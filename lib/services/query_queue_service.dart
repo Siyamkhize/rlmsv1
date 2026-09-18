@@ -3,14 +3,14 @@ import 'dart:collection';
 import 'package:flutter/foundation.dart';
 
 /// Query Queue Service
-/// 
+///
 /// Manages API request queuing with:
 /// - Controlled concurrency (max 3 simultaneous requests)
 /// - Request prioritization (high, normal, low)
 /// - Automatic retry with exponential backoff
 /// - Request deduplication
 /// - Cancellation support
-/// 
+///
 /// Usage:
 /// ```dart
 /// final result = await QueryQueueService.instance.enqueue(
@@ -39,7 +39,7 @@ class QueryQueueService {
     Priority priority = Priority.normal,
     String? cacheKey,
     Duration? cacheFor,
-    bool deduplicateBy,
+    bool deduplicate = false,
   }) async {
     // Check cache first
     if (cacheKey != null && _cachedResults.containsKey(cacheKey)) {
@@ -51,10 +51,11 @@ class QueryQueueService {
     }
 
     final completer = Completer<T>();
-    final requestId = cacheKey ?? DateTime.now().millisecondsSinceEpoch.toString();
+    final requestId =
+        cacheKey ?? DateTime.now().millisecondsSinceEpoch.toString();
 
     // Deduplicate if already running
-    if (deduplicateBy && _runningRequestIds.contains(requestId)) {
+    if (deduplicate && _runningRequestIds.contains(requestId)) {
       debugPrint('⏳ QueryQueue: Deduplicating request $requestId');
       return _waitForRunningRequest<T>(requestId);
     }
@@ -101,7 +102,8 @@ class QueryQueueService {
       _queue.addAll(list);
     }
 
-    debugPrint('📥 QueryQueue: Added ${request.id} (priority: ${request.priority.name}, queue size: ${_queue.length})');
+    debugPrint(
+        '📥 QueryQueue: Added ${request.id} (priority: ${request.priority.name}, queue size: ${_queue.length})');
   }
 
   /// Process queue
@@ -117,7 +119,8 @@ class QueryQueueService {
     _activeRequests++;
     _runningRequestIds.add(request.id);
 
-    debugPrint('🚀 QueryQueue: Executing ${request.id} (active: $_activeRequests/${maxConcurrentRequests})');
+    debugPrint(
+        '🚀 QueryQueue: Executing ${request.id} (active: $_activeRequests/$maxConcurrentRequests)');
 
     try {
       final result = await request.request();
@@ -128,7 +131,8 @@ class QueryQueueService {
           data: result,
           expiresAt: DateTime.now().add(request.cacheFor!),
         );
-        debugPrint('💾 QueryQueue: Cached ${request.cacheKey} for ${request.cacheFor!.inSeconds}s');
+        debugPrint(
+            '💾 QueryQueue: Cached ${request.cacheKey} for ${request.cacheFor!.inSeconds}s');
       }
 
       request.completer.complete(result);
@@ -139,15 +143,18 @@ class QueryQueueService {
       // Retry logic
       if (request.retries < maxRetries) {
         request.retries++;
-        final delay = initialRetryDelay * (1 << (request.retries - 1)); // Exponential backoff
+        final delay = initialRetryDelay *
+            (1 << (request.retries - 1)); // Exponential backoff
 
-        debugPrint('🔄 QueryQueue: Retrying ${request.id} (attempt ${request.retries}/$maxRetries) in ${delay.inSeconds}s');
+        debugPrint(
+            '🔄 QueryQueue: Retrying ${request.id} (attempt ${request.retries}/$maxRetries) in ${delay.inSeconds}s');
 
         await Future.delayed(delay);
         _addToQueue(request);
       } else {
         request.completer.completeError(error);
-        debugPrint('💀 QueryQueue: Failed ${request.id} after $maxRetries retries');
+        debugPrint(
+            '💀 QueryQueue: Failed ${request.id} after $maxRetries retries');
       }
     } finally {
       _activeRequests--;
@@ -189,7 +196,6 @@ class QueryQueueService {
 
   /// Clear expired cache
   void clearExpiredCache() {
-    final now = DateTime.now();
     _cachedResults.removeWhere((key, value) {
       if (value is _CachedResult && value.isExpired) {
         debugPrint('🧹 QueryQueue: Cleared expired cache: $key');

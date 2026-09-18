@@ -2,20 +2,20 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppConfig {
-  // Local dev (phone must be on same Wi-Fi as the PC running the server) - ACTIVE
-  static const String serverHost = '192.168.0.84'; // Local dev IP
-  static const int serverPort = 8080; // Local dev port
-  static const String serverProtocol = 'http'; // Local dev uses HTTP
-  static const String basePath = '/assessorReport2/mobile';
+  // Local dev (phone must be on same Wi-Fi as the PC running the server) - DISABLED
+  // static const String serverHost = '192.168.0.84'; // Local dev IP
+  // static const int serverPort = 8080; // Local dev port
+  // static const String serverProtocol = 'http'; // Local dev uses HTTP
+  // static const String basePath = '/assessorReport2/mobile';
 
-  // Live server configuration - ONLINE (DISABLED)
-  // static const String serverHost = 'rlms.rlms.co.za'; // Live server domain
-  // static const int serverPort = 443; // HTTPS port
-  // static const String serverProtocol = 'https'; // Live server uses HTTPS
-  // static const String basePath = '/mobile';
+  // Live server configuration - ONLINE (ACTIVE)
+  static const String serverHost = 'rlms.rlms.co.za'; // Live server domain
+  static const int serverPort = 443; // HTTPS port
+  static const String serverProtocol = 'https'; // Live server uses HTTPS
+  static const String basePath = '/mobile';
 
   // Base URL for all API calls
-  // Result: http://192.168.68.106/assessorReport2/mobile
+  // Result: http://192.168.0.84:8080/assessorReport2/mobile
   static String get baseUrl {
     // Don't include port for standard HTTPS (443) or HTTP (80)
     final includePort = (serverProtocol == 'https' && serverPort != 443) ||

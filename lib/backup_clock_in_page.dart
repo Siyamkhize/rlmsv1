@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:signature/signature.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'config.dart';
 import 'database_helper.dart';
 import 'services/secure_location_service.dart';
@@ -23,12 +24,12 @@ import 'LearnerDetailsPage.dart';
 
 class BackupClockInPage extends StatefulWidget {
   final String classID;
-  final List<dynamic> learners;
+  final List<dynamic> learners; // May be empty - will load independently
 
   const BackupClockInPage({
     Key? key,
     required this.classID,
-    required this.learners,
+    this.learners = const [], // Make optional with default empty list
   }) : super(key: key);
 
   @override
@@ -40,6 +41,10 @@ class _BackupClockInPageState extends State<BackupClockInPage> {
   String? _selectedLearnerId;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+
+  // Learners list - loaded independently
+  List<dynamic> _learners = [];
+  bool _isLoadingLearners = true;
 
   // Signature controller
   final SignatureController _signatureController = SignatureController(
@@ -58,12 +63,143 @@ class _BackupClockInPageState extends State<BackupClockInPage> {
   @override
   void initState() {
     super.initState();
-    _loadClockingStatus();
+    _loadLearnersData(); // Load learners first, will call _loadClockingStatus() after
     _syncAllSignaturesToServer(); // Sync signatures when page loads (if online)
+  }
+
+  /// Load learners from database (offline-first) and/or API
+  /// Load learners - prioritizes server data over offline DB
+  Future<void> _loadLearnersData() async {
+    setState(() => _isLoadingLearners = true);
+
+    try {
+      // PRIORITY 1: Use learners passed from parent widget (server data - most current)
+      if (widget.learners.isNotEmpty) {
+        print(
+            '[BACKUP_LOAD] Using ${widget.learners.length} learners from parent widget (server data)');
+        setState(() {
+          _learners = widget.learners;
+          _isLoadingLearners = false;
+        });
+        // Load clocking status after learners are loaded
+        await _loadClockingStatus();
+        return;
+      }
+
+      // PRIORITY 2: Try offline database (fallback only)
+      final db = await DatabaseHelper().database;
+      final offlineResult = await db.rawQuery('''
+        SELECT LearnerID, Name, Surname, IDNumber, ProfileImage
+        FROM learnerdetails 
+        WHERE classID = ? 
+        ORDER BY Name, Surname
+      ''', [widget.classID]);
+
+      if (offlineResult.isNotEmpty) {
+        print(
+            '[BACKUP_LOAD] Loaded ${offlineResult.length} learners from offline DB for classID ${widget.classID}');
+        setState(() {
+          _learners = offlineResult;
+          _isLoadingLearners = false;
+        });
+        // Load clocking status after learners are loaded
+        await _loadClockingStatus();
+        return;
+      }
+
+      // PRIORITY 3: Last resort - fetch from API
+      print('[BACKUP_LOAD] Fetching learners from API...');
+      await _fetchLearnersFromAPI();
+    } catch (e) {
+      print('[BACKUP_LOAD] Error loading learners: $e');
+      // Fallback to widget.learners if available
+      setState(() {
+        _learners = widget.learners;
+        _isLoadingLearners = false;
+      });
+      // Load clocking status even with fallback
+      await _loadClockingStatus();
+    }
+  }
+
+  /// Fetch learners from live server API
+  Future<void> _fetchLearnersFromAPI() async {
+    try {
+      final url =
+          AppConfig.buildUrl('get_learners.php?classID=${widget.classID}');
+      final token = await AppConfig.getAuthToken();
+
+      if (token == null) {
+        print('[BACKUP_API] No auth token available');
+        setState(() => _isLoadingLearners = false);
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true && data['data'] != null) {
+          final learnersList = data['data'] as List;
+          print(
+              '[BACKUP_API] Fetched ${learnersList.length} learners from API');
+
+          setState(() {
+            _learners = learnersList;
+            _isLoadingLearners = false;
+          });
+
+          // Store in offline database for future use
+          await _storeLearnersOffline(learnersList);
+
+          // Load clocking status after learners are loaded from API
+          await _loadClockingStatus();
+        } else {
+          print('[BACKUP_API] API returned no learners');
+          setState(() => _isLoadingLearners = false);
+        }
+      } else {
+        print('[BACKUP_API] Failed with status ${response.statusCode}');
+        setState(() => _isLoadingLearners = false);
+      }
+    } catch (e) {
+      print('[BACKUP_API] Error fetching from API: $e');
+      setState(() => _isLoadingLearners = false);
+    }
+  }
+
+  /// Store fetched learners in offline database
+  Future<void> _storeLearnersOffline(List<dynamic> learners) async {
+    try {
+      final db = await DatabaseHelper().database;
+      for (var learner in learners) {
+        final learnerMap = learner as Map<String, dynamic>;
+        await db.insert(
+          'learnerdetails',
+          learnerMap,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+      print('[BACKUP_STORE] Stored ${learners.length} learners offline');
+    } catch (e) {
+      print('[BACKUP_STORE] Error storing offline: $e');
+    }
   }
 
   /// Load clocking status for all learners
   Future<void> _loadClockingStatus() async {
+    // Wait for learners to load first
+    if (_isLoadingLearners || _learners.isEmpty) {
+      print('[BACKUP_STATUS] Waiting for learners to load...');
+      return;
+    }
+
     try {
       final db = await DatabaseHelper().database;
       final today = DateTime.now().toUtc().add(const Duration(hours: 2));
@@ -71,9 +207,9 @@ class _BackupClockInPageState extends State<BackupClockInPage> {
 
       print('[BACKUP_STATUS] ===== LOADING STATUS =====');
       print('[BACKUP_STATUS] Loading status for date: $todayStr');
-      print('[BACKUP_STATUS] Total learners: ${widget.learners.length}');
+      print('[BACKUP_STATUS] Total learners: ${_learners.length}');
 
-      for (var learner in widget.learners) {
+      for (var learner in _learners) {
         final learnerMap = learner as Map<String, dynamic>;
         final learnerId = learnerMap['LearnerID'].toString();
         final learnerName = '${learnerMap['Name']} ${learnerMap['Surname']}';
@@ -162,9 +298,9 @@ class _BackupClockInPageState extends State<BackupClockInPage> {
   // Filter learners based on search
   List<dynamic> get _filteredLearners {
     if (_searchQuery.isEmpty) {
-      return widget.learners;
+      return _learners;
     }
-    return widget.learners.where((learner) {
+    return _learners.where((learner) {
       final learnerMap = learner as Map<String, dynamic>;
       final name = (learnerMap['Name'] ?? '').toString().toLowerCase();
       final surname = (learnerMap['Surname'] ?? '').toString().toLowerCase();
@@ -236,8 +372,17 @@ class _BackupClockInPageState extends State<BackupClockInPage> {
 
           // Learner list
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+            child: _isLoading || _isLoadingLearners
+                ? const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text('Loading learners...'),
+                      ],
+                    ),
+                  )
                 : _filteredLearners.isEmpty
                     ? Center(
                         child: Text(
@@ -372,6 +517,18 @@ class _BackupClockInPageState extends State<BackupClockInPage> {
       return;
     }
 
+    // Check if learners are still loading
+    if (_isLoadingLearners || _learners.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please wait, learners are still loading...'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
     // Block if learner has already completed their day
     if (_hasLearnerCompletedDay(learnerId)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -429,8 +586,13 @@ class _BackupClockInPageState extends State<BackupClockInPage> {
 
       // Step 5: ID verification
       setState(() => _currentStep = 'id_verification');
+      print('[BACKUP_CLOCKIN] ===== STEP 5: ID VERIFICATION =====');
       final idVerified = await _verifyLearnerID(learnerId);
+      print('[BACKUP_CLOCKIN] ID verification result: $idVerified');
+
       if (!idVerified) {
+        print(
+            '[BACKUP_CLOCKIN] ID verification FAILED or CANCELLED - stopping');
         setState(() {
           _isClockingIn[learnerId] = false;
           _currentStep = null;
@@ -438,10 +600,20 @@ class _BackupClockInPageState extends State<BackupClockInPage> {
         return;
       }
 
-      // Step 6: Signature capture for clock-in
+      // Step 6: Signature capture (clock-in signature - temporary, will be replaced by clock-out signature)
+      print(
+          '[BACKUP_CLOCKIN] ===== STEP 6: SIGNATURE CAPTURE (CLOCK-IN) =====');
       setState(() => _currentStep = 'signature');
       final signatureData = await _captureSignature(learnerId);
+      print(
+          '[BACKUP_CLOCKIN] Signature capture result: ${signatureData != null ? "SUCCESS (${signatureData.length} chars)" : "NULL/CANCELLED"}');
       if (signatureData == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Signature is required for backup clock-in'),
+            backgroundColor: Colors.orange,
+          ),
+        );
         setState(() {
           _isClockingIn[learnerId] = false;
           _currentStep = null;
@@ -450,6 +622,7 @@ class _BackupClockInPageState extends State<BackupClockInPage> {
       }
 
       // Step 7: GPS and geofence check
+      print('[BACKUP_CLOCKIN] ===== STEP 7: GEOFENCE CHECK =====');
       setState(() => _currentStep = 'gps_check');
       final gpsOk = await _verifyGeofenceAndGPS(learnerId);
       if (!gpsOk) {
@@ -460,7 +633,9 @@ class _BackupClockInPageState extends State<BackupClockInPage> {
         return;
       }
 
-      // Step 8: Submit clock-in WITH signature
+      // Step 8: Submit clock-in WITH clock-in signature (will be replaced by clock-out signature when user clocks out)
+      print(
+          '[BACKUP_CLOCKIN] ===== STEP 8: SUBMITTING CLOCK-IN WITH SIGNATURE =====');
       setState(() => _currentStep = 'submitting');
       await _submitBackupClockIn(learnerId, signatureData);
 
@@ -501,6 +676,18 @@ class _BackupClockInPageState extends State<BackupClockInPage> {
   /// ========== CLOCK-OUT FLOW (ONE SIGNATURE per day - captured at clock-out) ==========
   Future<void> _startBackupClockOut(String learnerId) async {
     if (_isClockingIn[learnerId] == true) {
+      return;
+    }
+
+    // Check if learners are still loading
+    if (_isLoadingLearners || _learners.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please wait, learners are still loading...'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
       return;
     }
 
@@ -1039,24 +1226,68 @@ class _BackupClockInPageState extends State<BackupClockInPage> {
   }
 
   Future<bool> _verifyLearnerID(String learnerId) async {
+    // Find learner in list
+    print('[VERIFY_LEARNER] ===== START VERIFICATION =====');
+    print(
+        '[VERIFY_LEARNER] Looking for learner ID: $learnerId (type: ${learnerId.runtimeType})');
+    print('[VERIFY_LEARNER] Total learners in list: ${_learners.length}');
+
+    // Debug: Print ALL keys and values for the first learner
+    if (_learners.isNotEmpty) {
+      print('[VERIFY_LEARNER] Sample learner structure:');
+      final sample = _learners.first as Map;
+      sample.forEach((key, value) {
+        print('[VERIFY_LEARNER]   $key: $value (type: ${value.runtimeType})');
+      });
+    }
+
+    // Debug: Print ALL learner IDs with their types
+    print('[VERIFY_LEARNER] All learner IDs in list:');
+    for (var l in _learners) {
+      final map = l as Map;
+      final id = map['LearnerID'];
+      print(
+          '[VERIFY_LEARNER]   ID: $id (type: ${id.runtimeType}, toString: ${id.toString()})');
+    }
+
     Map<String, dynamic>? learner;
     try {
-      learner = widget.learners.firstWhere(
-        (l) => (l as Map<String, dynamic>)['LearnerID'].toString() == learnerId,
-      ) as Map<String, dynamic>;
+      learner = _learners.firstWhere(
+        (l) {
+          final map = l as Map<String, dynamic>;
+          final learnerIdValue = map['LearnerID'];
+          final match = learnerIdValue.toString() == learnerId;
+          print(
+              '[VERIFY_LEARNER] Comparing: $learnerIdValue == $learnerId -> $match');
+          return match;
+        },
+      ) as Map<String, dynamic>?;
+
+      if (learner != null) {
+        print(
+            '[VERIFY_LEARNER] SUCCESS: Found learner: ${learner['Name']} ${learner['Surname']}');
+      }
     } catch (e) {
+      print('[VERIFY_LEARNER] EXCEPTION (learner not found or error): $e');
       learner = null;
     }
 
     if (learner == null || learner.isEmpty) {
+      print(
+          '[VERIFY_LEARNER] FINAL ERROR: Learner $learnerId NOT found in loaded list');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Learner not found'),
+        SnackBar(
+          content: Text(
+              'Learner $learnerId not found in this class. Please refresh the page.'),
           backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
         ),
       );
       return false;
     }
+
+    print(
+        '[VERIFY_LEARNER] Found learner: ${learner['Name']} ${learner['Surname']}');
 
     final idNumber = learner['IDNumber']?.toString() ?? '';
     final TextEditingController idController = TextEditingController();
@@ -1095,13 +1326,20 @@ class _BackupClockInPageState extends State<BackupClockInPage> {
             ),
             ElevatedButton(
               onPressed: () {
-                if (idController.text.trim() == idNumber) {
+                final enteredId = idController.text.trim();
+                print(
+                    '[VERIFY_LEARNER] Entered ID: $enteredId, Expected: $idNumber');
+
+                if (enteredId == idNumber) {
+                  print('[VERIFY_LEARNER] ID MATCH! Closing dialog with TRUE');
                   Navigator.of(context).pop(true);
                 } else {
+                  print('[VERIFY_LEARNER] ID MISMATCH! Showing error');
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('ID number does not match!'),
                       backgroundColor: Colors.red,
+                      duration: Duration(seconds: 2),
                     ),
                   );
                 }
@@ -1117,24 +1355,33 @@ class _BackupClockInPageState extends State<BackupClockInPage> {
       },
     );
 
+    print('[VERIFY_LEARNER] Dialog closed with result: $confirmed');
+    print('[VERIFY_LEARNER] Returning: ${confirmed == true}');
     return confirmed == true;
   }
 
   Future<String?> _captureSignature(String learnerId) async {
+    print('[SIGNATURE] Starting signature capture for learner: $learnerId');
     _signatureController.clear();
 
     Map<String, dynamic>? learner;
     try {
-      learner = widget.learners.firstWhere(
+      learner = _learners.firstWhere(
         (l) => (l as Map<String, dynamic>)['LearnerID'].toString() == learnerId,
-      ) as Map<String, dynamic>;
+      ) as Map<String, dynamic>?;
+      print(
+          '[SIGNATURE] Found learner: ${learner?['Name']} ${learner?['Surname']}');
     } catch (e) {
+      print('[SIGNATURE] ERROR finding learner: $e');
       learner = null;
     }
 
     if (learner == null) {
+      print('[SIGNATURE] Learner not found, returning null');
       return null;
     }
+
+    print('[SIGNATURE] Showing signature dialog...');
 
     final signature = await showDialog<String?>(
       context: context,
@@ -1202,6 +1449,8 @@ class _BackupClockInPageState extends State<BackupClockInPage> {
       },
     );
 
+    print(
+        '[SIGNATURE] Dialog closed. Result: ${signature != null ? "SIGNATURE PROVIDED (${signature.length} chars)" : "NULL/CANCELLED"}');
     return signature;
   }
 

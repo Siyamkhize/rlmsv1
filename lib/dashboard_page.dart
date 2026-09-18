@@ -7,6 +7,7 @@ import 'database_helper.dart';
 import 'FacilitatorProfile.dart';
 import 'MaterialForm.dart';
 import 'clock_in_page.dart';
+import 'backup_clock_in_page.dart';
 import 'contact_less.dart';
 import 'services/fingerprint_service.dart';
 import 'sync_service.dart' show syncSingleClockIn, syncSingleClockOut;
@@ -217,6 +218,8 @@ class _DashboardPageState extends State<DashboardPage> {
               'LearnerID': learner['LearnerID']?.toString() ?? 'N/A',
               'Name': learner['Name']?.toString() ?? 'N/A',
               'Surname': learner['Surname']?.toString() ?? 'N/A',
+              'IDNumber': learner['IDNumber']?.toString() ??
+                  'N/A', // CRITICAL: Required for backup clock-in verification
               'clock_in_time': learner['clock_in_time']?.toString() ?? '',
               'clock_out_time': learner['clock_out_time']?.toString() ?? '',
               'contact_time': learner['contact_time']?.toString() ?? '',
@@ -2484,14 +2487,54 @@ class _DashboardPageState extends State<DashboardPage> {
             label: 'Clock In',
             isActive: false,
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ClockInPage(
-                    classID: widget.classID,
-                    learners: currentLearners,
-                  ),
-                ),
+              // Show dialog to choose clock-in method
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text('Choose Clock-In Method'),
+                    content:
+                        const Text('Select how you want to clock in learners:'),
+                    actions: [
+                      TextButton.icon(
+                        icon: const Icon(Icons.fingerprint, color: Colors.blue),
+                        label: const Text('Fingerprint Scanner'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ClockInPage(
+                                classID: widget.classID,
+                                learners: currentLearners,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      TextButton.icon(
+                        icon: const Icon(Icons.edit, color: Colors.orange),
+                        label: const Text('Signature (Backup)'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BackupClockInPage(
+                                classID: widget.classID,
+                                learners: currentLearners,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      TextButton(
+                        child: const Text('Cancel'),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  );
+                },
               );
             },
           ),

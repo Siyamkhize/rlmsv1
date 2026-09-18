@@ -11,6 +11,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'EnrollmentPage.dart';
+import 'backup_clock_in_page.dart';
 import 'services/fingerprint_service.dart';
 import 'services/secure_location_service.dart'; // Added for future location improvements
 import 'DetailsPage.dart';
@@ -5231,47 +5232,49 @@ class _ClockInPageState extends State<ClockInPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: _isConnected
-                    ? Colors.green.withOpacity(0.1)
-                    : Colors.red.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: _isConnected ? Colors.green : Colors.red,
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _isConnected ? Icons.wifi : Icons.wifi_off,
-                    size: 16,
-                    color: _isConnected ? Colors.green : Colors.red,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _isConnected ? 'Online' : 'Offline',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: _isConnected ? Colors.green : Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+        title: const Text('Clock In'),
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.black,
         actions: [
+          // Network Status Indicator (First - most important)
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: _isConnected
+                  ? Colors.green.withOpacity(0.1)
+                  : Colors.red.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _isConnected ? Colors.green : Colors.red,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  _isConnected ? Icons.wifi : Icons.wifi_off,
+                  size: 14,
+                  color: _isConnected ? Colors.green : Colors.red,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _isConnected ? 'ON' : 'OFF',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: _isConnected ? Colors.green : Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Smaller icons with padding=8 to fit all 6 icons
           IconButton(
+            padding: const EdgeInsets.all(8),
+            iconSize: 22,
             icon: const Icon(Icons.sync, color: Colors.orange),
             onPressed: _isConnected
                 ? () async {
@@ -5288,6 +5291,8 @@ class _ClockInPageState extends State<ClockInPage>
             tooltip: 'Sync Clock-ins',
           ),
           IconButton(
+            padding: const EdgeInsets.all(8),
+            iconSize: 22,
             icon: const Icon(Icons.description, color: Colors.teal),
             onPressed: _isConnected
                 ? () async {
@@ -5303,6 +5308,8 @@ class _ClockInPageState extends State<ClockInPage>
             tooltip: 'Sync Docs',
           ),
           IconButton(
+            padding: const EdgeInsets.all(8),
+            iconSize: 22,
             icon: const Icon(Icons.download, color: Colors.green),
             onPressed: _isConnected
                 ? () async {
@@ -5333,6 +5340,8 @@ class _ClockInPageState extends State<ClockInPage>
             tooltip: 'Pull Server Records',
           ),
           IconButton(
+            padding: const EdgeInsets.all(8),
+            iconSize: 22,
             icon: const Icon(Icons.refresh, color: Colors.orange),
             onPressed: _isConnected
                 ? () async {
@@ -5365,11 +5374,31 @@ class _ClockInPageState extends State<ClockInPage>
             tooltip: 'Update Learners',
           ),
           IconButton(
+            padding: const EdgeInsets.all(8),
+            iconSize: 22,
             icon: const Icon(Icons.info_outline),
             onPressed: () {
               _showQueueStatus();
             },
             tooltip: 'View Sync Queue Status',
+          ),
+          IconButton(
+            padding: const EdgeInsets.all(8),
+            iconSize: 22,
+            icon: const Icon(Icons.edit, color: Colors.orange),
+            onPressed: () {
+              // Navigate to backup clock-in page (signature mode)
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BackupClockInPage(
+                    classID: widget.classID,
+                    learners: widget.learners,
+                  ),
+                ),
+              );
+            },
+            tooltip: 'Switch to Backup Mode (Signature)',
           ),
         ],
       ),

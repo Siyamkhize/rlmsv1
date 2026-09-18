@@ -1,19 +1,18 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import '../services/query_queue_service.dart';
 
 /// Lazy Loading Controller
-/// 
+///
 /// Manages pagination and infinite scroll for large datasets.
-/// 
+///
 /// Features:
 /// - Automatic page loading on scroll
 /// - Pull-to-refresh support
 /// - Loading state management
 /// - Error handling with retry
 /// - Integrates with QueryQueueService
-/// 
+///
 /// Usage:
 /// ```dart
 /// final controller = LazyLoadingController<Learner>(
@@ -74,10 +73,11 @@ class LazyLoadingController<T> extends ChangeNotifier {
     notifyListeners();
 
     try {
-      debugPrint('📄 LazyLoading: Loading page ${_currentPage + 1} (size: $pageSize)');
+      debugPrint(
+          '📄 LazyLoading: Loading page ${_currentPage + 1} (size: $pageSize)');
 
       final List<T> newItems;
-      
+
       if (useQueryQueue) {
         // Use query queue for controlled concurrency
         newItems = await QueryQueueService.instance.enqueue(
@@ -85,7 +85,7 @@ class LazyLoadingController<T> extends ChangeNotifier {
           priority: queuePriority,
           cacheKey: 'page_${_currentPage + 1}_$pageSize',
           cacheFor: const Duration(minutes: 5),
-          deduplicateBy: true,
+          deduplicate: true,
         );
       } else {
         newItems = await fetchPage(_currentPage + 1, pageSize);
@@ -95,7 +95,8 @@ class LazyLoadingController<T> extends ChangeNotifier {
       _currentPage++;
       _hasMore = newItems.length >= pageSize;
 
-      debugPrint('✅ LazyLoading: Loaded ${newItems.length} items (total: ${_items.length}, hasMore: $_hasMore)');
+      debugPrint(
+          '✅ LazyLoading: Loaded ${newItems.length} items (total: ${_items.length}, hasMore: $_hasMore)');
     } catch (e) {
       _error = e.toString();
       debugPrint('❌ LazyLoading: Error loading page: $e');
@@ -121,7 +122,7 @@ class LazyLoadingController<T> extends ChangeNotifier {
       _hasMore = true;
 
       await loadNextPage();
-      
+
       debugPrint('✅ LazyLoading: Refresh complete');
     } finally {
       _isRefreshing = false;
@@ -146,7 +147,7 @@ class LazyLoadingController<T> extends ChangeNotifier {
     if (scrollController == null) return;
 
     final threshold = scrollController!.position.maxScrollExtent * 0.8;
-    
+
     if (scrollController!.position.pixels >= threshold) {
       loadNextPage();
     }

@@ -33,6 +33,7 @@ header('Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token'
 /**
  * Get client IP address (handles proxies)
  */
+if (!function_exists('get_client_ip')) {
 function get_client_ip() {
     $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
     
@@ -48,6 +49,7 @@ function get_client_ip() {
     
     return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : '0.0.0.0';
 }
+}
 
 /**
  * Sanitize input string
@@ -55,6 +57,7 @@ function get_client_ip() {
  * @param string $input Raw input
  * @return string Sanitized input
  */
+if (!function_exists('sanitize_input')) {
 function sanitize_input($input) {
     if ($input === null) {
         return '';
@@ -68,6 +71,7 @@ function sanitize_input($input) {
     
     return $input;
 }
+}
 
 /**
  * Validate integer input
@@ -77,6 +81,7 @@ function sanitize_input($input) {
  * @param int $max Maximum value
  * @return int|false Validated integer or false
  */
+if (!function_exists('validate_int')) {
 function validate_int($input, $min = PHP_INT_MIN, $max = PHP_INT_MAX) {
     $value = filter_var($input, FILTER_VALIDATE_INT);
     
@@ -90,6 +95,7 @@ function validate_int($input, $min = PHP_INT_MIN, $max = PHP_INT_MAX) {
     
     return $value;
 }
+}
 
 /**
  * Validate email address
@@ -97,8 +103,10 @@ function validate_int($input, $min = PHP_INT_MIN, $max = PHP_INT_MAX) {
  * @param string $email Email address
  * @return string|false Validated email or false
  */
+if (!function_exists('validate_email')) {
 function validate_email($email) {
     return filter_var($email, FILTER_VALIDATE_EMAIL);
+}
 }
 
 /**
@@ -107,6 +115,7 @@ function validate_email($email) {
  * @param string $id_number ID number
  * @return bool True if valid
  */
+if (!function_exists('validate_sa_id')) {
 function validate_sa_id($id_number) {
     // Remove spaces and dashes
     $id = preg_replace('/[\s\-]/', '', $id_number);
@@ -147,6 +156,7 @@ function validate_sa_id($id_number) {
     
     return $checkDigit === (int)$id[12];
 }
+}
 
 /**
  * Validate file upload
@@ -155,6 +165,7 @@ function validate_sa_id($id_number) {
  * @param array $options Validation options
  * @return array ['valid' => bool, 'error' => string|null, 'sanitized_name' => string]
  */
+if (!function_exists('validate_file_upload')) {
 function validate_file_upload($file, $options = []) {
     // Default options
     $defaults = [
@@ -227,6 +238,7 @@ function validate_file_upload($file, $options = []) {
         'extension' => $file_extension
     ];
 }
+}
 
 /**
  * Check rate limit
@@ -238,6 +250,7 @@ function validate_file_upload($file, $options = []) {
  * @param int $window_seconds Time window in seconds
  * @return array ['allowed' => bool, 'message' => string, 'retry_after' => int|null]
  */
+if (!function_exists('check_rate_limit')) {
 function check_rate_limit($conn, $ip, $action = 'api_request', $max_attempts = 60, $window_seconds = 60) {
     // Create rate_limit table if it doesn't exist
     $create_table = "
@@ -301,6 +314,7 @@ function check_rate_limit($conn, $ip, $action = 'api_request', $max_attempts = 6
         'remaining' => $max_attempts - $attempt_count - 1
     ];
 }
+}
 
 /**
  * Validate authentication token
@@ -310,6 +324,7 @@ function check_rate_limit($conn, $ip, $action = 'api_request', $max_attempts = 6
  * @param string|null $required_role Required role
  * @return array|false User data or false if invalid
  */
+if (!function_exists('validate_auth_token')) {
 function validate_auth_token($conn, $token, $required_role = null) {
     // Sanitize token
     $token = preg_replace('/[^a-zA-Z0-9]/', '', $token);
@@ -352,6 +367,7 @@ function validate_auth_token($conn, $token, $required_role = null) {
     
     return $user;
 }
+}
 
 /**
  * Log security event
@@ -360,6 +376,7 @@ function validate_auth_token($conn, $token, $required_role = null) {
  * @param string $description Description of event
  * @param array $metadata Additional metadata
  */
+if (!function_exists('log_security_event')) {
 function log_security_event($event_type, $description, $metadata = []) {
     // Get database connection
     global $conn;
@@ -400,12 +417,14 @@ function log_security_event($event_type, $description, $metadata = []) {
     $stmt->execute();
     $stmt->close();
 }
+}
 
 /**
  * Generate CSRF token
  * 
  * @return string CSRF token
  */
+if (!function_exists('generate_csrf_token')) {
 function generate_csrf_token() {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -417,6 +436,7 @@ function generate_csrf_token() {
     
     return $_SESSION['csrf_token'];
 }
+}
 
 /**
  * Verify CSRF token
@@ -424,6 +444,7 @@ function generate_csrf_token() {
  * @param string $token Token to verify
  * @return bool True if valid
  */
+if (!function_exists('verify_csrf_token')) {
 function verify_csrf_token($token) {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -435,10 +456,12 @@ function verify_csrf_token($token) {
     
     return hash_equals($_SESSION['csrf_token'], $token);
 }
+}
 
 /**
  * Create auth_tokens table if it doesn't exist
  */
+if (!function_exists('ensure_auth_tokens_table')) {
 function ensure_auth_tokens_table($conn) {
     $create_table = "
         CREATE TABLE IF NOT EXISTS auth_tokens (
@@ -457,6 +480,7 @@ function ensure_auth_tokens_table($conn) {
     ";
     
     $conn->query($create_table);
+}
 }
 
 // Initialize auth_tokens table on load

@@ -1,17 +1,19 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../utils/lazy_loading_controller.dart';
+import '../services/query_queue_service.dart';
 
 /// Reusable Paginated List Widget
-/// 
+///
 /// Drop-in replacement for ListView with automatic pagination.
-/// 
+///
 /// Features:
 /// - Infinite scroll
 /// - Pull-to-refresh
 /// - Loading indicators
 /// - Error handling with retry
 /// - Empty state
-/// 
+///
 /// Usage:
 /// ```dart
 /// PaginatedListWidget<Learner>(
@@ -32,7 +34,7 @@ class PaginatedListWidget<T> extends StatefulWidget {
   final bool enableRefresh;
 
   const PaginatedListWidget({
-    Key? key,
+    super.key,
     required this.controller,
     required this.itemBuilder,
     this.loadingBuilder,
@@ -43,7 +45,7 @@ class PaginatedListWidget<T> extends StatefulWidget {
     this.shrinkWrap = false,
     this.physics,
     this.enableRefresh = true,
-  }) : super(key: key);
+  });
 
   @override
   State<PaginatedListWidget<T>> createState() => _PaginatedListWidgetState<T>();
@@ -169,26 +171,29 @@ class _PaginatedListWidgetState<T> extends State<PaginatedListWidget<T>> {
 
 /// Search-enabled paginated list with debouncing
 class SearchablePaginatedList<T> extends StatefulWidget {
-  final Future<List<T>> Function(String query, int page, int pageSize) searchFetch;
+  final Future<List<T>> Function(String query, int page, int pageSize)
+      searchFetch;
   final Widget Function(BuildContext, T) itemBuilder;
   final String hintText;
   final int pageSize;
   final Duration debounceDuration;
 
   const SearchablePaginatedList({
-    Key? key,
+    super.key,
     required this.searchFetch,
     required this.itemBuilder,
     this.hintText = 'Search...',
     this.pageSize = 30,
     this.debounceDuration = const Duration(milliseconds: 500),
-  }) : super(key: key);
+  });
 
   @override
-  State<SearchablePaginatedList<T>> createState() => _SearchablePaginatedListState<T>();
+  State<SearchablePaginatedList<T>> createState() =>
+      _SearchablePaginatedListState<T>();
 }
 
-class _SearchablePaginatedListState<T> extends State<SearchablePaginatedList<T>> {
+class _SearchablePaginatedListState<T>
+    extends State<SearchablePaginatedList<T>> {
   late LazyLoadingController<T> _controller;
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounceTimer;
