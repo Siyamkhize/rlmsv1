@@ -87,6 +87,23 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
   // Guardian fields
   bool _isMinor = false;
 
+  // Location data
+  List<String> _provinces = [];
+  List<String> _districts = [];
+  List<String> _municipalities = [];
+
+  static const List<String> _fallbackSouthAfricanProvinces = [
+    'Eastern Cape',
+    'Free State',
+    'Gauteng',
+    'KwaZulu Natal',
+    'Limpopo',
+    'Mpumalanga',
+    'Northern Cape',
+    'North West',
+    'Western Cape',
+  ];
+
   // Dropdown field definitions
   final Map<String, List<String>> _dropdownOptions = {
     'Title': ['Mr', 'Mrs', 'Miss', 'Ms', 'Dr', 'Prof'],
@@ -113,6 +130,14 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       'Other'
     ],
   };
+
+  // Getter for dynamic dropdown options (includes location fields)
+  Map<String, List<String>> get _allDropdownOptions => {
+        ..._dropdownOptions,
+        'Province': _provinces,
+        'District': _districts,
+        'Municipality': _municipalities,
+      };
 
   // Required dropdown fields
   final Set<String> _requiredDropdownFields = {
@@ -146,6 +171,9 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     ['AddressLine2'],
     ['AddressLine3'],
     ['PostalCode'],
+    ['Province'],
+    ['District'],
+    ['Municipality'],
     ['KinName'],
     ['KinRelation'],
     ['KinContact'],
@@ -172,6 +200,10 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     _tabController = TabController(
         length: 5, vsync: this); // Will be updated after data loads
     _controllers = {};
+
+    // Fetch location data
+    _fetchProvinces();
+
     fetchLearnerDetails();
     syncLocalData();
 
@@ -828,6 +860,121 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     }
   }
 
+  void _ensureFallbackProvincesLoaded() {
+    if (_provinces.isNotEmpty) return;
+    setState(() {
+      _provinces = List<String>.from(_fallbackSouthAfricanProvinces);
+    });
+    print(
+        '[LOCATION] Using fallback provinces (${_provinces.length} items)');
+  }
+
+  Future<void> _loadLocationCascadesIfNeeded() async {
+    if (learnerData == null) return;
+    _ensureFallbackProvincesLoaded();
+    final province = learnerData!['Province']?.toString().trim() ?? '';
+    if (_isMissingValue(province)) return;
+
+    await _fetchDistricts(province);
+    final district = learnerData!['District']?.toString().trim() ?? '';
+    if (_isMissingValue(district)) return;
+
+    await _fetchMunicipalities(district);
+  }
+
+  // Fetch location data methods
+  Future<void> _fetchProvinces() async {
+    print('[LOCATION] _fetchProvinces called');
+    try {
+      final url = AppConfig.buildUrl('fetch_provinces.php');
+      print('[LOCATION] Fetching from: $url');
+      final response = await http.get(
+        Uri.parse(url),
+      );
+      print('[LOCATION] Response status: ${response.statusCode}');
+      print('[LOCATION] Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('[LOCATION] Decoded data: $data');
+        if (data['success'] == true) {
+          setState(() {
+            _provinces = List<String>.from(
+              data['data']['provinces'].map((p) => p['name'] as String),
+            );
+          });
+          print('[LOCATION] Provinces set: $_provinces');
+        } else {
+          print('[LOCATION] API returned success=false');
+        }
+      } else {
+        print('[LOCATION] HTTP error: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('[LOCATION] Error fetching provinces: $e');
+    } finally {
+      _ensureFallbackProvincesLoaded();
+    }
+  }
+
+  Future<void> _fetchDistricts(String province) async {
+    print('[LOCATION] _fetchDistricts called for province: $province');
+    try {
+      final url = AppConfig.buildUrl('fetch_districts.php',
+          queryParams: {'province': province});
+      print('[LOCATION] Fetching from: $url');
+      final response = await http.get(
+        Uri.parse(url),
+      );
+      print('[LOCATION] Districts response status: ${response.statusCode}');
+      print('[LOCATION] Districts response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          setState(() {
+            _districts = List<String>.from(
+              data['data']['districts'].map((d) => d['name'] as String),
+            );
+            _municipalities = []; // Reset municipalities when district changes
+          });
+          print('[LOCATION] Districts set: $_districts');
+        }
+      }
+    } catch (e) {
+      print('[LOCATION] Error fetching districts: $e');
+    }
+  }
+
+  Future<void> _fetchMunicipalities(String district) async {
+    print('[LOCATION] _fetchMunicipalities called for district: $district');
+    try {
+      final url = AppConfig.buildUrl('fetch_municipalities.php',
+          queryParams: {'district': district});
+      print('[LOCATION] Fetching from: $url');
+      final response = await http.get(
+        Uri.parse(url),
+      );
+      print(
+          '[LOCATION] Municipalities response status: ${response.statusCode}');
+      print('[LOCATION] Municipalities response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          setState(() {
+            _municipalities = List<String>.from(
+              data['data']['municipalities'].map((m) => m['name'] as String),
+            );
+          });
+          print('[LOCATION] Municipalities set: $_municipalities');
+        }
+      }
+    } catch (e) {
+      print('[LOCATION] Error fetching municipalities: $e');
+    }
+  }
+
   Future<void> fetchLearnerDetails() async {
     try {
       // Missing-profile edits are saved locally first — do not overwrite them
@@ -853,6 +1000,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             _isMinor = age != null && age < 18;
             _updateTabController();
           });
+          await _loadLocationCascadesIfNeeded();
           await fetchBankDetails();
           await fetchGuardianData();
 
@@ -878,6 +1026,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
               isLoading = false;
               _initControllersFrom(learnerData!);
             });
+
+            await _loadLocationCascadesIfNeeded();
 
             // Perform initial calculations from ID number (outside setState)
             await _calculateAndUpdateFromIDNumber();
@@ -960,6 +1110,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         });
         print(
             'Learner data fetched from local database: ${learnerData!.keys.toList()}');
+        await _loadLocationCascadesIfNeeded();
         await fetchBankDetails();
         await fetchGuardianData();
 
@@ -1212,7 +1363,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       };
 
       _controllers.forEach((key, controller) {
-        if (_dropdownOptions.containsKey(key)) return;
+        if (_allDropdownOptions.containsKey(key)) return;
         if (protectedFields.contains(key)) return; // Skip protected fields
 
         final text = controller.text.trim();
@@ -1224,7 +1375,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         }
       });
 
-      for (final key in _dropdownOptions.keys) {
+      for (final key in _allDropdownOptions.keys) {
         final value = learnerData?[key]?.toString().trim() ?? '';
         if (value.isNotEmpty && !_isMissingValue(value)) {
           updateData[key] = value;
@@ -1557,6 +1708,9 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       'AddressLine2', // Suburb
       'AddressLine3', // City/Town
       'PostalCode', // Postal Code
+      'Province',
+      'District',
+      'Municipality',
       'KinName',
       'KinRelation',
       'KinContact',
@@ -1602,6 +1756,15 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           dropdownKey,
           learnerData!.containsKey(dropdownKey)
               ? learnerData![dropdownKey]
+              : null,
+        ));
+      }
+      for (final locationKey in ['Province', 'District', 'Municipality']) {
+        if (orderedEntries.any((entry) => entry.key == locationKey)) continue;
+        orderedEntries.add(MapEntry(
+          locationKey,
+          learnerData!.containsKey(locationKey)
+              ? learnerData![locationKey]
               : null,
         ));
       }
@@ -1723,9 +1886,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
   }
 
   String? _resolveDropdownValue(String fieldKey) {
-    final options = _dropdownOptions[fieldKey] ?? [];
-    if (options.isEmpty) return null;
-
+    final options = _allDropdownOptions[fieldKey] ?? [];
     final raw = learnerData?[fieldKey]?.toString().trim() ?? '';
     if (raw.isEmpty || raw.toLowerCase() == 'null') return null;
 
@@ -1734,12 +1895,15 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         return option;
       }
     }
-    return null;
+    return options.isEmpty ? null : raw;
   }
 
   Widget _buildDropdownField(String fieldKey, bool isRequired) {
-    final options = _dropdownOptions[fieldKey] ?? [];
+    final options = List<String>.from(_allDropdownOptions[fieldKey] ?? []);
     final resolvedValue = _resolveDropdownValue(fieldKey);
+    if (resolvedValue != null && !options.contains(resolvedValue)) {
+      options.insert(0, resolvedValue);
+    }
 
     return DropdownButtonFormField<String>(
       key: ValueKey('dropdown_$fieldKey'),
@@ -1765,11 +1929,27 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             ),
           )
           .toList(),
-      onChanged: (String? newValue) {
+      onChanged: (String? newValue) async {
         if (newValue == null) return;
         setState(() {
           learnerData![fieldKey] = newValue;
         });
+
+        // Handle cascading location dropdowns
+        if (fieldKey == 'Province') {
+          await _fetchDistricts(newValue);
+          // Clear district and municipality when province changes
+          setState(() {
+            learnerData!['District'] = '';
+            learnerData!['Municipality'] = '';
+          });
+        } else if (fieldKey == 'District') {
+          await _fetchMunicipalities(newValue);
+          // Clear municipality when district changes
+          setState(() {
+            learnerData!['Municipality'] = '';
+          });
+        }
       },
       validator: isRequired
           ? (value) {
@@ -2145,7 +2325,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
         // Check if this field should be read-only
         final bool isReadOnly = readOnlyFields.contains(entry.key);
-        final bool isDropdownField = _dropdownOptions.containsKey(entry.key);
+        final bool isDropdownField = _allDropdownOptions.containsKey(entry.key);
         final bool shouldUseDropdown = isDropdownField;
         final bool isRequired = _requiredDropdownFields.contains(entry.key) ||
             _requiredTextFields.contains(entry.key);

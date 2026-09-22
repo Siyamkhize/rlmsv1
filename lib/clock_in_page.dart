@@ -105,12 +105,20 @@ class _ClockInPageState extends State<ClockInPage>
   final int _minFileSize = 10 * 1024; // 10KB
   String get _uploadUrl => AppConfig.buildUrl('upload_learner_document.php');
 
-  final List<String> _requiredDocuments = const [
+  // Documents required for UPLOAD (all 5 must be uploaded)
+  final List<String> _requiredDocumentsForUpload = const [
     'ID Document',
     'Qualifications',
     'Bank Confirmation Letter',
     'Proof of Residence',
     'CV',
+  ];
+
+  // Documents required for CLOCK-IN (must be approved)
+  final List<String> _requiredDocumentsForClocking = const [
+    'ID Document',
+    'Qualifications',
+    'Proof of Residence',
   ];
 
   @override
@@ -3345,6 +3353,9 @@ class _ClockInPageState extends State<ClockInPage>
     _RequiredProfileRule(label: 'Address Line 2', keys: ['AddressLine2']),
     _RequiredProfileRule(label: 'Address Line 3', keys: ['AddressLine3']),
     _RequiredProfileRule(label: 'Postal Code', keys: ['PostalCode']),
+    _RequiredProfileRule(label: 'Province', keys: ['Province']),
+    _RequiredProfileRule(label: 'District', keys: ['District']),
+    _RequiredProfileRule(label: 'Municipality', keys: ['Municipality']),
     _RequiredProfileRule(label: 'Next of Kin Name', keys: ['KinName']),
     _RequiredProfileRule(label: 'Next of Kin Relation', keys: ['KinRelation']),
     _RequiredProfileRule(label: 'Next of Kin Contact', keys: ['KinContact']),
@@ -3400,77 +3411,280 @@ class _ClockInPageState extends State<ClockInPage>
 
   Future<bool> _ensureLearnerDocumentsComplete(String learnerId) async {
     while (true) {
-      final missingDocs = await _getMissingRequiredDocuments(learnerId);
-      if (missingDocs.isEmpty) {
-        await _syncLearnerDocumentsForLearner(learnerId);
-        return true;
+      // Get detailed document statuses (not just missing, but with status info)
+      final docStatuses = await _getDetailedDocumentStatuses(learnerId);
+
+      if (docStatuses['allApproved'] == true) {
+        return true; // All 3 mandatory docs are approved
       }
 
-      final action = await showDialog<String>(
+      final List<Map<String, dynamic>> problemDocs =
+          docStatuses['documents'] ?? [];
+
+      final action = await showDialog<Map<String, dynamic>>(
         context: context,
+        barrierDismissible: false,
         builder: (dialogContext) {
           return AlertDialog(
-            title: const Text('Missing Required Documents'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+            title: Row(
               children: [
-                const Text(
-                  'This learner has missing required documents. Scan all missing document(s) before clock-in.',
-                ),
-                const SizedBox(height: 12),
-                ...missingDocs.map((doc) => Text('- $doc')),
+                Icon(Icons.block, color: Colors.red, size: 28),
+                SizedBox(width: 12),
+                Expanded(child: Text('Clock-In Blocked')),
               ],
             ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.orange.shade300),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.assignment_late,
+                            color: Colors.orange, size: 32),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'All 3 required documents must be approved',
+                            style: TextStyle(
+                              color: Colors.orange.shade900,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Document statuses:',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                  ),
+                  const SizedBox(height: 8),
+                  ...problemDocs.map((doc) {
+                    final docName = doc['name'] ?? '';
+                    final status = doc['status'] ?? 'Not Uploaded';
+                    final reason = doc['reason'];
+
+                    Color iconColor = Colors.orange;
+                    IconData icon = Icons.error_outline;
+                    if (status == 'Declined') {
+                      iconColor = Colors.red;
+                      icon = Icons.cancel;
+                    } else if (status == 'Not Uploaded') {
+                      iconColor = Colors.grey;
+                      icon = Icons.upload_file;
+                    }
+
+                    return Container(
+                      margin: EdgeInsets.only(bottom: 12),
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(icon, color: iconColor, size: 20),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      docName,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    Text(
+                                      status,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: iconColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (reason != null &&
+                              reason.toString().isNotEmpty) ...[
+                            SizedBox(height: 8),
+                            Container(
+                              padding: EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'Reason: $reason',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.red.shade900,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.block, color: Colors.red, size: 20),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'You cannot clock in until all documents are approved.',
+                            style: TextStyle(
+                              color: Colors.red.shade900,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Please contact your administrator for document approval.',
+                            style: TextStyle(
+                              color: Colors.blue.shade900,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop('cancel'),
-                child: const Text('Cancel'),
-              ),
-              OutlinedButton(
-                onPressed: () => Navigator.of(dialogContext).pop('sync'),
-                child: const Text('Sync Documents'),
-              ),
               ElevatedButton(
-                onPressed: () => Navigator.of(dialogContext).pop('scan'),
-                child: const Text('Scan Next Document'),
+                onPressed: () =>
+                    Navigator.of(dialogContext).pop({'action': 'ok'}),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('OK'),
               ),
             ],
           );
         },
       );
 
-      if (action == 'sync') {
-        await _syncLearnerDocumentsForLearner(learnerId);
-        continue;
+      // User clicked OK - block clock-in
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>> _getDetailedDocumentStatuses(
+      String learnerId) async {
+    try {
+      if (!await _checkConnectivity()) {
+        // Offline: assume local docs are approved
+        return {'allApproved': true, 'documents': []};
       }
 
-      if (action != 'scan') {
-        return false;
+      final response = await http.post(
+        Uri.parse(AppConfig.buildUrl('get_document_statuses.php')),
+        body: {'learner_id': learnerId},
+      ).timeout(const Duration(seconds: 6));
+
+      if (response.statusCode != 200) {
+        return {'allApproved': false, 'documents': []};
       }
 
-      final selectedDoc = await _pickMissingDocument(missingDocs);
-      if (selectedDoc == null) {
-        return false;
+      final decoded = json.decode(response.body);
+      if (decoded['success'] != true) {
+        return {'allApproved': false, 'documents': []};
       }
 
-      final scanned = await _scanAndSaveDocument(learnerId, selectedDoc);
-      if (!scanned) {
-        return false;
+      final docsMap = decoded['documents'] as Map<String, dynamic>?;
+      if (docsMap == null) {
+        return {'allApproved': false, 'documents': []};
       }
 
-      final stillMissing = await _getMissingRequiredDocuments(learnerId);
-      if (stillMissing.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Saved $selectedDoc. Remaining: ${stillMissing.join(', ')}',
-            ),
-            backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+      // Check each required document (only the 3 for clocking)
+      final List<Map<String, dynamic>> problemDocs = [];
+
+      for (final requiredDoc in _requiredDocumentsForClocking) {
+        final normalizedName = requiredDoc.trim().toLowerCase();
+
+        // Find matching document in response
+        Map<String, dynamic>? docInfo;
+        for (final entry in docsMap.entries) {
+          if (entry.key.trim().toLowerCase() == normalizedName) {
+            docInfo = entry.value as Map<String, dynamic>?;
+            break;
+          }
+        }
+
+        if (docInfo == null) {
+          // Document not uploaded
+          problemDocs.add({
+            'name': requiredDoc,
+            'status': 'Not Uploaded',
+            'reason': null,
+          });
+        } else {
+          final status = docInfo['status']?.toString() ?? 'Pending';
+          if (status.toLowerCase() != 'approved') {
+            // Document is Pending or Declined
+            problemDocs.add({
+              'name': requiredDoc,
+              'status': status,
+              'reason': docInfo['rejection_reason'],
+            });
+          }
+        }
       }
+
+      return {
+        'allApproved': problemDocs.isEmpty,
+        'documents': problemDocs,
+      };
+    } catch (e) {
+      print('[DOCUMENTS] Error fetching detailed statuses: $e');
+      return {'allApproved': false, 'documents': []};
     }
   }
 
@@ -3714,7 +3928,13 @@ class _ClockInPageState extends State<ClockInPage>
 
     final dbHelper = DatabaseHelper();
     final localDocs = await dbHelper.fetchLearnerDocuments(learnerId);
-    final localExistingDocs = localDocs
+
+    // For CLOCKING: Filter to APPROVED documents only
+    final localApprovedDocs = localDocs
+        .where((doc) {
+          final status = doc['status']?.toString()?.toLowerCase() ?? '';
+          return status == 'approved';
+        })
         .map((doc) =>
             normalizeRequiredDoc(doc['documentName']?.toString() ?? ''))
         .toSet();
@@ -3726,14 +3946,17 @@ class _ClockInPageState extends State<ClockInPage>
       try {
         final serverDocs = await _fetchServerDocuments(learnerId);
         if (serverDocs != null) {
-          final serverExistingDocs = serverDocs.toSet();
-          // When online: check server first, then local database
-          final missingDocs = _requiredDocuments.where((requiredDoc) {
+          final serverApprovedDocs = serverDocs.toSet();
+          // When online: check server first for APPROVED docs, then local database
+          // Only check the 3 required documents for clocking (not all 5)
+          final missingDocs =
+              _requiredDocumentsForClocking.where((requiredDoc) {
             final normalized = normalizeRequiredDoc(requiredDoc);
-            return !serverExistingDocs.contains(normalized) &&
-                !localExistingDocs.contains(normalized);
+            return !serverApprovedDocs.contains(normalized) &&
+                !localApprovedDocs.contains(normalized);
           }).toList();
-          print('[DOCUMENTS] ONLINE: Missing docs: $missingDocs');
+          print(
+              '[DOCUMENTS] ONLINE: Missing APPROVED docs for clock-in: $missingDocs');
           return missingDocs;
         }
       } catch (e) {
@@ -3743,12 +3966,13 @@ class _ClockInPageState extends State<ClockInPage>
     }
 
     // When offline OR server check failed: trust local database
-    final missingDocs = _requiredDocuments
+    // Only check the 3 required documents for clocking (not all 5)
+    final missingDocs = _requiredDocumentsForClocking
         .where((requiredDoc) =>
-            !localExistingDocs.contains(normalizeRequiredDoc(requiredDoc)))
+            !localApprovedDocs.contains(normalizeRequiredDoc(requiredDoc)))
         .toList();
     print(
-        '[DOCUMENTS] OFFLINE: Missing docs: $missingDocs (based on local database only)');
+        '[DOCUMENTS] OFFLINE: Missing APPROVED docs for clock-in: $missingDocs (based on local database only)');
     return missingDocs;
   }
 
@@ -3781,21 +4005,27 @@ class _ClockInPageState extends State<ClockInPage>
 
       final parsed = <String>[];
       for (final item in docs) {
-        String value = '';
+        // FILTER: Only include APPROVED documents for clock-in validation
         if (item is Map) {
+          final status = item['status']?.toString()?.toLowerCase() ?? '';
+          if (status != 'approved') {
+            continue; // Skip non-approved documents
+          }
+
           // Handle learner_document table row shapes (real schema first).
-          value = item['documentName']?.toString() ??
+          final value = item['documentName']?.toString() ??
               item['DocumentName']?.toString() ??
               item['document_name']?.toString() ??
               item['document_type']?.toString() ??
               item['doc_type']?.toString() ??
               '';
+          final normalized = normalizeDocName(value);
+          if (normalized.isNotEmpty) {
+            parsed.add(normalized);
+          }
         } else {
-          value = item?.toString() ?? '';
-        }
-        final normalized = normalizeDocName(value);
-        if (normalized.isNotEmpty) {
-          parsed.add(normalized);
+          // If not a map, we can't check status, so skip it
+          continue;
         }
       }
       return parsed;
@@ -3804,7 +4034,7 @@ class _ClockInPageState extends State<ClockInPage>
     Future<List<String>?> attempt(Map<String, String> body) async {
       final response = await http
           .post(
-            Uri.parse(AppConfig.buildUrl('check_learner_documents.php')),
+            Uri.parse(AppConfig.buildUrl('get_document_statuses.php')),
             body: body,
           )
           .timeout(const Duration(seconds: 6));

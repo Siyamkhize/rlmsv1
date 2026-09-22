@@ -664,7 +664,8 @@ class DatabaseHelper {
 
   Future<Database> _initDatabase() async {
     final path = await getDatabasesPath();
-    return openDatabase(join(path, _dbName), version: 10,
+    return openDatabase(join(path, _dbName),
+        version: 16, // ⬆️ BUMP for facilitator clocking evidence table
         onUpgrade: (db, oldVersion, newVersion) async {
       debugPrint(
           '[DB] Upgrading database from version $oldVersion to $newVersion');
@@ -931,6 +932,305 @@ class DatabaseHelper {
           debugPrint('[DB] Error adding columns to material_receipt_form: $e');
         }
       }
+
+      if (oldVersion < 11) {
+        // Add location columns to learnerdetails table
+        try {
+          // Check if columns exist before adding
+          final columns =
+              await db.rawQuery("PRAGMA table_info('learnerdetails')");
+          final existingColumns =
+              columns.map((c) => c['name']?.toString().toLowerCase()).toSet();
+
+          if (!existingColumns.contains('province')) {
+            await db.execute(
+                'ALTER TABLE learnerdetails ADD COLUMN Province VARCHAR(50)');
+            debugPrint('[DB] Added Province column to learnerdetails');
+          }
+
+          if (!existingColumns.contains('district')) {
+            await db.execute(
+                'ALTER TABLE learnerdetails ADD COLUMN District VARCHAR(50)');
+            debugPrint('[DB] Added District column to learnerdetails');
+          }
+
+          if (!existingColumns.contains('municipality')) {
+            await db.execute(
+                'ALTER TABLE learnerdetails ADD COLUMN Municipality VARCHAR(50)');
+            debugPrint('[DB] Added Municipality column to learnerdetails');
+          }
+        } catch (e) {
+          debugPrint(
+              '[DB] Error adding location columns to learnerdetails: $e');
+        }
+      }
+
+      if (oldVersion < 12) {
+        // Create learner_clocking_evidence table for face recognition evidence
+        try {
+          // Drop and recreate to ensure correct schema
+          await db.execute('DROP TABLE IF EXISTS learner_clocking_evidence');
+
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS learner_clocking_evidence (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              LearnerID INTEGER NOT NULL,
+              clock_date TEXT NOT NULL,
+              
+              clock_in_signature TEXT,
+              clock_in_photo TEXT,
+              clock_in_latitude REAL,
+              clock_in_longitude REAL,
+              clock_in_accuracy REAL,
+              clock_in_verification_method TEXT,
+              clock_in_face_log_id INTEGER,
+              clock_in_timestamp TEXT,
+              
+              clock_out_signature TEXT,
+              clock_out_photo TEXT,
+              clock_out_latitude REAL,
+              clock_out_longitude REAL,
+              clock_out_accuracy REAL,
+              clock_out_verification_method TEXT,
+              clock_out_face_log_id INTEGER,
+              clock_out_timestamp TEXT,
+              
+              synced INTEGER DEFAULT 0,
+              created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+              updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+              
+              UNIQUE(LearnerID, clock_date)
+            )
+          ''');
+
+          await db.execute('''
+            CREATE INDEX IF NOT EXISTS idx_evidence_learner 
+            ON learner_clocking_evidence(LearnerID)
+          ''');
+
+          await db.execute('''
+            CREATE INDEX IF NOT EXISTS idx_evidence_date 
+            ON learner_clocking_evidence(clock_date)
+          ''');
+
+          await db.execute('''
+            CREATE INDEX IF NOT EXISTS idx_evidence_synced 
+            ON learner_clocking_evidence(synced)
+          ''');
+
+          debugPrint(
+              '[DB] Created learner_clocking_evidence table with indices');
+        } catch (e) {
+          debugPrint('[DB] Error creating learner_clocking_evidence table: $e');
+        }
+      }
+
+      if (oldVersion < 13) {
+        // Create learner_face_cache table for offline face verification
+        try {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS learner_face_cache (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              learner_id INTEGER UNIQUE NOT NULL,
+              embedding TEXT NOT NULL,
+              quality_score REAL NOT NULL DEFAULT 0.8,
+              enrolled_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL,
+              synced INTEGER DEFAULT 1
+            )
+          ''');
+
+          await db.execute('''
+            CREATE INDEX IF NOT EXISTS idx_face_cache_learner 
+            ON learner_face_cache(learner_id)
+          ''');
+
+          debugPrint(
+              '[DB] Created learner_face_cache table for offline verification');
+        } catch (e) {
+          debugPrint('[DB] Error creating learner_face_cache table: $e');
+        }
+
+        // Create learner_face_verification_queue table for offline sync
+        try {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS learner_face_verification_queue (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              learner_id INTEGER NOT NULL,
+              embedding TEXT NOT NULL,
+              match_score REAL NOT NULL,
+              verified INTEGER NOT NULL,
+              quality_score REAL NOT NULL,
+              liveness_passed INTEGER NOT NULL DEFAULT 1,
+              verification_type TEXT NOT NULL DEFAULT 'clock_in',
+              failure_reason TEXT,
+              device_info TEXT,
+              attempted_at TEXT NOT NULL,
+              synced INTEGER DEFAULT 0,
+              created_at TEXT NOT NULL
+            )
+          ''');
+
+          await db.execute('''
+            CREATE INDEX IF NOT EXISTS idx_verification_queue_learner 
+            ON learner_face_verification_queue(learner_id)
+          ''');
+
+          await db.execute('''
+            CREATE INDEX IF NOT EXISTS idx_verification_queue_synced 
+            ON learner_face_verification_queue(synced)
+          ''');
+
+          debugPrint(
+              '[DB] Created learner_face_verification_queue table for offline sync');
+        } catch (e) {
+          debugPrint(
+              '[DB] Error creating learner_face_verification_queue table: $e');
+        }
+      }
+
+      if (oldVersion < 14) {
+        // v14: Province/District/Municipality sync fix
+        // The columns already exist (added in v11), but insertLearnerDetails()
+        // was missing these fields. Clear learner data to force fresh sync.
+        debugPrint(
+            '[DB] ✅ v14 migration: Clearing learner data for fresh sync');
+
+        try {
+          await db.delete('learnerdetails');
+          debugPrint(
+              '[DB] Cleared learnerdetails - will re-sync with location fields');
+        } catch (e) {
+          debugPrint('[DB] Error clearing learnerdetails: $e');
+        }
+      }
+
+      if (oldVersion < 15) {
+        // v15: Multi-camera face verification support
+        // Add camera_facing column to support both front and back camera embeddings
+        debugPrint('[DB] ✅ v15 migration: Adding multi-camera support');
+
+        try {
+          // Recreate learner_face_cache with composite primary key
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS learner_face_cache_new (
+              learner_id INTEGER NOT NULL,
+              camera_facing TEXT NOT NULL CHECK(camera_facing IN ('front', 'back')),
+              embedding TEXT NOT NULL,
+              quality_score REAL DEFAULT NULL,
+              enrolled_at TEXT DEFAULT NULL,
+              updated_at TEXT DEFAULT NULL,
+              synced INTEGER DEFAULT 0,
+              PRIMARY KEY (learner_id, camera_facing)
+            )
+          ''');
+
+          // Copy existing data (mark as 'back' camera)
+          await db.execute('''
+            INSERT INTO learner_face_cache_new 
+            (learner_id, camera_facing, embedding, quality_score, enrolled_at, updated_at, synced)
+            SELECT learner_id, 'back', embedding, quality_score, enrolled_at, updated_at, synced
+            FROM learner_face_cache
+          ''');
+
+          // Drop old table
+          await db.execute('DROP TABLE learner_face_cache');
+
+          // Rename new table
+          await db.execute(
+              'ALTER TABLE learner_face_cache_new RENAME TO learner_face_cache');
+
+          // Create indexes
+          await db.execute('''
+            CREATE INDEX IF NOT EXISTS idx_learner_face_cache_learner 
+            ON learner_face_cache(learner_id)
+          ''');
+
+          await db.execute('''
+            CREATE INDEX IF NOT EXISTS idx_learner_face_cache_synced 
+            ON learner_face_cache(synced)
+          ''');
+
+          debugPrint(
+              '[DB] ✅ Recreated learner_face_cache with camera_facing column');
+        } catch (e) {
+          debugPrint('[DB] ❌ Error migrating learner_face_cache: $e');
+        }
+
+        try {
+          // Add camera_facing to verification queue
+          await db.execute('''
+            ALTER TABLE learner_face_verification_queue 
+            ADD COLUMN camera_facing TEXT DEFAULT 'back'
+          ''');
+
+          debugPrint(
+              '[DB] ✅ Added camera_facing to learner_face_verification_queue');
+        } catch (e) {
+          debugPrint(
+              '[DB] ❌ Error adding camera_facing to verification queue: $e');
+        }
+      }
+
+      if (oldVersion < 16) {
+        // v16: Facilitator clocking evidence table
+        debugPrint(
+            '[DB] ✅ v16 migration: Adding facilitator_clocking_evidence table');
+
+        try {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS facilitator_clocking_evidence (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              facilitator_id INTEGER NOT NULL,
+              clock_date TEXT NOT NULL,
+              
+              clock_in_signature TEXT DEFAULT NULL,
+              clock_in_photo TEXT DEFAULT NULL,
+              clock_in_latitude REAL DEFAULT NULL,
+              clock_in_longitude REAL DEFAULT NULL,
+              clock_in_accuracy REAL DEFAULT NULL,
+              clock_in_verification_method TEXT DEFAULT NULL,
+              clock_in_face_log_id INTEGER DEFAULT NULL,
+              clock_in_timestamp TEXT DEFAULT NULL,
+              
+              clock_out_signature TEXT DEFAULT NULL,
+              clock_out_photo TEXT DEFAULT NULL,
+              clock_out_latitude REAL DEFAULT NULL,
+              clock_out_longitude REAL DEFAULT NULL,
+              clock_out_accuracy REAL DEFAULT NULL,
+              clock_out_verification_method TEXT DEFAULT NULL,
+              clock_out_face_log_id INTEGER DEFAULT NULL,
+              clock_out_timestamp TEXT DEFAULT NULL,
+              
+              synced INTEGER DEFAULT 0,
+              created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+              updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+              
+              UNIQUE(facilitator_id, clock_date)
+            )
+          ''');
+
+          await db.execute('''
+            CREATE INDEX IF NOT EXISTS idx_fac_evidence_facilitator 
+            ON facilitator_clocking_evidence(facilitator_id)
+          ''');
+
+          await db.execute('''
+            CREATE INDEX IF NOT EXISTS idx_fac_evidence_date 
+            ON facilitator_clocking_evidence(clock_date)
+          ''');
+
+          await db.execute('''
+            CREATE INDEX IF NOT EXISTS idx_fac_evidence_synced 
+            ON facilitator_clocking_evidence(synced)
+          ''');
+
+          debugPrint(
+              '[DB] ✅ Created facilitator_clocking_evidence table with indexes');
+        } catch (e) {
+          debugPrint('[DB] ❌ Error creating facilitator_clocking_evidence: $e');
+        }
+      }
     }, onCreate: (db, dbVersion) async {
       // Create example tables
       await db.execute(
@@ -989,6 +1289,9 @@ class DatabaseHelper {
               KinName VARCHAR(100),
               KinRelation VARCHAR(50),
               KinContact VARCHAR(15),
+              Province VARCHAR(50),
+              District VARCHAR(50),
+              Municipality VARCHAR(50),
               SchoolName VARCHAR(100),
               SchoolCompletion DATE,
               SchoolLocation VARCHAR(100),
@@ -1855,6 +2158,9 @@ updated_at TIMESTAMP
         'AddressLine2': learnerData['AddressLine2'] ?? '',
         'AddressLine3': learnerData['AddressLine3'] ?? '',
         'PostalCode': learnerData['PostalCode'] ?? '',
+        'Province': learnerData['Province'] ?? '', // ✅ ADDED
+        'District': learnerData['District'] ?? '', // ✅ ADDED
+        'Municipality': learnerData['Municipality'] ?? '', // ✅ ADDED
         'KinName': learnerData['KinName'] ?? '',
         'KinRelation': learnerData['KinRelation'] ?? '',
         'KinContact': learnerData['KinContact'] ?? '',
@@ -6770,6 +7076,116 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     }
   }
 
+  // ========== FACILITATOR CLOCKING EVIDENCE METHODS ==========
+
+  /// Insert or update facilitator clocking evidence (signature + photo)
+  Future<void> saveFacilitatorClockingEvidence({
+    required int facilitatorId,
+    required String clockDate,
+    required String action, // 'in' or 'out'
+    String? signatureFilename,
+    String? photoFilename,
+    double? latitude,
+    double? longitude,
+    double? accuracy,
+    String? verificationMethod,
+    int? faceLogId,
+    String? timestamp,
+  }) async {
+    final db = await database;
+
+    // Prepare field names based on action
+    final sigField = 'clock_${action}_signature';
+    final photoField = 'clock_${action}_photo';
+    final latField = 'clock_${action}_latitude';
+    final lngField = 'clock_${action}_longitude';
+    final accField = 'clock_${action}_accuracy';
+    final methodField = 'clock_${action}_verification_method';
+    final logIdField = 'clock_${action}_face_log_id';
+    final tsField = 'clock_${action}_timestamp';
+
+    // Check if record exists
+    final existing = await db.query(
+      'facilitator_clocking_evidence',
+      where: 'facilitator_id = ? AND clock_date = ?',
+      whereArgs: [facilitatorId, clockDate],
+    );
+
+    final data = <String, dynamic>{};
+    if (signatureFilename != null) data[sigField] = signatureFilename;
+    if (photoFilename != null) data[photoField] = photoFilename;
+    if (latitude != null) data[latField] = latitude;
+    if (longitude != null) data[lngField] = longitude;
+    if (accuracy != null) data[accField] = accuracy;
+    if (verificationMethod != null) data[methodField] = verificationMethod;
+    if (faceLogId != null) data[logIdField] = faceLogId;
+    if (timestamp != null) data[tsField] = timestamp;
+
+    if (existing.isEmpty) {
+      // Insert new record
+      data['facilitator_id'] = facilitatorId;
+      data['clock_date'] = clockDate;
+      data['synced'] = 0;
+      await db.insert('facilitator_clocking_evidence', data);
+      debugPrint(
+          '[FAC_EVIDENCE] Inserted new evidence for facilitator $facilitatorId on $clockDate');
+    } else {
+      // Update existing record
+      data['updated_at'] = DateTime.now().toIso8601String();
+      await db.update(
+        'facilitator_clocking_evidence',
+        data,
+        where: 'facilitator_id = ? AND clock_date = ?',
+        whereArgs: [facilitatorId, clockDate],
+      );
+      debugPrint(
+          '[FAC_EVIDENCE] Updated evidence for facilitator $facilitatorId on $clockDate');
+    }
+  }
+
+  /// Get facilitator clocking evidence for a specific date
+  Future<Map<String, dynamic>?> getFacilitatorClockingEvidence({
+    required int facilitatorId,
+    required String clockDate,
+  }) async {
+    final db = await database;
+    final results = await db.query(
+      'facilitator_clocking_evidence',
+      where: 'facilitator_id = ? AND clock_date = ?',
+      whereArgs: [facilitatorId, clockDate],
+    );
+
+    return results.isNotEmpty ? results.first : null;
+  }
+
+  /// Get all unsynced facilitator clocking evidence
+  Future<List<Map<String, dynamic>>>
+      getUnsyncedFacilitatorClockingEvidence() async {
+    final db = await database;
+    return await db.query(
+      'facilitator_clocking_evidence',
+      where: 'synced = ?',
+      whereArgs: [0],
+      orderBy: 'clock_date DESC',
+    );
+  }
+
+  /// Mark facilitator clocking evidence as synced
+  Future<void> markFacilitatorEvidenceSynced({
+    required int facilitatorId,
+    required String clockDate,
+  }) async {
+    final db = await database;
+    await db.update(
+      'facilitator_clocking_evidence',
+      {'synced': 1, 'updated_at': DateTime.now().toIso8601String()},
+      where: 'facilitator_id = ? AND clock_date = ?',
+      whereArgs: [facilitatorId, clockDate],
+    );
+    debugPrint(
+        '[FAC_EVIDENCE] Marked evidence as synced for facilitator $facilitatorId on $clockDate');
+  }
+
   /// Generate neural network features from WSQ template for contactless verification
   // Future<void> _generateNeuralNetworkFeatures(int learnerId, String wsqTemplate) async {
   //   try {
@@ -7676,6 +8092,328 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     } catch (e) {
       print('Error updating learner: $e');
       rethrow;
+    }
+  }
+
+  // ==================== FACE RECOGNITION EVIDENCE METHODS ====================
+
+  /// Manual repair: Recreate learner_clocking_evidence table
+  Future<void> repairEvidenceTable() async {
+    try {
+      final db = await database;
+
+      print(
+          '[DB_REPAIR] Dropping and recreating learner_clocking_evidence table...');
+
+      // Drop existing table
+      await db.execute('DROP TABLE IF EXISTS learner_clocking_evidence');
+
+      // Recreate with correct schema
+      await db.execute('''
+        CREATE TABLE learner_clocking_evidence (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          LearnerID INTEGER NOT NULL,
+          clock_date TEXT NOT NULL,
+          
+          clock_in_signature TEXT,
+          clock_in_photo TEXT,
+          clock_in_latitude REAL,
+          clock_in_longitude REAL,
+          clock_in_accuracy REAL,
+          clock_in_verification_method TEXT,
+          clock_in_face_log_id INTEGER,
+          clock_in_timestamp TEXT,
+          
+          clock_out_signature TEXT,
+          clock_out_photo TEXT,
+          clock_out_latitude REAL,
+          clock_out_longitude REAL,
+          clock_out_accuracy REAL,
+          clock_out_verification_method TEXT,
+          clock_out_face_log_id INTEGER,
+          clock_out_timestamp TEXT,
+          
+          synced INTEGER DEFAULT 0,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          
+          UNIQUE(LearnerID, clock_date)
+        )
+      ''');
+
+      // Create indices
+      await db.execute('''
+        CREATE INDEX idx_evidence_learner ON learner_clocking_evidence(LearnerID)
+      ''');
+
+      await db.execute('''
+        CREATE INDEX idx_evidence_date ON learner_clocking_evidence(clock_date)
+      ''');
+
+      await db.execute('''
+        CREATE INDEX idx_evidence_synced ON learner_clocking_evidence(synced)
+      ''');
+
+      print(
+          '[DB_REPAIR] ✅ learner_clocking_evidence table recreated successfully');
+    } catch (e) {
+      print('[DB_REPAIR] ❌ Error recreating table: $e');
+      rethrow;
+    }
+  }
+
+  /// Upsert clock-in evidence (signature, GPS, verification method, face log ID, photo)
+  Future<void> saveClockInEvidence({
+    required int learnerId,
+    required String clockDate, // Format: YYYY-MM-DD
+    String? signature,
+    String? photo, // Base64 verification photo
+    double? latitude,
+    double? longitude,
+    double? accuracy,
+    String?
+        verificationMethod, // 'face', 'fingerprint', 'security_question', 'otp'
+    int? faceLogId,
+  }) async {
+    try {
+      final db = await database;
+      final timestamp = DateTime.now().toIso8601String();
+
+      // Check if evidence row exists for this learner and date
+      final existing = await db.query(
+        'learner_clocking_evidence',
+        where: 'LearnerID = ? AND clock_date = ?',
+        whereArgs: [learnerId, clockDate],
+      );
+
+      if (existing.isNotEmpty) {
+        // Update existing row
+        await db.update(
+          'learner_clocking_evidence',
+          {
+            if (signature != null) 'clock_in_signature': signature,
+            if (photo != null) 'clock_in_photo': photo,
+            if (latitude != null) 'clock_in_latitude': latitude,
+            if (longitude != null) 'clock_in_longitude': longitude,
+            if (accuracy != null) 'clock_in_accuracy': accuracy,
+            if (verificationMethod != null)
+              'clock_in_verification_method': verificationMethod,
+            if (faceLogId != null) 'clock_in_face_log_id': faceLogId,
+            'clock_in_timestamp': timestamp,
+            'updated_at': timestamp,
+            'synced': 0, // Mark as unsynced
+          },
+          where: 'LearnerID = ? AND clock_date = ?',
+          whereArgs: [learnerId, clockDate],
+        );
+        debugPrint(
+            '[DB] Updated clock-in evidence for learner $learnerId on $clockDate');
+      } else {
+        // Insert new row
+        await db.insert('learner_clocking_evidence', {
+          'LearnerID': learnerId,
+          'clock_date': clockDate,
+          if (signature != null) 'clock_in_signature': signature,
+          if (photo != null) 'clock_in_photo': photo,
+          if (latitude != null) 'clock_in_latitude': latitude,
+          if (longitude != null) 'clock_in_longitude': longitude,
+          if (accuracy != null) 'clock_in_accuracy': accuracy,
+          if (verificationMethod != null)
+            'clock_in_verification_method': verificationMethod,
+          if (faceLogId != null) 'clock_in_face_log_id': faceLogId,
+          'clock_in_timestamp': timestamp,
+          'synced': 0,
+        });
+        debugPrint(
+            '[DB] Inserted clock-in evidence for learner $learnerId on $clockDate');
+      }
+    } catch (e) {
+      debugPrint('[DB] Error saving clock-in evidence: $e');
+      rethrow;
+    }
+  }
+
+  /// Upsert clock-out evidence (signature, GPS, verification method, face log ID, photo)
+  Future<void> saveClockOutEvidence({
+    required int learnerId,
+    required String clockDate,
+    String? signature,
+    String? photo, // Base64 verification photo
+    double? latitude,
+    double? longitude,
+    double? accuracy,
+    String? verificationMethod,
+    int? faceLogId,
+  }) async {
+    try {
+      final db = await database;
+      final timestamp = DateTime.now().toIso8601String();
+
+      // Check if evidence row exists
+      final existing = await db.query(
+        'learner_clocking_evidence',
+        where: 'LearnerID = ? AND clock_date = ?',
+        whereArgs: [learnerId, clockDate],
+      );
+
+      if (existing.isNotEmpty) {
+        // Update existing row
+        await db.update(
+          'learner_clocking_evidence',
+          {
+            if (signature != null) 'clock_out_signature': signature,
+            if (photo != null) 'clock_out_photo': photo,
+            if (latitude != null) 'clock_out_latitude': latitude,
+            if (longitude != null) 'clock_out_longitude': longitude,
+            if (accuracy != null) 'clock_out_accuracy': accuracy,
+            if (verificationMethod != null)
+              'clock_out_verification_method': verificationMethod,
+            if (faceLogId != null) 'clock_out_face_log_id': faceLogId,
+            'clock_out_timestamp': timestamp,
+            'updated_at': timestamp,
+            'synced': 0,
+          },
+          where: 'LearnerID = ? AND clock_date = ?',
+          whereArgs: [learnerId, clockDate],
+        );
+        debugPrint(
+            '[DB] Updated clock-out evidence for learner $learnerId on $clockDate');
+      } else {
+        // Insert new row (clock-out without clock-in - shouldn't happen but handle it)
+        await db.insert('learner_clocking_evidence', {
+          'LearnerID': learnerId,
+          'clock_date': clockDate,
+          if (signature != null) 'clock_out_signature': signature,
+          if (photo != null) 'clock_out_photo': photo,
+          if (latitude != null) 'clock_out_latitude': latitude,
+          if (longitude != null) 'clock_out_longitude': longitude,
+          if (accuracy != null) 'clock_out_accuracy': accuracy,
+          if (verificationMethod != null)
+            'clock_out_verification_method': verificationMethod,
+          if (faceLogId != null) 'clock_out_face_log_id': faceLogId,
+          'clock_out_timestamp': timestamp,
+          'synced': 0,
+        });
+        debugPrint(
+            '[DB] Inserted clock-out evidence for learner $learnerId on $clockDate (no clock-in)');
+      }
+    } catch (e) {
+      debugPrint('[DB] Error saving clock-out evidence: $e');
+      rethrow;
+    }
+  }
+
+  /// Get evidence for a specific learner and date
+  Future<Map<String, dynamic>?> getClockingEvidence({
+    required int learnerId,
+    required String clockDate,
+  }) async {
+    try {
+      final db = await database;
+      final results = await db.query(
+        'learner_clocking_evidence',
+        where: 'LearnerID = ? AND clock_date = ?',
+        whereArgs: [learnerId, clockDate],
+      );
+
+      if (results.isNotEmpty) {
+        return results.first;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('[DB] Error getting clocking evidence: $e');
+      return null;
+    }
+  }
+
+  /// Get all unsynced evidence records
+  Future<List<Map<String, dynamic>>> getUnsyncedClockingEvidence() async {
+    try {
+      final db = await database;
+      return await db.query(
+        'learner_clocking_evidence',
+        where: 'synced = ?',
+        whereArgs: [0],
+      );
+    } catch (e) {
+      debugPrint('[DB] Error getting unsynced clocking evidence: $e');
+      return [];
+    }
+  }
+
+  /// Mark evidence as synced
+  Future<void> markEvidenceSynced({
+    required int learnerId,
+    required String clockDate,
+  }) async {
+    try {
+      final db = await database;
+      await db.update(
+        'learner_clocking_evidence',
+        {'synced': 1, 'updated_at': DateTime.now().toIso8601String()},
+        where: 'LearnerID = ? AND clock_date = ?',
+        whereArgs: [learnerId, clockDate],
+      );
+      debugPrint(
+          '[DB] Marked evidence as synced for learner $learnerId on $clockDate');
+    } catch (e) {
+      debugPrint('[DB] Error marking evidence as synced: $e');
+    }
+  }
+
+  /// Sync evidence to server
+  Future<Map<String, dynamic>> syncClockingEvidenceToServer() async {
+    try {
+      final unsynced = await getUnsyncedClockingEvidence();
+
+      if (unsynced.isEmpty) {
+        return {'success': true, 'synced': 0, 'message': 'No evidence to sync'};
+      }
+
+      debugPrint(
+          '[DB_SYNC] Syncing ${unsynced.length} evidence records to server...');
+
+      final url = AppConfig.buildUrl('sync_clocking_evidence.php');
+      final token = await AppConfig.getAuthToken();
+
+      final response = await http
+          .post(
+            Uri.parse(url),
+            headers: {
+              'Content-Type': 'application/json',
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({'evidence': unsynced}),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+
+        if (result['success'] == true) {
+          // Mark records as synced
+          final db = await database;
+          for (var evidence in unsynced) {
+            await db.update(
+              'learner_clocking_evidence',
+              {'synced': 1, 'updated_at': DateTime.now().toIso8601String()},
+              where: 'LearnerID = ? AND clock_date = ?',
+              whereArgs: [evidence['LearnerID'], evidence['clock_date']],
+            );
+          }
+
+          debugPrint(
+              '[DB_SYNC] ✅ Successfully synced ${result['synced']} evidence records');
+          return result as Map<String, dynamic>;
+        } else {
+          throw Exception(result['message'] ?? 'Sync failed');
+        }
+      } else {
+        throw Exception('Server returned ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('[DB_SYNC] ❌ Error syncing evidence: $e');
+      return {'success': false, 'message': e.toString()};
     }
   }
 }

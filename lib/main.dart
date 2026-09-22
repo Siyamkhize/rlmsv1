@@ -8,6 +8,7 @@ import 'package:workmanager/workmanager.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:sqflite/sqflite.dart';
 import 'dashboard_page.dart';
 import 'sdp_projects_page.dart';
 import 'database_helper.dart';
@@ -17,6 +18,8 @@ import 'AssessorPage.dart';
 import 'ArplAssessorPage.dart';
 import 'ModeratorPage.dart';
 import 'facilitator_fingerprint_page.dart';
+import 'facilitator_face_enroll_page.dart';
+import 'facilitator_face_clockin_page.dart';
 import 'finance_dashboard.dart';
 import 'logistics_dashboard.dart';
 import 'utils/global_error_handler.dart';
@@ -24,6 +27,9 @@ import 'utils/ultimate_scanner_crash_prevention.dart';
 import 'services/random_prompt_service.dart';
 import 'monitoring_prompt_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'repositories/facilitator_face_repository.dart';
+import 'widgets/simple_face_capture.dart';
+import 'services/face_embedding_service.dart';
 
 // Define unique task names for Workmanager
 const String syncTask = "com.example.rlmss.syncTask";
@@ -1471,33 +1477,68 @@ class _LoginPageState extends State<LoginPage> {
         }
       }
 
-      // Step 1: Check if facilitator has fingerprints enrolled (one-time setup)
+      // Step 1: Check if facilitator has fingerprints OR face enrolled (one-time setup)
       final hasFingerprints =
           await dbHelper.facilitatorHasFingerprints(facilitatorIdInt);
       debugPrint(
           '[LOGIN] Facilitator $facilitatorIdInt has fingerprints: $hasFingerprints');
 
+      // Check if facilitator has face enrolled (alternative to fingerprints)
+      bool hasFaceEnrolled = false;
       if (!hasFingerprints) {
+        try {
+          final faceRepo = FacilitatorFaceRepository();
+          final checkResult =
+              await faceRepo.checkFaceEnrolled(facilitatorIdInt);
+          hasFaceEnrolled = checkResult['enrolled'] == true;
+          debugPrint(
+              '[LOGIN] Facilitator $facilitatorIdInt has face enrolled: $hasFaceEnrolled');
+        } catch (e) {
+          debugPrint('[LOGIN] Error checking face enrollment: $e');
+        }
+      }
+
+      if (!hasFingerprints && !hasFaceEnrolled) {
         debugPrint(
-            '[LOGIN] No fingerprints enrolled for facilitator $facilitatorIdInt');
-        // Navigate to fingerprint enrollment (first-time setup)
+            '[LOGIN] No fingerprints or face enrolled for facilitator $facilitatorIdInt');
+        // Navigate to fingerprint page which will handle scanner dialog
+        // If no scanner, it will automatically use face enrollment flow
         final enrolled = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => FacilitatorFingerprintPage(
-              facilitatorId: facilitatorIdInt,
-              facilitatorName: fullName.isNotEmpty ? fullName : facilitatorName,
-              isFirstTimeSetup: true,
-            ),
-          ),
-        );
+              context,
+              MaterialPageRoute(
+                builder: (context) => FacilitatorFingerprintPage(
+                  facilitatorId: facilitatorIdInt,
+                  facilitatorName:
+                      fullName.isNotEmpty ? fullName : facilitatorName,
+                  isFirstTimeSetup: true,
+                ),
+              ),
+            ) ??
+            false;
 
         if (!mounted) return;
 
-        if (enrolled != true) {
-          // User didn't complete enrollment, stay on login page
-          _showError('Fingerprint enrollment is required to continue');
+        if (!enrolled) {
+          _showError('Authentication enrollment is required to continue');
           return;
+        }
+
+        // Re-check what was enrolled (in a local scope, don't reassign final variable)
+        final hasNewFingerprints =
+            await dbHelper.facilitatorHasFingerprints(facilitatorIdInt);
+        if (!hasNewFingerprints) {
+          try {
+            final faceRepo = FacilitatorFaceRepository();
+            final checkResult =
+                await faceRepo.checkFaceEnrolled(facilitatorIdInt);
+            hasFaceEnrolled = checkResult['enrolled'] == true;
+          } catch (e) {
+            debugPrint('[LOGIN] Error re-checking face enrollment: $e');
+          }
+        } else {
+          // Fingerprints were enrolled, update the local variable
+          // Note: hasFingerprints is final, so we just know enrollment succeeded
+          debugPrint('[LOGIN] Fingerprints were enrolled successfully');
         }
       }
 
@@ -1519,22 +1560,36 @@ class _LoginPageState extends State<LoginPage> {
           );
         }
 
-        // Navigate to fingerprint page for clock-in (required daily)
-        final clockedIn = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => FacilitatorFingerprintPage(
-              facilitatorId: facilitatorIdInt,
-              facilitatorName: fullName.isNotEmpty ? fullName : facilitatorName,
-              isFirstTimeSetup: false,
-              requireClockIn: true, // Force clock-in mode
-            ),
-          ),
-        );
+        bool clockedIn = false;
+
+        // Use face verification if face is enrolled, otherwise use fingerprint
+        if (hasFaceEnrolled) {
+          debugPrint('[LOGIN] Using face verification for clock-in');
+          clockedIn = await _facilitatorFaceClockIn(
+            facilitatorIdInt: facilitatorIdInt,
+            facilitatorName: fullName.isNotEmpty ? fullName : facilitatorName,
+          );
+        } else {
+          debugPrint('[LOGIN] Using fingerprint for clock-in');
+          // Navigate to fingerprint page for clock-in (required daily)
+          clockedIn = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => FacilitatorFingerprintPage(
+                    facilitatorId: facilitatorIdInt,
+                    facilitatorName:
+                        fullName.isNotEmpty ? fullName : facilitatorName,
+                    isFirstTimeSetup: false,
+                    requireClockIn: true, // Force clock-in mode
+                  ),
+                ),
+              ) ??
+              false;
+        }
 
         if (!mounted) return;
 
-        if (clockedIn != true) {
+        if (!clockedIn) {
           // User didn't clock in, stay on login page
           _showError('Clock-in is required to access the dashboard');
           return;
@@ -1566,6 +1621,60 @@ class _LoginPageState extends State<LoginPage> {
       // If any error occurs, bypass fingerprint and go to dashboard
       debugPrint('[LOGIN] Error occurred, bypassing fingerprint features');
       onSuccess();
+    }
+  }
+
+  // Handle facilitator face verification for clock-in
+  // Navigate to comprehensive clock-in page with face verification, signature, and geofencing
+  Future<bool> _facilitatorFaceClockIn({
+    required int facilitatorIdInt,
+    required String facilitatorName,
+  }) async {
+    try {
+      debugPrint('[FAC_FACE_LOGIN] Navigating to face clock-in page');
+
+      // Navigate to comprehensive clock-in page
+      final result = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FacilitatorFaceClockInPage(
+            facilitatorId: facilitatorIdInt,
+            facilitatorName: facilitatorName,
+          ),
+        ),
+      );
+
+      // Result is true if clock-in completed successfully, false/null otherwise
+      return result ?? false;
+    } catch (e) {
+      debugPrint('[FAC_FACE_LOGIN] Navigation error: $e');
+
+      // Show error
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.red),
+                SizedBox(width: 12),
+                Text('Verification Error'),
+              ],
+            ),
+            content: Text(
+              e.toString().replaceFirst('Exception: ', ''),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return false;
     }
   }
 

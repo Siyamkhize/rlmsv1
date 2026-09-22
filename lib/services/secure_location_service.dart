@@ -498,13 +498,15 @@ class SecureLocationService {
         'error': 'Server returned status ${response.statusCode}',
       };
     } catch (e) {
-      print('[SECURE_LOC] Server verification failed: $e');
-      final fallbackSuccess = securePosition.isTrusted &&
-          !securePosition.isMockDetected &&
-          securePosition.passedSanityCheck;
+      print(
+          '[SECURE_LOC] ⚠️ Server verification failed: $e - BLOCKING clock-in');
+      // SECURITY FIX: When server is unreachable, BLOCK the clock-in completely
+      // Do NOT allow fallback success - this was allowing users to clock in from anywhere
+      // when they had no internet or server was down
       return {
-        'success': fallbackSuccess,
-        'error': fallbackSuccess ? null : 'Server connection failed: $e',
+        'success': false,
+        'error':
+            'Cannot verify location - server unreachable. Please check your internet connection and try again.',
       };
     }
   }

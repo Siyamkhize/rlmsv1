@@ -64,6 +64,16 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
   String? _selectedDisability;
   String? _selectedBank;
 
+  // Location Selections
+  String? _selectedProvince;
+  String? _selectedDistrict;
+  String? _selectedMunicipality;
+
+  // Location Options
+  List<String> _provinces = [];
+  List<String> _districts = [];
+  List<String> _municipalities = [];
+
   // ID validation state
   bool _isValidSAId = false;
 
@@ -151,6 +161,125 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
     super.dispose();
   }
 
+  // Fetch provinces from server
+  Future<void> _fetchProvinces() async {
+    print('🌍 AddLearnerPage: _fetchProvinces called');
+    try {
+      final url = AppConfig.buildUrl('fetch_provinces.php');
+      print('🌍 AddLearnerPage: Fetching from URL: $url');
+
+      final response = await http.get(Uri.parse(url)).timeout(
+            const Duration(seconds: 10),
+          );
+
+      print('🌍 AddLearnerPage: Response status: ${response.statusCode}');
+      print('🌍 AddLearnerPage: Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('🌍 AddLearnerPage: Decoded data: $data');
+        if (data['success'] == true && data['data'] != null) {
+          setState(() {
+            _provinces = (data['data']['provinces'] as List)
+                .map((e) => e['name'].toString())
+                .toList();
+          });
+          print(
+              '🌍 AddLearnerPage: _provinces set to: $_provinces (${_provinces.length} items)');
+        } else {
+          print(
+              '🌍 AddLearnerPage: ERROR - data[success] is false or data[data] is null');
+          _useHardcodedProvinces();
+        }
+      } else {
+        print('🌍 AddLearnerPage: ERROR - HTTP ${response.statusCode}');
+        _useHardcodedProvinces();
+      }
+    } catch (e, stackTrace) {
+      print('🌍 AddLearnerPage: EXCEPTION - Error fetching provinces: $e');
+      print('🌍 AddLearnerPage: Stack trace: $stackTrace');
+      _useHardcodedProvinces();
+    }
+  }
+
+  // Fallback hardcoded provinces
+  void _useHardcodedProvinces() {
+    print('🌍 AddLearnerPage: Using hardcoded provinces as fallback');
+    setState(() {
+      _provinces = [
+        'Eastern Cape',
+        'Free State',
+        'Gauteng',
+        'KwaZulu Natal',
+        'Limpopo',
+        'Mpumalanga',
+        'Northern Cape',
+        'North West',
+        'Western Cape',
+      ];
+    });
+    print(
+        '🌍 AddLearnerPage: Hardcoded provinces loaded: ${_provinces.length} items');
+  }
+
+  // Fetch districts for selected province
+  Future<void> _fetchDistricts(String province) async {
+    try {
+      final response = await http.get(
+        Uri.parse(AppConfig.buildUrl('fetch_districts.php',
+            queryParams: {'province': province})),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true && data['data'] != null) {
+          setState(() {
+            _districts = (data['data']['districts'] as List)
+                .map((e) => e['name'].toString())
+                .toList();
+            _selectedDistrict = null; // Reset district when province changes
+            _selectedMunicipality = null; // Reset municipality
+            _municipalities = [];
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching districts: $e');
+    }
+  }
+
+  // Fetch municipalities for selected district
+  Future<void> _fetchMunicipalities(String district) async {
+    try {
+      final response = await http.get(
+        Uri.parse(AppConfig.buildUrl('fetch_municipalities.php',
+            queryParams: {'district': district})),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true && data['data'] != null) {
+          setState(() {
+            _municipalities = (data['data']['municipalities'] as List)
+                .map((e) => e['name'].toString())
+                .toList();
+            _selectedMunicipality =
+                null; // Reset municipality when district changes
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching municipalities: $e');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    print('AddLearnerPage: initState called');
+    _fetchProvinces(); // Load provinces when page loads
+  }
+
   Future<void> _handleFormSubmission(BuildContext context) async {
     // Prepare learner data (only fields for learnerdetails table)
     Map<String, dynamic> learnerData = {
@@ -186,6 +315,9 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           : _kinRelationController.text,
       'KinContact':
           _kinContactController.text.isEmpty ? '' : _kinContactController.text,
+      'Province': _selectedProvince ?? '',
+      'District': _selectedDistrict ?? '',
+      'Municipality': _selectedMunicipality ?? '',
       'SchoolName':
           _schoolNameController.text.isEmpty ? '' : _schoolNameController.text,
       'SchoolCompletion': _schoolCompletionController.text.isEmpty
@@ -410,6 +542,11 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
                     existingLearner['KinRelation'] ?? '';
                 _kinContactController.text =
                     existingLearner['KinContact'] ?? '';
+
+                // Load location data if exists
+                _selectedProvince = existingLearner['Province'];
+                _selectedDistrict = existingLearner['District'];
+                _selectedMunicipality = existingLearner['Municipality'];
               });
 
               if (mounted) {
@@ -601,7 +738,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add New Learner'),
+        title: const Text('Add Learner'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         actions: [
@@ -681,6 +818,145 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
             _buildTextField('Kin Name', _kinNameController),
             _buildTextField('Kin Relation', _kinRelationController),
             _buildTextField('Kin Contact', _kinContactController),
+
+            const SizedBox(height: 20),
+
+            // Location Information Section
+            _buildSectionHeader('Location Information'),
+
+            // Province - Show dropdown if null or empty, show text if has value
+            if (_selectedProvince == null || _selectedProvince!.isEmpty)
+              Builder(builder: (context) {
+                print(
+                    'AddLearnerPage: Building Province dropdown, _provinces.length = ${_provinces.length}');
+                return _buildDropdownField(
+                    'Province', _selectedProvince, _provinces, (value) {
+                  setState(() {
+                    _selectedProvince = value;
+                    if (value != null) {
+                      _fetchDistricts(value);
+                    }
+                  });
+                });
+              })
+            else
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Province',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Text(
+                        _selectedProvince!,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            // District - Show dropdown if null or empty, show text if has value
+            if (_selectedDistrict == null || _selectedDistrict!.isEmpty)
+              _buildDropdownField('District', _selectedDistrict, _districts,
+                  (value) {
+                setState(() {
+                  _selectedDistrict = value;
+                  if (value != null) {
+                    _fetchMunicipalities(value);
+                  }
+                });
+              })
+            else
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'District',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Text(
+                        _selectedDistrict!,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            // Municipality - Show dropdown if null or empty, show text if has value
+            if (_selectedMunicipality == null || _selectedMunicipality!.isEmpty)
+              _buildDropdownField(
+                  'Municipality', _selectedMunicipality, _municipalities,
+                  (value) {
+                setState(() {
+                  _selectedMunicipality = value;
+                });
+              })
+            else
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Municipality',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Text(
+                        _selectedMunicipality!,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
             const SizedBox(height: 20),
 
@@ -810,14 +1086,25 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           border: const OutlineInputBorder(),
           filled: true,
           fillColor: Colors.grey[50],
+          // Show hint when list is empty
+          hintText: options.isEmpty ? 'Loading...' : 'Select $label',
         ),
-        items: options.map((String option) {
-          return DropdownMenuItem<String>(
-            value: option,
-            child: Text(option),
-          );
-        }).toList(),
-        onChanged: onChanged,
+        items: options.isEmpty
+            ? [
+                DropdownMenuItem<String>(
+                  value: null,
+                  enabled: false,
+                  child:
+                      Text('Loading...', style: TextStyle(color: Colors.grey)),
+                )
+              ]
+            : options.map((String option) {
+                return DropdownMenuItem<String>(
+                  value: option,
+                  child: Text(option),
+                );
+              }).toList(),
+        onChanged: options.isEmpty ? null : onChanged,
       ),
     );
   }

@@ -55,6 +55,9 @@ dependencies:
   infinite_scroll_pagination: ^4.0.0
   synchronized: ^3.1.0
   audioplayers: ^6.6.0
+  # Face Recognition dependencies
+  google_mlkit_face_detection: ^0.11.1
+  tflite_flutter: ^0.11.0
 
 dev_dependencies:
   flutter_test:
@@ -70,4 +73,6 @@ flutter:
     - assets/MTL_LEADERSHIP_AGREEMENT.docx
     - assets/Cleaned_Final_Agreement.docx
     - assets/Cleaned_Updated_Agreement_V4.docx
+    # Face Recognition model
+    - assets/models/mobile_face_net.tflite
     # - assets/sounds/alarm.mp3

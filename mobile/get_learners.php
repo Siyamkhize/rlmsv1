@@ -68,6 +68,7 @@ while ($row = $result->fetch_assoc()) {
 
 // Return paginated response with metadata
 $response = [
+    'success' => true,
     'data' => $classes,
     'pagination' => [
         'page' => $page,
