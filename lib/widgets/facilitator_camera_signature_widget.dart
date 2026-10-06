@@ -700,31 +700,32 @@ class _FacilitatorCameraSignatureWidgetState
       backgroundColor: Colors.black,
       body: Column(
         children: [
-          // Modern Teal Header with User Info - Similar to your image
+          // Compact Teal Header - Smaller and more proportional
           Container(
             width: double.infinity,
             decoration: const BoxDecoration(
               color: Colors.teal,
               borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(16),
               ),
             ),
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 child: Column(
                   children: [
-                    // User Photo (circular with green check)
+                    // Compact User Photo (smaller)
                     Stack(
                       alignment: Alignment.center,
                       children: [
                         Container(
-                          width: 80,
-                          height: 80,
+                          width: 60, // Reduced from 80
+                          height: 60, // Reduced from 80
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 3),
+                            border: Border.all(color: Colors.white, width: 2),
                           ),
                           child: ClipOval(
                             child: _photoFile != null
@@ -736,19 +737,19 @@ class _FacilitatorCameraSignatureWidgetState
                                     color: Colors.white,
                                     child: const Icon(
                                       Icons.person,
-                                      size: 40,
+                                      size: 30,
                                       color: Colors.teal,
                                     ),
                                   ),
                           ),
                         ),
-                        // Green check mark - positioned bottom right
+                        // Smaller green check mark
                         Positioned(
-                          bottom: 2,
-                          right: 2,
+                          bottom: 0,
+                          right: 0,
                           child: Container(
-                            width: 24,
-                            height: 24,
+                            width: 18, // Reduced from 24
+                            height: 18, // Reduced from 24
                             decoration: const BoxDecoration(
                               color: Colors.green,
                               shape: BoxShape.circle,
@@ -756,41 +757,41 @@ class _FacilitatorCameraSignatureWidgetState
                             child: const Icon(
                               Icons.check,
                               color: Colors.white,
-                              size: 16,
+                              size: 12, // Reduced from 16
                             ),
                           ),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8), // Reduced from 12
 
-                    // User Name
+                    // User Name (smaller font)
                     Text(
                       widget.facilitatorName,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 22,
+                        fontSize: 18, // Reduced from 22
                         fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.center,
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6), // Reduced from 8
 
-                    // User Details Row
+                    // Compact badges row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // ID Badge
+                        // ID Badge (smaller)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
+                            horizontal: 8, // Reduced from 12
+                            vertical: 4, // Reduced from 6
                           ),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -798,14 +799,14 @@ class _FacilitatorCameraSignatureWidgetState
                               const Icon(
                                 Icons.badge,
                                 color: Colors.white,
-                                size: 16,
+                                size: 14, // Reduced from 16
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 3), // Reduced from 4
                               Text(
                                 'ID ${widget.facilitatorId}',
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 14,
+                                  fontSize: 12, // Reduced from 14
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -813,17 +814,17 @@ class _FacilitatorCameraSignatureWidgetState
                           ),
                         ),
 
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8), // Reduced from 12
 
-                        // Time Badge
+                        // Time Badge (smaller)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
+                            horizontal: 8,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -831,14 +832,14 @@ class _FacilitatorCameraSignatureWidgetState
                               const Icon(
                                 Icons.access_time,
                                 color: Colors.white,
-                                size: 16,
+                                size: 14,
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 3),
                               Text(
                                 DateFormat('HH:mm').format(DateTime.now()),
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 14,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -846,17 +847,17 @@ class _FacilitatorCameraSignatureWidgetState
                           ),
                         ),
 
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
 
-                        // Clock In Badge
+                        // Clock In Badge (smaller)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
+                            horizontal: 8,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.green,
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -864,14 +865,14 @@ class _FacilitatorCameraSignatureWidgetState
                               const Icon(
                                 Icons.login,
                                 color: Colors.white,
-                                size: 16,
+                                size: 14,
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 3),
                               Text(
                                 'Clock ${widget.clockAction == 'in' ? 'In' : 'Out'}',
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 14,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -886,44 +887,44 @@ class _FacilitatorCameraSignatureWidgetState
             ),
           ),
 
-          // Signature Section - White Card
+          // Compact Signature Section - More proportional white card
           Expanded(
             child: Container(
-              margin: const EdgeInsets.all(20),
-              padding: const EdgeInsets.all(20),
+              margin: const EdgeInsets.all(16), // Reduced from 20
+              padding: const EdgeInsets.all(16), // Reduced from 20
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 children: [
-                  // Digital Signature Header
+                  // Compact Digital Signature Header
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(6), // Reduced from 8
                         decoration: BoxDecoration(
                           color: Colors.teal.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
                           Icons.edit,
                           color: Colors.teal,
-                          size: 20,
+                          size: 18, // Reduced from 20
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10), // Reduced from 12
                       const Expanded(
                         child: Text(
                           'Digital Signature',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 16, // Reduced from 18
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
                           ),
                         ),
                       ),
-                      // Clear button (top right)
+                      // Clear button (smaller)
                       IconButton(
                         onPressed: () {
                           _signatureController?.clear();
@@ -931,38 +932,40 @@ class _FacilitatorCameraSignatureWidgetState
                         icon: const Icon(
                           Icons.refresh,
                           color: Colors.grey,
+                          size: 20, // Smaller icon
                         ),
                         tooltip: 'Clear',
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6), // Reduced from 8
 
                   Text(
                     'Sign below to confirm your clock ${widget.clockAction}',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 13, // Reduced from 14
                       color: Colors.grey[600],
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12), // Reduced from 20
 
-                  // Signature Pad
+                  // Compact Signature Pad - More proportional
                   Expanded(
+                    flex: 3, // Give it less space proportion
                     child: Container(
                       decoration: BoxDecoration(
                         border: Border.all(
                           color: Colors.grey[300]!,
-                          width: 2,
+                          width: 1.5, // Thinner border
                         ),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Stack(
                         children: [
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(8),
                             child: Signature(
                               controller: _signatureController!,
                               backgroundColor: Colors.white,
@@ -977,7 +980,7 @@ class _FacilitatorCameraSignatureWidgetState
                                   'Sign here',
                                   style: TextStyle(
                                     color: Colors.grey[400],
-                                    fontSize: 16,
+                                    fontSize: 14, // Reduced from 16
                                   ),
                                 ),
                               ),
@@ -987,9 +990,9 @@ class _FacilitatorCameraSignatureWidgetState
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12), // Reduced from 20
 
-                  // Confirm Button - Full width
+                  // Compact Confirm Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -997,21 +1000,24 @@ class _FacilitatorCameraSignatureWidgetState
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.teal,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12), // Reduced from 16
                         elevation: 2,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius:
+                              BorderRadius.circular(10), // Reduced from 12
                         ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.check_circle, size: 22),
-                          const SizedBox(width: 8),
+                          const Icon(Icons.check_circle,
+                              size: 20), // Reduced from 22
+                          const SizedBox(width: 6), // Reduced from 8
                           Text(
                             'Confirm Clock ${widget.clockAction == 'in' ? 'In' : 'Out'}',
                             style: const TextStyle(
-                              fontSize: 16,
+                              fontSize: 15, // Reduced from 16
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -1020,29 +1026,29 @@ class _FacilitatorCameraSignatureWidgetState
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8), // Reduced from 12
 
-                  // Info note
+                  // Compact info note
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10), // Reduced from 12
                     decoration: BoxDecoration(
                       color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6), // Reduced from 8
                       border: Border.all(color: Colors.blue[100]!),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           Icons.info_outline,
-                          size: 18,
+                          size: 16, // Reduced from 18
                           color: Colors.blue[700],
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6), // Reduced from 8
                         Expanded(
                           child: Text(
                             'Your signature confirms the accuracy of this clock record',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 11, // Reduced from 12
                               color: Colors.blue[700],
                             ),
                           ),
