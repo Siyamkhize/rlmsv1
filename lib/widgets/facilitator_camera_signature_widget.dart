@@ -951,42 +951,40 @@ class _FacilitatorCameraSignatureWidgetState
 
                   const SizedBox(height: 12), // Reduced from 20
 
-                  // Compact Signature Pad - More proportional
-                  Expanded(
-                    flex: 3, // Give it less space proportion
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.grey[300]!,
-                          width: 1.5, // Thinner border
-                        ),
-                        borderRadius: BorderRadius.circular(10),
+                  // Very Compact Signature Pad - Fixed height like your reference
+                  Container(
+                    height: 120, // Fixed small height instead of Expanded
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.grey[300]!,
+                        width: 1.5, // Thinner border
                       ),
-                      child: Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Signature(
-                              controller: _signatureController!,
-                              backgroundColor: Colors.white,
-                            ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Signature(
+                            controller: _signatureController!,
+                            backgroundColor: Colors.white,
                           ),
-                          // Placeholder text when empty
-                          if (_signatureController?.isEmpty ?? true)
-                            Positioned.fill(
-                              child: Container(
-                                alignment: Alignment.center,
-                                child: Text(
-                                  'Sign here',
-                                  style: TextStyle(
-                                    color: Colors.grey[400],
-                                    fontSize: 14, // Reduced from 16
-                                  ),
+                        ),
+                        // Placeholder text when empty
+                        if (_signatureController?.isEmpty ?? true)
+                          Positioned.fill(
+                            child: Container(
+                              alignment: Alignment.center,
+                              child: Text(
+                                'Sign here',
+                                style: TextStyle(
+                                  color: Colors.grey[400],
+                                  fontSize: 14, // Reduced from 16
                                 ),
                               ),
                             ),
-                        ],
-                      ),
+                          ),
+                      ],
                     ),
                   ),
 
