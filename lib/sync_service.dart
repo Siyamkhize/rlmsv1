@@ -12,6 +12,8 @@ import 'package:sqflite/sqflite.dart'; // For ConflictAlgorithm
 import 'package:path/path.dart' as path;
 import 'package:intl/intl.dart';
 import 'utils/clocking_logger.dart';
+import 'services/http_client_service.dart';
+import 'config/network_config.dart';
 
 Future<bool> syncSingleClockIn(Map<String, dynamic> attendance) async {
   print('=== CLOCK-IN SYNC START ===');
@@ -571,6 +573,16 @@ class SyncService extends ChangeNotifier {
             continue;
           }
 
+          // Log data quality issues when server returns incomplete data
+          if (learner['Title'] == null ||
+              learner['DateOfBirth'] == null ||
+              learner['Name'] == null ||
+              learner['Surname'] == null) {
+            print("WARNING: Server returned incomplete data for learner ${learner['IDNumber']}: " +
+                "Title=${learner['Title']}, Name=${learner['Name']}, " +
+                "Surname=${learner['Surname']}, DateOfBirth=${learner['DateOfBirth']}");
+          }
+
           // Extract bank details before inserting learner
           Map<String, dynamic>? bankDetails;
           if (learner['BankName'] != null || learner['BankAccount'] != null) {
@@ -592,12 +604,8 @@ class SyncService extends ChangeNotifier {
           learnerData.remove('BankCode');
 
           try {
-            // Insert/update learner details
-            await db.insert(
-              'learnerdetails',
-              learnerData,
-              conflictAlgorithm: ConflictAlgorithm.replace,
-            );
+            // Insert/update learner details using sanitized upsert
+            await _dbHelper.upsertLearner(learnerData);
 
             // Insert/update bank details if they exist
             if (bankDetails != null) {
@@ -611,8 +619,15 @@ class SyncService extends ChangeNotifier {
             print(
                 "Successfully synced learner with IDNumber: ${learner['IDNumber']}, Server ID: ${learner['LearnerID']}");
           } catch (e) {
-            print(
-                "Error syncing learner with IDNumber ${learner['IDNumber']}: $e");
+            if (e.toString().contains('NOT NULL constraint failed')) {
+              print(
+                  "NOT NULL constraint failed for learner with IDNumber ${learner['IDNumber']}: $e");
+              print("Raw learner data: $learner");
+              // Continue with other learners even if one fails due to constraint issues
+            } else {
+              print(
+                  "Error syncing learner with IDNumber ${learner['IDNumber']}: $e");
+            }
             // Continue with other learners even if one fails
           }
         }
@@ -2383,8 +2398,13 @@ class SyncService extends ChangeNotifier {
       // Define the PHP API URL for materials received data
       final apiUrl = AppConfig.saveMaterialsReceivedUrl;
 
-      // Make the API call
-      final response = await http.get(Uri.parse(apiUrl));
+      // Make the API call using HttpClientService with proper retry and timeout
+      final response = await HttpClientService.makeRequest(
+        () => http.get(Uri.parse(apiUrl)),
+        endpoint: 'materials_received_sync',
+        maxRetries: NetworkConfig.syncOperationsMaxRetries,
+        timeoutSeconds: NetworkConfig.lightweightTimeout,
+      );
 
       // Check if the response is successful
       if (response.statusCode == 200) {

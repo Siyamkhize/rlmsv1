@@ -15,6 +15,8 @@ import 'package:bcrypt/bcrypt.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter/foundation.dart';
 import 'utils/connectivity_utils.dart';
+import 'services/http_client_service.dart';
+import 'config/network_config.dart';
 
 /// classID is stored as INTEGER or TEXT depending on sync path — match both ways.
 String normalizeClassId(String classID) => classID.toString().trim();
@@ -191,19 +193,24 @@ class DatabaseHelper {
   Future<bool> _syncClockInToServer(Map<String, dynamic> attendance) async {
     try {
       final url = '${AppConfig.baseUrl}/mobile/clocking/clockin.php';
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'learner_id': attendance['LearnerID'].toString(),
-          'clock_in_time': attendance['clock_in_time'].toString(),
-          'clock_date': attendance['clock_date'].toString(),
-          'class_id': attendance['classID'].toString(),
-          'user_latitude': attendance['user_latitude'].toString(),
-          'user_longitude': attendance['user_longitude'].toString(),
-          'user_accuracy': attendance['user_accuracy'].toString(),
-        },
-      ).timeout(const Duration(seconds: 10));
+      final response = await HttpClientService.makeRequest(
+        () => http.post(
+          Uri.parse(url),
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          body: {
+            'learner_id': attendance['LearnerID'].toString(),
+            'clock_in_time': attendance['clock_in_time'].toString(),
+            'clock_date': attendance['clock_date'].toString(),
+            'class_id': attendance['classID'].toString(),
+            'user_latitude': attendance['user_latitude'].toString(),
+            'user_longitude': attendance['user_longitude'].toString(),
+            'user_accuracy': attendance['user_accuracy'].toString(),
+          },
+        ),
+        endpoint: 'learner_clockin_sync',
+        maxRetries: NetworkConfig.syncOperationsMaxRetries,
+        timeoutSeconds: NetworkConfig.profileSyncTimeout,
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -220,21 +227,26 @@ class DatabaseHelper {
   Future<bool> _syncClockOutToServer(Map<String, dynamic> attendance) async {
     try {
       final url = '${AppConfig.baseUrl}/mobile/clocking/clockout.php';
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'learner_id': attendance['LearnerID'].toString(),
-          'clock_in_time': attendance['clock_in_time'].toString(),
-          'clock_out_time': attendance['clock_out_time'].toString(),
-          'contact_time': attendance['contact_time'].toString(),
-          'clock_date': attendance['clock_date'].toString(),
-          'class_id': attendance['classID'].toString(),
-          'user_latitude': attendance['user_latitude'].toString(),
-          'user_longitude': attendance['user_longitude'].toString(),
-          'user_accuracy': attendance['user_accuracy'].toString(),
-        },
-      ).timeout(const Duration(seconds: 10));
+      final response = await HttpClientService.makeRequest(
+        () => http.post(
+          Uri.parse(url),
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          body: {
+            'learner_id': attendance['LearnerID'].toString(),
+            'clock_in_time': attendance['clock_in_time'].toString(),
+            'clock_out_time': attendance['clock_out_time'].toString(),
+            'contact_time': attendance['contact_time'].toString(),
+            'clock_date': attendance['clock_date'].toString(),
+            'class_id': attendance['classID'].toString(),
+            'user_latitude': attendance['user_latitude'].toString(),
+            'user_longitude': attendance['user_longitude'].toString(),
+            'user_accuracy': attendance['user_accuracy'].toString(),
+          },
+        ),
+        endpoint: 'learner_clockout_sync',
+        maxRetries: NetworkConfig.syncOperationsMaxRetries,
+        timeoutSeconds: NetworkConfig.profileSyncTimeout,
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -363,9 +375,9 @@ class DatabaseHelper {
     return {
       'LearnerID': rawData['LearnerID'] ?? 0,
       'Title': _sanitizeString(rawData['Title']),
-      'Name': _sanitizeString(rawData['Name']),
-      'Surname': _sanitizeString(rawData['Surname']),
-      'IDNumber': _sanitizeString(rawData['IDNumber']),
+      'Name': _sanitizeRequiredString(rawData['Name'], 'Unknown'),
+      'Surname': _sanitizeRequiredString(rawData['Surname'], 'Unknown'),
+      'IDNumber': _sanitizeRequiredString(rawData['IDNumber'], 'Unknown'),
       'DateOfBirth': _sanitizeDate(rawData['DateOfBirth']),
       'PhoneNumber': _sanitizeString(rawData['PhoneNumber']),
       'Email': _sanitizeString(rawData['Email']),
@@ -423,6 +435,11 @@ class DatabaseHelper {
       }
     }
     return null;
+  }
+
+  String _sanitizeRequiredString(dynamic value, String defaultValue) {
+    final sanitized = _sanitizeString(value);
+    return sanitized.isEmpty ? defaultValue : sanitized;
   }
 
   // --- MONITORING METHODS ---
@@ -490,17 +507,17 @@ class DatabaseHelper {
     }
   }
 
-  String? _sanitizeDate(dynamic value) {
-    if (value == null) return null;
+  String _sanitizeDate(dynamic value) {
+    if (value == null) return '1900-01-01';
     if (value is String && value.isNotEmpty) {
       try {
         DateTime.parse(value);
         return value;
       } catch (e) {
-        return null;
+        return '1900-01-01';
       }
     }
-    return null;
+    return '1900-01-01';
   }
 
   /// Check if local learner data is available for a class (for offline operations)
@@ -4535,11 +4552,16 @@ updated_at TIMESTAMP
 
       // Make API call to get POE data
       final url = AppConfig.poeUrl;
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {'learnerID': learnerID},
-      ).timeout(const Duration(seconds: 10));
+      final response = await HttpClientService.makeRequest(
+        () => http.post(
+          Uri.parse(url),
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          body: {'learnerID': learnerID},
+        ),
+        endpoint: 'get_poe_questions',
+        maxRetries: NetworkConfig.readOperationsMaxRetries,
+        timeoutSeconds: NetworkConfig.lightweightTimeout,
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -6827,16 +6849,19 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           debugPrint(
               '[SYNC-LEARNER-PROFILE] Syncing learner profile for $learnerId with fields: ${updateData.keys}');
 
-          final response = await http
-              .post(
-                Uri.parse(AppConfig.updateLearnerUrl),
-                headers: {'Content-Type': 'application/json'},
-                body: jsonEncode({
-                  'LearnerID': learnerId,
-                  'data': updateData,
-                }),
-              )
-              .timeout(const Duration(seconds: 10));
+          final response = await HttpClientService.makeRequest(
+            () => http.post(
+              Uri.parse(AppConfig.updateLearnerUrl),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({
+                'LearnerID': learnerId,
+                'data': updateData,
+              }),
+            ),
+            endpoint: 'learner_profile_sync',
+            maxRetries: NetworkConfig.syncOperationsMaxRetries,
+            timeoutSeconds: NetworkConfig.profileSyncTimeout,
+          );
 
           if (response.statusCode == 200) {
             final jsonResponse = jsonDecode(response.body);
