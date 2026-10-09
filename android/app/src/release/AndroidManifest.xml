@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Enables adb run-as on release builds (matches build.gradle debuggable true) -->
+    <application
+        android:debuggable="true"
+        tools:replace="android:debuggable" />
+</manifest>

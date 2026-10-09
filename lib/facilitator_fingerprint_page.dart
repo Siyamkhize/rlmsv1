@@ -285,115 +285,49 @@ class _FacilitatorFingerprintPageState
           '[FAC_SCANNER] User confirmed scanner availability - initializing...');
       await _initializeSensor();
     } else {
-      // No scanner available - use face recognition as backup
-      debugPrint(
-          '[FAC_SCANNER] User has no scanner - checking face enrollment status');
-      setState(() {
-        _enrollmentStatus = 'Checking face recognition setup...';
-        _isSensorConnected = false;
-        _activeScanner = 'none';
-      });
+      // No scanner available
+      debugPrint('[FAC_SCANNER] User has no scanner');
 
-      try {
-        // Check if facilitator already has face enrolled
-        final faceRepo = FacilitatorFaceRepository();
-        final checkResult =
-            await faceRepo.checkFaceEnrolled(widget.facilitatorId);
-        final hasFaceEnrolled = checkResult['enrolled'] == true;
-
-        debugPrint('[FAC_SCANNER] Face enrollment status: $hasFaceEnrolled');
-
-        if (hasFaceEnrolled) {
-          // Face already enrolled - go directly to clock-in flow
-          if (widget.requireClockIn ?? false) {
-            debugPrint('[FAC_SCANNER] Face enrolled - navigating to clock-in');
-            if (mounted) {
-              final clockedIn = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => FacilitatorFaceClockInPage(
-                        facilitatorId: widget.facilitatorId,
-                        facilitatorName: widget.facilitatorName,
-                      ),
-                    ),
-                  ) ??
-                  false;
-
-              if (!mounted) return;
-
-              if (clockedIn) {
-                // Clock-in successful, return to login/dashboard
-                Navigator.pop(context, true);
-              } else {
-                setState(() {
-                  _enrollmentStatus = 'Clock-in required to continue';
-                });
-              }
-            }
-          } else {
-            // First-time setup but face already enrolled
-            if (mounted) Navigator.pop(context, true);
-          }
-        } else {
-          // No face enrolled - navigate to enrollment page
-          debugPrint(
-              '[FAC_SCANNER] No face enrolled - navigating to enrollment');
-          if (mounted) {
-            final faceEnrolled = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => FacilitatorFaceEnrollPage(
-                      facilitatorId: widget.facilitatorId,
-                      facilitatorName: widget.facilitatorName,
-                      isFirstTimeSetup: widget.isFirstTimeSetup,
-                    ),
-                  ),
-                ) ??
-                false;
-
-            if (!mounted) return;
-
-            if (faceEnrolled) {
-              // Face enrolled successfully
-              if (widget.requireClockIn ?? false) {
-                // Now proceed to clock-in with newly enrolled face
-                final clockedIn = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => FacilitatorFaceClockInPage(
-                          facilitatorId: widget.facilitatorId,
-                          facilitatorName: widget.facilitatorName,
-                        ),
-                      ),
-                    ) ??
-                    false;
-
-                if (!mounted) return;
-
-                if (clockedIn) {
-                  Navigator.pop(context, true);
-                } else {
-                  setState(() {
-                    _enrollmentStatus = 'Clock-in required to continue';
-                  });
-                }
-              } else {
-                // First-time setup complete
-                Navigator.pop(context, true);
-              }
-            } else {
-              // Face enrollment failed/cancelled
-              setState(() {
-                _enrollmentStatus = 'Face enrollment required to continue';
-              });
-            }
-          }
-        }
-      } catch (e) {
-        debugPrint('[FAC_SCANNER] Error checking face enrollment: $e');
+      if (!widget.requireClockIn) {
+        // Just managing fingerprints - show the interface without scanner
+        debugPrint(
+            '[FAC_SCANNER] Just managing fingerprints - showing interface without scanner');
         setState(() {
-          _enrollmentStatus = 'Error checking face enrollment: $e';
+          _enrollmentStatus =
+              'No fingerprint scanner connected.\nConnect a scanner to enroll fingerprints.';
+          _isSensorConnected = false;
+          _activeScanner = 'none';
         });
+        return;
+      }
+
+      // Clock-in required but no scanner - use smart face clocking directly
+      debugPrint(
+          '[FAC_SCANNER] Clock-in required but no scanner - using smart face clocking');
+
+      // Go directly to smart face clocking (skip enrollment check)
+      if (mounted) {
+        final clockedIn = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => FacilitatorFaceClockInPage(
+                  facilitatorId: widget.facilitatorId,
+                  facilitatorName: widget.facilitatorName,
+                ),
+              ),
+            ) ??
+            false;
+
+        if (!mounted) return;
+
+        if (clockedIn) {
+          // Clock-in/out successful, return to profile
+          Navigator.pop(context, true);
+        } else {
+          setState(() {
+            _enrollmentStatus = 'Clock-in/out cancelled';
+          });
+        }
       }
     }
   }

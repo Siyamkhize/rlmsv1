@@ -8,8 +8,10 @@ import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:signature/signature.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart'; // Added for DateFormat
 import 'database_helper.dart';
 import 'facilitator_fingerprint_page.dart';
+import 'facilitator_face_clockout_page.dart';
 
 import 'config.dart';
 
@@ -64,6 +66,13 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
     super.initState();
     facilitatorData = _fetchFacilitatorData();
     _loadOnlineProfileImage();
+  }
+
+  /// Refresh facilitator data
+  void _refreshData() {
+    setState(() {
+      facilitatorData = _fetchFacilitatorData();
+    });
   }
 
   @override
@@ -525,8 +534,8 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       // Update UI
       setState(() {
         isEditing = false;
-        facilitatorData = _fetchFacilitatorData();
       });
+      _refreshData();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -876,7 +885,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
             icon: const Icon(Icons.refresh),
             onPressed: () {
               _loadOnlineProfileImage();
-              setState(() => facilitatorData = _fetchFacilitatorData());
+              _refreshData();
             },
           ),
         ],
@@ -973,6 +982,8 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                       ),
                     ]),
                     const SizedBox(height: 20),
+                    _buildClockingSection(data),
+                    const SizedBox(height: 20),
                     _buildFingerprintSection(data),
                     const SizedBox(height: 20),
                     _buildSignatureSection(),
@@ -985,6 +996,259 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
         },
       ),
     );
+  }
+
+  /// Builds the clocking section showing clock-in status and clock-out option
+  Widget _buildClockingSection(Map<String, dynamic> data) {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _getFacilitatorIdByClassID(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Card(
+            elevation: 4,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          );
+        }
+
+        final facilitatorData = snapshot.data;
+        final facilitatorId = facilitatorData?['facilitator_id'] as int?;
+
+        if (facilitatorId == null) {
+          return Card(
+            elevation: 4,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Clocking',
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blueAccent),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Clocking features not available',
+                        style: TextStyle(
+                            color: Colors.grey[600],
+                            fontStyle: FontStyle.italic),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return FutureBuilder<Map<String, dynamic>?>(
+          future: _getClockingStatus(facilitatorId),
+          builder: (context, clockSnapshot) {
+            final attendance = clockSnapshot.data;
+            final bool isClockedIn =
+                attendance != null && attendance['clock_in_time'] != null;
+            final bool isClockedOut = isClockedIn &&
+                attendance['clock_out_time'] != null &&
+                attendance['clock_out_time'].toString().isNotEmpty;
+
+            return Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Clocking',
+                          style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blueAccent),
+                        ),
+                        // Clock Out button (only show if clocked in but not out)
+                        if (isClockedIn && !isClockedOut)
+                          ElevatedButton.icon(
+                            onPressed: () => _navigateToClockOut(facilitatorId),
+                            icon: const Icon(Icons.exit_to_app, size: 18),
+                            label: const Text(
+                              'Clock Out',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              minimumSize: const Size(0, 36),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Status display
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isClockedIn
+                            ? (isClockedOut
+                                ? Colors.grey.withOpacity(0.1)
+                                : Colors.green.withOpacity(0.1))
+                            : Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isClockedIn
+                              ? (isClockedOut ? Colors.grey : Colors.green)
+                              : Colors.orange,
+                          width: 2,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isClockedIn
+                                ? (isClockedOut
+                                    ? Icons.check_circle
+                                    : Icons.access_time)
+                                : Icons.schedule,
+                            color: isClockedIn
+                                ? (isClockedOut ? Colors.grey : Colors.green)
+                                : Colors.orange,
+                            size: 32,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isClockedIn
+                                      ? (isClockedOut
+                                          ? 'Clocked Out for Today'
+                                          : 'Clocked In')
+                                      : 'Not Clocked In Yet',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: isClockedIn
+                                        ? (isClockedOut
+                                            ? Colors.grey[700]
+                                            : Colors.green)
+                                        : Colors.orange,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                if (isClockedIn) ...[
+                                  Text(
+                                    'Clock In: ${attendance!['clock_in_time']}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                  if (isClockedOut) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Clock Out: ${attendance['clock_out_time']}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                  ],
+                                ] else
+                                  Text(
+                                    'You need to clock in to access the system today.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// Navigate to clock-out page
+  void _navigateToClockOut(int facilitatorId) async {
+    debugPrint('[FAC_PROFILE] Navigating to smart face clock-out');
+
+    final facilitatorData = await _getFacilitatorIdByClassID();
+    final facilitatorName =
+        facilitatorData['fullName'] as String? ?? 'Facilitator';
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FacilitatorFaceClockOutPage(
+          facilitatorId: facilitatorId,
+          facilitatorName: facilitatorName,
+        ),
+      ),
+    );
+
+    // Refresh the profile data after returning
+    if (result == true && mounted) {
+      _refreshData();
+    }
+  }
+
+  /// Navigate to fingerprint management page (manage fingerprints only)
+  void _navigateToFingerprintManage(
+      int facilitatorId, String facilitatorName) async {
+    debugPrint('[FAC_PROFILE] Navigating to fingerprint management');
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FacilitatorFingerprintPage(
+          facilitatorId: facilitatorId,
+          facilitatorName: facilitatorName,
+          isFirstTimeSetup: false,
+          requireClockIn: false, // Just manage fingerprints, no clocking
+        ),
+      ),
+    );
+
+    // Refresh the profile data after returning
+    if (result == true && mounted) {
+      _refreshData();
+    }
   }
 
   /// Builds the fingerprint management section
@@ -1033,7 +1297,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                     Flexible(
                       child: ElevatedButton.icon(
                         onPressed: facilitatorId != null
-                            ? () => _navigateToFingerprintPage(
+                            ? () => _navigateToFingerprintManage(
                                 facilitatorId, fullName ?? 'Facilitator')
                             : null,
                         icon: const Icon(Icons.fingerprint, size: 18),
@@ -1183,25 +1447,145 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
   }
 
   /// Navigate to fingerprint management page
+  /// Get clocking status for today
+  Future<Map<String, dynamic>?> _getClockingStatus(int? facilitatorId) async {
+    if (facilitatorId == null) return null;
+
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    return await DatabaseHelper()
+        .getFacilitatorAttendanceForDay(facilitatorId.toString(), today);
+  }
+
+  /// Navigate to fingerprint management page
   void _navigateToFingerprintPage(
       int facilitatorId, String facilitatorName) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => FacilitatorFingerprintPage(
-          facilitatorId: facilitatorId,
-          facilitatorName: facilitatorName,
-          isFirstTimeSetup: false,
-          requireClockIn: false,
-        ),
-      ),
-    );
+    // Check if facilitator has clocked in today and if they've clocked out
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final attendance = await DatabaseHelper()
+        .getFacilitatorAttendanceForDay(facilitatorId.toString(), today);
 
-    // Refresh the profile data after returning
-    if (result == true && mounted) {
-      setState(() {
-        facilitatorData = _fetchFacilitatorData();
-      });
+    if (attendance != null && attendance['clock_in_time'] != null) {
+      // Facilitator has clocked in today
+      final clockOutTime = attendance['clock_out_time'];
+
+      if (clockOutTime == null || clockOutTime.toString().isEmpty) {
+        // Clocked in but NOT clocked out - go directly to clock-out
+        debugPrint(
+            '[FAC_PROFILE] Facilitator clocked in, navigating to clock-out');
+
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FacilitatorFingerprintPage(
+              facilitatorId: facilitatorId,
+              facilitatorName: facilitatorName,
+              isFirstTimeSetup: false,
+              requireClockIn:
+                  true, // Show clocking options (Clock In/Out buttons)
+            ),
+          ),
+        );
+
+        // Refresh the profile data after returning
+        if (result == true && mounted) {
+          _refreshData();
+        }
+      } else {
+        // Already clocked out today
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.green, size: 32),
+                    SizedBox(width: 12),
+                    Text('Already Clocked Out'),
+                  ],
+                ),
+                content: Text(
+                  'You have already clocked out for today.\n\n'
+                  'Clock In: ${attendance['clock_in_time']}\n'
+                  'Clock Out: $clockOutTime\n\n'
+                  'See you tomorrow!',
+                ),
+                actions: [
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('OK'),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      }
+    } else {
+      // Not clocked in (shouldn't normally happen, but handle it)
+      // Show dialog to choose between clocking or managing fingerprints
+      final choice = await showDialog<String>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Fingerprint Management'),
+            content: const Text(
+                'You haven\'t clocked in yet today. What would you like to do?'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop('cancel'),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton.icon(
+                onPressed: () => Navigator.of(context).pop('clock'),
+                icon: const Icon(Icons.access_time),
+                label: const Text('Clock In'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () => Navigator.of(context).pop('manage'),
+                icon: const Icon(Icons.fingerprint),
+                label: const Text('Manage Fingerprints'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (choice == null || choice == 'cancel') {
+        return; // User cancelled
+      }
+
+      // Navigate based on choice
+      final requireClockIn = choice == 'clock';
+
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FacilitatorFingerprintPage(
+            facilitatorId: facilitatorId,
+            facilitatorName: facilitatorName,
+            isFirstTimeSetup: false,
+            requireClockIn: requireClockIn,
+          ),
+        ),
+      );
+
+      // Refresh the profile data after returning
+      if (result == true && mounted) {
+        _refreshData();
+      }
     }
   }
 

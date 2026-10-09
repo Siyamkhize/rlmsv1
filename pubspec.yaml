@@ -2,7 +2,7 @@ name: rlmss
 description: "RLMSS v1 - Remote Learner Management System"
 publish_to: 'none'
 
-version: 1.0.0+4
+version: 1.0.0+5
 
 environment:
   sdk: '>=3.4.3 <4.0.0'

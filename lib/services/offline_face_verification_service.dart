@@ -477,4 +477,23 @@ class OfflineFaceVerificationService {
       return 0;
     }
   }
+
+  /// Delete cached face embedding for a learner (for re-enrollment)
+  /// Deletes ALL cached embeddings (front and back cameras)
+  Future<bool> deleteLocalEmbedding(int learnerId) async {
+    try {
+      final db = await DatabaseHelper().database;
+      final deleted = await db.delete(
+        'learner_face_cache',
+        where: 'learner_id = ?',
+        whereArgs: [learnerId],
+      );
+      print(
+          '[OFFLINE_FACE] Deleted $deleted cached embedding(s) for learner $learnerId');
+      return deleted > 0;
+    } catch (e) {
+      print('[OFFLINE_FACE] Error deleting cached embedding: $e');
+      return false;
+    }
+  }
 }

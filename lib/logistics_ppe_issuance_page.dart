@@ -427,9 +427,54 @@ class _LogisticsPPEIssuancePageState extends State<LogisticsPPEIssuancePage> {
       final learnerId = learner['LearnerID'].toString();
 
       if (activeScanner == 'zkteco') {
-        verified = await _fingerprintService.verifyFingerprint(learnerId);
+        // For ZKTeco, we need to get stored templates and call verifyFingerprint with templates
+        // This needs to be implemented properly - for now, let's disable this functionality
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Not Implemented'),
+            content: const Text(
+                'ZKTeco fingerprint verification not yet implemented for PPE issuance'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+        return;
       } else if (activeScanner == 'futronic') {
-        verified = await _futronicService.verifyFutronicFingerprint(learnerId);
+        // For Futronic, we need to get the stored templates first
+        final dbHelper = DatabaseHelper();
+        final templates = await dbHelper.getAllTemplates(int.parse(learnerId));
+
+        if (templates.isEmpty ||
+            (templates['futronic_left_template'] == null &&
+                templates['futronic_right_template'] == null)) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content:
+                    Text('No fingerprint templates found for this learner'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
+        final leftTemplate = templates['futronic_left_template'] as String?;
+        final rightTemplate = templates['futronic_right_template'] as String?;
+        final hint = (leftTemplate != null && leftTemplate.isNotEmpty)
+            ? 'left'
+            : 'right';
+
+        verified = await _futronicService.verifyBoth(
+          hintFinger: hint,
+          leftTemplate: leftTemplate,
+          rightTemplate: rightTemplate,
+        );
       }
 
       if (!verified) {

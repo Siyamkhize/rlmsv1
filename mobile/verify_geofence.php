@@ -31,15 +31,28 @@ try {
         exit;
     }
 
+    $userType = $input['user_type'] ?? 'learner'; // Default to learner for backward compatibility
+    $userId = $input['user_id'] ?? '';
     $learnerId = $input['learner_id'] ?? '';
     $classId = $input['class_id'] ?? '';
     $action = $input['action'] ?? 'clock_in';
     $auditData = $input['audit_data'] ?? [];
 
-    if (empty($learnerId) || empty($classId)) {
-        $response['error'] = 'Missing learner_id or class_id';
-        echo json_encode($response);
-        exit;
+    // For learners: require learner_id and class_id
+    // For facilitators: require user_id
+    if ($userType === 'facilitator') {
+        if (empty($userId)) {
+            $response['error'] = 'Missing user_id for facilitator';
+            echo json_encode($response);
+            exit;
+        }
+    } else {
+        // Default to learner flow - requires learner_id and class_id
+        if (empty($learnerId) || empty($classId)) {
+            $response['error'] = 'Missing learner_id or class_id';
+            echo json_encode($response);
+            exit;
+        }
     }
 
     // Reject if mock location was detected
@@ -56,9 +69,10 @@ try {
         exit;
     }
 
-    $userLat = floatval($auditData['latitude'] ?? 0);
-    $userLon = floatval($auditData['longitude'] ?? 0);
-    $userAccuracy = floatval($auditData['accuracy'] ?? 999);
+    // Get user's latitude/longitude from audit_data OR from body
+    $userLat = floatval($auditData['latitude'] ?? ($input['latitude'] ?? 0));
+    $userLon = floatval($auditData['longitude'] ?? ($input['longitude'] ?? 0));
+    $userAccuracy = floatval($auditData['accuracy'] ?? ($input['accuracy'] ?? 999));
 
     // Max 60m accuracy allowed
     if ($userAccuracy > 60) {
@@ -74,19 +88,34 @@ try {
         exit;
     }
 
-    // Get site coordinates for this class
-    $stmt = $conn->prepare(
-        "SELECT s.latitude, s.longitude, s.siteName 
-         FROM class c 
-         JOIN sites s ON c.siteID = s.siteID 
-         WHERE c.classID = ? LIMIT 1"
-    );
-    $stmt->bind_param("s", $classId);
+    // Get site coordinates
+    if ($userType === 'facilitator') {
+        // For facilitators: look up their site from facilitator table
+        $stmt = $conn->prepare(
+            "SELECT s.latitude, s.longitude, s.siteName 
+             FROM facilitator f
+             JOIN sites s ON f.siteID = s.siteID 
+             WHERE f.FacilitatorID = ? LIMIT 1"
+        );
+        $stmt->bind_param("s", $userId);
+    } else {
+        // For learners: look up site from their class
+        $stmt = $conn->prepare(
+            "SELECT s.latitude, s.longitude, s.siteName 
+             FROM class c 
+             JOIN sites s ON c.siteID = s.siteID 
+             WHERE c.classID = ? LIMIT 1"
+        );
+        $stmt->bind_param("s", $classId);
+    }
+    
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows === 0) {
-        $response['error'] = 'Site coordinates not found for class';
+        $response['error'] = $userType === 'facilitator' 
+            ? 'Site coordinates not found for facilitator' 
+            : 'Site coordinates not found for class';
         echo json_encode($response);
         exit;
     }

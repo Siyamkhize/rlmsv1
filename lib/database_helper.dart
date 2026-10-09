@@ -14,6 +14,12 @@ import 'package:flutter/material.dart';
 import 'package:bcrypt/bcrypt.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter/foundation.dart';
+import 'utils/connectivity_utils.dart';
+
+/// classID is stored as INTEGER or TEXT depending on sync path — match both ways.
+String normalizeClassId(String classID) => classID.toString().trim();
+
+const String _classIdMatchSql = 'CAST(classID AS TEXT) = ?';
 
 class DatabaseHelper {
   static Database? _database;
@@ -47,9 +53,7 @@ class DatabaseHelper {
         // Check if we have internet connectivity
         bool hasInternet = false;
         try {
-          final connectivityResult = await Connectivity().checkConnectivity();
-          hasInternet = connectivityResult.isNotEmpty &&
-              connectivityResult.first != ConnectivityResult.none;
+          hasInternet = await hasNetworkConnectivity();
         } catch (e) {
           print('[CLEANUP] Error checking connectivity: $e');
         }
@@ -377,6 +381,9 @@ class DatabaseHelper {
       'KinName': _sanitizeString(rawData['KinName']),
       'KinRelation': _sanitizeString(rawData['KinRelation']),
       'KinContact': _sanitizeString(rawData['KinContact']),
+      'Province': _sanitizeString(rawData['Province']),
+      'District': _sanitizeString(rawData['District']),
+      'Municipality': _sanitizeString(rawData['Municipality']),
       'SchoolName': _sanitizeString(rawData['SchoolName']),
       'SchoolCompletion': _sanitizeDate(rawData['SchoolCompletion']),
       'SchoolLocation': _sanitizeString(rawData['SchoolLocation']),
@@ -502,8 +509,8 @@ class DatabaseHelper {
       final db = await database;
       final result = await db.query(
         'learnerdetails',
-        where: 'classID = ?',
-        whereArgs: [classID],
+        where: _classIdMatchSql,
+        whereArgs: [normalizeClassId(classID)],
         limit: 1,
       );
       return result.isNotEmpty;
@@ -518,8 +525,8 @@ class DatabaseHelper {
     try {
       final db = await database;
       final result = await db.rawQuery(
-        'SELECT COUNT(*) as count FROM learnerdetails WHERE classID = ?',
-        [classID],
+        'SELECT COUNT(*) as count FROM learnerdetails WHERE $_classIdMatchSql',
+        [normalizeClassId(classID)],
       );
       return result.first['count'] as int? ?? 0;
     } catch (e) {
@@ -665,7 +672,7 @@ class DatabaseHelper {
   Future<Database> _initDatabase() async {
     final path = await getDatabasesPath();
     return openDatabase(join(path, _dbName),
-        version: 16, // ⬆️ BUMP for facilitator clocking evidence table
+        version: 17, // ⬆️ BUMP for facilitator clock_in_method column
         onUpgrade: (db, oldVersion, newVersion) async {
       debugPrint(
           '[DB] Upgrading database from version $oldVersion to $newVersion');
@@ -1231,6 +1238,24 @@ class DatabaseHelper {
           debugPrint('[DB] ❌ Error creating facilitator_clocking_evidence: $e');
         }
       }
+
+      if (oldVersion < 17) {
+        // v17: Add clock_in_method column to facilitator_clocking table
+        debugPrint(
+            '[DB] ✅ v17 migration: Adding clock_in_method column to facilitator_clocking');
+
+        try {
+          await db.execute('''
+            ALTER TABLE facilitator_clocking 
+            ADD COLUMN clock_in_method TEXT DEFAULT 'signature'
+          ''');
+
+          debugPrint(
+              '[DB] ✅ Added clock_in_method column to facilitator_clocking table');
+        } catch (e) {
+          debugPrint('[DB] ❌ Error adding clock_in_method column: $e');
+        }
+      }
     }, onCreate: (db, dbVersion) async {
       // Create example tables
       await db.execute(
@@ -1317,6 +1342,38 @@ class DatabaseHelper {
           ''',
       );
 
+      // Create location lookup tables for offline functionality
+      await db.execute(
+        '''
+          CREATE TABLE IF NOT EXISTS province (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(100) NOT NULL UNIQUE
+          )
+          ''',
+      );
+
+      await db.execute(
+        '''
+          CREATE TABLE IF NOT EXISTS district (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(100) NOT NULL,
+            province VARCHAR(100) NOT NULL,
+            UNIQUE(name, province)
+          )
+          ''',
+      );
+
+      await db.execute(
+        '''
+          CREATE TABLE IF NOT EXISTS local_municipality (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(100) NOT NULL,
+            district VARCHAR(100) NOT NULL,
+            UNIQUE(name, district)
+          )
+          ''',
+      );
+
       await db.execute(
         '''
          CREATE TABLE learner_clocking (
@@ -1362,6 +1419,7 @@ class DatabaseHelper {
             clock_date DATE NOT NULL,
             clock_in_time DATETIME NOT NULL,
             clock_out_time DATETIME,
+            clock_in_method TEXT DEFAULT 'signature',
             contact_time TEXT,
             synced INTEGER NOT NULL DEFAULT 0,
             user_latitude DECIMAL(10,6),
@@ -1699,6 +1757,24 @@ updated_at TIMESTAMP
   )
 ''');
 
+      // Manual clocking evidence table (signature + face photos)
+      await db.execute('''
+  CREATE TABLE manual_clocking_evidence (
+    evidence_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    LearnerID INTEGER NOT NULL,
+    clock_date TEXT NOT NULL,
+    signature_in TEXT,
+    signature_out TEXT,
+    face_in TEXT,
+    face_out TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    synced INTEGER DEFAULT 0,
+    UNIQUE(LearnerID, clock_date),
+    FOREIGN KEY (LearnerID) REFERENCES learnerdetails(LearnerID)
+  )
+''');
+
       await db.execute(
         '''
          CREATE TABLE induction_clocking (
@@ -1789,7 +1865,680 @@ updated_at TIMESTAMP
                 synced INTEGER DEFAULT 0
               )
             ''');
+
+      // Seed essential data to ensure offline functionality
+      await _seedEssentialData(db);
     });
+  }
+
+  /// Seeds essential data to ensure the database always has critical records for offline functionality
+  Future<void> _seedEssentialData(Database db) async {
+    debugPrint('[DB_SEED] Seeding essential data for offline functionality...');
+
+    try {
+      // 1. Create a default facilitator for offline access
+      await _seedDefaultFacilitator(db);
+
+      // 2. Create a default class for offline access
+      await _seedDefaultClass(db);
+
+      // 3. Create default site for offline access
+      await _seedDefaultSite(db);
+
+      // 4. Create default SDP for offline access
+      await _seedDefaultSDP(db);
+
+      // 5. Create default project for offline access
+      await _seedDefaultProject(db);
+
+      // 6. Populate location lookup tables with South African data
+      await _seedLocationTables(db);
+
+      debugPrint('[DB_SEED] ✅ Essential data seeding completed successfully');
+    } catch (e) {
+      debugPrint('[DB_SEED] ❌ Error seeding essential data: $e');
+    }
+  }
+
+  Future<void> _seedDefaultFacilitator(Database db) async {
+    try {
+      // Check if any facilitator exists
+      final existing = await db.query('facilitator', limit: 1);
+      if (existing.isNotEmpty) {
+        debugPrint('[DB_SEED] Facilitators already exist, skipping seed');
+        return;
+      }
+
+      // Create default offline facilitator
+      await db.insert(
+          'facilitator',
+          {
+            'facilitator_id': 999999,
+            'firstName': 'Offline',
+            'lastName': 'Facilitator',
+            'role': 'facilitator',
+            'email': 'offline@rlmss.local',
+            'classID': 999,
+            'password': '\$2y\$10\$dummyhashforofflineaccess', // Dummy hash
+            'assessorNo': 'OFFLINE001',
+            'assessorExpiryDate': '2030-12-31',
+            'phoneNumber': '000-000-0000',
+            'workNumber': '000-000-0000',
+            'f_IDNumber': '0000000000000',
+            'serial_number': 'OFFLINE_DEVICE_001',
+          },
+          conflictAlgorithm: ConflictAlgorithm.ignore);
+
+      debugPrint('[DB_SEED] ✅ Default facilitator seeded');
+    } catch (e) {
+      debugPrint('[DB_SEED] ❌ Error seeding facilitator: $e');
+    }
+  }
+
+  Future<void> _seedDefaultClass(Database db) async {
+    try {
+      // Check if any class exists
+      final existing = await db.query('class', limit: 1);
+      if (existing.isNotEmpty) {
+        debugPrint('[DB_SEED] Classes already exist, skipping seed');
+        return;
+      }
+
+      // Create default offline class
+      await db.insert(
+          'class',
+          {
+            'classID': 999,
+            'className': 'Offline Training Class',
+            'siteID': 999,
+            'project_id': 999,
+          },
+          conflictAlgorithm: ConflictAlgorithm.ignore);
+
+      debugPrint('[DB_SEED] ✅ Default class seeded');
+    } catch (e) {
+      debugPrint('[DB_SEED] ❌ Error seeding class: $e');
+    }
+  }
+
+  Future<void> _seedDefaultSite(Database db) async {
+    try {
+      // Check if any site exists
+      final existing = await db.query('sites', limit: 1);
+      if (existing.isNotEmpty) {
+        debugPrint('[DB_SEED] Sites already exist, skipping seed');
+        return;
+      }
+
+      // Create default offline site
+      await db.insert(
+          'sites',
+          {
+            'siteID': 999,
+            'siteName': 'Offline Training Site',
+            'siteAddress': 'Offline Location',
+            'latitude': -26.2041, // Default to Johannesburg
+            'longitude': 28.0473,
+            'radius': 100.0,
+            'province': 'Offline',
+            'district': 'Offline',
+            'municipality': 'Offline',
+            'contact_person': 'System Administrator',
+            'cell_phone': '000-000-0000',
+            'email': 'offline@rlmss.local',
+          },
+          conflictAlgorithm: ConflictAlgorithm.ignore);
+
+      debugPrint('[DB_SEED] ✅ Default site seeded');
+    } catch (e) {
+      debugPrint('[DB_SEED] ❌ Error seeding site: $e');
+    }
+  }
+
+  Future<void> _seedDefaultSDP(Database db) async {
+    try {
+      // Check if any SDP exists
+      final existing = await db.query('sdp', limit: 1);
+      if (existing.isNotEmpty) {
+        debugPrint('[DB_SEED] SDPs already exist, skipping seed');
+        return;
+      }
+
+      // Create default offline SDP
+      await db.insert(
+          'sdp',
+          {
+            'sdp_id': 999,
+            'sdp_name': 'Offline Skills Development Provider',
+            'accreditation_status': 'Accredited',
+            'contact_person': 'System Administrator',
+            'contact_email': 'offline@rlmss.local',
+            'contact_phone': '000-000-0000',
+            'address': 'Offline Location',
+            'province': 'Gauteng',
+            'district': 'Johannesburg',
+            'municipality': 'Johannesburg Metro',
+          },
+          conflictAlgorithm: ConflictAlgorithm.ignore);
+
+      debugPrint('[DB_SEED] ✅ Default SDP seeded');
+    } catch (e) {
+      debugPrint('[DB_SEED] ❌ Error seeding SDP: $e');
+    }
+  }
+
+  Future<void> _seedDefaultProject(Database db) async {
+    try {
+      // Check if any project exists
+      final existing = await db.query('project', limit: 1);
+      if (existing.isNotEmpty) {
+        debugPrint('[DB_SEED] Projects already exist, skipping seed');
+        return;
+      }
+
+      // Create default offline project
+      await db.insert(
+          'project',
+          {
+            'project_id': 999,
+            'sdp_name': 'Offline Skills Development Provider',
+            'project_pathway': 'General Skills Development',
+            'qualification': 'Multi-Trade Skills Programme',
+            'qualification_id': 999,
+            'project_startdate': '2024-01-01',
+            'project_enddate': '2030-12-31',
+            'project_duration': '365',
+            'project_learners': '50',
+            'accreditation_status': 'Accredited',
+            'seta': 'CETA',
+            'contact_person': 'System Administrator',
+            'contact_email': 'offline@rlmss.local',
+            'contact_phone': '000-000-0000',
+            'address': 'Offline Location',
+            'province': 'Gauteng',
+            'district': 'Johannesburg',
+            'municipality': 'Johannesburg Metro',
+            'synced': 1,
+          },
+          conflictAlgorithm: ConflictAlgorithm.ignore);
+
+      debugPrint('[DB_SEED] ✅ Default project seeded');
+    } catch (e) {
+      debugPrint('[DB_SEED] ❌ Error seeding project: $e');
+    }
+  }
+
+  Future<void> _seedLocationTables(Database db) async {
+    try {
+      // Check if provinces already exist
+      final existingProvinces = await db.query('province', limit: 1);
+      if (existingProvinces.isNotEmpty) {
+        debugPrint('[DB_SEED] Location data already exists, skipping seed');
+        return;
+      }
+
+      debugPrint('[DB_SEED] Seeding South African location data...');
+
+      // Seed provinces
+      final provinces = [
+        'Eastern Cape',
+        'Free State',
+        'Gauteng',
+        'KwaZulu-Natal',
+        'Limpopo',
+        'Mpumalanga',
+        'Northern Cape',
+        'North West',
+        'Western Cape',
+      ];
+
+      for (String province in provinces) {
+        await db.insert('province', {'name': province},
+            conflictAlgorithm: ConflictAlgorithm.ignore);
+      }
+
+      // Seed major districts for key provinces (limited set for offline functionality)
+      final districts = {
+        'Gauteng': [
+          'City of Johannesburg',
+          'City of Tshwane',
+          'Ekurhuleni',
+          'Sedibeng',
+          'West Rand'
+        ],
+        'Western Cape': [
+          'City of Cape Town',
+          'Cape Winelands',
+          'Overberg',
+          'Eden',
+          'Central Karoo',
+          'West Coast'
+        ],
+        'KwaZulu-Natal': [
+          'eThekwini',
+          'uMgungundlovu',
+          'uThukela',
+          'Amajuba',
+          'Zululand',
+          'Umkhanyakude'
+        ],
+      };
+
+      for (String province in districts.keys) {
+        for (String district in districts[province]!) {
+          await db.insert('district', {'name': district, 'province': province},
+              conflictAlgorithm: ConflictAlgorithm.ignore);
+        }
+      }
+
+      // Seed major municipalities for Gauteng (most common province)
+      final municipalities = {
+        'City of Johannesburg': [
+          'Johannesburg Metro',
+          'Alexandra',
+          'Randburg',
+          'Roodepoort',
+          'Sandton'
+        ],
+        'City of Tshwane': [
+          'Tshwane Metro',
+          'Centurion',
+          'Pretoria',
+          'Wonderboom',
+          'Akasia'
+        ],
+        'Ekurhuleni': [
+          'Ekurhuleni Metro',
+          'Kempton Park',
+          'Germiston',
+          'Boksburg',
+          'Benoni'
+        ],
+      };
+
+      for (String district in municipalities.keys) {
+        for (String municipality in municipalities[district]!) {
+          await db.insert('local_municipality',
+              {'name': municipality, 'district': district},
+              conflictAlgorithm: ConflictAlgorithm.ignore);
+        }
+      }
+
+      debugPrint('[DB_SEED] ✅ Location tables seeded successfully');
+    } catch (e) {
+      debugPrint('[DB_SEED] ❌ Error seeding location tables: $e');
+    }
+  }
+
+  // Location data methods for server-first, local fallback approach
+  Future<List<Map<String, dynamic>>> getProvincesFromLocal() async {
+    try {
+      final db = await database;
+      final result = await db.query('province', orderBy: 'name');
+      debugPrint('[DB] Found ${result.length} provinces in local database');
+      return result;
+    } catch (e) {
+      debugPrint('[DB] Error fetching provinces from local: $e');
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getDistrictsFromLocal(
+      String province) async {
+    try {
+      final db = await database;
+      final result = await db.query('district',
+          where: 'province = ?', whereArgs: [province], orderBy: 'name');
+      debugPrint(
+          '[DB] Found ${result.length} districts for province "$province" in local database');
+      return result;
+    } catch (e) {
+      debugPrint('[DB] Error fetching districts from local: $e');
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getMunicipalitiesFromLocal(
+      String district) async {
+    try {
+      final db = await database;
+      final result = await db.query('local_municipality',
+          where: 'district = ?', whereArgs: [district], orderBy: 'name');
+      debugPrint(
+          '[DB] Found ${result.length} municipalities for district "$district" in local database');
+      return result;
+    } catch (e) {
+      debugPrint('[DB] Error fetching municipalities from local: $e');
+      return [];
+    }
+  }
+
+  // Sync location tables from server
+  Future<void> syncLocationTables() async {
+    await syncProvinces();
+    await syncDistricts();
+    await syncMunicipalities();
+  }
+
+  Future<void> syncProvinces() async {
+    try {
+      debugPrint('[LOCATION_SYNC] Syncing provinces from server...');
+
+      final response = await http.get(
+        Uri.parse(AppConfig.buildUrl('sync_provinces.php')),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['provinces'] != null) {
+          final db = await database;
+
+          // Clear existing provinces
+          await db.delete('province');
+
+          // Insert new provinces
+          int insertedCount = 0;
+          for (var province in data['provinces']) {
+            await db.insert(
+                'province',
+                {
+                  'name': province['name']?.toString() ?? '',
+                },
+                conflictAlgorithm: ConflictAlgorithm.replace);
+            insertedCount++;
+          }
+
+          debugPrint('[LOCATION_SYNC] ✅ Synced $insertedCount provinces');
+        } else {
+          debugPrint(
+              '[LOCATION_SYNC] ❌ Server returned invalid provinces data');
+        }
+      } else {
+        debugPrint(
+            '[LOCATION_SYNC] ❌ Failed to fetch provinces: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('[LOCATION_SYNC] ❌ Error syncing provinces: $e');
+    }
+  }
+
+  Future<void> syncDistricts() async {
+    try {
+      debugPrint('[LOCATION_SYNC] Syncing districts from server...');
+
+      final response = await http.get(
+        Uri.parse(AppConfig.buildUrl('sync_districts.php')),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['districts'] != null) {
+          final db = await database;
+
+          // Clear existing districts
+          await db.delete('district');
+
+          // Insert new districts
+          int insertedCount = 0;
+          for (var district in data['districts']) {
+            await db.insert(
+                'district',
+                {
+                  'name': district['name']?.toString() ?? '',
+                  'province': district['province']?.toString() ?? '',
+                },
+                conflictAlgorithm: ConflictAlgorithm.replace);
+            insertedCount++;
+          }
+
+          debugPrint('[LOCATION_SYNC] ✅ Synced $insertedCount districts');
+        } else {
+          debugPrint(
+              '[LOCATION_SYNC] ❌ Server returned invalid districts data');
+        }
+      } else {
+        debugPrint(
+            '[LOCATION_SYNC] ❌ Failed to fetch districts: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('[LOCATION_SYNC] ❌ Error syncing districts: $e');
+    }
+  }
+
+  Future<void> syncMunicipalities() async {
+    try {
+      debugPrint('[LOCATION_SYNC] Syncing municipalities from server...');
+
+      final response = await http.get(
+        Uri.parse(AppConfig.buildUrl('sync_municipalities.php')),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['municipalities'] != null) {
+          final db = await database;
+
+          // Clear existing municipalities
+          await db.delete('local_municipality');
+
+          // Insert new municipalities
+          int insertedCount = 0;
+          for (var municipality in data['municipalities']) {
+            await db.insert(
+                'local_municipality',
+                {
+                  'name': municipality['name']?.toString() ?? '',
+                  'district': municipality['district']?.toString() ?? '',
+                },
+                conflictAlgorithm: ConflictAlgorithm.replace);
+            insertedCount++;
+          }
+
+          debugPrint('[LOCATION_SYNC] ✅ Synced $insertedCount municipalities');
+        } else {
+          debugPrint(
+              '[LOCATION_SYNC] ❌ Server returned invalid municipalities data');
+        }
+      } else {
+        debugPrint(
+            '[LOCATION_SYNC] ❌ Failed to fetch municipalities: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('[LOCATION_SYNC] ❌ Error syncing municipalities: $e');
+    }
+  }
+
+  /// Public method to ensure the database has essential data for offline functionality
+  /// Call this during app startup or when database seems empty
+  Future<void> ensureEssentialDataExists() async {
+    final db = await database;
+    await _seedEssentialData(db);
+  }
+
+  /// Ensure specific class data exists for offline access
+  /// Call this when a facilitator logs in with a specific classID
+  Future<void> ensureClassDataExists(
+    String classID, {
+    String? className,
+    String? facilitatorEmail,
+    String? facilitatorName,
+  }) async {
+    debugPrint('[DB_ENSURE] Ensuring class data exists for classID: $classID');
+
+    try {
+      final db = await database;
+
+      // Check if class exists
+      final classExists = await db.query('class',
+          where: _classIdMatchSql, whereArgs: [normalizeClassId(classID)]);
+
+      if (classExists.isEmpty) {
+        debugPrint(
+            '[DB_ENSURE] Class $classID does not exist, creating placeholder...');
+
+        // Create placeholder class
+        await db.insert(
+            'class',
+            {
+              'classID': int.tryParse(classID) ?? classID,
+              'className': className ?? 'Class $classID',
+              'siteID': 999, // Link to default site
+              'project_id': 999, // Link to default project
+            },
+            conflictAlgorithm: ConflictAlgorithm.ignore);
+
+        debugPrint('[DB_ENSURE] ✅ Created placeholder class $classID');
+      }
+
+      // Ensure there's at least one learner for this class (for testing)
+      final learnersExist = await db.query('learnerdetails',
+          where: _classIdMatchSql,
+          whereArgs: [normalizeClassId(classID)],
+          limit: 1);
+
+      if (learnersExist.isEmpty) {
+        debugPrint(
+            '[DB_ENSURE] No learners found for class $classID, creating test learner...');
+
+        // Create test learner for offline functionality
+        await db.insert(
+            'learnerdetails',
+            {
+              'LearnerID': 999999,
+              'Title': 'Mr',
+              'Name': 'Test',
+              'Surname': 'Learner',
+              'IDNumber': '0000000000000',
+              'DateOfBirth': '1990-01-01',
+              'PhoneNumber': '000-000-0000',
+              'Email': 'test.learner@offline.local',
+              'Age': 34,
+              'Gender': 'Male',
+              'classID': int.tryParse(classID) ?? classID,
+              'Race': 'African',
+              'Language': 'English',
+              'Disability': 'None',
+              'CellphoneNumber': '000-000-0000',
+              'AddressLine1': 'Offline Address',
+              'AddressLine2': '',
+              'AddressLine3': '',
+              'PostalCode': '0000',
+              'KinName': 'Test Guardian',
+              'KinRelation': 'Parent',
+              'KinContact': '000-000-0000',
+              'SchoolName': 'Offline School',
+              'SchoolCompletion': 'Grade 12',
+              'SchoolLocation': 'Offline',
+              'SchoolGrade': '12',
+              'profile_image': '',
+              'signature': '',
+              'synced': 0,
+              'Province': 'Gauteng',
+              'District': 'Johannesburg',
+              'Municipality': 'Johannesburg Metro',
+            },
+            conflictAlgorithm: ConflictAlgorithm.ignore);
+
+        debugPrint('[DB_ENSURE] ✅ Created test learner for class $classID');
+      }
+    } catch (e) {
+      debugPrint('[DB_ENSURE] ❌ Error ensuring class data: $e');
+    }
+  }
+
+  /// Specifically ensure learner data exists for class ID 134 (or any specific class)
+  /// This is useful for testing and ensuring offline functionality
+  Future<void> ensureTestLearnersExist(String classID,
+      {int learnerCount = 5}) async {
+    debugPrint(
+        '[DB_ENSURE_LEARNERS] Ensuring $learnerCount test learners exist for classID: $classID');
+
+    try {
+      final db = await database;
+
+      // Check existing learners
+      final existingLearners = await db
+          .query('learnerdetails', where: 'classID = ?', whereArgs: [classID]);
+
+      if (existingLearners.length >= learnerCount) {
+        debugPrint(
+            '[DB_ENSURE_LEARNERS] Already have ${existingLearners.length} learners for class $classID');
+        return;
+      }
+
+      // Create additional test learners
+      final int startingId = 900000 + int.parse(classID);
+      final learnersToCreate = learnerCount - existingLearners.length;
+
+      for (int i = 0; i < learnersToCreate; i++) {
+        final learnerId = startingId + i;
+        final learnerNum = i + 1;
+
+        await db.insert(
+            'learnerdetails',
+            {
+              'LearnerID': learnerId,
+              'Title': i % 2 == 0 ? 'Mr' : 'Ms',
+              'Name': 'TestLearner$learnerNum',
+              'Surname': 'Class$classID',
+              'IDNumber':
+                  '${(1990000000000 + learnerId).toString().padLeft(13, '0')}',
+              'DateOfBirth':
+                  '199${(i % 10).toString()}-${((i % 12) + 1).toString().padLeft(2, '0')}-15',
+              'PhoneNumber':
+                  '011-${(2000000 + learnerId).toString().substring(0, 7)}',
+              'Email': 'testlearner$learnerNum.class$classID@offline.local',
+              'Age': 25 + (i % 15),
+              'Gender': i % 2 == 0 ? 'Male' : 'Female',
+              'classID': int.tryParse(classID) ?? classID,
+              'Race': ['African', 'Coloured', 'Indian', 'White'][i % 4],
+              'Language': ['English', 'Afrikaans', 'Zulu', 'Xhosa'][i % 4],
+              'Disability': 'None',
+              'CellphoneNumber':
+                  '072-${(1000000 + learnerId).toString().substring(0, 7)}',
+              'AddressLine1': '$learnerNum Test Street',
+              'AddressLine2': 'Test Suburb',
+              'AddressLine3': 'Test City',
+              'PostalCode': (1000 + (i * 10)).toString(),
+              'KinName': 'Guardian$learnerNum LastName',
+              'KinRelation': ['Parent', 'Guardian', 'Sibling', 'Spouse'][i % 4],
+              'KinContact':
+                  '011-${(3000000 + learnerId).toString().substring(0, 7)}',
+              'SchoolName': 'Test High School $learnerNum',
+              'SchoolCompletion': [
+                'Grade 10',
+                'Grade 11',
+                'Grade 12',
+                'Matric'
+              ][i % 4],
+              'SchoolLocation': 'Test Town',
+              'SchoolGrade': ['10', '11', '12', '12'][i % 4],
+              'profile_image': '',
+              'signature': '',
+              'synced': 0,
+              'Province': 'Gauteng',
+              'District': 'Johannesburg',
+              'Municipality': 'Johannesburg Metro',
+              'created_at': DateTime.now().toIso8601String(),
+              'updated_at': DateTime.now().toIso8601String(),
+            },
+            conflictAlgorithm: ConflictAlgorithm.ignore);
+      }
+
+      debugPrint(
+          '[DB_ENSURE_LEARNERS] ✅ Created $learnersToCreate test learners for class $classID');
+
+      // Verify total count
+      final totalLearners = await db
+          .query('learnerdetails', where: 'classID = ?', whereArgs: [classID]);
+      debugPrint(
+          '[DB_ENSURE_LEARNERS] Total learners now in class $classID: ${totalLearners.length}');
+    } catch (e) {
+      debugPrint('[DB_ENSURE_LEARNERS] ❌ Error creating test learners: $e');
+    }
   }
 
   // Method to hash passwords
@@ -2338,10 +3087,10 @@ updated_at TIMESTAMP
       WHERE clock_date = ?
       GROUP BY LearnerID
     ) lc ON l.LearnerID = lc.LearnerID 
-    WHERE l.classID = ?
+    WHERE CAST(l.classID AS TEXT) = ?
   ''', [
       currentDate, // Current date in SAST
-      classID
+      normalizeClassId(classID),
     ]);
 
     debugPrint(
@@ -2385,13 +3134,13 @@ updated_at TIMESTAMP
       WHERE clock_date = ?
       GROUP BY LearnerID
     ) lc ON l.LearnerID = lc.LearnerID 
-    WHERE l.classID = ?
+    WHERE CAST(l.classID AS TEXT) = ?
     AND lc.clock_in_time IS NOT NULL
     AND lc.clock_in_time != ''
     ORDER BY lc.clock_in_time DESC
   ''', [
       currentDate, // Current date in SAST
-      classID
+      normalizeClassId(classID),
     ]);
 
     debugPrint(
@@ -4943,8 +5692,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   Future<bool> _checkConnectivity() async {
     try {
-      var connectivityResult = await Connectivity().checkConnectivity();
-      return connectivityResult != ConnectivityResult.none;
+      return await hasNetworkConnectivity();
     } catch (e) {
       print('Error checking connectivity: $e');
       return false;
@@ -5595,19 +6343,34 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   // Sync learners from server to local database
   Future<void> syncLearnersFromServer(String classID) async {
+    debugPrint('[SYNC-CLASS] ========================================');
+    debugPrint('[SYNC-CLASS] METHOD ENTRY - syncLearnersFromServer called');
+    debugPrint('[SYNC-CLASS] classID parameter: $classID');
+    debugPrint('[SYNC-CLASS] ========================================');
+
     try {
-      debugPrint('[SYNC-CLASS] Starting learner sync for classID: $classID');
+      debugPrint(
+          '[SYNC-CLASS] Inside try block - Starting learner sync for classID: $classID');
+
+      // Get auth token for authenticated requests
+      final token = await AppConfig.getAuthToken();
+      if (token == null) {
+        debugPrint('[SYNC-CLASS] No auth token available, cannot sync');
+        throw Exception('Authentication required');
+      }
 
       // Try primary sync endpoint first
       http.Response? response;
       try {
         debugPrint(
             '[SYNC-CLASS] Trying primary endpoint: syncLearnersByClassUrl');
-        response = await http
-            .get(
-              Uri.parse('${AppConfig.syncLearnersByClassUrl}?classID=$classID'),
-            )
-            .timeout(const Duration(seconds: 15));
+        response = await http.get(
+          Uri.parse('${AppConfig.syncLearnersByClassUrl}?classID=$classID'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ).timeout(const Duration(seconds: 15));
 
         if (response.statusCode != 200) {
           debugPrint(
@@ -5623,15 +6386,42 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       // Fallback to alternative endpoint if primary fails
       if (response == null) {
         debugPrint('[SYNC-CLASS] Trying fallback endpoint: getLearnersUrl');
-        response = await http
-            .get(
-              Uri.parse('${AppConfig.getLearnersUrl}?classID=$classID'),
-            )
-            .timeout(const Duration(seconds: 10));
+        response = await http.get(
+          Uri.parse('${AppConfig.getLearnersUrl}?classID=$classID'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ).timeout(const Duration(seconds: 10));
       }
 
       if (response.statusCode == 200) {
-        List<dynamic> learnersDataRaw = json.decode(response.body);
+        final responseData = json.decode(response.body);
+
+        // Handle both response formats:
+        // 1. New format: {success: true, data: [...]}
+        // 2. Old format: [...]
+        List<dynamic> learnersDataRaw;
+        if (responseData is Map && responseData.containsKey('data')) {
+          // New format with success/data wrapper
+          if (responseData['success'] == true) {
+            learnersDataRaw = responseData['data'] as List<dynamic>;
+            debugPrint(
+                '[SYNC-CLASS] Using new response format with ${learnersDataRaw.length} learners');
+          } else {
+            debugPrint(
+                '[SYNC-CLASS] Server returned success=false: ${responseData['error'] ?? 'Unknown error'}');
+            throw Exception(responseData['error'] ?? 'Sync failed');
+          }
+        } else if (responseData is List) {
+          // Old format - direct array
+          learnersDataRaw = responseData;
+          debugPrint('[SYNC-CLASS] Using old response format (direct array)');
+        } else {
+          debugPrint(
+              '[SYNC-CLASS] Unexpected response format: ${responseData.runtimeType}');
+          throw Exception('Unexpected response format from server');
+        }
 
         // Deduplicate learners by LearnerID to prevent duplicate processing
         Map<String, dynamic> uniqueLearnersMap = {};
@@ -7020,6 +7810,36 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       where: 'clocking_id = ?',
       whereArgs: [clockingId],
     );
+  }
+
+  // Update facilitator clock-out time
+  Future<void> updateFacilitatorClockOut({
+    required int facilitatorId,
+    required String clockDate,
+    required String clockOutTime,
+    String? clockOutMethod,
+  }) async {
+    final db = await database;
+
+    // Update the existing record with clock-out information (without clock_out_method for now)
+    final updateData = {
+      'clock_out_time': clockOutTime,
+      'contact_time': DateTime.now().millisecondsSinceEpoch,
+      'synced': 0, // Mark as unsynced
+    };
+
+    // Note: Skipping clock_out_method as it doesn't exist in current schema
+    // TODO: Add clock_out_method column to facilitator_clocking table in future update
+
+    await db.update(
+      'facilitator_clocking',
+      updateData,
+      where: 'facilitator_id = ? AND clock_date = ?',
+      whereArgs: [facilitatorId, clockDate],
+    );
+
+    debugPrint(
+        '[DB_HELPER] Updated facilitator clock-out for facilitator $facilitatorId on $clockDate');
   }
 
   // Check if facilitator has any fingerprints enrolled

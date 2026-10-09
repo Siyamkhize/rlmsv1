@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:collection';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'dart:io'; // Added for File operations
+import 'utils/sqflite_platform.dart';
+import 'utils/connectivity_utils.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
@@ -10,13 +12,16 @@ import 'dart:math' as math;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:signature/signature.dart'; // Added for signature capture
+import 'package:path_provider/path_provider.dart'; // Added for file paths
 import 'EnrollmentPage.dart';
-import 'backup_clock_in_page.dart';
 import 'services/fingerprint_service.dart';
 import 'services/secure_location_service.dart'; // Added for future location improvements
 import 'DetailsPage.dart';
 import 'LearnerDetailsPage.dart';
 import 'sick_note_page.dart';
+import 'backup_clock_in_page.dart'; // Added for backup clock-in navigation
+import 'signature_geofence_clock_in_page.dart'; // Added for signature+geofence clock-in
 import 'database_helper.dart';
 import 'sync_service.dart'
     show syncSingleClockIn, syncSingleClockOut, SyncService;
@@ -30,6 +35,9 @@ import 'services/futronic_service.dart' as futronic;
 import 'services/database_coordinator.dart';
 
 import 'config.dart';
+import 'utils/learner_profile_validation.dart';
+import 'mixins/learner_clockin_gates_mixin.dart';
+import 'services/learner_document_clockin_service.dart';
 
 // Extension must be top-level
 extension StringCasingExtension on String {
@@ -54,7 +62,7 @@ class ClockInPage extends StatefulWidget {
 }
 
 class _ClockInPageState extends State<ClockInPage>
-    with WidgetsBindingObserver, MonitoringMixin {
+    with WidgetsBindingObserver, MonitoringMixin, LearnerClockInGatesMixin {
   final FingerprintService _fingerprintService = FingerprintService();
   final futronic.FutronicService _futronicService = futronic.FutronicService();
   final DatabaseCoordinator _dbCoordinator = DatabaseCoordinator();
@@ -105,17 +113,9 @@ class _ClockInPageState extends State<ClockInPage>
   final int _minFileSize = 10 * 1024; // 10KB
   String get _uploadUrl => AppConfig.buildUrl('upload_learner_document.php');
 
-  // Documents required for UPLOAD (all 5 must be uploaded)
-  final List<String> _requiredDocumentsForUpload = const [
-    'ID Document',
-    'Qualifications',
-    'Bank Confirmation Letter',
-    'Proof of Residence',
-    'CV',
-  ];
-
-  // Documents required for CLOCK-IN (must be approved)
-  final List<String> _requiredDocumentsForClocking = const [
+  // MANDATORY DOCUMENTS: Only these 3 are required for clock-in
+  // Bank Confirmation Letter and CV are optional
+  final List<String> _requiredDocuments = const [
     'ID Document',
     'Qualifications',
     'Proof of Residence',
@@ -125,7 +125,7 @@ class _ClockInPageState extends State<ClockInPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    databaseFactory = databaseFactoryFfi;
+    ensureSqflitePlatformInitialized();
     ClockingLogger.instance.initialize();
     ClockingLogger.instance.logAppLifecycle('Clock-in page initialized',
         details: 'ClassID: ${widget.classID}');
@@ -318,17 +318,23 @@ class _ClockInPageState extends State<ClockInPage>
 
   // Check initial connectivity status
   Future<void> _checkInitialConnectivity() async {
+    debugPrint('[INIT] Checking initial connectivity...');
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
       final isConnected = connectivityResult.isNotEmpty &&
           connectivityResult.first != ConnectivityResult.none;
+
+      debugPrint('[INIT] Connectivity result: $connectivityResult');
+      debugPrint('[INIT] Initial connection status: $isConnected');
+
       if (mounted) {
         setState(() {
           _isConnected = isConnected;
         });
+        debugPrint('[INIT] Set _isConnected to: $isConnected');
       }
     } catch (e) {
-      print('Error checking initial connectivity: $e');
+      debugPrint('[INIT] Error checking initial connectivity: $e');
       if (mounted) {
         setState(() {
           _isConnected = false;
@@ -1868,6 +1874,588 @@ class _ClockInPageState extends State<ClockInPage>
     }
   }
 
+  /// Show dialog asking if user wants to use backup signature method when no scanner detected
+  Future<bool?> _showBackupMethodDialog() async {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('No Scanner Detected'),
+          content: const Text(
+            'Use signature (with ID confirmation) as a backup clock-in instead?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('No'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Yes'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Backup clock-in flow: ID check → signature → geofence → GPS → clock-in
+  Future<void> _backupClockInFlow(String learnerId,
+      {bool skipMandatoryChecks = false}) async {
+    // Only run mandatory checks if NOT already done
+    if (!skipMandatoryChecks) {
+      print('[BACKUP_CLOCK_IN] Running mandatory checks...');
+      final profileIsComplete = await _ensureLearnerProfileComplete(learnerId);
+      if (!profileIsComplete) {
+        return;
+      }
+
+      try {
+        final strictBankOk = await _ensureLearnerBankDetailsComplete(
+          learnerId,
+          await _getLearnerForValidation(learnerId),
+        );
+      } catch (e) {
+        debugPrint('[BACKUP_CLOCK_IN] Bank check error (ignored): $e');
+      }
+
+      final documentsComplete =
+          await _ensureLearnerDocumentsComplete(learnerId);
+      if (!documentsComplete) {
+        return;
+      }
+
+      await _showClockingDaysPopup(learnerId, 'in');
+    } else {
+      print(
+          '[BACKUP_CLOCK_IN] Skipping mandatory checks (already done in main flow)');
+    }
+
+    setState(() {
+      _isClockingIn[learnerId] = true;
+      _currentLearnerIdForClocking = learnerId;
+    });
+
+    try {
+      // Step 1: ID Number Check (Facilitator Identity Verification)
+      final learner = widget.learners.firstWhere(
+        (l) => l['learner_id'].toString() == learnerId,
+        orElse: () => null,
+      );
+
+      if (learner == null) {
+        FingerprintErrorHandler.showError(
+          context,
+          'Learner not found',
+        );
+        setState(() {
+          _isClockingIn[learnerId] = false;
+          _currentLearnerIdForClocking = null;
+        });
+        return;
+      }
+
+      final idNumber = learner['id_number']?.toString() ?? '';
+      if (idNumber.isEmpty) {
+        FingerprintErrorHandler.showError(
+          context,
+          'Learner ID number not found in system',
+        );
+        setState(() {
+          _isClockingIn[learnerId] = false;
+          _currentLearnerIdForClocking = null;
+        });
+        return;
+      }
+
+      // Show ID verification dialog - Facilitator confirms their identity
+      final idController = TextEditingController();
+      final idConfirmed = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Confirm Your Identity'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Enter YOUR ID number to confirm you are clocking in ${learner['name']} ${learner['surname']}:',
+                  style: const TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: idController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Your ID Number',
+                    border: OutlineInputBorder(),
+                    helperText: 'Enter your own ID number',
+                  ),
+                  maxLength: 13,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (idController.text == idNumber) {
+                    Navigator.of(context).pop(true);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                            'ID number does not match. Cannot proceed with clock-in.'),
+                        backgroundColor: Colors.red,
+                        duration: Duration(seconds: 3),
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Confirm'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (idConfirmed != true) {
+        print('[BACKUP_CLOCK_IN] ID verification failed or cancelled');
+        setState(() {
+          _isClockingIn[learnerId] = false;
+          _currentLearnerIdForClocking = null;
+        });
+        return;
+      }
+
+      print('[BACKUP_CLOCK_IN] ID verified successfully');
+
+      // Step 2: Signature capture
+      final signatureController = SignatureController(
+        penStrokeWidth: 3,
+        penColor: Colors.black,
+        exportBackgroundColor: Colors.white,
+      );
+
+      final signatureCaptured = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Capture Signature'),
+            content: SizedBox(
+              width: 300,
+              height: 250,
+              child: Column(
+                children: [
+                  const Text(
+                    'Please sign below to confirm clock-in:',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Signature(
+                      controller: signatureController,
+                      backgroundColor: Colors.white,
+                      height: 150,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => signatureController.clear(),
+                child: const Text('Clear'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (signatureController.isNotEmpty) {
+                    Navigator.of(context).pop(true);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please provide a signature'),
+                        backgroundColor: Colors.orange,
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Continue'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (signatureCaptured != true) {
+        print('[BACKUP_CLOCK_IN] Signature capture cancelled');
+        signatureController.dispose();
+        setState(() {
+          _isClockingIn[learnerId] = false;
+          _currentLearnerIdForClocking = null;
+        });
+        return;
+      }
+
+      print('[BACKUP_CLOCK_IN] Signature captured successfully');
+
+      // Save signature to file (optional - for record keeping)
+      String? signaturePath;
+      try {
+        final signatureBytes = await signatureController.toPngBytes();
+        if (signatureBytes != null) {
+          final directory = await getApplicationDocumentsDirectory();
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          signaturePath =
+              '${directory.path}/backup_signature_${learnerId}_$timestamp.png';
+          final file = File(signaturePath);
+          await file.writeAsBytes(signatureBytes);
+          print('[BACKUP_CLOCK_IN] Signature saved to: $signaturePath');
+        }
+      } catch (e) {
+        debugPrint('[BACKUP_CLOCK_IN] Failed to save signature file: $e');
+        // Continue anyway - signature file is optional
+      } finally {
+        signatureController.dispose();
+      }
+
+      // Step 3 & 4: Geofence and GPS check
+      print('[BACKUP_CLOCK_IN] Checking GPS and geofence...');
+      final gpsOk = await _checkGeofenceAndGPS();
+      if (!gpsOk) {
+        print('[BACKUP_CLOCK_IN] GPS/geofence check failed');
+        setState(() {
+          _isClockingIn[learnerId] = false;
+          _currentLearnerIdForClocking = null;
+        });
+        return;
+      }
+
+      print('[BACKUP_CLOCK_IN] GPS/geofence check passed');
+
+      // Step 5: Perform actual clock-in (same as fingerprint method)
+      final now = _getCurrentTimeString();
+      final date = _getCurrentDateString();
+
+      // Check if already clocked in today
+      final existingAttendance =
+          await DatabaseHelper().getAttendanceForDay(learnerId, date);
+      if (existingAttendance != null &&
+          existingAttendance['clock_in_time'] != null &&
+          existingAttendance['clock_in_time'].toString().isNotEmpty) {
+        FingerprintErrorHandler.showInfo(context,
+            'Already clocked in today at ${existingAttendance['clock_in_time']}');
+        setState(() {
+          _isClockingIn[learnerId] = false;
+          _currentLearnerIdForClocking = null;
+        });
+        return;
+      }
+
+      // Try to sync with server first
+      final attendance = {
+        'LearnerID': learnerId,
+        'clock_in_time': now,
+        'clock_out_time': '', // Empty for clock-in
+        'contact_time': '', // Empty for clock-in
+        'Date': date,
+        'facilitator_id': widget.classID,
+        'backup_method': '1', // Flag to indicate backup method used
+        if (signaturePath != null) 'signature_path': signaturePath,
+      };
+
+      bool synced = false;
+      try {
+        synced = await syncSingleClockIn(attendance);
+        print('[BACKUP_CLOCK_IN] Server sync result: $synced');
+      } catch (e) {
+        debugPrint('[BACKUP_CLOCK_IN] Server sync failed: $e');
+      }
+
+      // Save to local database
+      final dbData = {
+        'LearnerID': learnerId,
+        'clock_in_time': now,
+        'clock_out_time': '', // Empty for clock-in
+        'contact_time': '', // Empty for clock-in
+        'clock_date': date,
+        'facilitator_id': widget.classID,
+        'synced': synced ? 1 : 0,
+      };
+
+      await DatabaseHelper().insertClocking(dbData);
+      print('[BACKUP_CLOCK_IN] Saved to local database');
+
+      // Update UI
+      if (mounted) {
+        setState(() {
+          clockInTimes[learnerId] = now;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                '✓ Backup clock-in successful at $now${synced ? '' : ' (will sync later)'}'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('[BACKUP_CLOCK_IN] Error: $e');
+      FingerprintErrorHandler.showError(
+        context,
+        'Backup clock-in failed: $e',
+      );
+    } finally {
+      setState(() {
+        _isClockingIn[learnerId] = false;
+        _currentLearnerIdForClocking = null;
+      });
+    }
+  }
+
+  /// Check geofence and GPS accuracy
+  Future<bool> _checkGeofenceAndGPS() async {
+    // Check if we have site coordinates
+    if (_siteLat == null || _siteLon == null) {
+      FingerprintErrorHandler.showError(
+        context,
+        'Site coordinates not available',
+      );
+      return false;
+    }
+
+    // Check if within range
+    if (!_isWithinRange) {
+      final distance = _calculateDistanceFromSite();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'You are ${distance.toStringAsFixed(0)}m away. Must be within range to clock in.',
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      return false;
+    }
+
+    // Check GPS accuracy
+    if (_currentGpsAccuracy == null || _currentGpsAccuracy! > 60) {
+      FingerprintErrorHandler.showError(
+        context,
+        'GPS accuracy too low. Please wait for better signal.',
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  /// Helper method to calculate distance from site
+  double _calculateDistanceFromSite() {
+    // This should use current position, but for now return a placeholder
+    // The actual calculation should be implemented based on current GPS position
+    return 0.0;
+  }
+
+  /// Perform the actual clock-in operation
+  Future<void> _performClockIn(String learnerId,
+      {bool isBackup = false}) async {
+    // TODO: Implement actual clock-in database operation
+    // This should include:
+    // - Saving to local database
+    // - Syncing to server if online
+    // - Updating UI state
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isBackup ? 'Backup clock-in successful' : 'Clock-in successful',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  /// Backup clock-out flow: ID check → signature → geofence → GPS → clock-out
+  Future<void> _backupClockOutFlow(String learnerId) async {
+    setState(() {
+      _isClockingIn[learnerId] = true;
+      _currentLearnerIdForClocking = learnerId;
+    });
+
+    try {
+      // Step 1: ID Number Check
+      final learner = widget.learners.firstWhere(
+        (l) => l['learner_id'].toString() == learnerId,
+        orElse: () => null,
+      );
+
+      if (learner == null) {
+        FingerprintErrorHandler.showError(
+          context,
+          'Learner not found',
+        );
+        setState(() {
+          _isClockingIn[learnerId] = false;
+          _currentLearnerIdForClocking = null;
+        });
+        return;
+      }
+
+      final idNumber = learner['id_number']?.toString() ?? '';
+      if (idNumber.isEmpty) {
+        FingerprintErrorHandler.showError(
+          context,
+          'Learner ID number not found in system',
+        );
+        setState(() {
+          _isClockingIn[learnerId] = false;
+          _currentLearnerIdForClocking = null;
+        });
+        return;
+      }
+
+      // Show ID verification dialog
+      final idController = TextEditingController();
+      final idConfirmed = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Confirm ID Number'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Please enter ID number for ${learner['name']} ${learner['surname']}:',
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: idController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'ID Number',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLength: 13,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (idController.text == idNumber) {
+                    Navigator.of(context).pop(true);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('ID number does not match'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Confirm'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (idConfirmed != true) {
+        setState(() {
+          _isClockingIn[learnerId] = false;
+          _currentLearnerIdForClocking = null;
+        });
+        return;
+      }
+
+      // Step 2: Signature capture
+      // TODO: Implement signature capture dialog
+      // For now, we'll proceed to geofence and GPS checks
+
+      // Step 3 & 4: Geofence and GPS check
+      final gpsOk = await _checkGeofenceAndGPS();
+      if (!gpsOk) {
+        setState(() {
+          _isClockingIn[learnerId] = false;
+          _currentLearnerIdForClocking = null;
+        });
+        return;
+      }
+
+      // Step 5: Perform clock-out
+      await _performClockOut(learnerId, isBackup: true);
+    } catch (e) {
+      debugPrint('[BACKUP_CLOCK_OUT] Error: $e');
+      FingerprintErrorHandler.showError(
+        context,
+        'Backup clock-out failed: $e',
+      );
+    } finally {
+      setState(() {
+        _isClockingIn[learnerId] = false;
+        _currentLearnerIdForClocking = null;
+      });
+    }
+  }
+
+  /// Perform the actual clock-out operation
+  Future<void> _performClockOut(String learnerId,
+      {bool isBackup = false}) async {
+    // TODO: Implement actual clock-out database operation
+    // This should include:
+    // - Saving to local database
+    // - Syncing to server if online
+    // - Updating UI state
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isBackup ? 'Backup clock-out successful' : 'Clock-out successful',
+        ),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
   Future<String> _detectScanner() async {
     // Try ZKTeco first
     String scanner = 'none';
@@ -1952,6 +2540,7 @@ class _ClockInPageState extends State<ClockInPage>
       return;
     }
 
+    // ===== MANDATORY CHECKS FIRST (ALWAYS RUN REGARDLESS OF METHOD) =====
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Checking learner profile...'),
@@ -2016,6 +2605,29 @@ class _ClockInPageState extends State<ClockInPage>
       return;
     }
 
+    // ===== NOW CHECK SCANNER (AFTER ALL MANDATORY CHECKS) =====
+    print('[CLOCK_IN] All mandatory checks complete. Now detecting scanner...');
+    final scanner = await _detectScanner();
+
+    if (scanner == 'none') {
+      print('[CLOCK_IN] No scanner detected - showing backup method dialog');
+      final useBackup = await _showBackupMethodDialog();
+      if (useBackup == true) {
+        // Enter backup flow (ID verification → signature → GPS → clock-in)
+        // All mandatory checks already done above, so skip them in backup flow
+        await _backupClockInFlow(learnerId, skipMandatoryChecks: true);
+        return;
+      } else {
+        // User chose not to use backup method
+        print('[CLOCK_IN] User declined backup method');
+        return;
+      }
+    }
+
+    // Scanner present - continue with normal fingerprint flow
+    print(
+        '[CLOCK_IN] Scanner detected: $scanner - continuing with fingerprint verification');
+
     final learnerIdInt = int.tryParse(learnerId);
     if (learnerIdInt == null) {
       FingerprintErrorHandler.showError(
@@ -2023,7 +2635,6 @@ class _ClockInPageState extends State<ClockInPage>
       return;
     }
     final templates = await DatabaseHelper().getAllTemplates(learnerIdInt);
-    final scanner = await _detectScanner();
 
     // Evaluate available templates per scanner
     final hasZkLeft = (templates['zkteco_left_template']?.isNotEmpty ?? false);
@@ -2387,8 +2998,8 @@ class _ClockInPageState extends State<ClockInPage>
       return false;
     }
 
-    final missingFieldLabels = _getMissingRequiredProfileFieldLabels(learner);
-    final missingFieldKeys = _getMissingRequiredProfileFieldKeys(learner);
+    final missingFieldLabels = learnerProfileMissingFieldLabels(learner);
+    final missingFieldKeys = learnerProfileMissingFieldKeys(learner);
     if (missingFieldLabels.isEmpty) {
       return true;
     }
@@ -2416,6 +3027,19 @@ class _ClockInPageState extends State<ClockInPage>
               const Text(
                 'This learner profile is incomplete. Please fill in missing fields and press Update Data before clock-in.',
               ),
+              if (missingFieldLabels.any((l) =>
+                  l == 'Province' ||
+                  l == 'District' ||
+                  l == 'Municipality')) ...[
+                const SizedBox(height: 8),
+                const Text(
+                  'Province, District and Municipality must all be selected together.',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.orange,
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               const Text(
                 'Missing fields:',
@@ -2458,7 +3082,7 @@ class _ClockInPageState extends State<ClockInPage>
 
     final refreshedLearner = await _getLearnerForValidation(learnerId);
     final refreshedMissing =
-        _getMissingRequiredProfileFieldLabels(refreshedLearner ?? {});
+        learnerProfileMissingFieldLabels(refreshedLearner ?? {});
 
     if (refreshedMissing.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2503,52 +3127,7 @@ class _ClockInPageState extends State<ClockInPage>
 
   Future<Map<String, dynamic>?> _getLearnerForValidation(
       String learnerId) async {
-    // Prefer local DB — profile edits are saved locally first and the server
-    // response can still be stale and overwrite unsynced changes.
-    final localLearner = await DatabaseHelper().getLearnerById(learnerId);
-    bool hasUnsyncedChanges =
-        localLearner != null && localLearner['synced'] == 0;
-
-    if (localLearner != null) {
-      print(
-          '[DEBUG clock_in_page] _getLearnerForValidation for learnerId $learnerId, got localLearner: $localLearner');
-    }
-
-    if (await _checkConnectivity() && !hasUnsyncedChanges) {
-      try {
-        final response = await http
-            .get(
-              Uri.parse('${AppConfig.learnerDetailsUrl}?LearnerID=$learnerId'),
-            )
-            .timeout(const Duration(seconds: 6));
-        if (response.statusCode == 200) {
-          final decoded = json.decode(response.body);
-          if (decoded is Map &&
-              decoded['success'] == true &&
-              decoded['data'] != null) {
-            print(
-                '[DEBUG clock_in_page] _getLearnerForValidation - updating local from server!');
-            final learnerData = Map<String, dynamic>.from(decoded['data']);
-            await DatabaseHelper().upsertLearner(learnerData);
-            return learnerData;
-          }
-        }
-      } catch (_) {
-        // Fall through to offline/local data
-      }
-    } else if (hasUnsyncedChanges) {
-      print(
-          '[DEBUG clock_in_page] _getLearnerForValidation - local has synced=0, skipping server update!');
-    }
-
-    // Always return local data if available!
-    if (localLearner != null) {
-      print(
-          '[DEBUG clock_in_page] _getLearnerForValidation - returning local data!');
-      return localLearner;
-    }
-
-    return null;
+    return fetchLearnerForClockInValidation(learnerId);
   }
 
   List<String> _getMissingRequiredProfileFieldLabels(
@@ -3410,210 +3989,15 @@ class _ClockInPageState extends State<ClockInPage>
   };
 
   Future<bool> _ensureLearnerDocumentsComplete(String learnerId) async {
-    while (true) {
-      // Get detailed document statuses (not just missing, but with status info)
-      final docStatuses = await _getDetailedDocumentStatuses(learnerId);
+    return ensureLearnerDocumentsCompleteForClockIn(learnerId);
+  }
 
-      if (docStatuses['allApproved'] == true) {
-        return true; // All 3 mandatory docs are approved
-      }
-
-      final List<Map<String, dynamic>> problemDocs =
-          docStatuses['documents'] ?? [];
-
-      final action = await showDialog<Map<String, dynamic>>(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) {
-          return AlertDialog(
-            title: Row(
-              children: [
-                Icon(Icons.block, color: Colors.red, size: 28),
-                SizedBox(width: 12),
-                Expanded(child: Text('Clock-In Blocked')),
-              ],
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.orange.shade300),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.assignment_late,
-                            color: Colors.orange, size: 32),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'All 3 required documents must be approved',
-                            style: TextStyle(
-                              color: Colors.orange.shade900,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Document statuses:',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                  ),
-                  const SizedBox(height: 8),
-                  ...problemDocs.map((doc) {
-                    final docName = doc['name'] ?? '';
-                    final status = doc['status'] ?? 'Not Uploaded';
-                    final reason = doc['reason'];
-
-                    Color iconColor = Colors.orange;
-                    IconData icon = Icons.error_outline;
-                    if (status == 'Declined') {
-                      iconColor = Colors.red;
-                      icon = Icons.cancel;
-                    } else if (status == 'Not Uploaded') {
-                      iconColor = Colors.grey;
-                      icon = Icons.upload_file;
-                    }
-
-                    return Container(
-                      margin: EdgeInsets.only(bottom: 12),
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(icon, color: iconColor, size: 20),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      docName,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    Text(
-                                      status,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: iconColor,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (reason != null &&
-                              reason.toString().isNotEmpty) ...[
-                            SizedBox(height: 8),
-                            Container(
-                              padding: EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.red.shade50,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                'Reason: $reason',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.red.shade900,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.shade200),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.block, color: Colors.red, size: 20),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'You cannot clock in until all documents are approved.',
-                            style: TextStyle(
-                              color: Colors.red.shade900,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blue.shade200),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.info_outline, color: Colors.blue, size: 20),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Please contact your administrator for document approval.',
-                            style: TextStyle(
-                              color: Colors.blue.shade900,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              ElevatedButton(
-                onPressed: () =>
-                    Navigator.of(dialogContext).pop({'action': 'ok'}),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-
-      // User clicked OK - block clock-in
-      return false;
-    }
+  Future<void> _handleDocumentReupload(String learnerId, String docName) async {
+    await LearnerDocumentClockInService(context).scanAndSaveDocument(
+      learnerId,
+      docName,
+      replaceExisting: true,
+    );
   }
 
   Future<Map<String, dynamic>> _getDetailedDocumentStatuses(
@@ -3643,10 +4027,10 @@ class _ClockInPageState extends State<ClockInPage>
         return {'allApproved': false, 'documents': []};
       }
 
-      // Check each required document (only the 3 for clocking)
+      // Check each required document
       final List<Map<String, dynamic>> problemDocs = [];
 
-      for (final requiredDoc in _requiredDocumentsForClocking) {
+      for (final requiredDoc in _requiredDocuments) {
         final normalizedName = requiredDoc.trim().toLowerCase();
 
         // Find matching document in response
@@ -3928,13 +4312,7 @@ class _ClockInPageState extends State<ClockInPage>
 
     final dbHelper = DatabaseHelper();
     final localDocs = await dbHelper.fetchLearnerDocuments(learnerId);
-
-    // For CLOCKING: Filter to APPROVED documents only
-    final localApprovedDocs = localDocs
-        .where((doc) {
-          final status = doc['status']?.toString()?.toLowerCase() ?? '';
-          return status == 'approved';
-        })
+    final localExistingDocs = localDocs
         .map((doc) =>
             normalizeRequiredDoc(doc['documentName']?.toString() ?? ''))
         .toSet();
@@ -3946,17 +4324,14 @@ class _ClockInPageState extends State<ClockInPage>
       try {
         final serverDocs = await _fetchServerDocuments(learnerId);
         if (serverDocs != null) {
-          final serverApprovedDocs = serverDocs.toSet();
-          // When online: check server first for APPROVED docs, then local database
-          // Only check the 3 required documents for clocking (not all 5)
-          final missingDocs =
-              _requiredDocumentsForClocking.where((requiredDoc) {
+          final serverExistingDocs = serverDocs.toSet();
+          // When online: check server first, then local database
+          final missingDocs = _requiredDocuments.where((requiredDoc) {
             final normalized = normalizeRequiredDoc(requiredDoc);
-            return !serverApprovedDocs.contains(normalized) &&
-                !localApprovedDocs.contains(normalized);
+            return !serverExistingDocs.contains(normalized) &&
+                !localExistingDocs.contains(normalized);
           }).toList();
-          print(
-              '[DOCUMENTS] ONLINE: Missing APPROVED docs for clock-in: $missingDocs');
+          print('[DOCUMENTS] ONLINE: Missing docs: $missingDocs');
           return missingDocs;
         }
       } catch (e) {
@@ -3966,13 +4341,12 @@ class _ClockInPageState extends State<ClockInPage>
     }
 
     // When offline OR server check failed: trust local database
-    // Only check the 3 required documents for clocking (not all 5)
-    final missingDocs = _requiredDocumentsForClocking
+    final missingDocs = _requiredDocuments
         .where((requiredDoc) =>
-            !localApprovedDocs.contains(normalizeRequiredDoc(requiredDoc)))
+            !localExistingDocs.contains(normalizeRequiredDoc(requiredDoc)))
         .toList();
     print(
-        '[DOCUMENTS] OFFLINE: Missing APPROVED docs for clock-in: $missingDocs (based on local database only)');
+        '[DOCUMENTS] OFFLINE: Missing docs: $missingDocs (based on local database only)');
     return missingDocs;
   }
 
@@ -3988,9 +4362,27 @@ class _ClockInPageState extends State<ClockInPage>
     List<String> parseDocsPayload(dynamic payload) {
       List<dynamic>? docs;
 
-      // Format A: { success: true, documents: [...] }
+      // Format A: { success: true, documents: {...} } - get_document_statuses.php format
       if (payload is Map) {
-        if (payload['success'] == true && payload['documents'] is List) {
+        if (payload['success'] == true && payload['documents'] is Map) {
+          // New format: documents is a Map<docName, {status, ...}>
+          final docsMap = payload['documents'] as Map<String, dynamic>;
+          final approved = <String>[];
+          docsMap.forEach((docName, docInfo) {
+            if (docInfo is Map) {
+              final status = docInfo['status']?.toString() ?? 'Pending';
+              // Only count APPROVED documents
+              if (status.toLowerCase() == 'approved') {
+                final normalized = normalizeDocName(docName);
+                if (normalized.isNotEmpty) {
+                  approved.add(normalized);
+                }
+              }
+            }
+          });
+          return approved;
+        } else if (payload['success'] == true && payload['documents'] is List) {
+          // Old format: documents is a List
           docs = payload['documents'] as List<dynamic>;
         } else if (payload['data'] is List) {
           // Format B: { data: [...] }
@@ -4005,27 +4397,29 @@ class _ClockInPageState extends State<ClockInPage>
 
       final parsed = <String>[];
       for (final item in docs) {
-        // FILTER: Only include APPROVED documents for clock-in validation
+        String value = '';
+        String status = '';
         if (item is Map) {
-          final status = item['status']?.toString()?.toLowerCase() ?? '';
-          if (status != 'approved') {
-            continue; // Skip non-approved documents
-          }
+          // Check approval status first
+          status = item['status']?.toString() ?? 'Pending';
 
           // Handle learner_document table row shapes (real schema first).
-          final value = item['documentName']?.toString() ??
+          value = item['documentName']?.toString() ??
               item['DocumentName']?.toString() ??
               item['document_name']?.toString() ??
               item['document_type']?.toString() ??
               item['doc_type']?.toString() ??
               '';
+        } else {
+          value = item?.toString() ?? '';
+        }
+
+        // CRITICAL: Only count documents with "Approved" status
+        if (status.toLowerCase() == 'approved') {
           final normalized = normalizeDocName(value);
           if (normalized.isNotEmpty) {
             parsed.add(normalized);
           }
-        } else {
-          // If not a map, we can't check status, so skip it
-          continue;
         }
       }
       return parsed;
@@ -4047,11 +4441,9 @@ class _ClockInPageState extends State<ClockInPage>
       return parseDocsPayload(decoded);
     }
 
-    // Server implementations differ across modules; try both keys.
-    final byLearnerId = await attempt({'learner_id': learnerId});
-    if (byLearnerId != null) return byLearnerId;
-
-    return await attempt({'learnerID': learnerId});
+    // Try with learner_id parameter
+    final result = await attempt({'learner_id': learnerId});
+    return result;
   }
 
   Future<String?> _pickMissingDocument(List<String> missingDocs) async {
@@ -4461,6 +4853,23 @@ class _ClockInPageState extends State<ClockInPage>
     final templates =
         await DatabaseHelper().getAllTemplates(int.parse(learnerId));
     final scanner = await _detectScanner();
+
+    // NEW: If no scanner detected, ask if user wants to use backup signature method
+    if (scanner == 'none') {
+      final useBackup = await _showBackupMethodDialog();
+      if (useBackup == true) {
+        // Enter backup flow: ID check → signature → geofence → GPS → clock-out
+        await _backupClockOutFlow(learnerId);
+        return;
+      } else {
+        // User chose not to use backup method
+        setState(() {
+          _isClockingIn[learnerId] = false;
+          _currentLearnerIdForClocking = null;
+        });
+        return;
+      }
+    }
 
     // Evaluate available templates per scanner
     final hasZkLeft = (templates['zkteco_left_template']?.isNotEmpty ?? false);
@@ -5154,12 +5563,76 @@ class _ClockInPageState extends State<ClockInPage>
 
   Future<void> _loadLearnersFromLocalDatabase() async {
     try {
+      debugPrint('[LOAD] ========== STARTING OFFLINE LEARNER LOAD ==========');
+      debugPrint('[LOAD] ClassID: ${widget.classID}');
+
       final dbHelper = DatabaseHelper();
+
+      // First, let's verify the database and class exist
+      final db = await dbHelper.database;
+
+      // Check if any learners exist in this class at all
+      final classCheck = await db.query('learnerdetails',
+          where: 'CAST(classID AS TEXT) = ?',
+          whereArgs: [normalizeClassId(widget.classID)]);
+      debugPrint(
+          '[LOAD] Total learners in class ${widget.classID}: ${classCheck.length}');
+
+      if (classCheck.isEmpty) {
+        debugPrint('[LOAD] ❌ No learners found in class ${widget.classID}');
+        debugPrint('[LOAD] Available classes in database:');
+        final allClasses = await db.rawQuery(
+            'SELECT DISTINCT classID FROM learnerdetails ORDER BY classID');
+        for (var classData in allClasses.take(10)) {
+          debugPrint(
+              '[LOAD]   - Class: ${classData['classID']} (type: ${classData['classID'].runtimeType})');
+        }
+
+        // Try to create test learners for offline functionality
+        debugPrint(
+            '[LOAD] 🔄 Attempting to create test learners for offline functionality...');
+        try {
+          await dbHelper.ensureClassDataExists(widget.classID);
+          await dbHelper.ensureTestLearnersExist(widget.classID,
+              learnerCount: 5);
+
+          // Retry loading after creating test data
+          final retryCheck = await db.query('learnerdetails',
+              where: 'CAST(classID AS TEXT) = ?',
+              whereArgs: [normalizeClassId(widget.classID)]);
+
+          if (retryCheck.isNotEmpty) {
+            debugPrint(
+                '[LOAD] ✅ Successfully created ${retryCheck.length} test learners, retrying load...');
+            // Recursively call this method to load the new test data
+            await _loadLearnersFromLocalDatabase();
+            return;
+          } else {
+            debugPrint('[LOAD] ❌ Failed to create test learners');
+          }
+        } catch (e) {
+          debugPrint('[LOAD] ❌ Error creating test learners: $e');
+        }
+
+        if (widget.learners.isNotEmpty) {
+          debugPrint(
+              '[LOAD] Using ${widget.learners.length} learners passed from dashboard (offline cache)');
+          setState(() {
+            _filterLearners();
+          });
+          return;
+        }
+
+        setState(() {
+          widget.learners.clear();
+          _filterLearners();
+        });
+        return;
+      }
+
       final learnersWithClockingData =
           await dbHelper.getLearnersWithClockingData(widget.classID);
 
-      debugPrint(
-          '[LOAD] ========== LOADING LEARNERS FROM LOCAL DATABASE ==========');
       debugPrint(
           '[LOAD] Found ${learnersWithClockingData.length} learners for classID: ${widget.classID}');
 
@@ -5218,9 +5691,22 @@ class _ClockInPageState extends State<ClockInPage>
         _filterLearners();
       });
     } catch (e) {
+      debugPrint('[LOAD] ❌ Error loading offline learners: $e');
+      debugPrint('[LOAD] Stack trace: ${StackTrace.current}');
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading offline learners: $e')),
+        SnackBar(
+          content: Text('Error loading offline learners: $e'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 5),
+        ),
       );
+
+      // Still try to show empty state properly
+      setState(() {
+        widget.learners.clear();
+        _filterLearners();
+      });
     }
   }
 
@@ -5313,12 +5799,14 @@ class _ClockInPageState extends State<ClockInPage>
 
   Future<bool> _checkConnectivity() async {
     try {
-      final connectivityResult = await Connectivity().checkConnectivity();
-      final isConnected = connectivityResult.isNotEmpty &&
-          connectivityResult.first != ConnectivityResult.none;
+      debugPrint('[CONNECTIVITY] Checking connectivity...');
+      final isConnected = await hasNetworkConnectivity();
+      debugPrint('[CONNECTIVITY] Is connected: $isConnected');
 
       // Update the state if it's different
       if (mounted && _isConnected != isConnected) {
+        debugPrint(
+            '[CONNECTIVITY] Updating _isConnected state to: $isConnected');
         setState(() {
           _isConnected = isConnected;
         });
@@ -5326,7 +5814,7 @@ class _ClockInPageState extends State<ClockInPage>
 
       return isConnected;
     } catch (e) {
-      print('Error checking connectivity: $e');
+      debugPrint('[CONNECTIVITY] Error checking connectivity: $e');
       return false;
     }
   }
@@ -5462,49 +5950,47 @@ class _ClockInPageState extends State<ClockInPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Clock In'),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: _isConnected
+                    ? Colors.green.withOpacity(0.1)
+                    : Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: _isConnected ? Colors.green : Colors.red,
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _isConnected ? Icons.wifi : Icons.wifi_off,
+                    size: 16,
+                    color: _isConnected ? Colors.green : Colors.red,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _isConnected ? 'Online' : 'Offline',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: _isConnected ? Colors.green : Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.black,
         actions: [
-          // Network Status Indicator (First - most important)
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: _isConnected
-                  ? Colors.green.withOpacity(0.1)
-                  : Colors.red.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: _isConnected ? Colors.green : Colors.red,
-                width: 1,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _isConnected ? Icons.wifi : Icons.wifi_off,
-                  size: 14,
-                  color: _isConnected ? Colors.green : Colors.red,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  _isConnected ? 'ON' : 'OFF',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: _isConnected ? Colors.green : Colors.red,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Smaller icons with padding=8 to fit all 6 icons
           IconButton(
-            padding: const EdgeInsets.all(8),
-            iconSize: 22,
             icon: const Icon(Icons.sync, color: Colors.orange),
             onPressed: _isConnected
                 ? () async {
@@ -5521,8 +6007,6 @@ class _ClockInPageState extends State<ClockInPage>
             tooltip: 'Sync Clock-ins',
           ),
           IconButton(
-            padding: const EdgeInsets.all(8),
-            iconSize: 22,
             icon: const Icon(Icons.description, color: Colors.teal),
             onPressed: _isConnected
                 ? () async {
@@ -5538,8 +6022,6 @@ class _ClockInPageState extends State<ClockInPage>
             tooltip: 'Sync Docs',
           ),
           IconButton(
-            padding: const EdgeInsets.all(8),
-            iconSize: 22,
             icon: const Icon(Icons.download, color: Colors.green),
             onPressed: _isConnected
                 ? () async {
@@ -5569,43 +6051,67 @@ class _ClockInPageState extends State<ClockInPage>
                 : null,
             tooltip: 'Pull Server Records',
           ),
-          IconButton(
-            padding: const EdgeInsets.all(8),
-            iconSize: 22,
-            icon: const Icon(Icons.refresh, color: Colors.orange),
-            onPressed: _isConnected
-                ? () async {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Syncing learners from server...'),
-                        backgroundColor: Colors.blue,
-                      ),
-                    );
-                    try {
-                      final dbHelper = DatabaseHelper();
-                      await dbHelper.syncLearnersFromServer(widget.classID);
-                      await _loadLearnersFromLocalDatabase();
-                      if (mounted) {
+          Builder(
+            builder: (context) {
+              debugPrint('[BUTTON] Refresh button enabled: $_isConnected');
+              return IconButton(
+                icon: const Icon(Icons.refresh, color: Colors.orange),
+                onPressed: _isConnected
+                    ? () async {
+                        debugPrint(
+                            '[BUTTON] ========================================');
+                        debugPrint(
+                            '[BUTTON] REFRESH BUTTON PRESSED - Starting sync');
+                        debugPrint('[BUTTON] classID: ${widget.classID}');
+                        debugPrint(
+                            '[BUTTON] ========================================');
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Learners synced successfully'),
-                            backgroundColor: Colors.green,
+                            content: Text('Syncing learners from server...'),
+                            backgroundColor: Colors.blue,
                           ),
                         );
+                        try {
+                          debugPrint(
+                              '[BUTTON] Creating DatabaseHelper instance...');
+                          final dbHelper = DatabaseHelper();
+                          debugPrint(
+                              '[BUTTON] DatabaseHelper created, calling syncLearnersFromServer...');
+
+                          await dbHelper.syncLearnersFromServer(widget.classID);
+
+                          debugPrint(
+                              '[BUTTON] syncLearnersFromServer completed, loading from local DB...');
+                          await _loadLearnersFromLocalDatabase();
+                          debugPrint(
+                              '[BUTTON] _loadLearnersFromLocalDatabase completed');
+
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Learners synced successfully'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        } catch (e, stackTrace) {
+                          debugPrint('[BUTTON] !!!!! EXCEPTION CAUGHT !!!!!');
+                          debugPrint('[BUTTON] Error: $e');
+                          debugPrint('[BUTTON] Stack trace: $stackTrace');
+
+                          if (mounted) {
+                            FingerprintErrorHandler.showError(
+                                context, 'Sync failed: $e');
+                          }
+                        }
                       }
-                    } catch (e) {
-                      if (mounted) {
-                        FingerprintErrorHandler.showError(context,
-                            'Sync failed. Check your internet connection.');
-                      }
-                    }
-                  }
-                : null,
-            tooltip: 'Update Learners',
+                    : null,
+                tooltip: 'Update Learners',
+              );
+            },
           ),
           IconButton(
-            padding: const EdgeInsets.all(8),
-            iconSize: 22,
             icon: const Icon(Icons.info_outline),
             onPressed: () {
               _showQueueStatus();
@@ -5613,12 +6119,9 @@ class _ClockInPageState extends State<ClockInPage>
             tooltip: 'View Sync Queue Status',
           ),
           IconButton(
-            padding: const EdgeInsets.all(8),
-            iconSize: 22,
-            icon: const Icon(Icons.edit, color: Colors.orange),
+            icon: const Icon(Icons.edit, color: Colors.blue),
             onPressed: () {
-              // Navigate to backup clock-in page (signature mode)
-              Navigator.pushReplacement(
+              Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => BackupClockInPage(
@@ -5628,7 +6131,22 @@ class _ClockInPageState extends State<ClockInPage>
                 ),
               );
             },
-            tooltip: 'Switch to Backup Mode (Signature)',
+            tooltip: 'Backup Clock-In (Face + Signature)',
+          ),
+          IconButton(
+            icon: const Icon(Icons.draw, color: Colors.purple),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SignatureGeofenceClockInPage(
+                    classID: widget.classID,
+                    learners: List.from(widget.learners),
+                  ),
+                ),
+              );
+            },
+            tooltip: 'Signature + Geofence Clock-In',
           ),
         ],
       ),

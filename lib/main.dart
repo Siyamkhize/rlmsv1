@@ -364,9 +364,16 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _checkDatabase() async {
     try {
       bool isConnected = await dbHelper.isDatabaseConnected();
+
+      // Ensure essential data exists for offline functionality
+      if (isConnected) {
+        await dbHelper.ensureEssentialDataExists();
+        debugPrint('[STARTUP] Essential data seeding completed');
+      }
+
       setState(() {
         _databaseStatus = isConnected
-            ? 'Connected to SQLite Database'
+            ? 'Connected to SQLite Database (with offline data)'
             : 'Not connected to SQLite Database';
       });
     } catch (e) {
@@ -517,6 +524,12 @@ class _LoginPageState extends State<LoginPage> {
           // Sync learners to local database if we have a classID
           if (classID.isNotEmpty) {
             try {
+              // Ensure class data exists for offline functionality
+              await dbHelper.ensureClassDataExists(classID,
+                  className: null, // Will use default
+                  facilitatorEmail: username,
+                  facilitatorName: null);
+
               await dbHelper.syncLearnersFromServer(classID);
               print('Successfully synced learners for classID: $classID');
             } catch (e) {
@@ -590,6 +603,12 @@ class _LoginPageState extends State<LoginPage> {
           // Try to sync learners from server if we have a classID
           if (classID.isNotEmpty) {
             try {
+              // Ensure class data exists for offline functionality
+              await dbHelper.ensureClassDataExists(classID,
+                  className: null, // Will use default
+                  facilitatorEmail: username,
+                  facilitatorName: null);
+
               await dbHelper.syncLearnersFromServer(classID);
               print('Successfully synced learners for classID: $classID');
             } catch (e) {

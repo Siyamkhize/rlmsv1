@@ -7,23 +7,69 @@
  * 
  * Security Features:
  * - Bearer token authentication required
- * - Rate limiting
+ * - Global and endpoint-specific rate limiting
  * - File validation (PNG for signatures, JPEG for photos)
  * - File size limits
+ * - Request monitoring and logging
  * 
  * @security CRITICAL - Authentication required
  */
 
-require_once 'require_auth.php';
 require_once 'connection.php';
+require_once 'require_auth.php';
+require_once 'security_middleware.php';
 
 header('Content-Type: application/json');
 
-// SECURITY: Require authentication
-$user = requireAuth($conn);
+// Initialize request security and logging  
+$log_id = 0;
+if (function_exists('initializeRequestSecurity') && isset($conn)) {
+    $log_id = initializeRequestSecurity($conn, 'upload_clocking_evidence_images');
+}
 
-// SECURITY: Apply rate limiting
-applyRateLimit($conn, 'upload_clocking_evidence');
+// Enable detailed logging for troubleshooting
+error_log("[UPLOAD_EVIDENCE] === New upload request received ===");
+error_log("[UPLOAD_EVIDENCE] Request method: " . $_SERVER['REQUEST_METHOD']);
+error_log("[UPLOAD_EVIDENCE] Content-Type: " . ($_SERVER['CONTENT_TYPE'] ?? 'not set'));
+error_log("[UPLOAD_EVIDENCE] Authorization header: " . (isset($_SERVER['HTTP_AUTHORIZATION']) ? 'present' : 'missing'));
+error_log("[UPLOAD_EVIDENCE] FILES array: " . json_encode(array_keys($_FILES)));
+error_log("[UPLOAD_EVIDENCE] POST fields: " . json_encode(array_keys($_POST)));
+
+// SECURITY: Require authentication
+try {
+    if (function_exists('requireAuth') && isset($conn)) {
+        $user = requireAuth($conn);
+        error_log("[UPLOAD_EVIDENCE] ✅ Authentication successful - User ID: " . $user['user_id']);
+    }
+} catch (Exception $e) {
+    error_log("[UPLOAD_EVIDENCE] ❌ Authentication failed: " . $e->getMessage());
+    
+    // Log completion with error
+    if (function_exists('log_request_completion') && isset($conn)) {
+        log_request_completion($conn, $log_id, 401, 'error', 'Authentication failed: ' . $e->getMessage());
+    }
+    
+    http_response_code(401);
+    echo json_encode(['error' => 'Authentication required', 'message' => $e->getMessage()]);
+    exit;
+}
+
+// SECURITY: Apply endpoint-specific rate limiting
+try {
+    if (function_exists('applyRateLimit') && isset($conn)) {
+        applyRateLimit($conn, 'upload_clocking_evidence');
+    }
+    error_log("[UPLOAD_EVIDENCE] ✅ Rate limit check passed");
+} catch (Exception $e) {
+    error_log("[UPLOAD_EVIDENCE] ❌ Rate limit exceeded: " . $e->getMessage());
+    
+    // Log completion with error
+    if (function_exists('log_request_completion') && isset($conn)) {
+        log_request_completion($conn, $log_id, 429, 'error', 'Rate limit exceeded: ' . $e->getMessage());
+    }
+    
+    throw $e;
+}
 
 // Initialize response
 $response = [
@@ -31,22 +77,38 @@ $response = [
     'uploaded' => []
 ];
 
+error_log("[UPLOAD_EVIDENCE] Initializing upload process...");
+
 // Create directories with secure permissions (inside mobile/)
 $signatures_dir = 'clocking_evidence/signatures/';
 $photos_dir = 'clocking_evidence/face_photos/';
 
 if (!is_dir($signatures_dir)) {
     mkdir($signatures_dir, 0755, true);
+    error_log("[UPLOAD_EVIDENCE] Created signatures directory");
 }
 if (!is_dir($photos_dir)) {
     mkdir($photos_dir, 0755, true);
+    error_log("[UPLOAD_EVIDENCE] Created face photos directory");
 }
+
+error_log("[UPLOAD_EVIDENCE] Signatures dir exists: " . (is_dir($signatures_dir) ? 'YES' : 'NO'));
+error_log("[UPLOAD_EVIDENCE] Photos dir exists: " . (is_dir($photos_dir) ? 'YES' : 'NO'));
+error_log("[UPLOAD_EVIDENCE] Signatures dir writable: " . (is_writable($signatures_dir) ? 'YES' : 'NO'));
+error_log("[UPLOAD_EVIDENCE] Photos dir writable: " . (is_writable($photos_dir) ? 'YES' : 'NO'));
 
 // Process signature upload (if provided)
 if (isset($_FILES['signature']) && $_FILES['signature']['error'] === UPLOAD_ERR_OK) {
+    error_log("[UPLOAD_EVIDENCE] Processing signature upload...");
     $signature = $_FILES['signature'];
     $learner_id = $_POST['learner_id'] ?? '';
     $suffix = $_POST['signature_suffix'] ?? 'in';
+    
+    error_log("[UPLOAD_EVIDENCE] Signature file name: " . $signature['name']);
+    error_log("[UPLOAD_EVIDENCE] Signature file size: " . $signature['size']);
+    error_log("[UPLOAD_EVIDENCE] Signature file type: " . $signature['type']);
+    error_log("[UPLOAD_EVIDENCE] Learner ID: $learner_id");
+    error_log("[UPLOAD_EVIDENCE] Suffix: $suffix");
     
     // Validate PNG signature
     $validation = validate_file_upload($signature, [
@@ -70,15 +132,27 @@ if (isset($_FILES['signature']) && $_FILES['signature']['error'] === UPLOAD_ERR_
     
     $signature_path = $signatures_dir . $signature_filename;
     
+    error_log("[UPLOAD_EVIDENCE] Attempting to move uploaded file to: $signature_path");
+    
     if (move_uploaded_file($signature['tmp_name'], $signature_path)) {
         chmod($signature_path, 0644);
+        error_log("[UPLOAD_EVIDENCE] ✅ Signature file saved successfully: $signature_path");
         $response['uploaded'][] = [
             'type' => 'signature',
             'filename' => $signature_filename,
             'path' => $signature_path
         ];
     } else {
+        error_log("[UPLOAD_EVIDENCE] ❌ Failed to move signature file");
+        error_log("[UPLOAD_EVIDENCE] Source: " . $signature['tmp_name']);
+        error_log("[UPLOAD_EVIDENCE] Destination: " . $signature_path);
         sendError('Failed to save signature file', 500, 'SIGNATURE_SAVE_ERROR');
+    }
+} else {
+    if (isset($_FILES['signature'])) {
+        error_log("[UPLOAD_EVIDENCE] Signature upload error code: " . $_FILES['signature']['error']);
+    } else {
+        error_log("[UPLOAD_EVIDENCE] No signature file in request");
     }
 }
 
@@ -135,6 +209,11 @@ log_security_event('clocking_evidence_uploaded', 'Clocking evidence images uploa
 ]);
 
 sendSuccess($response, 'Files uploaded successfully');
+
+// Log successful completion
+if (function_exists('log_request_completion') && isset($conn)) {
+    log_request_completion($conn, $log_id, 200, 'success', 'Files uploaded successfully');
+}
 
 $conn->close();
 ?>

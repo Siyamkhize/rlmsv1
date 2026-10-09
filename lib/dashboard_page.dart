@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'LearnerListPage.dart';
@@ -8,6 +9,7 @@ import 'FacilitatorProfile.dart';
 import 'MaterialForm.dart';
 import 'clock_in_page.dart';
 import 'backup_clock_in_page.dart';
+import 'signature_geofence_clock_in_page.dart';
 import 'contact_less.dart';
 import 'services/fingerprint_service.dart';
 import 'sync_service.dart' show syncSingleClockIn, syncSingleClockOut;
@@ -2513,14 +2515,31 @@ class _DashboardPageState extends State<DashboardPage> {
                         },
                       ),
                       TextButton.icon(
-                        icon: const Icon(Icons.edit, color: Colors.orange),
-                        label: const Text('Signature (Backup)'),
+                        icon: const Icon(Icons.face, color: Colors.orange),
+                        label: const Text('Face'),
                         onPressed: () {
                           Navigator.pop(context);
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => BackupClockInPage(
+                                classID: widget.classID,
+                                learners: currentLearners,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      TextButton.icon(
+                        icon: const Icon(Icons.edit, color: Colors.purple),
+                        label: const Text('Signature'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  SignatureGeofenceClockInPage(
                                 classID: widget.classID,
                                 learners: currentLearners,
                               ),

@@ -10,7 +10,10 @@ class FaceVerificationRepository {
   Map<String, dynamic> _parseJsonBody(String body, String operation) {
     final trimmed = body.trim();
     if (trimmed.isEmpty) {
-      return {'success': false, 'message': 'Empty server response ($operation)'};
+      return {
+        'success': false,
+        'message': 'Empty server response ($operation)'
+      };
     }
 
     try {
@@ -222,6 +225,48 @@ class FaceVerificationRepository {
       return 'Flutter App v1.0.7'; // TODO: Get actual device info from device_info_plus
     } catch (e) {
       return 'Unknown device';
+    }
+  }
+
+  /// Delete a learner's face enrollment (for re-enrollment)
+  ///
+  /// Parameters:
+  /// - learnerId: Learner's ID
+  ///
+  /// Returns:
+  /// - success: Whether deletion succeeded
+  /// - message: Success or error message
+  Future<Map<String, dynamic>> deleteFaceEnrollment(int learnerId) async {
+    try {
+      print(
+          '🔷 FaceVerificationRepository: Deleting face enrollment for learner $learnerId');
+
+      final url = AppConfig.buildUrl('delete_face_enrollment.php');
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'learner_id': learnerId}),
+      );
+
+      print('🔷 Delete enrollment response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = _parseJsonBody(response.body, 'delete enrollment');
+        print('🔷 Delete enrollment response: $data');
+        return data;
+      } else {
+        return {
+          'success': false,
+          'message': 'Server error: HTTP ${response.statusCode}',
+        };
+      }
+    } catch (e, stackTrace) {
+      print('❌ Error deleting face enrollment: $e');
+      print('Stack trace: $stackTrace');
+      return {
+        'success': false,
+        'message': 'Network error: $e',
+      };
     }
   }
 }

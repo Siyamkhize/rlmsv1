@@ -2,98 +2,99 @@
 /**
  * Setup Clocking Evidence Folders
  * 
- * Creates the directory structure for storing clocking evidence images
- * Run this script once to create the necessary folders
+ * Creates the directory structure for backup clock-in evidence:
+ * - mobile/clocking_evidence/signatures/
+ * - mobile/clocking_evidence/face_photos/
  * 
- * Usage: Navigate to https://yoursite.com/mobile/setup_clocking_evidence_folders.php
+ * Run this once to set up the folders with proper permissions.
  */
 
 header('Content-Type: application/json');
 
-$results = [];
-$errors = [];
+$base_dir = __DIR__ . '/clocking_evidence';
+$signatures_dir = $base_dir . '/signatures';
+$face_photos_dir = $base_dir . '/face_photos';
 
-// Define directories to create (inside mobile/ directory)
-$base_path = __DIR__ . '/'; // Current directory (mobile/)
-$directories = [
-    'clocking_evidence' => $base_path . 'clocking_evidence/',
-    'signatures' => $base_path . 'clocking_evidence/signatures/',
-    'face_photos' => $base_path . 'clocking_evidence/face_photos/'
+$results = [
+    'success' => true,
+    'folders_created' => [],
+    'folders_existed' => [],
+    'errors' => []
 ];
 
-// Create each directory
-foreach ($directories as $name => $path) {
-    if (is_dir($path)) {
-        $results[$name] = [
-            'status' => 'exists',
-            'path' => realpath($path),
-            'writable' => is_writable($path)
-        ];
+// Create base directory
+if (!is_dir($base_dir)) {
+    if (mkdir($base_dir, 0755, true)) {
+        $results['folders_created'][] = 'clocking_evidence/';
+        chmod($base_dir, 0755);
     } else {
-        if (mkdir($path, 0755, true)) {
-            chmod($path, 0755); // Ensure correct permissions
-            $results[$name] = [
-                'status' => 'created',
-                'path' => realpath($path),
-                'writable' => is_writable($path)
-            ];
-        } else {
-            $errors[$name] = "Failed to create directory: $path";
-            $results[$name] = [
-                'status' => 'error',
-                'path' => $path,
-                'writable' => false
-            ];
-        }
+        $results['success'] = false;
+        $results['errors'][] = 'Failed to create base directory: clocking_evidence/';
     }
+} else {
+    $results['folders_existed'][] = 'clocking_evidence/';
 }
 
-// Create a test file to verify write permissions
-$test_file = $base_path . 'clocking_evidence/test.txt';
-$can_write = false;
-if (file_put_contents($test_file, 'Test write ' . date('Y-m-d H:i:s'))) {
-    $can_write = true;
-    unlink($test_file); // Clean up test file
+// Create signatures subdirectory
+if (!is_dir($signatures_dir)) {
+    if (mkdir($signatures_dir, 0755, true)) {
+        $results['folders_created'][] = 'clocking_evidence/signatures/';
+        chmod($signatures_dir, 0755);
+    } else {
+        $results['success'] = false;
+        $results['errors'][] = 'Failed to create signatures directory';
+    }
+} else {
+    $results['folders_existed'][] = 'clocking_evidence/signatures/';
 }
 
-// Output results
-$response = [
-    'success' => empty($errors),
-    'timestamp' => date('Y-m-d H:i:s'),
-    'directories' => $results,
-    'write_test' => $can_write,
-    'errors' => $errors
+// Create face_photos subdirectory
+if (!is_dir($face_photos_dir)) {
+    if (mkdir($face_photos_dir, 0755, true)) {
+        $results['folders_created'][] = 'clocking_evidence/face_photos/';
+        chmod($face_photos_dir, 0755);
+    } else {
+        $results['success'] = false;
+        $results['errors'][] = 'Failed to create face_photos directory';
+    }
+} else {
+    $results['folders_existed'][] = 'clocking_evidence/face_photos/';
+}
+
+// Create .htaccess to protect the evidence files
+$htaccess_content = <<<HTACCESS
+# Protect clocking evidence files
+# Only allow access through the app (via PHP scripts)
+
+# Deny direct access to all files
+<Files "*">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# Allow access to index files
+<Files "index.php">
+    Allow from all
+</Files>
+HTACCESS;
+
+$htaccess_file = $base_dir . '/.htaccess';
+if (!file_exists($htaccess_file)) {
+    if (file_put_contents($htaccess_file, $htaccess_content)) {
+        $results['folders_created'][] = 'clocking_evidence/.htaccess (security)';
+        chmod($htaccess_file, 0644);
+    } else {
+        $results['errors'][] = 'Failed to create .htaccess security file';
+    }
+} else {
+    $results['folders_existed'][] = 'clocking_evidence/.htaccess';
+}
+
+// Check permissions
+$results['permissions'] = [
+    'base_dir' => is_writable($base_dir) ? 'writable' : 'NOT WRITABLE',
+    'signatures_dir' => is_writable($signatures_dir) ? 'writable' : 'NOT WRITABLE',
+    'face_photos_dir' => is_writable($face_photos_dir) ? 'writable' : 'NOT WRITABLE'
 ];
 
-if ($response['success']) {
-    $response['message'] = 'All directories created successfully and are writable!';
-} else {
-    $response['message'] = 'Some directories could not be created. Check errors for details.';
-}
-
-// Pretty print the JSON
-echo json_encode($response, JSON_PRETTY_PRINT);
-
-// Also create an index.html in each directory to prevent directory listing
-$index_content = '<!DOCTYPE html>
-<html>
-<head>
-    <title>403 Forbidden</title>
-</head>
-<body>
-    <h1>Access Denied</h1>
-    <p>You do not have permission to access this directory.</p>
-</body>
-</html>';
-
-foreach ($directories as $name => $path) {
-    if (is_dir($path)) {
-        $index_file = $path . 'index.html';
-        if (!file_exists($index_file)) {
-            file_put_contents($index_file, $index_content);
-        }
-    }
-}
-
-echo "\n\n<!-- Security index files created to prevent directory browsing -->";
-?>
+echo json_encode($results, JSON_PRETTY_PRINT);

@@ -70,7 +70,7 @@ class AppConfig {
       '$baseUrl/download_agreement_pdf.php';
   static String get uploadImageUrl => '$baseUrl/upload_image.php';
   static String get learnerImagesUrl => '$baseUrl/learnerImages';
-  static String get signaturesUrl => '$baseUrl/signatures';
+  static String get signaturesUrl => '$baseUrl/save_manual_clocking_images.php';
   static String get getSdpUrl => '$baseUrl/get_sdp.php';
   static String get getSdpProjectsUrl => '$baseUrl/get_sdp_projects.php';
   static String get getSdpSitesUrl => '$baseUrl/get_sdp_sites.php';
@@ -128,6 +128,8 @@ class AppConfig {
       '$baseUrl/get_arpl_toolkit_data.php'; // Use unified endpoint for plumber
   static String get getArplSaveToolkitDataUrl =>
       '$baseUrl/save_arpl_appendix_f_assessment.php';
+  static String get saveModerationJudgementUrl =>
+      '$baseUrl/save_moderation_judgement.php';
 
   // Bricklayer Gap Closure Endpoints
   static String get getBricklayerGapUnitStandardsUrl =>
@@ -162,6 +164,16 @@ class AppConfig {
   static String get addLearnerUrl => '$baseUrl/add_learner.php';
   static String get getAttendanceUrl => '$baseUrl/get_attendance.php';
   static String get checkBankDetailsUrl => '$baseUrl/check_bank_details.php';
+
+  // Site Admin / Workplace Management Endpoints
+  static String get getSiteAdminWorkplacesUrl =>
+      '$baseUrl/get_site_admin_workplaces.php';
+  static String get getWorkplaceAttendanceUrl =>
+      '$baseUrl/get_workplace_attendance.php';
+  static String get getWorkplaceLearnersForClockingUrl =>
+      '$baseUrl/get_workplace_learners_for_clocking.php';
+  static String get saveWorkplaceClockingUrl =>
+      '$baseUrl/save_workplace_clocking.php';
 
   // Logistics Management Endpoints
   static String get getLogisticsSitesUrl => '$baseUrl/get_logistics_sites.php';

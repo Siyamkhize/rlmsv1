@@ -481,14 +481,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         return 'Date of Birth';
       case 'Title':
         return 'Title';
-      case 'Grade':
-        return 'School Grade';
       case 'SchoolGrade':
         return 'School Grade';
-      case 'EducationLevel':
-        return 'Education Level';
-      case 'Qualification':
-        return 'Qualification';
       case 'SchoolLocation':
         return 'School Location';
       case 'SchoolName':
@@ -503,8 +497,6 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         return 'Next of Kin Relation';
       case 'School':
         return 'School';
-      case 'Institution':
-        return 'Institution';
       default:
         return fieldName;
     }
@@ -865,8 +857,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     setState(() {
       _provinces = List<String>.from(_fallbackSouthAfricanProvinces);
     });
-    print(
-        '[LOCATION] Using fallback provinces (${_provinces.length} items)');
+    print('[LOCATION] Using fallback provinces (${_provinces.length} items)');
   }
 
   Future<void> _loadLocationCascadesIfNeeded() async {
@@ -884,95 +875,258 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
   // Fetch location data methods
   Future<void> _fetchProvinces() async {
-    print('[LOCATION] _fetchProvinces called');
+    print('[LOCATION] _fetchProvinces called (server-first approach)');
+
     try {
+      // Try server first
       final url = AppConfig.buildUrl('fetch_provinces.php');
-      print('[LOCATION] Fetching from: $url');
+      print('[LOCATION] Fetching from server: $url');
+
       final response = await http.get(
         Uri.parse(url),
-      );
-      print('[LOCATION] Response status: ${response.statusCode}');
-      print('[LOCATION] Response body: ${response.body}');
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      print('[LOCATION] Server response status: ${response.statusCode}');
+      print('[LOCATION] Server response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         print('[LOCATION] Decoded data: $data');
-        if (data['success'] == true) {
-          setState(() {
-            _provinces = List<String>.from(
-              data['data']['provinces'].map((p) => p['name'] as String),
-            );
-          });
-          print('[LOCATION] Provinces set: $_provinces');
-        } else {
-          print('[LOCATION] API returned success=false');
+
+        if (data['success'] == true && data['data']?['provinces'] != null) {
+          final provincesData = data['data']['provinces'];
+          if (provincesData is List && provincesData.isNotEmpty) {
+            setState(() {
+              _provinces = List<String>.from(
+                provincesData.map((p) => p['name'] as String),
+              );
+            });
+            print(
+                '[LOCATION] ✅ Server provinces loaded: $_provinces (${_provinces.length} items)');
+            return; // Success - no need for fallback
+          }
         }
+        print('[LOCATION] ⚠️ Server returned invalid provinces data');
       } else {
-        print('[LOCATION] HTTP error: ${response.statusCode}');
+        print('[LOCATION] ⚠️ Server returned HTTP ${response.statusCode}');
       }
     } catch (e) {
-      print('[LOCATION] Error fetching provinces: $e');
-    } finally {
-      _ensureFallbackProvincesLoaded();
+      print('[LOCATION] ⚠️ Server request failed: $e');
     }
+
+    // Server failed - try local database fallback
+    try {
+      print('[LOCATION] 🔄 Trying local database fallback...');
+      final localProvinces = await DatabaseHelper().getProvincesFromLocal();
+
+      if (localProvinces.isNotEmpty) {
+        setState(() {
+          _provinces = List<String>.from(
+            localProvinces.map((p) => p['name'] as String),
+          );
+        });
+        print(
+            '[LOCATION] ✅ Local database provinces loaded: $_provinces (${_provinces.length} items)');
+        return; // Success with local data
+      } else {
+        print('[LOCATION] ⚠️ Local database has no provinces');
+      }
+    } catch (e) {
+      print('[LOCATION] ⚠️ Local database fallback failed: $e');
+    }
+
+    // Both server and local failed - use hardcoded fallback
+    print('[LOCATION] 🔄 Using hardcoded fallback provinces...');
+    _ensureFallbackProvincesLoaded();
   }
 
   Future<void> _fetchDistricts(String province) async {
-    print('[LOCATION] _fetchDistricts called for province: $province');
+    print(
+        '[LOCATION] _fetchDistricts called for province: $province (server-first approach)');
+
+    if (province.trim().isEmpty) {
+      print('[LOCATION] Province is empty, skipping districts fetch');
+      setState(() {
+        _districts = [];
+        _municipalities = [];
+      });
+      return;
+    }
+
     try {
+      // Try server first
       final url = AppConfig.buildUrl('fetch_districts.php',
           queryParams: {'province': province});
-      print('[LOCATION] Fetching from: $url');
+      print('[LOCATION] Fetching from server: $url');
+
       final response = await http.get(
         Uri.parse(url),
-      );
-      print('[LOCATION] Districts response status: ${response.statusCode}');
-      print('[LOCATION] Districts response body: ${response.body}');
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      print('[LOCATION] Server response status: ${response.statusCode}');
+      print('[LOCATION] Server response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print('[LOCATION] Decoded data: $data');
+
         if (data['success'] == true) {
-          setState(() {
-            _districts = List<String>.from(
-              data['data']['districts'].map((d) => d['name'] as String),
-            );
-            _municipalities = []; // Reset municipalities when district changes
-          });
-          print('[LOCATION] Districts set: $_districts');
+          final districtsData = data['data']?['districts'];
+          if (districtsData != null &&
+              districtsData is List &&
+              districtsData.isNotEmpty) {
+            setState(() {
+              _districts = List<String>.from(
+                districtsData.map((d) => d['name'] as String),
+              );
+              _municipalities =
+                  []; // Reset municipalities when province changes
+            });
+            print(
+                '[LOCATION] ✅ Server districts loaded: $_districts (${_districts.length} items)');
+            return; // Success - no need for fallback
+          }
         }
+        print(
+            '[LOCATION] ⚠️ Server returned invalid districts data: ${data['message'] ?? 'No message'}');
+      } else {
+        print(
+            '[LOCATION] ⚠️ Server returned HTTP ${response.statusCode}: ${response.body}');
       }
     } catch (e) {
-      print('[LOCATION] Error fetching districts: $e');
+      print('[LOCATION] ⚠️ Server request failed: $e');
+      print('[LOCATION] Stack trace: ${StackTrace.current}');
     }
+
+    // Server failed - try local database fallback
+    try {
+      print(
+          '[LOCATION] 🔄 Trying local database fallback for province: $province');
+      final localDistricts =
+          await DatabaseHelper().getDistrictsFromLocal(province);
+
+      if (localDistricts.isNotEmpty) {
+        setState(() {
+          _districts = List<String>.from(
+            localDistricts.map((d) => d['name'] as String),
+          );
+          _municipalities = []; // Reset municipalities when province changes
+        });
+        print(
+            '[LOCATION] ✅ Local database districts loaded: $_districts (${_districts.length} items)');
+        return; // Success with local data
+      } else {
+        print(
+            '[LOCATION] ⚠️ Local database has no districts for province: $province');
+      }
+    } catch (e) {
+      print('[LOCATION] ⚠️ Local database fallback failed: $e');
+    }
+
+    // Both server and local failed - clear districts
+    print('[LOCATION] ❌ No districts found for province: $province');
+    setState(() {
+      _districts = [];
+      _municipalities = [];
+    });
   }
 
   Future<void> _fetchMunicipalities(String district) async {
-    print('[LOCATION] _fetchMunicipalities called for district: $district');
+    print(
+        '[LOCATION] _fetchMunicipalities called for district: $district (server-first approach)');
+
+    if (district.trim().isEmpty) {
+      print('[LOCATION] District is empty, skipping municipalities fetch');
+      setState(() {
+        _municipalities = [];
+      });
+      return;
+    }
+
     try {
+      // Try server first
       final url = AppConfig.buildUrl('fetch_municipalities.php',
           queryParams: {'district': district});
-      print('[LOCATION] Fetching from: $url');
+      print('[LOCATION] Fetching from server: $url');
+
       final response = await http.get(
         Uri.parse(url),
-      );
-      print(
-          '[LOCATION] Municipalities response status: ${response.statusCode}');
-      print('[LOCATION] Municipalities response body: ${response.body}');
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      print('[LOCATION] Server response status: ${response.statusCode}');
+      print('[LOCATION] Server response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print('[LOCATION] Decoded data: $data');
+
         if (data['success'] == true) {
-          setState(() {
-            _municipalities = List<String>.from(
-              data['data']['municipalities'].map((m) => m['name'] as String),
-            );
-          });
-          print('[LOCATION] Municipalities set: $_municipalities');
+          final municipalitiesData = data['data']?['municipalities'];
+          if (municipalitiesData != null &&
+              municipalitiesData is List &&
+              municipalitiesData.isNotEmpty) {
+            setState(() {
+              _municipalities = List<String>.from(
+                municipalitiesData.map((m) => m['name'] as String),
+              );
+            });
+            print(
+                '[LOCATION] ✅ Server municipalities loaded: $_municipalities (${_municipalities.length} items)');
+            return; // Success - no need for fallback
+          }
         }
+        print(
+            '[LOCATION] ⚠️ Server returned invalid municipalities data: ${data['message'] ?? 'No message'}');
+      } else {
+        print(
+            '[LOCATION] ⚠️ Server returned HTTP ${response.statusCode}: ${response.body}');
       }
     } catch (e) {
-      print('[LOCATION] Error fetching municipalities: $e');
+      print('[LOCATION] ⚠️ Server request failed: $e');
+      print('[LOCATION] Stack trace: ${StackTrace.current}');
     }
+
+    // Server failed - try local database fallback
+    try {
+      print(
+          '[LOCATION] 🔄 Trying local database fallback for district: $district');
+      final localMunicipalities =
+          await DatabaseHelper().getMunicipalitiesFromLocal(district);
+
+      if (localMunicipalities.isNotEmpty) {
+        setState(() {
+          _municipalities = List<String>.from(
+            localMunicipalities.map((m) => m['name'] as String),
+          );
+        });
+        print(
+            '[LOCATION] ✅ Local database municipalities loaded: $_municipalities (${_municipalities.length} items)');
+        return; // Success with local data
+      } else {
+        print(
+            '[LOCATION] ⚠️ Local database has no municipalities for district: $district');
+      }
+    } catch (e) {
+      print('[LOCATION] ⚠️ Local database fallback failed: $e');
+    }
+
+    // Both server and local failed - clear municipalities
+    print('[LOCATION] ❌ No municipalities found for district: $district');
+    setState(() {
+      _municipalities = [];
+    });
   }
 
   Future<void> fetchLearnerDetails() async {
@@ -1719,10 +1873,6 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       'SchoolLocation',
       'SchoolGrade',
       'School', // Alternative school field name
-      'Institution', // Institution field
-      'Grade', // Legacy school grade field name
-      'EducationLevel', // Education level field
-      'Qualification', // Qualification field
       'classID', // classID comes after school grade
     ];
 
@@ -1931,24 +2081,37 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           .toList(),
       onChanged: (String? newValue) async {
         if (newValue == null) return;
+
+        print('[DROPDOWN] $fieldKey changed to: $newValue');
+
         setState(() {
           learnerData![fieldKey] = newValue;
         });
 
         // Handle cascading location dropdowns
         if (fieldKey == 'Province') {
+          print(
+              '[DROPDOWN] Province changed to: $newValue, fetching districts...');
           await _fetchDistricts(newValue);
           // Clear district and municipality when province changes
           setState(() {
             learnerData!['District'] = '';
             learnerData!['Municipality'] = '';
+            print(
+                '[DROPDOWN] Cleared District and Municipality after Province change');
           });
+          print('[DROPDOWN] Districts now available: ${_districts.length}');
         } else if (fieldKey == 'District') {
+          print(
+              '[DROPDOWN] District changed to: $newValue, fetching municipalities...');
           await _fetchMunicipalities(newValue);
           // Clear municipality when district changes
           setState(() {
             learnerData!['Municipality'] = '';
+            print('[DROPDOWN] Cleared Municipality after District change');
           });
+          print(
+              '[DROPDOWN] Municipalities now available: ${_municipalities.length}');
         }
       },
       validator: isRequired

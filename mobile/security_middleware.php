@@ -9,6 +9,7 @@
  * - File upload security
  * - CSRF protection
  * - Security event logging
+ * - Global request monitoring
  * 
  * @version 1.0.0
  * @security CRITICAL - Do not modify without security review
@@ -17,6 +18,11 @@
 // Prevent direct access
 if (!defined('SECURITY_FUNCTIONS_LOADED')) {
     define('SECURITY_FUNCTIONS_LOADED', true);
+}
+
+// Load request logger if available
+if (file_exists(__DIR__ . '/request_logger.php')) {
+    require_once __DIR__ . '/request_logger.php';
 }
 
 // Security headers
@@ -29,6 +35,122 @@ header('Referrer-Policy: strict-origin-when-cross-origin');
 header('Access-Control-Allow-Origin: *');  // Change to specific domain in production
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token');
+
+/**
+ * Apply rate limiting with standard limits
+ * Convenience function for endpoint protection
+ * 
+ * @param int $max_requests Maximum requests per minute
+ * @param string $action Action identifier for rate limiting
+ */
+if (!function_exists('applyRateLimit')) {
+function applyRateLimit($max_requests = 10, $action = 'api_request') {
+    global $conn;
+    
+    if (!$conn) {
+        // If no DB connection, skip rate limiting but log the attempt
+        error_log("Rate limiting skipped - no database connection for action: $action");
+        return;
+    }
+    
+    $ip = get_client_ip();
+    $window_seconds = 60; // 1 minute window
+    
+    $result = check_rate_limit($conn, $ip, $action, $max_requests, $window_seconds);
+    
+    if (!$result['allowed']) {
+        // Log security event
+        log_security_event('RATE_LIMIT_EXCEEDED', 
+            "Rate limit exceeded for action: $action", 
+            [
+                'action' => $action,
+                'ip' => $ip,
+                'max_requests' => $max_requests,
+                'retry_after' => $result['retry_after']
+            ]
+        );
+        
+        http_response_code(429);
+        header('Retry-After: ' . $result['retry_after']);
+        echo json_encode([
+            'error' => 'Too Many Requests',
+            'message' => $result['message'],
+            'retry_after' => $result['retry_after']
+        ]);
+        exit;
+    }
+}
+}
+
+/**
+ * Global rate limiting check
+ * Apply broad rate limits to prevent system overload
+ * 
+ * @param mysqli $conn Database connection
+ * @param int $max_requests_per_minute Maximum requests per minute globally
+ */
+if (!function_exists('applyGlobalRateLimit')) {
+function applyGlobalRateLimit($conn, $max_requests_per_minute = 100) {
+    $ip = get_client_ip();
+    
+    // Check global rate limit (all endpoints combined)
+    $result = check_rate_limit($conn, $ip, 'global_requests', $max_requests_per_minute, 60);
+    
+    if (!$result['allowed']) {
+        log_security_event('GLOBAL_RATE_LIMIT_EXCEEDED', 
+            "Global rate limit exceeded from IP: $ip", 
+            [
+                'ip' => $ip,
+                'max_requests' => $max_requests_per_minute,
+                'retry_after' => $result['retry_after']
+            ]
+        );
+        
+        http_response_code(429);
+        header('Retry-After: ' . $result['retry_after']);
+        echo json_encode([
+            'error' => 'Global Rate Limit Exceeded',
+            'message' => 'Too many requests from your IP address. Please slow down.',
+            'retry_after' => $result['retry_after']
+        ]);
+        exit;
+    }
+}
+}
+
+/**
+ * Initialize request monitoring and security
+ * Call this at the start of every endpoint
+ * 
+ * @param mysqli $conn Database connection
+ * @param string $endpoint_name Name of the endpoint
+ * @return int Request log ID for completion tracking
+ */
+if (!function_exists('initializeRequestSecurity')) {
+function initializeRequestSecurity($conn, $endpoint_name) {
+    $log_id = 0;
+    
+    try {
+        // Apply global rate limiting first
+        applyGlobalRateLimit($conn, 100); // 100 requests per minute globally per IP
+        
+        // Log the request if logging is available
+        if (function_exists('log_request')) {
+            $log_id = log_request($conn, $endpoint_name, [
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+                'content_type' => $_SERVER['CONTENT_TYPE'] ?? ''
+            ]);
+        }
+        
+        return $log_id;
+        
+    } catch (Exception $e) {
+        // Don't let security failures break the endpoint
+        error_log("Request security initialization failed: " . $e->getMessage());
+        return $log_id;
+    }
+}
+}
 
 /**
  * Get client IP address (handles proxies)

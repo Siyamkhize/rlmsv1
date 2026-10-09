@@ -30,6 +30,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
+// Set timezone to South Africa (SAST - UTC+2)
+date_default_timezone_set('Africa/Johannesburg');
+
 // Logging
 error_reporting(E_ALL);
 ini_set('display_errors', 0);

@@ -71,6 +71,11 @@
             android:name="flutterEmbedding"
             android:value="2" />
         
+        <!-- Google MLKit Face Detection -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="face" />
+        
         <!-- Workmanager service for background tasks -->
         <service
             android:name="be.tramckrijte.workmanager.BackgroundService"

@@ -1,16 +1,15 @@
 import 'dart:io';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
 import 'package:signature/signature.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
-import 'dart:ui' as ui;
 import '../services/secure_location_service.dart';
+import '../database_helper.dart';
+import '../config.dart';
 
 /// Combined Camera + Signature widget for Facilitator Clocking
 /// This widget handles the complete flow:
@@ -72,7 +71,6 @@ class _FacilitatorCameraSignatureWidgetState
   // Signature state
   SignatureController? _signatureController;
   String? _signatureBase64;
-  bool _isSigning = false;
   bool _isSubmitting = false;
 
   // Location data
@@ -208,7 +206,7 @@ class _FacilitatorCameraSignatureWidgetState
     });
   }
 
-  Future<void> _captureLocation() async {
+  Future<void> _captureLocationAndVerifyGeofence() async {
     try {
       // Show loading
       if (mounted) {
@@ -225,7 +223,7 @@ class _FacilitatorCameraSignatureWidgetState
                   ),
                 ),
                 SizedBox(width: 16),
-                Text('Getting location...'),
+                Text('Verifying location...'),
               ],
             ),
             duration: Duration(seconds: 10),
@@ -233,11 +231,32 @@ class _FacilitatorCameraSignatureWidgetState
         );
       }
 
-      // Get location
+      // Get secure location
       final locationResult = await SecureLocationService.getSecurePosition();
 
       if (!locationResult.isTrusted) {
-        throw Exception('Location could not be verified');
+        throw Exception(
+            'Location could not be verified - GPS accuracy too poor or mock location detected');
+      }
+
+      // Verify facilitator is within site geofence using server verification
+      // We need to get the facilitator's class/site for verification
+      final geofenceResult = await _verifyFacilitatorGeofence(locationResult);
+
+      if (geofenceResult['success'] != true) {
+        final errorMsg =
+            geofenceResult['error'] ?? 'Geofence verification failed';
+        final distance = geofenceResult['distance'];
+        final effectiveRadius = geofenceResult['effective_radius'];
+
+        String detailedError = errorMsg;
+        if (distance != null && effectiveRadius != null) {
+          detailedError =
+              'You are ${distance.toStringAsFixed(0)}m from the site. '
+              'You must be within ${effectiveRadius.toStringAsFixed(0)}m to clock ${widget.clockAction}.';
+        }
+
+        throw Exception(detailedError);
       }
 
       _latitude = locationResult.position.latitude;
@@ -245,14 +264,76 @@ class _FacilitatorCameraSignatureWidgetState
       _accuracy = locationResult.position.accuracy;
 
       debugPrint(
-          '[FAC_CAMERA_SIGNATURE] Location: $_latitude, $_longitude (${_accuracy}m)');
+          '[FAC_CAMERA_SIGNATURE] ✅ Location verified: $_latitude, $_longitude (${_accuracy}m)');
     } catch (e) {
-      debugPrint('[FAC_CAMERA_SIGNATURE] Location error: $e');
-      // Set default location if GPS fails
-      _latitude = 0.0;
-      _longitude = 0.0;
-      _accuracy = 999.0;
-      _showError('GPS unavailable, using approximate location');
+      debugPrint('[FAC_CAMERA_SIGNATURE] Location/geofence error: $e');
+      throw Exception('Location verification failed: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> _verifyFacilitatorGeofence(
+      SecurePositionResult securePosition) async {
+    try {
+      // Get facilitator's active classes/sites from database
+      final facilitatorClassId = await _getFacilitatorClassId();
+
+      if (facilitatorClassId == null) {
+        return {
+          'success': false,
+          'error':
+              'Unable to determine your assigned site. Please contact your administrator.',
+        };
+      }
+
+      // Use the same geofence verification as learners
+      return await SecureLocationService.verifyGeofenceOnServer(
+        securePosition: securePosition,
+        classID: facilitatorClassId,
+        learnerID: widget.facilitatorId
+            .toString(), // Use facilitator ID for verification
+        action: widget.clockAction,
+        baseUrl: AppConfig.baseUrl,
+      );
+    } catch (e) {
+      debugPrint('[FAC_CAMERA_SIGNATURE] Geofence verification error: $e');
+      return {
+        'success': false,
+        'error': 'Unable to verify location: $e',
+      };
+    }
+  }
+
+  Future<String?> _getFacilitatorClassId() async {
+    try {
+      final dbHelper = DatabaseHelper();
+      final db = await dbHelper.database;
+
+      // Query facilitator's assigned class - assuming facilitators table has facilitator_id and class_id
+      // Or get the most recent class they're working with
+      final result = await db.rawQuery(
+        'SELECT classID FROM facilitator WHERE facilitator_id = ?',
+        [widget.facilitatorId.toString()],
+      );
+
+      if (result.isNotEmpty) {
+        final classIdValue = result.first['classID'];
+        if (classIdValue != null) {
+          final classIdStr = classIdValue.toString();
+          // If comma-separated, take the first one for geofence verification
+          if (classIdStr.contains(',')) {
+            return classIdStr.split(',').first.trim();
+          }
+          return classIdStr;
+        }
+      }
+
+      // Fallback: if facilitator not found directly, we might need to handle this differently
+      debugPrint(
+          '[FAC_CAMERA_SIGNATURE] No classID found for facilitator ${widget.facilitatorId}');
+      return null;
+    } catch (e) {
+      debugPrint('[FAC_CAMERA_SIGNATURE] Error getting facilitator class: $e');
+      return null;
     }
   }
 
@@ -263,6 +344,10 @@ class _FacilitatorCameraSignatureWidgetState
       return;
     }
 
+    setState(() {
+      _isSubmitting = true;
+    });
+
     try {
       // Convert signature to base64
       final signatureBytes = await _signatureController!.toPngBytes();
@@ -270,10 +355,10 @@ class _FacilitatorCameraSignatureWidgetState
         _signatureBase64 = base64Encode(signatureBytes);
       }
 
-      // Capture location
-      await _captureLocation();
+      // Capture location and verify geofence - this will throw if not within site
+      await _captureLocationAndVerifyGeofence();
 
-      // Return all data
+      // Return all data if geofence verification passed
       if (mounted) {
         Navigator.pop(context, {
           'success': true,
@@ -286,7 +371,32 @@ class _FacilitatorCameraSignatureWidgetState
       }
     } catch (e) {
       debugPrint('[FAC_CAMERA_SIGNATURE] Complete error: $e');
-      _showError('Failed to complete: $e');
+      setState(() {
+        _isSubmitting = false;
+      });
+      _showErrorDialog('Location Verification Failed', e.toString());
+    }
+  }
+
+  void _showErrorDialog(String title, String message) {
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
     }
   }
 
@@ -951,36 +1061,56 @@ class _FacilitatorCameraSignatureWidgetState
 
                   const SizedBox(height: 12), // Reduced from 20
 
-                  // Very Compact Signature Pad - Fixed height like your reference
+                  // Modern Signature Pad - Perfect balanced height
                   Container(
-                    height: 120, // Fixed small height instead of Expanded
+                    height:
+                        180, // Perfect modern size - not too big, not too small
                     decoration: BoxDecoration(
                       border: Border.all(
                         color: Colors.grey[300]!,
-                        width: 1.5, // Thinner border
+                        width: 1.5,
                       ),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Stack(
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(10),
                           child: Signature(
                             controller: _signatureController!,
                             backgroundColor: Colors.white,
                           ),
                         ),
-                        // Placeholder text when empty
+                        // Modern placeholder text when empty
                         if (_signatureController?.isEmpty ?? true)
                           Positioned.fill(
                             child: Container(
                               alignment: Alignment.center,
-                              child: Text(
-                                'Sign here',
-                                style: TextStyle(
-                                  color: Colors.grey[400],
-                                  fontSize: 14, // Reduced from 16
-                                ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.edit,
+                                    color: Colors.grey[300],
+                                    size: 32,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Sign here',
+                                    style: TextStyle(
+                                      color: Colors.grey[400],
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -994,7 +1124,7 @@ class _FacilitatorCameraSignatureWidgetState
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _completeFlow,
+                      onPressed: _isSubmitting ? null : _completeFlow,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.teal,
                         foregroundColor: Colors.white,
@@ -1006,21 +1136,44 @@ class _FacilitatorCameraSignatureWidgetState
                               BorderRadius.circular(10), // Reduced from 12
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.check_circle,
-                              size: 20), // Reduced from 22
-                          const SizedBox(width: 6), // Reduced from 8
-                          Text(
-                            'Confirm Clock ${widget.clockAction == 'in' ? 'In' : 'Out'}',
-                            style: const TextStyle(
-                              fontSize: 15, // Reduced from 16
-                              fontWeight: FontWeight.bold,
+                      child: _isSubmitting
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Verifying location...',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.check_circle,
+                                    size: 20), // Reduced from 22
+                                const SizedBox(width: 6), // Reduced from 8
+                                Text(
+                                  'Confirm Clock ${widget.clockAction == 'in' ? 'In' : 'Out'}',
+                                  style: const TextStyle(
+                                    fontSize: 15, // Reduced from 16
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
 

@@ -34,30 +34,49 @@ $classID = validate_int($_GET['classID'], 1);
 if ($classID === false) {
     sendError('Invalid classID format', 400, 'INVALID_PARAMETER');
 }
-// PAGINATION: Support lazy loading
-$page = isset($_GET['page']) ? validate_int($_GET['page'], 1) : 1;
-$pageSize = isset($_GET['pageSize']) ? validate_int($_GET['pageSize'], 1, 100) : 30;
+// PAGINATION: Support lazy loading OR fetch all if no pagination params
+$usePagination = isset($_GET['page']) || isset($_GET['pageSize']);
 
-if ($page === false || $pageSize === false) {
-    sendError('Invalid pagination parameters', 400, 'INVALID_PARAMETER');
+if ($usePagination) {
+    $page = isset($_GET['page']) ? validate_int($_GET['page'], 1) : 1;
+    $pageSize = isset($_GET['pageSize']) ? validate_int($_GET['pageSize'], 1, 100) : 30;
+
+    if ($page === false || $pageSize === false) {
+        sendError('Invalid pagination parameters', 400, 'INVALID_PARAMETER');
+    }
+
+    $offset = ($page - 1) * $pageSize;
+
+    // Get total count for pagination metadata (exclude NULL classID)
+    $countQuery = "SELECT COUNT(*) as total FROM learnerdetails WHERE classID = ? AND classID IS NOT NULL";
+    $countStmt = $conn->prepare($countQuery);
+    $countStmt->bind_param("i", $classID);
+    $countStmt->execute();
+    $countResult = $countStmt->get_result();
+    $totalCount = $countResult->fetch_assoc()['total'];
+    $countStmt->close();
+
+    // Get paginated results (exclude NULL classID)
+    $query = "SELECT * FROM learnerdetails WHERE classID = ? AND classID IS NOT NULL LIMIT ? OFFSET ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("iii", $classID, $pageSize, $offset);
+} else {
+    // NO PAGINATION: Fetch ALL learners for this class (for offline sync)
+    // Explicitly exclude learners with NULL classID
+    $query = "SELECT * FROM learnerdetails WHERE classID = ? AND classID IS NOT NULL";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $classID);
+    
+    // Get total count
+    $countQuery = "SELECT COUNT(*) as total FROM learnerdetails WHERE classID = ?";
+    $countStmt = $conn->prepare($countQuery);
+    $countStmt->bind_param("i", $classID);
+    $countStmt->execute();
+    $countResult = $countStmt->get_result();
+    $totalCount = $countResult->fetch_assoc()['total'];
+    $countStmt->close();
 }
 
-$offset = ($page - 1) * $pageSize;
-
-// Get total count for pagination metadata
-$countQuery = "SELECT COUNT(*) as total FROM learnerdetails WHERE classID = ?";
-$countStmt = $conn->prepare($countQuery);
-$countStmt->bind_param("i", $classID);
-$countStmt->execute();
-$countResult = $countStmt->get_result();
-$totalCount = $countResult->fetch_assoc()['total'];
-$countStmt->close();
-
-// Get paginated results
-$query = "SELECT * FROM learnerdetails WHERE classID = ? LIMIT ? OFFSET ?";
-
-$stmt = $conn->prepare($query);
-$stmt->bind_param("iii", $classID, $pageSize, $offset);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -66,18 +85,33 @@ while ($row = $result->fetch_assoc()) {
     $classes[] = $row;
 }
 
-// Return paginated response with metadata
-$response = [
-    'success' => true,
-    'data' => $classes,
-    'pagination' => [
-        'page' => $page,
-        'pageSize' => $pageSize,
-        'total' => $totalCount,
-        'totalPages' => ceil($totalCount / $pageSize),
-        'hasMore' => ($offset + $pageSize) < $totalCount
-    ]
-];
+// Return response with appropriate metadata
+if ($usePagination) {
+    $response = [
+        'success' => true,
+        'data' => $classes,
+        'pagination' => [
+            'page' => $page,
+            'pageSize' => $pageSize,
+            'total' => $totalCount,
+            'totalPages' => ceil($totalCount / $pageSize),
+            'hasMore' => ($offset + $pageSize) < $totalCount
+        ]
+    ];
+} else {
+    // Non-paginated response (all records)
+    $response = [
+        'success' => true,
+        'data' => $classes,
+        'pagination' => [
+            'page' => 1,
+            'pageSize' => $totalCount,
+            'total' => $totalCount,
+            'totalPages' => 1,
+            'hasMore' => false
+        ]
+    ];
+}
 
 echo json_encode($response, JSON_PRETTY_PRINT);
 $stmt->close();

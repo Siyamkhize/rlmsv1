@@ -304,6 +304,13 @@ class SyncService extends ChangeNotifier {
     }
 
     try {
+      await DatabaseHelper().syncLocationTables();
+      print('[SYNC] ✅ Location tables sync complete');
+    } catch (e) {
+      print('[SYNC] ❌ Location tables sync failed: $e');
+    }
+
+    try {
       await _syncLearningpathway();
       print('[SYNC] ✅ Learning pathway sync complete');
     } catch (e) {
