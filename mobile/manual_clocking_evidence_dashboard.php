@@ -87,6 +87,36 @@ if ($filter_site > 0) {
     $classesResult = $conn->query($classesQuery);
 }
 
+// All projects for JS
+$allProjectsQuery = "SELECT project_id, project_name FROM project WHERE project_id IS NOT NULL ORDER BY project_name";
+$allProjectsResult = $conn->query($allProjectsQuery);
+$allProjectsData = [];
+if ($allProjectsResult) {
+    while ($row = $allProjectsResult->fetch_assoc()) {
+        $allProjectsData[] = ['id' => (int)$row['project_id'], 'name' => $row['project_name']];
+    }
+}
+
+// All sites for JS
+$allSitesQuery = "SELECT siteID, SiteName, project_id FROM sites WHERE siteID IS NOT NULL ORDER BY SiteName";
+$allSitesResult = $conn->query($allSitesQuery);
+$allSitesData = [];
+if ($allSitesResult) {
+    while ($row = $allSitesResult->fetch_assoc()) {
+        $allSitesData[] = ['id' => (int)$row['siteID'], 'name' => $row['SiteName'], 'project_id' => (int)$row['project_id']];
+    }
+}
+
+// All classes for JS
+$allClassesQuery = "SELECT classID, ClassName, siteID FROM class WHERE classID IS NOT NULL ORDER BY ClassName";
+$allClassesResult = $conn->query($allClassesQuery);
+$allClassesData = [];
+if ($allClassesResult) {
+    while ($row = $allClassesResult->fetch_assoc()) {
+        $allClassesData[] = ['id' => (int)$row['classID'], 'name' => $row['ClassName'], 'site_id' => (int)$row['siteID']];
+    }
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -891,6 +921,10 @@ if ($filter_site > 0) {
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     
     <script>
+        // Pre-loaded data from PHP
+        var allSites = <?php echo json_encode($allSitesData); ?>;
+        var allClasses = <?php echo json_encode($allClassesData); ?>;
+        
         $(document).ready(function() {
             // Initialize DataTable
             $('#evidenceTable').DataTable({
@@ -908,73 +942,70 @@ if ($filter_site > 0) {
                 $('#modalEvidence').attr('src', 'manual_clocking_evidence/' + evidence);
             });
             
-            // Cascading filter functionality
-            $('#project_select').on('change', function() {
-                var projectId = $(this).val();
-                var siteSelect = $('#site_select');
-                var classSelect = $('#class_select');
+            // Filter sites dropdown based on selected project
+            function filterSites(projectId) {
+                var siteSelect = document.getElementById('site_select');
+                var currentSiteVal = siteSelect.value;
                 
-                // Disable dependent dropdowns while loading
-                siteSelect.prop('disabled', true);
-                classSelect.prop('disabled', true);
-                
-                // Load sites for selected project
-                $.get('get_filter_options.php', {
-                    action: 'get_sites',
-                    project_id: projectId
-                })
-                .done(function(data) {
-                    // Clear and repopulate site dropdown
-                    siteSelect.html('<option value="0">All Sites</option>');
-                    $.each(data, function(index, site) {
-                        siteSelect.append('<option value="' + site.id + '">' + site.name + '</option>');
-                    });
-                    
-                    // Reset site selection and trigger change to cascade to classes
-                    siteSelect.val('0');
-                    siteSelect.trigger('change');
-                })
-                .fail(function() {
-                    console.error('Failed to load sites');
-                    siteSelect.html('<option value="0">All Sites</option>');
-                    siteSelect.val('0');
-                    siteSelect.trigger('change');
-                })
-                .always(function() {
-                    siteSelect.prop('disabled', false);
+                // Rebuild site options
+                siteSelect.innerHTML = '<option value="0">All Sites</option>';
+                var sitesToShow = (projectId == 0) ? allSites : allSites.filter(function(s) { return s.project_id == projectId; });
+                sitesToShow.forEach(function(site) {
+                    var opt = document.createElement('option');
+                    opt.value = site.id;
+                    opt.textContent = site.name;
+                    if (site.id == currentSiteVal) opt.selected = true;
+                    siteSelect.appendChild(opt);
                 });
+                
+                // If the previously selected site is no longer available, reset it
+                if (siteSelect.value != currentSiteVal) {
+                    siteSelect.value = '0';
+                }
+                
+                // Now cascade to classes
+                filterClasses(siteSelect.value, projectId);
+            }
+
+            // Filter classes dropdown based on selected site (and optionally project)
+            function filterClasses(siteId, projectId) {
+                var classSelect = document.getElementById('class_select');
+                var currentClassVal = classSelect.value;
+                
+                classSelect.innerHTML = '<option value="0">All Classes</option>';
+                
+                var classesToShow;
+                if (siteId > 0) {
+                    classesToShow = allClasses.filter(function(c) { return c.site_id == siteId; });
+                } else if (projectId > 0) {
+                    // Get site IDs for this project first
+                    var siteIds = allSites.filter(function(s) { return s.project_id == projectId; }).map(function(s) { return s.id; });
+                    classesToShow = allClasses.filter(function(c) { return siteIds.indexOf(c.site_id) !== -1; });
+                } else {
+                    classesToShow = allClasses;
+                }
+                
+                classesToShow.forEach(function(cls) {
+                    var opt = document.createElement('option');
+                    opt.value = cls.id;
+                    opt.textContent = cls.name;
+                    if (cls.id == currentClassVal) opt.selected = true;
+                    classSelect.appendChild(opt);
+                });
+                
+                if (classSelect.value != currentClassVal) {
+                    classSelect.value = '0';
+                }
+            }
+
+            // Wire up change events
+            document.getElementById('project_select').addEventListener('change', function() {
+                filterSites(parseInt(this.value) || 0);
             });
-            
-            $('#site_select').on('change', function() {
-                var siteId = $(this).val();
-                var classSelect = $('#class_select');
-                
-                // Disable class dropdown while loading
-                classSelect.prop('disabled', true);
-                
-                // Load classes for selected site
-                $.get('get_filter_options.php', {
-                    action: 'get_classes',
-                    site_id: siteId
-                })
-                .done(function(data) {
-                    // Clear and repopulate class dropdown
-                    classSelect.html('<option value="0">All Classes</option>');
-                    $.each(data, function(index, classItem) {
-                        classSelect.append('<option value="' + classItem.id + '">' + classItem.name + '</option>');
-                    });
-                    
-                    // Reset class selection
-                    classSelect.val('0');
-                })
-                .fail(function() {
-                    console.error('Failed to load classes');
-                    classSelect.html('<option value="0">All Classes</option>');
-                    classSelect.val('0');
-                })
-                .always(function() {
-                    classSelect.prop('disabled', false);
-                });
+
+            document.getElementById('site_select').addEventListener('change', function() {
+                var projectId = parseInt(document.getElementById('project_select').value) || 0;
+                filterClasses(parseInt(this.value) || 0, projectId);
             });
         });
     </script>
