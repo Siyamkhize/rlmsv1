@@ -3,9 +3,11 @@ import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'database_helper.dart';
 import 'config.dart';
+import 'services/http_client_service.dart';
+import 'config/network_config.dart';
 
 /// Persistent Sync Service - Maintains local data for offline operations
-/// 
+///
 /// Key Features:
 /// - Never clears local data
 /// - Uses UPSERT strategy (INSERT OR REPLACE)
@@ -15,7 +17,8 @@ class PersistentSyncService {
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
   /// Sync learner details with UPSERT strategy (never clears existing data)
-  Future<Map<String, dynamic>> syncLearnerDetailsPersistent({String? classID}) async {
+  Future<Map<String, dynamic>> syncLearnerDetailsPersistent(
+      {String? classID}) async {
     try {
       // Check connectivity
       final connectivityResult = await Connectivity().checkConnectivity();
@@ -41,14 +44,19 @@ class PersistentSyncService {
         url += '?classID=$classID';
       }
 
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 30));
+      final response = await HttpClientService.makeRequest(
+        () => http.get(
+          Uri.parse(url),
+          headers: {'Content-Type': 'application/json'},
+        ),
+        endpoint: 'sync_learners',
+        maxRetries: NetworkConfig.syncOperationsMaxRetries,
+        timeoutSeconds: NetworkConfig.lightweightTimeout,
+      );
 
       if (response.statusCode == 200) {
         final List<dynamic> learners = json.decode(response.body);
-        
+
         if (learners.isEmpty) {
           print('[PERSISTENT_SYNC] No learner data received from server');
           final localCount = await _getLocalLearnerCount(classID);
@@ -60,7 +68,8 @@ class PersistentSyncService {
           };
         }
 
-        print('[PERSISTENT_SYNC] Received ${learners.length} learners from server');
+        print(
+            '[PERSISTENT_SYNC] Received ${learners.length} learners from server');
 
         int insertedCount = 0;
         int updatedCount = 0;
@@ -71,33 +80,36 @@ class PersistentSyncService {
           try {
             // Validate required fields
             if (learner['IDNumber'] == null || learner['classID'] == null) {
-              print('[PERSISTENT_SYNC] Skipping invalid learner: Missing IDNumber or classID');
+              print(
+                  '[PERSISTENT_SYNC] Skipping invalid learner: Missing IDNumber or classID');
               errorCount++;
               continue;
             }
 
             // Check if learner exists locally
             final exists = await _learnerExists(learner['LearnerID']);
-            
+
             // Upsert learner data (INSERT OR REPLACE)
             await _dbHelper.upsertLearner(learner);
-            
+
             if (exists) {
               updatedCount++;
-              print('[PERSISTENT_SYNC] ✅ Updated: ${learner['Name']} ${learner['Surname']} (ID: ${learner['LearnerID']})');
+              print(
+                  '[PERSISTENT_SYNC] ✅ Updated: ${learner['Name']} ${learner['Surname']} (ID: ${learner['LearnerID']})');
             } else {
               insertedCount++;
-              print('[PERSISTENT_SYNC] ✅ Inserted: ${learner['Name']} ${learner['Surname']} (ID: ${learner['LearnerID']})');
+              print(
+                  '[PERSISTENT_SYNC] ✅ Inserted: ${learner['Name']} ${learner['Surname']} (ID: ${learner['LearnerID']})');
             }
-            
           } catch (e) {
-            print('[PERSISTENT_SYNC] ❌ Error processing learner ${learner['LearnerID']}: $e');
+            print(
+                '[PERSISTENT_SYNC] ❌ Error processing learner ${learner['LearnerID']}: $e');
             errorCount++;
           }
         }
 
         final totalLocal = await _getLocalLearnerCount(classID);
-        
+
         print('[PERSISTENT_SYNC] Sync completed:');
         print('  - Inserted: $insertedCount');
         print('  - Updated: $updatedCount');
@@ -113,18 +125,16 @@ class PersistentSyncService {
           'total': totalLocal,
           'mode': 'online',
         };
-
       } else {
         throw Exception('Server returned status ${response.statusCode}');
       }
-      
     } catch (e, stackTrace) {
       print('[PERSISTENT_SYNC] Error: $e');
       print('[PERSISTENT_SYNC] Stack trace: $stackTrace');
-      
+
       // Even on error, check if we have local data
       final localCount = await _getLocalLearnerCount(classID);
-      
+
       return {
         'success': false,
         'message': 'Sync failed but $localCount learners available locally',
@@ -150,15 +160,15 @@ class PersistentSyncService {
   /// Get count of learners in local database
   Future<int> _getLocalLearnerCount(String? classID) async {
     final db = await _dbHelper.database;
-    
+
     String query = 'SELECT COUNT(*) as count FROM learnerdetails';
     List<dynamic> args = [];
-    
+
     if (classID != null) {
       query += ' WHERE classID = ?';
       args.add(classID);
     }
-    
+
     final result = await db.rawQuery(query, args);
     return result.first['count'] as int? ?? 0;
   }
@@ -172,10 +182,10 @@ class PersistentSyncService {
   /// Get local data status for diagnostics
   Future<Map<String, dynamic>> getLocalDataStatus(String? classID) async {
     final db = await _dbHelper.database;
-    
+
     // Total learners
     final totalCount = await _getLocalLearnerCount(classID);
-    
+
     // Learners with fingerprints
     String fingerprintQuery = '''
       SELECT COUNT(*) as count FROM learnerdetails 
@@ -184,29 +194,30 @@ class PersistentSyncService {
          OR (futronic_left_template IS NOT NULL AND futronic_left_template != '')
          OR (futronic_right_template IS NOT NULL AND futronic_right_template != '')
     ''';
-    
+
     if (classID != null) {
       fingerprintQuery += ' AND classID = ?';
     }
-    
+
     final fingerprintResult = await db.rawQuery(
       fingerprintQuery,
       classID != null ? [classID] : [],
     );
     final fingerprintCount = fingerprintResult.first['count'] as int? ?? 0;
-    
+
     // Sample records
-    String sampleQuery = 'SELECT LearnerID, Name, Surname, IDNumber, classID FROM learnerdetails';
+    String sampleQuery =
+        'SELECT LearnerID, Name, Surname, IDNumber, classID FROM learnerdetails';
     if (classID != null) {
       sampleQuery += ' WHERE classID = ?';
     }
     sampleQuery += ' LIMIT 5';
-    
+
     final sampleResult = await db.rawQuery(
       sampleQuery,
       classID != null ? [classID] : [],
     );
-    
+
     return {
       'totalLearners': totalCount,
       'learnersWithFingerprints': fingerprintCount,
@@ -220,7 +231,7 @@ class PersistentSyncService {
   Future<Map<String, dynamic>> forceRefreshAllData() async {
     try {
       print('[PERSISTENT_SYNC] ⚠️ FORCE REFRESH - Clearing all local data');
-      
+
       // Check connectivity first
       final connectivityResult = await Connectivity().checkConnectivity();
       final isOnline = connectivityResult.isNotEmpty &&
@@ -240,7 +251,6 @@ class PersistentSyncService {
 
       // Re-sync from server
       return await syncLearnerDetailsPersistent();
-      
     } catch (e) {
       print('[PERSISTENT_SYNC] Force refresh error: $e');
       return {

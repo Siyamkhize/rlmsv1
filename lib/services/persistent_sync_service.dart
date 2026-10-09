@@ -5,6 +5,8 @@ import 'dart:convert';
 import '../database_helper.dart';
 import '../config.dart';
 import 'database_coordinator.dart';
+import 'http_client_service.dart';
+import '../config/network_config.dart';
 
 /// Persistent Sync Service for Offline-First Architecture
 /// Ensures learner data is always available locally for offline clocking
@@ -158,11 +160,14 @@ class PersistentSyncService {
     print('[PERSISTENT_SYNC] Syncing learners for class: $classID');
 
     try {
-      final response = await http
-          .get(
-            Uri.parse('${AppConfig.getLearnersUrl}?classID=$classID'),
-          )
-          .timeout(const Duration(seconds: 15));
+      final response = await HttpClientService.makeRequest(
+        () => http.get(
+          Uri.parse('${AppConfig.getLearnersUrl}?classID=$classID'),
+        ),
+        endpoint: 'learners_by_class',
+        maxRetries: NetworkConfig.syncOperationsMaxRetries,
+        timeoutSeconds: NetworkConfig.lightweightTimeout,
+      );
 
       if (response.statusCode != 200) {
         throw Exception('Server returned ${response.statusCode}');
@@ -314,18 +319,25 @@ class PersistentSyncService {
 
     final endpoint = hasClockOut ? AppConfig.clockoutUrl : AppConfig.clockinUrl;
 
-    final response = await http.post(
-      Uri.parse(endpoint),
-      body: {
-        'LearnerID': record['LearnerID'].toString(),
-        'clock_date': record['clock_date'].toString(),
-        'clock_in_time': record['clock_in_time'].toString(),
-        if (hasClockOut) 'clock_out_time': record['clock_out_time'].toString(),
-        'user_latitude': record['user_latitude']?.toString() ?? '',
-        'user_longitude': record['user_longitude']?.toString() ?? '',
-        'user_accuracy': record['user_accuracy']?.toString() ?? '',
-      },
-    ).timeout(const Duration(seconds: 10));
+    final response = await HttpClientService.makeRequest(
+      () => http.post(
+        Uri.parse(endpoint),
+        body: {
+          'LearnerID': record['LearnerID'].toString(),
+          'clock_date': record['clock_date'].toString(),
+          'clock_in_time': record['clock_in_time'].toString(),
+          if (hasClockOut)
+            'clock_out_time': record['clock_out_time'].toString(),
+          'user_latitude': record['user_latitude']?.toString() ?? '',
+          'user_longitude': record['user_longitude']?.toString() ?? '',
+          'user_accuracy': record['user_accuracy']?.toString() ?? '',
+        },
+      ),
+      endpoint:
+          hasClockOut ? 'clocking_clockout_sync' : 'clocking_clockin_sync',
+      maxRetries: NetworkConfig.syncOperationsMaxRetries,
+      timeoutSeconds: NetworkConfig.lightweightTimeout,
+    );
 
     if (response.statusCode == 200) {
       // Mark as synced

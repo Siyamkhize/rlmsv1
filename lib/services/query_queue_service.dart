@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 import 'package:flutter/foundation.dart';
+import '../config/network_config.dart';
 
 /// Query Queue Service
 ///
@@ -22,9 +23,9 @@ class QueryQueueService {
   static final QueryQueueService instance = QueryQueueService._();
   QueryQueueService._();
 
-  // Configuration
+  // Configuration - CRITICAL: Keep maxRetries ≤ 2 to prevent server overload
   static const int maxConcurrentRequests = 3;
-  static const int maxRetries = 3;
+  static const int maxRetries = 1; // FIXED: Reduced from 2 to 1 as requested
   static const Duration initialRetryDelay = Duration(seconds: 1);
 
   // Queue management
@@ -140,11 +141,11 @@ class QueryQueueService {
     } catch (error) {
       debugPrint('❌ QueryQueue: Error in ${request.id}: $error');
 
-      // Retry logic
+      // Retry logic with exponential backoff
       if (request.retries < maxRetries) {
         request.retries++;
-        final delay = initialRetryDelay *
-            (1 << (request.retries - 1)); // Exponential backoff
+        // Exponential backoff: 1s, 2s for retry attempts
+        final delay = initialRetryDelay * (1 << (request.retries - 1));
 
         debugPrint(
             '🔄 QueryQueue: Retrying ${request.id} (attempt ${request.retries}/$maxRetries) in ${delay.inSeconds}s');

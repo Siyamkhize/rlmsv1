@@ -18,6 +18,7 @@ import 'LearnerDetailsPage.dart';
 import 'sick_note_page.dart';
 import 'database_helper.dart';
 import 'services/secure_location_service.dart';
+import 'widgets/smart_framed_camera_capture.dart';
 import 'config.dart';
 import 'mixins/learner_clockin_gates_mixin.dart';
 import 'widgets/smart_framed_camera_capture.dart';
@@ -795,14 +796,54 @@ class _SignatureGeofenceClockInPageState
     setState(() => _isClockingIn[learnerID] = true);
 
     try {
-      final profileOk =
-          await ensureLearnerProfileCompleteForClockIn(learnerID);
+      final profileOk = await ensureLearnerProfileCompleteForClockIn(learnerID);
       if (!profileOk) return;
 
-      final docsOk =
-          await ensureLearnerDocumentsCompleteForClockIn(learnerID);
+      final docsOk = await ensureLearnerDocumentsCompleteForClockIn(learnerID);
       if (!docsOk) return;
 
+      // CRITICAL FIX: First capture face photo using SmartFramedCameraCapture
+      print('[SIGNATURE_GEO] Starting face capture for learner: $learnerID');
+
+      // Step 1: Navigate to SmartFramedCameraCapture for face photo
+      final learnerData = widget.learners.firstWhere(
+        (l) => l['LearnerID'].toString() == learnerID,
+        orElse: () => {'Name': 'Unknown', 'Surname': ''},
+      );
+      final learnerName = '${learnerData['Name']} ${learnerData['Surname']}';
+
+      final faceResult = await Navigator.push<Map<String, dynamic>>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SmartFramedCameraCapture(
+            learnerID: int.parse(learnerID),
+            learnerName: learnerName,
+            onCapture: (file, bytes) {
+              // Store the captured photo
+              _learnerPhotoBytes[int.parse(learnerID)] = bytes;
+              Navigator.pop(context, {'success': true, 'bytes': bytes});
+            },
+          ),
+        ),
+      );
+
+      if (faceResult?['success'] != true) {
+        print('[SIGNATURE_GEO] Face capture failed or cancelled');
+        return;
+      }
+
+      // Step 2: Capture signature using existing signature dialog
+      print(
+          '[SIGNATURE_GEO] Starting signature capture for learner: $learnerID');
+      await _showSignatureDialog(learnerID, true); // true = isClockIn
+
+      // Check if signature was captured successfully
+      if (!_learnerSignatureBytes.containsKey(int.parse(learnerID))) {
+        print('[SIGNATURE_GEO] Signature capture failed or cancelled');
+        return;
+      }
+
+      // Step 3: Proceed with clock-in using captured data
       final clockInTime = DateFormat('HH:mm:ss').format(DateTime.now());
 
       if (_isOnline) {

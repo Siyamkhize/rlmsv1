@@ -13,6 +13,8 @@ import 'finance_register_history.dart'; // Import for Attendance button
 import 'learner_induction_page.dart'; // Import for Induction button
 
 import 'config.dart'; // Import AppConfig
+import 'services/http_client_service.dart';
+import 'config/network_config.dart';
 import 'utils/scanner_pdf_resolver.dart';
 import 'dart:async'; // For Timer
 
@@ -181,12 +183,13 @@ class _AdminPageState extends State<AdminPage> {
 
       // Get SDP identifier - USE WIDGET.SDP DIRECTLY, DON'T RESOLVE
       String sdpIdentifier = widget.sdp.trim();
-      
+
       if (sdpIdentifier.isEmpty) {
         debugPrint('[ADMIN] ❌ ERROR: widget.sdp is empty!');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('SDP identifier missing. Please log out and log in again.'),
+            content: Text(
+                'SDP identifier missing. Please log out and log in again.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -201,7 +204,8 @@ class _AdminPageState extends State<AdminPage> {
       };
 
       // Use the CORRECT project ID from widget
-      bool useProjectFilter = widget.projectId != null && widget.projectId!.isNotEmpty;
+      bool useProjectFilter =
+          widget.projectId != null && widget.projectId!.isNotEmpty;
       if (useProjectFilter) {
         queryParams['project_id'] = widget.projectId!;
         debugPrint('[ADMIN] ✅ Using CORRECT project_id: ${widget.projectId}');
@@ -220,19 +224,24 @@ class _AdminPageState extends State<AdminPage> {
 
       debugPrint('[ADMIN] 🌐 Search URL: $url');
 
-      final response = await http.get(Uri.parse(url)).timeout(
-            const Duration(seconds: 5),
-          );
+      final response = await HttpClientService.makeRequest(
+        () => http.get(Uri.parse(url)),
+        endpoint: 'admin_learner_search',
+        maxRetries: NetworkConfig.readOperationsMaxRetries,
+        timeoutSeconds: NetworkConfig.lightweightTimeout,
+      );
 
       List<Map<String, dynamic>> suggestions = [];
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         debugPrint('[ADMIN] 📡 Server response: $data');
-        
+
         if (data['success'] == true) {
-          suggestions = List<Map<String, dynamic>>.from(data['suggestions'] ?? []);
-          debugPrint('[ADMIN] ✅ SDP endpoint returned ${suggestions.length} suggestions');
+          suggestions =
+              List<Map<String, dynamic>>.from(data['suggestions'] ?? []);
+          debugPrint(
+              '[ADMIN] ✅ SDP endpoint returned ${suggestions.length} suggestions');
         } else {
           debugPrint('[ADMIN] ❌ Server error: ${data['message']}');
         }
@@ -253,9 +262,12 @@ class _AdminPageState extends State<AdminPage> {
             'search_learner_autocomplete_sdp.php',
             queryParams: fallbackParams);
 
-        final fallbackResponse = await http.get(Uri.parse(fallbackUrl)).timeout(
-              const Duration(seconds: 5),
-            );
+        final fallbackResponse = await HttpClientService.makeRequest(
+          () => http.get(Uri.parse(fallbackUrl)),
+          endpoint: 'admin_learner_search_fallback',
+          maxRetries: NetworkConfig.readOperationsMaxRetries,
+          timeoutSeconds: NetworkConfig.lightweightTimeout,
+        );
 
         if (fallbackResponse.statusCode == 200) {
           final fallbackData = json.decode(fallbackResponse.body);
@@ -280,9 +292,12 @@ class _AdminPageState extends State<AdminPage> {
             'search_learner_autocomplete_global.php',
             queryParams: globalParams);
 
-        final globalResponse = await http.get(Uri.parse(globalUrl)).timeout(
-              const Duration(seconds: 5),
-            );
+        final globalResponse = await HttpClientService.makeRequest(
+          () => http.get(Uri.parse(globalUrl)),
+          endpoint: 'admin_learner_search_global',
+          maxRetries: NetworkConfig.readOperationsMaxRetries,
+          timeoutSeconds: NetworkConfig.lightweightTimeout,
+        );
 
         if (globalResponse.statusCode == 200) {
           final globalData = json.decode(globalResponse.body);
@@ -581,10 +596,12 @@ class _AdminPageState extends State<AdminPage> {
           AppConfig.buildUrl('get_sdp_all_data.php', queryParams: queryParams));
       debugPrint('[ADMIN] Requesting URL: $uri');
 
-      final response = await http.get(uri).timeout(
-            const Duration(seconds: 15),
-            onTimeout: () => throw Exception('Request timed out'),
-          );
+      final response = await HttpClientService.makeRequest(
+        () => http.get(uri),
+        endpoint: 'admin_get_details',
+        maxRetries: NetworkConfig.readOperationsMaxRetries,
+        timeoutSeconds: NetworkConfig.lightweightTimeout,
+      );
 
       debugPrint('[ADMIN] Response status: ${response.statusCode}');
       debugPrint(
@@ -1051,11 +1068,11 @@ class _AdminPageState extends State<AdminPage> {
 
       print('[ADMIN] Searching learner online (PROJECT-FILTERED): $uri');
 
-      final response = await http.get(uri).timeout(
-        const Duration(seconds: 5), // Reduced timeout from 10s to 5s
-        onTimeout: () {
-          throw Exception('Request timed out');
-        },
+      final response = await HttpClientService.makeRequest(
+        () => http.get(uri),
+        endpoint: 'admin_search_learner_online',
+        maxRetries: NetworkConfig.readOperationsMaxRetries,
+        timeoutSeconds: NetworkConfig.lightweightTimeout,
       );
 
       print('[ADMIN] 📡 Server response status: ${response.statusCode}');
@@ -1213,7 +1230,7 @@ class _AdminPageState extends State<AdminPage> {
       // If strict search failed, try without project/SDP filters
       if (where.length > 1) {
         debugPrint('[ADMIN] OFFLINE FALLBACK: Trying search without filters');
-        
+
         final fallbackQuery = '''
           SELECT
             l.*,
@@ -1230,7 +1247,7 @@ class _AdminPageState extends State<AdminPage> {
         ''';
 
         final fallbackResults = await db.rawQuery(fallbackQuery, [idNumber]);
-        
+
         if (fallbackResults.isNotEmpty) {
           final learner = fallbackResults.first;
           debugPrint(
@@ -1265,10 +1282,15 @@ class _AdminPageState extends State<AdminPage> {
       print('Request URL: $_checkDocsUrl');
       print('Request body: {"learner_id": "$learnerId"}');
 
-      final response = await http.post(
-        Uri.parse(_checkDocsUrl),
-        body: {'learner_id': learnerId},
-      ).timeout(const Duration(seconds: 10));
+      final response = await HttpClientService.makeRequest(
+        () => http.post(
+          Uri.parse(_checkDocsUrl),
+          body: {'learner_id': learnerId},
+        ),
+        endpoint: 'check_learner_documents',
+        maxRetries: NetworkConfig.readOperationsMaxRetries,
+        timeoutSeconds: NetworkConfig.lightweightTimeout,
+      );
 
       print('Server response status: ${response.statusCode}');
       print('Server response body: ${response.body}');
@@ -1721,11 +1743,23 @@ class _AdminPageState extends State<AdminPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('DEBUG INFO:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade800)),
-                      Text('widget.sdp: "${widget.sdp}"', style: TextStyle(fontSize: 12, color: Colors.blue.shade700)),
-                      Text('widget.projectId: "${widget.projectId}"', style: TextStyle(fontSize: 12, color: Colors.blue.shade700)),
-                      Text('widget.pathwayId: "${widget.pathwayId}"', style: TextStyle(fontSize: 12, color: Colors.blue.shade700)),
-                      Text('widget.qualificationId: "${widget.qualificationId}"', style: TextStyle(fontSize: 12, color: Colors.blue.shade700)),
+                      Text('DEBUG INFO:',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue.shade800)),
+                      Text('widget.sdp: "${widget.sdp}"',
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.blue.shade700)),
+                      Text('widget.projectId: "${widget.projectId}"',
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.blue.shade700)),
+                      Text('widget.pathwayId: "${widget.pathwayId}"',
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.blue.shade700)),
+                      Text(
+                          'widget.qualificationId: "${widget.qualificationId}"',
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.blue.shade700)),
                     ],
                   ),
                 ),

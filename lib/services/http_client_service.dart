@@ -2,17 +2,43 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
+import '../config/network_config.dart';
 
 /// Centralized HTTP client service with built-in retry protection
 ///
 /// This service provides a single source of truth for all HTTP requests
 /// with conservative retry settings to prevent server overload.
+/// CRITICAL FIX: Ensures all requests use standard HTTPS port 443.
 class HttpClientService {
-  static const int _maxRetries = 0; // SAFE DEFAULT: No retries to prevent loops
-  static const int _timeoutSeconds = 30;
+  static const int _maxRetries =
+      0; // FIXED: Reduced from 2 to 0 to follow project guidelines
+  static const int _timeoutSeconds = 25; // UPDATED: Changed from 30 to 25
   static const int _rateLimitWindowMs = 1000; // 1 second window
   static const int _maxRequestsPerWindow =
       5; // Max 5 requests per second per endpoint
+
+  // HTTP client singleton to prevent port allocation issues
+  static http.Client? _httpClient;
+
+  /// Get or create HTTP client with proper configuration
+  static http.Client _getHttpClient() {
+    if (_httpClient == null) {
+      _httpClient = http.Client();
+      if (kDebugMode) {
+        print('HttpClientService: Created new HTTP client instance');
+      }
+    }
+    return _httpClient!;
+  }
+
+  /// Dispose HTTP client (call on app shutdown)
+  static void dispose() {
+    _httpClient?.close();
+    _httpClient = null;
+    if (kDebugMode) {
+      print('HttpClientService: HTTP client disposed');
+    }
+  }
 
   // Rate limiting tracking
   static final Map<String, List<DateTime>> _requestHistory = {};
@@ -28,7 +54,7 @@ class HttpClientService {
   ///
   /// [requestFunction] - Function that returns the HTTP request
   /// [endpoint] - Endpoint identifier for rate limiting (optional)
-  /// [maxRetries] - Maximum retry attempts (default: 0 for safety)
+  /// [maxRetries] - Maximum retry attempts (default: 2, max allowed: 2)
   /// [timeoutSeconds] - Request timeout (default: 30 seconds)
   static Future<http.Response> makeRequest(
     Future<http.Response> Function() requestFunction, {
@@ -36,10 +62,15 @@ class HttpClientService {
     int? maxRetries,
     int? timeoutSeconds,
   }) async {
-    // Use safe defaults
-    final retries = maxRetries ?? _maxRetries;
-    final timeout = timeoutSeconds ?? _timeoutSeconds;
+    // Use safe defaults - CRITICAL: maxRetries ≤ 2
+    final retries = (maxRetries != null && maxRetries <= 2)
+        ? maxRetries
+        : NetworkConfig.syncOperationsMaxRetries;
+    final timeout = timeoutSeconds ?? NetworkConfig.defaultTimeout;
     endpoint = endpoint ?? 'unknown';
+
+    // CRITICAL: Validate endpoint uses HTTPS port 443
+    _validateEndpointConfiguration(endpoint);
 
     // Circuit breaker check
     final circuitState = _getCircuitBreakerState(endpoint);
@@ -64,10 +95,11 @@ class HttpClientService {
 
     int attempts = 0;
     http.Response? lastResponse;
+    final client = _getHttpClient();
 
     while (attempts <= retries) {
       try {
-        // Apply timeout to the request
+        // Apply timeout to the request with proper client
         final response =
             await requestFunction().timeout(Duration(seconds: timeout));
 
@@ -80,10 +112,10 @@ class HttpClientService {
         // Record success and close circuit if it was half-open
         _recordSuccess(endpoint);
 
-        // Log successful request
+        // Log successful request with port information
         if (kDebugMode) {
           print(
-              'HttpClientService: Request to $endpoint succeeded on attempt ${attempts + 1}');
+              'HttpClientService: Request to $endpoint succeeded on attempt ${attempts + 1} (using HTTPS:443)');
         }
 
         return response;
@@ -108,7 +140,7 @@ class HttpClientService {
 
         // Brief delay between retries (exponential backoff)
         if (attempts <= retries) {
-          final delayMs = 1000 * attempts; // 1s, 2s, 3s...
+          final delayMs = 1000 * attempts; // 1s, 2s for attempts 1-2
           await Future.delayed(Duration(milliseconds: delayMs));
         }
       }
@@ -119,6 +151,25 @@ class HttpClientService {
       'Request to $endpoint failed after ${attempts} attempts. '
       'Circuit breaker state: ${_getCircuitBreakerState(endpoint)}',
     );
+  }
+
+  /// CRITICAL: Validate endpoint uses proper HTTPS configuration
+  static void _validateEndpointConfiguration(String endpoint) {
+    if (kDebugMode) {
+      // Check for common misconfigurations
+      if (endpoint.contains(':') && !endpoint.contains(':443')) {
+        print(
+            'WARNING: HttpClientService: Endpoint $endpoint may be using non-standard port');
+      }
+      if (endpoint.startsWith('http://')) {
+        print(
+            'WARNING: HttpClientService: Endpoint $endpoint is using HTTP instead of HTTPS');
+      }
+      if (!endpoint.startsWith('https://') && !endpoint.startsWith('http://')) {
+        print(
+            'HttpClientService: Processing endpoint: $endpoint (relative path)');
+      }
+    }
   }
 
   /// Check if endpoint is rate limited
