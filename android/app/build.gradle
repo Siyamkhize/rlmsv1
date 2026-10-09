@@ -26,22 +26,27 @@ android {
         ]
     }
     
-    // Ultra low memory dex options
+    // Ultra low memory dex options - FIXED: Increased heap size to prevent OOM failures
     dexOptions {
-        javaMaxHeapSize "256m"
+        javaMaxHeapSize "4g"
         preDexLibraries = false
         additionalParameters = ["--force-jumbo"]
     }
     
-    // Packaging optimizations
+    // Packaging optimizations - FIXED: Merged duplicate packagingOptions blocks
     packagingOptions {
         pickFirst '**/libc++_shared.so'
         pickFirst '**/libjsc.so'
+        pickFirst '**/libzkfinger10.so'
+        pickFirst '**/libzksensorcore.so'
         exclude 'META-INF/DEPENDENCIES'
         exclude 'META-INF/LICENSE'
         exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/NOTICE'
         exclude 'META-INF/NOTICE.txt'
+        jniLibs {
+            useLegacyPackaging = false
+        }
     }
     
     // Lint optimizations for memory
@@ -110,8 +115,8 @@ android {
             minifyEnabled false
             shrinkResources false
             
-            // TEMPORARY: Make release debuggable for database inspection
-            debuggable true  // Enable debugging for database access
+            // Fixed: debuggable true in release breaks AOT snapshot
+            debuggable false
             testCoverageEnabled false
         }
         
@@ -147,15 +152,7 @@ android {
         }
     }
 
-    // Packaging options to handle native libraries
-    packagingOptions {
-        pickFirst '**/libc++_shared.so'
-        pickFirst '**/libzkfinger10.so'
-        pickFirst '**/libzksensorcore.so'
-        jniLibs {
-            useLegacyPackaging = false
-        }
-    }
+
     
     // Add this to handle Java compatibility issues
     lintOptions {
