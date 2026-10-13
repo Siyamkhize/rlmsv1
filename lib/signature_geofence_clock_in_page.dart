@@ -12,12 +12,15 @@ import 'package:geolocator/geolocator.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:uuid/uuid.dart';
 
 import 'DetailsPage.dart';
 import 'LearnerDetailsPage.dart';
 import 'sick_note_page.dart';
 import 'database_helper.dart';
 import 'services/secure_location_service.dart';
+import 'services/timezone_validator.dart';
+import 'services/offline_sync_queue_service.dart';
 import 'widgets/smart_framed_camera_capture.dart';
 import 'config.dart';
 import 'mixins/learner_clockin_gates_mixin.dart';
@@ -72,6 +75,12 @@ class _SignatureGeofenceClockInPageState
   // Track which learners have completed evidence capture
   Map<int, bool> _learnerHasPhoto = {};
   Map<int, bool> _learnerHasSignature = {};
+
+  // Batch mode state
+  bool _batchMode = false;
+  bool _isSubmittingBatch = false;
+  Map<String, Map<String, dynamic>> _batchClockings = {};
+  int get _pendingBatchCount => _batchClockings.length;
 
   // Geofencing state
   double? _currentGpsAccuracy;
@@ -385,42 +394,83 @@ class _SignatureGeofenceClockInPageState
   }
 
   Future<void> _fetchClockingDataFromServer() async {
-    if (!_isOnline) return;
+    final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
+    if (_isOnline) {
+      // ONLINE: Fetch from server
+      try {
+        final url = Uri.parse(
+          AppConfig.buildUrl(
+              'get_manual_clocking_status.php?clock_date=$currentDate'),
+        );
+
+        final response =
+            await http.get(url).timeout(const Duration(seconds: 10));
+
+        if (response.statusCode == 200) {
+          final result = jsonDecode(response.body);
+
+          if (result['success'] == true && result['records'] is List) {
+            for (var record in result['records']) {
+              final learnerID = record['learner_id'].toString();
+              final clockInTime = record['clock_in_time']?.toString() ?? '';
+              final clockOutTime = record['clock_out_time']?.toString() ?? '';
+              final contactTime = record['contact_time']?.toString() ?? '';
+
+              setState(() {
+                if (clockInTime.isNotEmpty)
+                  clockInTimes[learnerID] = clockInTime;
+                if (clockOutTime.isNotEmpty)
+                  clockOutTimes[learnerID] = clockOutTime;
+                if (contactTime.isNotEmpty)
+                  contactTimes[learnerID] = contactTime;
+              });
+            }
+
+            print(
+                '[SIGNATURE_GEO] Loaded ${result['count']} manual clocking records from server');
+          }
+        }
+      } catch (e) {
+        print(
+            '[SIGNATURE_GEO] Server fetch failed, falling back to local: $e');
+        await _loadClockingDataFromLocal(currentDate);
+      }
+    } else {
+      // OFFLINE: Load from local database
+      print('[SIGNATURE_GEO] Offline mode - loading from local database');
+      await _loadClockingDataFromLocal(currentDate);
+    }
+  }
+
+  /// Load today's clocking data from local manual_clocking table (offline fallback)
+  Future<void> _loadClockingDataFromLocal(String currentDate) async {
     try {
-      // Fetch manual clocking status from server
-      final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      final url = Uri.parse(
-        AppConfig.buildUrl(
-            'get_manual_clocking_status.php?clock_date=$currentDate'),
+      final db = await DatabaseHelper().database;
+      final records = await db.query(
+        'manual_clocking',
+        where: 'clock_date = ?',
+        whereArgs: [currentDate],
       );
 
-      final response = await http.get(url).timeout(const Duration(seconds: 10));
+      for (var record in records) {
+        final learnerID = record['LearnerID'].toString();
+        final clockInTime = record['clock_in_time']?.toString() ?? '';
+        final clockOutTime = record['clock_out_time']?.toString() ?? '';
+        final contactTime = record['contact_time']?.toString() ?? '';
 
-      if (response.statusCode == 200) {
-        final result = jsonDecode(response.body);
-
-        if (result['success'] == true && result['records'] is List) {
-          for (var record in result['records']) {
-            final learnerID = record['learner_id'].toString();
-            final clockInTime = record['clock_in_time']?.toString() ?? '';
-            final clockOutTime = record['clock_out_time']?.toString() ?? '';
-            final contactTime = record['contact_time']?.toString() ?? '';
-
-            setState(() {
-              if (clockInTime.isNotEmpty) clockInTimes[learnerID] = clockInTime;
-              if (clockOutTime.isNotEmpty)
-                clockOutTimes[learnerID] = clockOutTime;
-              if (contactTime.isNotEmpty) contactTimes[learnerID] = contactTime;
-            });
-          }
-
-          print(
-              '[SIGNATURE_GEO] Loaded ${result['count']} manual clocking records');
-        }
+        setState(() {
+          if (clockInTime.isNotEmpty) clockInTimes[learnerID] = clockInTime;
+          if (clockOutTime.isNotEmpty)
+            clockOutTimes[learnerID] = clockOutTime;
+          if (contactTime.isNotEmpty) contactTimes[learnerID] = contactTime;
+        });
       }
+
+      print(
+          '[SIGNATURE_GEO] Loaded ${records.length} records from local manual_clocking table');
     } catch (e) {
-      print('[SIGNATURE_GEO] Error fetching clocking data: $e');
+      print('[SIGNATURE_GEO] Error loading local clocking data: $e');
     }
   }
 
@@ -428,7 +478,7 @@ class _SignatureGeofenceClockInPageState
     final dbHelper = DatabaseHelper();
     final db = await dbHelper.database;
     final offlineRecords = await db.query(
-      'learner_clocking',
+      'manual_clocking',
       where: 'synced = ?',
       whereArgs: [0],
     );
@@ -439,7 +489,7 @@ class _SignatureGeofenceClockInPageState
         final signaturePath = record['signature']?.toString() ?? '';
         await _clockInOnline(learnerID, signaturePath);
         await db.update(
-          'learner_clocking',
+          'manual_clocking',
           {'synced': 1},
           where: 'LearnerID = ? AND clock_date = ?',
           whereArgs: [learnerID, record['clock_date'].toString()],
@@ -780,6 +830,20 @@ class _SignatureGeofenceClockInPageState
   Future<void> _handleClockIn(String learnerID) async {
     if (_isClockingIn[learnerID] == true) return;
 
+    // CRITICAL: Verify device time is correct before allowing clock-in
+    final timeOk = await TimezoneValidator.ensureCorrectTime(context);
+    if (!timeOk) {
+      // User cancelled or time is wrong - block clock-in
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Clock-in cancelled: Device time must be corrected first'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
     // Check if learner already clocked in today (prevent duplicates)
     final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     if (clockInTimes[learnerID]?.isNotEmpty == true) {
@@ -843,18 +907,23 @@ class _SignatureGeofenceClockInPageState
         return;
       }
 
-      // Step 3: Proceed with clock-in using captured data
-      final clockInTime = DateFormat('HH:mm:ss').format(DateTime.now());
-
-      if (_isOnline) {
-        await _clockInOnline(learnerID, '');
+      // Step 3: Branch based on mode
+      if (_batchMode) {
+        await _storeLearnerClockingData(learnerID, 'in');
       } else {
-        await _clockInOffline(learnerID, clockInTime);
-      }
+        // EXISTING INDIVIDUAL MODE - keep exactly as is
+        final clockInTime = DateFormat('HH:mm:ss').format(DateTime.now());
 
-      setState(() {
-        clockInTimes[learnerID] = clockInTime;
-      });
+        if (_isOnline) {
+          await _clockInOnline(learnerID, '');
+        } else {
+          await _clockInOffline(learnerID, clockInTime);
+        }
+
+        setState(() {
+          clockInTimes[learnerID] = clockInTime;
+        });
+      }
     } catch (e) {
       print('[SIGNATURE_GEO] Clock-in error: $e');
       ScaffoldMessenger.of(
@@ -894,18 +963,63 @@ class _SignatureGeofenceClockInPageState
     setState(() => _isClockingIn[learnerID] = true);
 
     try {
-      final clockOutTime = DateFormat('HH:mm:ss').format(DateTime.now());
-      final clockDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      // CRITICAL FIX: Capture face photo for clock-out
+      print('[SIGNATURE_GEO] Starting face capture for clock-out: $learnerID');
 
-      if (_isOnline) {
-        await _clockOutOnline(learnerID, '', synced: false);
-      } else {
-        await updateClockOut(learnerID, clockOutTime, clockDate);
+      final learnerData = widget.learners.firstWhere(
+        (l) => l['LearnerID'].toString() == learnerID,
+        orElse: () => {'Name': 'Unknown', 'Surname': ''},
+      );
+      final learnerName = '${learnerData['Name']} ${learnerData['Surname']}';
+
+      final faceResult = await Navigator.push<Map<String, dynamic>>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SmartFramedCameraCapture(
+            learnerID: int.parse(learnerID),
+            learnerName: learnerName,
+            onCapture: (file, bytes) {
+              _learnerPhotoBytes[int.parse(learnerID)] = bytes;
+              Navigator.pop(context, {'success': true, 'bytes': bytes});
+            },
+          ),
+        ),
+      );
+
+      if (faceResult?['success'] != true) {
+        print('[SIGNATURE_GEO] Face capture failed or cancelled for clock-out');
+        return;
       }
 
-      setState(() {
-        clockOutTimes[learnerID] = clockOutTime;
-      });
+      // Capture signature for clock-out
+      print(
+          '[SIGNATURE_GEO] Starting signature capture for clock-out: $learnerID');
+      await _showSignatureDialog(learnerID, false); // false = isClockOut
+
+      // Check if signature was captured successfully
+      if (!_learnerSignatureBytes.containsKey(int.parse(learnerID))) {
+        print('[SIGNATURE_GEO] Signature capture failed or cancelled');
+        return;
+      }
+
+      // Branch based on mode
+      if (_batchMode) {
+        await _storeLearnerClockingData(learnerID, 'out');
+      } else {
+        // EXISTING INDIVIDUAL MODE - keep exactly as is
+        final clockOutTime = DateFormat('HH:mm:ss').format(DateTime.now());
+        final clockDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+        if (_isOnline) {
+          await _clockOutOnline(learnerID, '', synced: false);
+        } else {
+          await _clockOutOffline(learnerID, clockOutTime, clockDate);
+        }
+
+        setState(() {
+          clockOutTimes[learnerID] = clockOutTime;
+        });
+      }
     } catch (e) {
       print('[SIGNATURE_GEO] Clock-out error: $e');
       ScaffoldMessenger.of(
@@ -913,6 +1027,158 @@ class _SignatureGeofenceClockInPageState
       ).showSnackBar(SnackBar(content: Text('Clock-out failed: $e')));
     } finally {
       setState(() => _isClockingIn[learnerID] = false);
+    }
+  }
+
+  /// Batch mode: Store learner clocking data for later submission
+  Future<void> _storeLearnerClockingData(String learnerID, String type) async {
+    // Step 1: Get learner details for display
+    final learner = widget.learners.firstWhere(
+      (l) => l['LearnerID'].toString() == learnerID,
+      orElse: () => {'Name': 'Unknown', 'Surname': 'Learner'},
+    );
+    final learnerName = '${learner['Name']} ${learner['Surname']}';
+
+    // Step 2: Get the already-captured data from current session
+    final learnerIdInt = int.parse(learnerID);
+    
+    // Verify photo and signature were already captured in current flow
+    if (!_learnerPhotoBytes.containsKey(learnerIdInt)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Photo not captured. Batch collection aborted.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    
+    if (!_learnerSignatureBytes.containsKey(learnerIdInt)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Signature not captured. Batch collection aborted.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Step 3: Store in batch map with all required data
+    final uuid = const Uuid();
+    final clockDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final clockTime = DateFormat('HH:mm:ss').format(DateTime.now());
+    final timestamp = DateTime.now().toUtc().toIso8601String();
+    final deviceEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+    _batchClockings[learnerID] = {
+      'learner_id': learnerID,
+      'name': learner['Name']?.toString() ?? '',
+      'surname': learner['Surname']?.toString() ?? '',
+      'type': type,
+      'face_image': base64Encode(_learnerPhotoBytes[learnerIdInt]!),
+      'signature_image': base64Encode(_learnerSignatureBytes[learnerIdInt]!),
+      'latitude': _currentPosition?.latitude ?? 0.0,
+      'longitude': _currentPosition?.longitude ?? 0.0,
+      'accuracy': _currentGpsAccuracy ?? 999.0,
+      'clock_date': clockDate,
+      'clock_time': clockTime,
+      'timestamp': timestamp,
+      'device_epoch': deviceEpoch,
+      'idempotency_key': uuid.v4(),
+    };
+
+    setState(() {});
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Added to batch ($_pendingBatchCount pending): ${learner['Name']} ${learner['Surname']} - ${type == 'in' ? 'Clock-in' : 'Clock-out'}',
+        ),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  /// Submit collected batch clockings using OfflineSyncQueueService
+  Future<void> _submitBatch() async {
+    if (_batchClockings.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No learner clockings collected'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmittingBatch = true);
+
+    try {
+      // Prepare learner clockings list for batch service
+      final learnerClockings = _batchClockings.values.toList();
+
+      // Call existing queueForBatchProcessing method
+      final syncService = OfflineSyncQueueService();
+      final result = await syncService.queueForBatchProcessing(
+        widget.classID,
+        learnerClockings,
+      );
+
+      if (result['success'] == true) {
+        // Update local state based on submitted data
+        for (final clocking in learnerClockings) {
+          final learnerID = clocking['learner_id'] as String;
+          final clockTime = clocking['clock_time'] as String;
+          if (clocking['type'] == 'in') {
+            setState(() {
+              clockInTimes[learnerID] = clockTime;
+            });
+          } else if (clocking['type'] == 'out') {
+            setState(() {
+              clockOutTimes[learnerID] = clockTime;
+            });
+          }
+        }
+
+        // Clear batch data and evidence maps
+        _batchClockings.clear();
+        _learnerPhotoFiles.clear();
+        _learnerPhotoBytes.clear();
+        _learnerSignatureBytes.clear();
+        _learnerHasPhoto.clear();
+        _learnerHasSignature.clear();
+        _signatureController.clear();
+
+        setState(() {});
+
+        // Show success message
+        final wasProcessedImmediately = result['processed_immediately'] == true;
+        final message = wasProcessedImmediately
+            ? '✅ Batch submitted successfully (${learnerClockings.length} learners)'
+            : '📤 Batch queued for sync (${learnerClockings.length} learners)';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else {
+        throw Exception(result['message'] ?? 'Batch submission failed');
+      }
+    } catch (e) {
+      print('[SIGNATURE_GEO] Batch submission error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Batch submission failed: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } finally {
+      setState(() => _isSubmittingBatch = false);
     }
   }
 
@@ -1009,6 +1275,8 @@ class _SignatureGeofenceClockInPageState
         'latitude': userLat,
         'longitude': userLon,
         'accuracy': userAccuracy,
+        'device_epoch': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        'is_offline_sync': false, // Real-time manual clock-in
       };
 
       print('[SIGNATURE_GEO] Sending manual clock-in for learner: $learnerID');
@@ -1162,6 +1430,8 @@ class _SignatureGeofenceClockInPageState
         'latitude': userLat,
         'longitude': userLon,
         'accuracy': userAccuracy,
+        'device_epoch': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        'is_offline_sync': false, // Real-time manual clock-out
       };
 
       print('[SIGNATURE_GEO] Sending manual clock-out for learner: $learnerID');
@@ -1250,9 +1520,9 @@ class _SignatureGeofenceClockInPageState
       print('[SIGNATURE_GEO] Starting offline clock-in for: $learnerID');
       final dbHelper = DatabaseHelper();
       final clockDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final appDir = await getApplicationDocumentsDirectory();
 
       // Save signature from per-learner storage
-      final appDir = await getApplicationDocumentsDirectory();
       final signaturePath =
           '${appDir.path}/signature_${learnerID}_$clockDate.png';
       String finalSignaturePath = '';
@@ -1264,11 +1534,30 @@ class _SignatureGeofenceClockInPageState
           await signatureFile
               .writeAsBytes(_learnerSignatureBytes[learnerIdInt]!);
           finalSignaturePath = signaturePath;
+          print('[SIGNATURE_GEO] Signature saved to: $finalSignaturePath');
         } catch (e) {
           print('[SIGNATURE_GEO] Signature save failed: $e');
         }
       } else {
         print('[SIGNATURE_GEO] No signature found for learner $learnerID');
+      }
+
+      // Save face photo from per-learner storage
+      final facePhotoPath =
+          '${appDir.path}/face_${learnerID}_$clockDate.png';
+      String finalFacePhotoPath = '';
+
+      if (_learnerPhotoBytes.containsKey(learnerIdInt)) {
+        try {
+          final facePhotoFile = File(facePhotoPath);
+          await facePhotoFile.writeAsBytes(_learnerPhotoBytes[learnerIdInt]!);
+          finalFacePhotoPath = facePhotoPath;
+          print('[SIGNATURE_GEO] Face photo saved to: $finalFacePhotoPath');
+        } catch (e) {
+          print('[SIGNATURE_GEO] Face photo save failed: $e');
+        }
+      } else {
+        print('[SIGNATURE_GEO] No face photo found for learner $learnerID');
       }
 
       // Get location data
@@ -1280,15 +1569,19 @@ class _SignatureGeofenceClockInPageState
         'LearnerID': learnerID,
         'clock_in_time': clockInTime,
         'clock_date': clockDate,
-        'signature': finalSignaturePath,
+        'signature_in': finalSignaturePath, // Correct key for database_helper
+        'face_in': finalFacePhotoPath, // Correct key for database_helper
         'synced': 0,
         'user_latitude': userLat.toString(),
         'user_longitude': userLon.toString(),
         'user_accuracy': userAccuracy.toString(),
+        'device_epoch': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        'is_offline_sync': 'true',
       };
 
-      await dbHelper.insertClockInOffline(clockInData);
-      print('[SIGNATURE_GEO] Offline clock-in saved for: $learnerID');
+      await dbHelper.insertManualClockInOffline(clockInData);
+      print(
+          '[SIGNATURE_GEO] Offline clock-in saved for: $learnerID to manual_clocking + manual_clocking_evidence');
 
       setState(() {
         clockInTimes[learnerID] = clockInTime;
@@ -1308,6 +1601,145 @@ class _SignatureGeofenceClockInPageState
     }
   }
 
+  /// Clock-out offline - saves signature and face photo to manual_clocking_evidence
+  Future<void> _clockOutOffline(
+    String learnerID,
+    String clockOutTime,
+    String clockDate,
+  ) async {
+    try {
+      print('[SIGNATURE_GEO] Starting offline clock-out for: $learnerID');
+      final dbHelper = DatabaseHelper();
+      final db = await dbHelper.database;
+      final appDir = await getApplicationDocumentsDirectory();
+
+      // Check if clock-in record exists
+      final existingRecords = await db.query(
+        'manual_clocking',
+        where: 'LearnerID = ? AND clock_date = ?',
+        whereArgs: [learnerID, clockDate],
+      );
+
+      if (existingRecords.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No clock-in record found for today.')),
+        );
+        return;
+      }
+
+      // Calculate contact time
+      final clockInTime = existingRecords[0]['clock_in_time']?.toString();
+      String? contactTime;
+      if (clockInTime != null && clockInTime.isNotEmpty) {
+        try {
+          final timeFormat = DateFormat('HH:mm:ss');
+          final clockInDateTime = timeFormat.parse(clockInTime);
+          final clockOutDateTime = timeFormat.parse(clockOutTime);
+          final contactTimeDuration = clockOutDateTime.difference(
+            clockInDateTime,
+          );
+          contactTime = formatDuration(contactTimeDuration);
+        } catch (e) {
+          print('[SIGNATURE_GEO] Error calculating contact time: $e');
+        }
+      }
+
+      // Save signature for clock-out from per-learner storage
+      final signaturePath =
+          '${appDir.path}/signature_out_${learnerID}_$clockDate.png';
+      String finalSignaturePath = '';
+
+      final learnerIdInt = int.parse(learnerID);
+      if (_learnerSignatureBytes.containsKey(learnerIdInt)) {
+        try {
+          final signatureFile = File(signaturePath);
+          await signatureFile
+              .writeAsBytes(_learnerSignatureBytes[learnerIdInt]!);
+          finalSignaturePath = signaturePath;
+          print('[SIGNATURE_GEO] Clock-out signature saved to: $finalSignaturePath');
+        } catch (e) {
+          print('[SIGNATURE_GEO] Clock-out signature save failed: $e');
+        }
+      } else {
+        print('[SIGNATURE_GEO] No signature found for learner $learnerID clock-out');
+      }
+
+      // Save face photo for clock-out from per-learner storage
+      final facePhotoPath =
+          '${appDir.path}/face_out_${learnerID}_$clockDate.png';
+      String finalFacePhotoPath = '';
+
+      if (_learnerPhotoBytes.containsKey(learnerIdInt)) {
+        try {
+          final facePhotoFile = File(facePhotoPath);
+          await facePhotoFile.writeAsBytes(_learnerPhotoBytes[learnerIdInt]!);
+          finalFacePhotoPath = facePhotoPath;
+          print('[SIGNATURE_GEO] Clock-out face photo saved to: $finalFacePhotoPath');
+        } catch (e) {
+          print('[SIGNATURE_GEO] Clock-out face photo save failed: $e');
+        }
+      } else {
+        print('[SIGNATURE_GEO] No face photo found for learner $learnerID clock-out');
+      }
+
+      // Prepare clock-out data
+      final clockOutData = {
+        'LearnerID': learnerID,
+        'clock_out_time': clockOutTime,
+        'clock_date': clockDate,
+        'contact_time': contactTime,
+        'signature_out': finalSignaturePath, // Correct key for database_helper
+        'face_out': finalFacePhotoPath, // Correct key for database_helper
+        'device_epoch': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        'is_offline_sync': 'true',
+      };
+
+      await dbHelper.updateManualClockOutOffline(clockOutData);
+      print(
+          '[SIGNATURE_GEO] Offline clock-out saved for: $learnerID to manual_clocking + manual_clocking_evidence');
+
+      setState(() {
+        clockOutTimes[learnerID] = clockOutTime;
+        if (contactTime != null) {
+          contactTimes[learnerID] = contactTime;
+        }
+
+        // Clear captured evidence after successful clock-out
+        _learnerPhotoFiles.remove(learnerIdInt);
+        _learnerPhotoBytes.remove(learnerIdInt);
+        _learnerSignatureBytes.remove(learnerIdInt);
+        _learnerHasPhoto.remove(learnerIdInt);
+        _learnerHasSignature.remove(learnerIdInt);
+
+        // Clear signature pad for next use
+        _signatureController.clear();
+      });
+
+      // Check if record is now complete (both clock-in and clock-out)
+      final hasClockIn = clockInTimes[learnerID]?.isNotEmpty == true;
+      final hasClockOut = clockOutTimes[learnerID]?.isNotEmpty == true;
+      final isComplete = hasClockIn && hasClockOut;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isComplete
+              ? '✅ Record Completed - Clock-in and Clock-out saved offline'
+              : 'Clock-out saved locally. Will sync when online.'),
+          backgroundColor: isComplete ? Colors.blue : Colors.green,
+          duration: Duration(seconds: isComplete ? 4 : 2),
+        ),
+      );
+    } catch (e) {
+      print('[SIGNATURE_GEO] Offline clock-out error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving offline clock-out: $e')),
+      );
+      rethrow;
+    }
+  }
+
+  /// DEPRECATED: Old method that only updated manual_clocking table
+  /// Kept for reference but no longer used
   Future<void> updateClockOut(
     String learnerID,
     String clockOutTime,
@@ -1316,7 +1748,7 @@ class _SignatureGeofenceClockInPageState
     try {
       final db = await DatabaseHelper().database;
       final existingRecords = await db.query(
-        'learner_clocking',
+        'manual_clocking',
         where: 'LearnerID = ? AND clock_date = ?',
         whereArgs: [learnerID, clockDate],
       );
@@ -1350,7 +1782,7 @@ class _SignatureGeofenceClockInPageState
       };
 
       await db.update(
-        'learner_clocking',
+        'manual_clocking',
         updatedData,
         where: 'LearnerID = ? AND clock_date = ?',
         whereArgs: [learnerID, clockDate],
@@ -1398,6 +1830,29 @@ class _SignatureGeofenceClockInPageState
         title: const Text('Signature + Geofence Clock-In'),
         backgroundColor: Colors.teal,
         actions: [
+          // Batch mode toggle
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Batch',
+                style: TextStyle(color: Colors.white, fontSize: 12),
+              ),
+              Switch(
+                value: _batchMode,
+                onChanged: (value) {
+                  setState(() {
+                    _batchMode = value;
+                    if (!value) {
+                      // Clear batch data when switching back to individual mode
+                      _batchClockings.clear();
+                    }
+                  });
+                },
+                activeColor: Colors.white,
+              ),
+            ],
+          ),
           // Connectivity indicator
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1443,6 +1898,39 @@ class _SignatureGeofenceClockInPageState
                         style: const TextStyle(fontSize: 11),
                       ),
                       backgroundColor: Colors.white,
+                    ),
+                ],
+              ),
+            ),
+          // Batch mode status banner
+          if (_batchMode)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              color: Colors.blue[50],
+              child: Row(
+                children: [
+                  const Icon(Icons.playlist_add_check, color: Colors.blue),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Batch Mode: ${_batchClockings.length} learner(s) collected',
+                      style: TextStyle(
+                        color: Colors.blue[900],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (_batchClockings.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: () {
+                        setState(() => _batchClockings.clear());
+                      },
+                      icon: const Icon(Icons.clear_all, size: 16),
+                      label: const Text('Clear'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.red,
+                      ),
                     ),
                 ],
               ),
@@ -1639,6 +2127,25 @@ class _SignatureGeofenceClockInPageState
           ),
         ],
       ),
+      floatingActionButton: _batchMode && _pendingBatchCount > 0
+          ? FloatingActionButton.extended(
+              onPressed: _isSubmittingBatch ? null : _submitBatch,
+              icon: _isSubmittingBatch
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.cloud_upload),
+              label: Text(_isSubmittingBatch
+                  ? 'Submitting...'
+                  : 'Submit Batch ($_pendingBatchCount)'),
+              backgroundColor: _isSubmittingBatch ? Colors.grey : Colors.teal,
+            )
+          : null,
     );
   }
 
