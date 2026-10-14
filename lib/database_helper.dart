@@ -1923,6 +1923,29 @@ updated_at TIMESTAMP
               )
             ''');
 
+      // Create offline_sessions table for persistent offline authentication
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS offline_sessions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_email TEXT NOT NULL UNIQUE,
+          token_hash TEXT NOT NULL,
+          device_id TEXT,
+          created_at TEXT NOT NULL,
+          expires_at TEXT NOT NULL,
+          last_activity_at TEXT NOT NULL
+        )
+      ''');
+
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_offline_sessions_email 
+        ON offline_sessions(user_email)
+      ''');
+
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_offline_sessions_expires 
+        ON offline_sessions(expires_at)
+      ''');
+
       // Seed essential data to ensure offline functionality
       await _seedEssentialData(db);
     });
@@ -3779,9 +3802,11 @@ updated_at TIMESTAMP
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
       
+      print('[OFFLINE_TOKEN_SECURITY] Token created for $email on device $deviceId, expires ${expiresAt.toIso8601String()}');
       debugPrint('[OFFLINE_TOKEN] ✅ Created offline session for $email (expires: ${expiresAt.toIso8601String()})');
       return token;
     } catch (e) {
+      print('[OFFLINE_TOKEN_SECURITY] Token creation FAILED: $e');
       debugPrint('[OFFLINE_TOKEN] ❌ Error creating offline token: $e');
       return null;
     }
@@ -3802,6 +3827,7 @@ updated_at TIMESTAMP
       );
       
       if (result.isEmpty) {
+        print('[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token not found for $email');
         debugPrint('[OFFLINE_TOKEN] ❌ No session found for $email');
         return false;
       }
@@ -3812,17 +3838,26 @@ updated_at TIMESTAMP
       final expiresAt = DateTime.parse(expiresAtStr);
       final now = DateTime.now();
       
+      // Check device binding
+      final storedDeviceId = session['device_id'] as String?;
+      final currentDeviceId = await _getDeviceId();
+      if (storedDeviceId != null && storedDeviceId != currentDeviceId && storedDeviceId != 'unknown_device') {
+        print('[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: device_id mismatch for $email (stored: $storedDeviceId, current: $currentDeviceId)');
+        await db.delete('offline_sessions', where: 'user_email = ?', whereArgs: [email]);
+        return false;
+      }
+      
       // Check if token matches
       final providedHash = _hashToken(token);
       if (providedHash != storedHash) {
-        debugPrint('[OFFLINE_TOKEN] ❌ Token hash mismatch for $email');
+        print('[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token hash mismatch for $email');
         await db.delete('offline_sessions', where: 'user_email = ?', whereArgs: [email]);
         return false;
       }
       
       // Check if expired
       if (now.isAfter(expiresAt)) {
-        debugPrint('[OFFLINE_TOKEN] ❌ Token expired for $email (expired: $expiresAtStr)');
+        print('[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token expired for $email at $expiresAtStr');
         await db.delete('offline_sessions', where: 'user_email = ?', whereArgs: [email]);
         return false;
       }
@@ -3847,6 +3882,7 @@ updated_at TIMESTAMP
         whereArgs: [email],
       );
       
+      print('[OFFLINE_TOKEN_SECURITY] Token validated for $email');
       debugPrint('[OFFLINE_TOKEN] ✅ Token validated for $email');
       return true;
     } catch (e) {
@@ -3901,6 +3937,7 @@ updated_at TIMESTAMP
         where: 'user_email = ?',
         whereArgs: [email],
       );
+      print('[OFFLINE_TOKEN_SECURITY] Session cleared for $email');
       debugPrint('[OFFLINE_TOKEN] ✅ Cleared session for $email');
     } catch (e) {
       debugPrint('[OFFLINE_TOKEN] ❌ Error clearing session: $e');
