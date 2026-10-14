@@ -1032,8 +1032,8 @@ class _SignatureGeofenceClockInPageState
 
   /// Batch mode: Store learner clocking data for later submission
   Future<void> _storeLearnerClockingData(String learnerID, String type) async {
-    // Warn user when approaching batch size limit
-    if (_batchClockings.length >= 15 && !_batchClockings.containsKey(learnerID)) {
+    // Warn at 14 so the 15th addition triggers the alert (>= 15 was off-by-one)
+    if (_batchClockings.length >= 14 && !_batchClockings.containsKey(learnerID)) {
       final shouldContinue = await showDialog<bool>(
         context: context,
         barrierDismissible: false,
@@ -1157,6 +1157,27 @@ class _SignatureGeofenceClockInPageState
         widget.classID,
         learnerClockings,
       );
+
+      // Handle batch size rejection from queue service
+      if (result['success'] == false) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Batch Size Limit Exceeded'),
+              content: Text(result['error'] ?? 'Batch could not be processed'),
+              actions: [
+                TextButton(
+                  child: const Text('OK'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          );
+        }
+        setState(() => _isSubmittingBatch = false);
+        return; // Don't proceed with success handling
+      }
 
       if (result['success'] == true) {
         // Update local state based on submitted data

@@ -82,13 +82,14 @@ try {
     }
 
     // Check if images already uploaded for this clocking event (idempotency)
+    // clock_type removed — column does not exist in learner_clocking_evidence
     $existingCheck = $conn->prepare("
         SELECT face_filename, signature_filename 
         FROM learner_clocking_evidence 
-        WHERE learner_id = ? AND clock_date = ? AND clock_type = ?
+        WHERE learner_id = ? AND clock_date = ?
         LIMIT 1
     ");
-    $existingCheck->bind_param("iss", $learnerID, $clockDate, $type);
+    $existingCheck->bind_param("is", $learnerID, $clockDate);
     $existingCheck->execute();
     $existingResult = $existingCheck->get_result();
 
