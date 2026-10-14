@@ -12,6 +12,15 @@ header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 include('connection.php');
 
+// SECURITY: Require authentication
+require_once __DIR__ . '/require_auth.php';
+$user = requireAuth($conn);
+$authenticated_user_id = $user['user_id'];
+$authenticated_role = $user['user_role'];
+
+// SECURITY: Apply rate limiting (POE uploads are larger, allow fewer per minute)
+applyRateLimit($conn, 'save_metadata', 20);
+
 // Constants
 define('MAX_FILE_SIZE', 15 * 1024 * 1024); // 15MB
 define('UPLOAD_DIR', 'POE/');

@@ -4,10 +4,19 @@ require_once __DIR__ . '/../security_functions.php';
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 // Database connection
 require_once 'connection.php';
+
+// SECURITY: Require authentication
+require_once __DIR__ . '/require_auth.php';
+$user = requireAuth($conn);
+$authenticated_user_id = $user['user_id'];
+$authenticated_role = $user['user_role'];
+
+// SECURITY: Apply rate limiting
+applyRateLimit($conn, 'get_attendance', 60);
 
 try {
     // Get parameters
