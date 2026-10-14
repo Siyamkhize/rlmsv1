@@ -212,6 +212,14 @@ class AppConfig {
     return url;
   }
 
+  // Offline session configuration - matches online behavior
+  // OFFLINE_SESSION_EXPIRY_DAYS: sessions last 7 days
+  // OFFLINE_TOKEN_REFRESH_ENABLED: auto-extend expiry during last day
+  // OFFLINE_TOKEN_LENGTH: 64-char hex token matches online format
+  static const int OFFLINE_SESSION_EXPIRY_DAYS = 7;
+  static const bool OFFLINE_TOKEN_REFRESH_ENABLED = true;
+  static const int OFFLINE_TOKEN_LENGTH = 64;
+
   // Helper function to get auth token
   static Future<String?> getAuthToken() async {
     try {

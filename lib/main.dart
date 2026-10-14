@@ -320,6 +320,7 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
     _checkConnectivity();
     _checkDatabase();
+    _checkOfflineSession(); // Check for existing offline session
     syncService.initSync();
     _initializeRandomPromptService();
   }
@@ -380,6 +381,101 @@ class _LoginPageState extends State<LoginPage> {
       setState(() {
         _databaseStatus = 'Error checking SQLite connection: $e';
       });
+    }
+  }
+
+  /// Check for existing offline session and auto-login if valid
+  Future<void> _checkOfflineSession() async {
+    try {
+      debugPrint('[OFFLINE_TOKEN] Checking for existing offline session...');
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('offline_token');
+      final email = prefs.getString('offline_user_email');
+
+      if (token == null || email == null) {
+        debugPrint('[OFFLINE_TOKEN] No offline session found');
+        return;
+      }
+
+      debugPrint('[OFFLINE_TOKEN] Found offline session for $email, validating...');
+      
+      // Load session from database to check expiry
+      final session = await dbHelper.loadOfflineSession(email);
+      
+      if (session == null) {
+        debugPrint('[OFFLINE_TOKEN] Session expired or not found, clearing SharedPreferences');
+        await prefs.remove('offline_token');
+        await prefs.remove('offline_user_email');
+        return;
+      }
+
+      // Validate the token
+      final isValid = await dbHelper.validateOfflineToken(email, token);
+      
+      if (!isValid) {
+        debugPrint('[OFFLINE_TOKEN] Token validation failed, clearing session');
+        await prefs.remove('offline_token');
+        await prefs.remove('offline_user_email');
+        return;
+      }
+
+      debugPrint('[OFFLINE_TOKEN] ✅ Valid session found, auto-logging in as $email');
+      
+      // Fetch user details and navigate based on role
+      // First check SDP
+      final sdpEntry = await dbHelper.getSdpByEmail(email);
+      if (sdpEntry != null) {
+        String role = 'sdp';
+        String siteID = sdpEntry['siteID']?.toString() ?? '';
+        String classID = sdpEntry['classID']?.toString() ?? '';
+        String sdp = sdpEntry['sdp_id']?.toString() ??
+            sdpEntry['sdp_name']?.toString() ??
+            sdpEntry['Reg_number']?.toString() ??
+            '';
+        String facilitatorId = sdpEntry['facilitator_id']?.toString() ?? '';
+        List classes = sdpEntry['classes'] ?? [];
+        int siteIDInt = int.tryParse(siteID) ?? 0;
+        List classData = await dbHelper.getClassData(classID);
+        List learners = await dbHelper.getLearnersForClass(siteIDInt);
+        
+        Map<String, dynamic> offlineData = {
+          'sdp_name': sdpEntry['sdp_name']?.toString() ??
+              sdpEntry['client_name']?.toString() ??
+              '',
+          'sdp_id': sdp,
+        };
+        
+        _navigateBasedOnRole(role, classID, sdp, classData, learners,
+            facilitatorId, classes, offlineData);
+        return;
+      }
+      
+      // Then check facilitator
+      final facilitator = await dbHelper.getFacilitatorByEmail(email);
+      if (facilitator != null) {
+        String role = facilitator['role'];
+        final normalizedRole = role.toLowerCase().trim();
+        if (normalizedRole.contains('arpl')) {
+          role = 'arpl_assessor';
+        } else if (normalizedRole == 'assessor') {
+          role = 'assessor';
+        } else if (role == 'Moderator') {
+          role = 'Moderator';
+        }
+        String classID = facilitator['classID']?.toString() ?? '';
+        String sdp = facilitator['sdp_name'] ?? '';
+        String facilitatorId = facilitator['facilitator_id']?.toString() ?? '';
+        List classes = facilitator['classes'] ?? [];
+        
+        _navigateBasedOnRole(role, classID, sdp, [], [], facilitatorId, classes, {});
+        return;
+      }
+
+      debugPrint('[OFFLINE_TOKEN] ⚠️ Session valid but user not found in database');
+      await prefs.remove('offline_token');
+      await prefs.remove('offline_user_email');
+    } catch (e) {
+      debugPrint('[OFFLINE_TOKEN] ❌ Error checking offline session: $e');
     }
   }
 
@@ -586,6 +682,22 @@ class _LoginPageState extends State<LoginPage> {
             await dbHelper.getSdp(username, password);
 
         if (sdpEntry != null) {
+          // ✅ SDP offline login successful - create offline session token
+          debugPrint('[OFFLINE_TOKEN] SDP login successful for $username');
+          try {
+            final token = await dbHelper.createOfflineToken(username);
+            if (token != null) {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setString('offline_token', token);
+              await prefs.setString('offline_user_email', username);
+              debugPrint('[OFFLINE_TOKEN] ✅ Offline token created and stored for $username');
+            } else {
+              debugPrint('[OFFLINE_TOKEN] ⚠️ Failed to create offline token for $username');
+            }
+          } catch (e) {
+            debugPrint('[OFFLINE_TOKEN] ❌ Error creating offline token: $e');
+          }
+          
           String role = 'sdp';
           String siteID = sdpEntry['siteID']?.toString() ?? '';
           String classID = sdpEntry['classID']?.toString() ?? '';
@@ -635,6 +747,22 @@ class _LoginPageState extends State<LoginPage> {
               await dbHelper.getFacilitator(username, password);
 
           if (facilitator != null) {
+            // ✅ Facilitator offline login successful - create offline session token
+            debugPrint('[OFFLINE_TOKEN] Facilitator login successful for $username');
+            try {
+              final token = await dbHelper.createOfflineToken(username);
+              if (token != null) {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString('offline_token', token);
+                await prefs.setString('offline_user_email', username);
+                debugPrint('[OFFLINE_TOKEN] ✅ Offline token created and stored for $username');
+              } else {
+                debugPrint('[OFFLINE_TOKEN] ⚠️ Failed to create offline token for $username');
+              }
+            } catch (e) {
+              debugPrint('[OFFLINE_TOKEN] ❌ Error creating offline token: $e');
+            }
+            
             String role = facilitator['role'];
             // Normalize the role for consistent handling
             final normalizedRole = role.toLowerCase().trim();
@@ -963,6 +1091,36 @@ class _LoginPageState extends State<LoginPage> {
           );
         },
       );
+    }
+  }
+
+  /// Logout and clear offline session token
+  Future<void> _logout() async {
+    try {
+      debugPrint('[OFFLINE_TOKEN] Logging out...');
+      final prefs = await SharedPreferences.getInstance();
+      final email = prefs.getString('offline_user_email');
+      
+      if (email != null) {
+        await dbHelper.clearOfflineSession(email);
+        debugPrint('[OFFLINE_TOKEN] ✅ Cleared offline session for $email');
+      }
+      
+      await prefs.remove('offline_token');
+      await prefs.remove('offline_user_email');
+      await prefs.remove('auth_token');
+      
+      debugPrint('[OFFLINE_TOKEN] ✅ Logout complete, cleared all session data');
+      
+      // Navigate back to login page (replace the current route)
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      debugPrint('[OFFLINE_TOKEN] ❌ Error during logout: $e');
     }
   }
 

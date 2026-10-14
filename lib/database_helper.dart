@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:bcrypt/bcrypt.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter/foundation.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'utils/connectivity_utils.dart';
 import 'services/http_client_service.dart';
 import 'config/network_config.dart';
@@ -205,11 +206,13 @@ class DatabaseHelper {
             'user_latitude': attendance['user_latitude'].toString(),
             'user_longitude': attendance['user_longitude'].toString(),
             'user_accuracy': attendance['user_accuracy'].toString(),
+            'device_epoch': (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString(),
+            'is_offline_sync': 'true', // Syncing offline record to server
           },
         ),
         endpoint: 'learner_clockin_sync',
         maxRetries: NetworkConfig.syncOperationsMaxRetries,
-        timeoutSeconds: NetworkConfig.profileSyncTimeout,
+        timeout: Duration(seconds: NetworkConfig.profileSyncTimeout),
       );
 
       if (response.statusCode == 200) {
@@ -241,11 +244,13 @@ class DatabaseHelper {
             'user_latitude': attendance['user_latitude'].toString(),
             'user_longitude': attendance['user_longitude'].toString(),
             'user_accuracy': attendance['user_accuracy'].toString(),
+            'device_epoch': (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString(),
+            'is_offline_sync': 'true', // Syncing offline record to server
           },
         ),
         endpoint: 'learner_clockout_sync',
         maxRetries: NetworkConfig.syncOperationsMaxRetries,
-        timeoutSeconds: NetworkConfig.profileSyncTimeout,
+        timeout: Duration(seconds: NetworkConfig.profileSyncTimeout),
       );
 
       if (response.statusCode == 200) {
@@ -689,7 +694,7 @@ class DatabaseHelper {
   Future<Database> _initDatabase() async {
     final path = await getDatabasesPath();
     return openDatabase(join(path, _dbName),
-        version: 17, // ⬆️ BUMP for facilitator clock_in_method column
+        version: 18, // ⬆️ BUMP for offline_sessions table
         onUpgrade: (db, oldVersion, newVersion) async {
       debugPrint(
           '[DB] Upgrading database from version $oldVersion to $newVersion');
@@ -1271,6 +1276,41 @@ class DatabaseHelper {
               '[DB] ✅ Added clock_in_method column to facilitator_clocking table');
         } catch (e) {
           debugPrint('[DB] ❌ Error adding clock_in_method column: $e');
+        }
+      }
+
+      if (oldVersion < 18) {
+        // v18: Create offline_sessions table for persistent offline authentication
+        debugPrint(
+            '[DB] ✅ v18 migration: Creating offline_sessions table for offline token storage');
+
+        try {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS offline_sessions (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_email TEXT NOT NULL UNIQUE,
+              token_hash TEXT NOT NULL,
+              device_id TEXT,
+              created_at TEXT NOT NULL,
+              expires_at TEXT NOT NULL,
+              last_activity_at TEXT NOT NULL
+            )
+          ''');
+
+          await db.execute('''
+            CREATE INDEX IF NOT EXISTS idx_offline_sessions_email 
+            ON offline_sessions(user_email)
+          ''');
+
+          await db.execute('''
+            CREATE INDEX IF NOT EXISTS idx_offline_sessions_expires 
+            ON offline_sessions(expires_at)
+          ''');
+
+          debugPrint(
+              '[DB] ✅ Created offline_sessions table with indexes');
+        } catch (e) {
+          debugPrint('[DB] ❌ Error creating offline_sessions table: $e');
         }
       }
     }, onCreate: (db, dbVersion) async {
@@ -3165,6 +3205,44 @@ updated_at TIMESTAMP
     return result;
   }
 
+  // Get ONLY learners who have NOT clocked in today (for signature geofence page)
+  Future<List<Map<String, dynamic>>> getLearnersNotClockedInToday(
+      String classID) async {
+    final db = await database;
+
+    // Use South African time (SAST - UTC+2)
+    final saTime = DateTime.now().toUtc().add(const Duration(hours: 2));
+    final currentDate = DateFormat('yyyy-MM-dd').format(saTime);
+
+    debugPrint(
+        '[NOT_CLOCKED_IN] Getting learners who have NOT clocked in for classID: $classID, date: $currentDate (SAST)');
+
+    final result = await db.rawQuery('''
+    SELECT 
+      l.LearnerID, 
+      l.Name, 
+      l.Surname,
+      l.IDNumber
+    FROM learnerdetails l
+    WHERE CAST(l.classID AS TEXT) = ?
+    AND l.LearnerID NOT IN (
+      SELECT LearnerID 
+      FROM manual_clocking 
+      WHERE clock_date = ? 
+      AND clock_in_time IS NOT NULL 
+      AND clock_in_time != ''
+    )
+    ORDER BY l.Name ASC
+  ''', [
+      normalizeClassId(classID),
+      currentDate,
+    ]);
+
+    debugPrint(
+        '[NOT_CLOCKED_IN] Found ${result.length} learners who have NOT clocked in today');
+    return result;
+  }
+
   // Get ALL learners from class with their earliest clocking data (if any)
   Future<List<Map<String, dynamic>>> getLearnersWithAllClockingData(
       String classID) async {
@@ -3338,6 +3416,116 @@ updated_at TIMESTAMP
       whereArgs: [learnerID, clockDate],
     );
     print('Learner Clock In Data Updated: $clockInData');
+  }
+
+  /// Insert manual clock-in (signature + geofence) offline
+  /// Saves to: manual_clocking + manual_clocking_evidence tables
+  Future<void> insertManualClockInOffline(Map<String, dynamic> clockInData) async {
+    final db = await database;
+
+    final clockDate = clockInData['clock_date'];
+    final learnerID = clockInData['LearnerID'];
+
+    // Check if record already exists
+    final existing = await db.query(
+      'manual_clocking',
+      where: 'LearnerID = ? AND clock_date = ?',
+      whereArgs: [learnerID, clockDate],
+    );
+
+    // 1. Insert/Update manual_clocking table
+    if (existing.isEmpty) {
+      await db.insert('manual_clocking', {
+        'LearnerID': learnerID,
+        'clock_date': clockDate,
+        'clock_in_time': clockInData['clock_in_time'],
+        'contact_time': clockInData['contact_time'],
+        'is_manual_attendance': 1,
+        'synced': 0,
+      });
+      print('[MANUAL_CLOCKING] Inserted offline clock-in for learner $learnerID');
+    } else {
+      await db.update(
+        'manual_clocking',
+        {
+          'clock_in_time': clockInData['clock_in_time'],
+          'contact_time': clockInData['contact_time'],
+          'synced': 0,
+        },
+        where: 'LearnerID = ? AND clock_date = ?',
+        whereArgs: [learnerID, clockDate],
+      );
+      print('[MANUAL_CLOCKING] Updated offline clock-in for learner $learnerID');
+    }
+
+    // 2. Insert/Update manual_clocking_evidence table (if signature/face provided)
+    if (clockInData.containsKey('signature_in') || clockInData.containsKey('face_in')) {
+      final evidenceExists = await db.query(
+        'manual_clocking_evidence',
+        where: 'LearnerID = ? AND clock_date = ?',
+        whereArgs: [learnerID, clockDate],
+      );
+
+      final evidenceData = {
+        'LearnerID': learnerID,
+        'clock_date': clockDate,
+        if (clockInData.containsKey('signature_in')) 'signature_in': clockInData['signature_in'],
+        if (clockInData.containsKey('face_in')) 'face_in': clockInData['face_in'],
+        'synced': 0,
+      };
+
+      if (evidenceExists.isEmpty) {
+        await db.insert('manual_clocking_evidence', evidenceData);
+        print('[MANUAL_CLOCKING] Inserted evidence for learner $learnerID');
+      } else {
+        await db.update(
+          'manual_clocking_evidence',
+          evidenceData,
+          where: 'LearnerID = ? AND clock_date = ?',
+          whereArgs: [learnerID, clockDate],
+        );
+        print('[MANUAL_CLOCKING] Updated evidence for learner $learnerID');
+      }
+    }
+  }
+
+  /// Update manual clock-out (signature + geofence) offline
+  /// Updates: manual_clocking + manual_clocking_evidence tables
+  Future<void> updateManualClockOutOffline(Map<String, dynamic> clockOutData) async {
+    final db = await database;
+
+    final clockDate = clockOutData['clock_date'];
+    final learnerID = clockOutData['LearnerID'];
+
+    // 1. Update manual_clocking table
+    await db.update(
+      'manual_clocking',
+      {
+        'clock_out_time': clockOutData['clock_out_time'],
+        'contact_time': clockOutData['contact_time'],
+        'synced': 0,
+      },
+      where: 'LearnerID = ? AND clock_date = ?',
+      whereArgs: [learnerID, clockDate],
+    );
+    print('[MANUAL_CLOCKING] Updated offline clock-out for learner $learnerID');
+
+    // 2. Update manual_clocking_evidence table (if signature/face provided)
+    if (clockOutData.containsKey('signature_out') || clockOutData.containsKey('face_out')) {
+      final evidenceData = <String, dynamic>{
+        if (clockOutData.containsKey('signature_out')) 'signature_out': clockOutData['signature_out'],
+        if (clockOutData.containsKey('face_out')) 'face_out': clockOutData['face_out'],
+        'synced': 0,
+      };
+
+      await db.update(
+        'manual_clocking_evidence',
+        evidenceData,
+        where: 'LearnerID = ? AND clock_date = ?',
+        whereArgs: [learnerID, clockDate],
+      );
+      print('[MANUAL_CLOCKING] Updated offline clock-out evidence for learner $learnerID');
+    }
   }
 
 //update clock out
@@ -3528,6 +3716,230 @@ updated_at TIMESTAMP
     }
   }
   //end
+
+  // ==================== OFFLINE SESSION TOKEN METHODS ====================
+  
+  /// Generate a cryptographically secure 64-character hex token
+  Future<String> _generateSecureToken() async {
+    final random = math.Random.secure();
+    final bytes = List<int>.generate(32, (_) => random.nextInt(256));
+    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  }
+
+  /// Hash a token using SHA-256
+  String _hashToken(String token) {
+    return sha256.convert(utf8.encode(token)).toString();
+  }
+
+  /// Get a unique device identifier
+  Future<String> _getDeviceId() async {
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      if (Platform.isAndroid) {
+        final androidInfo = await deviceInfo.androidInfo;
+        // Use 'id' property which contains the Android ID
+        return androidInfo.id;
+      } else if (Platform.isIOS) {
+        final iosInfo = await deviceInfo.iosInfo;
+        return iosInfo.identifierForVendor ?? 'unknown_device';
+      }
+      return 'unknown_device';
+    } catch (e) {
+      debugPrint('[OFFLINE_TOKEN] Error getting device ID: $e');
+      return 'unknown_device';
+    }
+  }
+
+  /// Create an offline session token for a user after successful bcrypt verification
+  /// Returns the plaintext token (to be stored in SharedPreferences)
+  Future<String?> createOfflineToken(String email) async {
+    try {
+      final db = await database;
+      
+      // Generate secure token
+      final token = await _generateSecureToken();
+      final tokenHash = _hashToken(token);
+      final deviceId = await _getDeviceId();
+      
+      // Calculate expiry (7 days from now)
+      final now = DateTime.now();
+      final expiresAt = now.add(Duration(days: AppConfig.OFFLINE_SESSION_EXPIRY_DAYS));
+      
+      // Insert or replace the session
+      await db.insert(
+        'offline_sessions',
+        {
+          'user_email': email,
+          'token_hash': tokenHash,
+          'device_id': deviceId,
+          'created_at': now.toIso8601String(),
+          'expires_at': expiresAt.toIso8601String(),
+          'last_activity_at': now.toIso8601String(),
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      
+      debugPrint('[OFFLINE_TOKEN] ✅ Created offline session for $email (expires: ${expiresAt.toIso8601String()})');
+      return token;
+    } catch (e) {
+      debugPrint('[OFFLINE_TOKEN] ❌ Error creating offline token: $e');
+      return null;
+    }
+  }
+
+  /// Validate an offline token and update last_activity_at
+  /// Returns true if token is valid and not expired
+  /// Automatically refreshes token if within last day of expiry
+  Future<bool> validateOfflineToken(String email, String token) async {
+    try {
+      final db = await database;
+      
+      // Query the session
+      final result = await db.query(
+        'offline_sessions',
+        where: 'user_email = ?',
+        whereArgs: [email],
+      );
+      
+      if (result.isEmpty) {
+        debugPrint('[OFFLINE_TOKEN] ❌ No session found for $email');
+        return false;
+      }
+      
+      final session = result.first;
+      final storedHash = session['token_hash'] as String;
+      final expiresAtStr = session['expires_at'] as String;
+      final expiresAt = DateTime.parse(expiresAtStr);
+      final now = DateTime.now();
+      
+      // Check if token matches
+      final providedHash = _hashToken(token);
+      if (providedHash != storedHash) {
+        debugPrint('[OFFLINE_TOKEN] ❌ Token hash mismatch for $email');
+        await db.delete('offline_sessions', where: 'user_email = ?', whereArgs: [email]);
+        return false;
+      }
+      
+      // Check if expired
+      if (now.isAfter(expiresAt)) {
+        debugPrint('[OFFLINE_TOKEN] ❌ Token expired for $email (expired: $expiresAtStr)');
+        await db.delete('offline_sessions', where: 'user_email = ?', whereArgs: [email]);
+        return false;
+      }
+      
+      // Check if we should refresh (within last day)
+      final hoursUntilExpiry = expiresAt.difference(now).inHours;
+      Map<String, dynamic> updateData = {
+        'last_activity_at': now.toIso8601String(),
+      };
+      
+      if (AppConfig.OFFLINE_TOKEN_REFRESH_ENABLED && hoursUntilExpiry < 24) {
+        final newExpiresAt = now.add(Duration(days: AppConfig.OFFLINE_SESSION_EXPIRY_DAYS));
+        updateData['expires_at'] = newExpiresAt.toIso8601String();
+        debugPrint('[OFFLINE_TOKEN] 🔄 Token refreshed for $email (new expiry: ${newExpiresAt.toIso8601String()})');
+      }
+      
+      // Update last activity and possibly expiry
+      await db.update(
+        'offline_sessions',
+        updateData,
+        where: 'user_email = ?',
+        whereArgs: [email],
+      );
+      
+      debugPrint('[OFFLINE_TOKEN] ✅ Token validated for $email');
+      return true;
+    } catch (e) {
+      debugPrint('[OFFLINE_TOKEN] ❌ Error validating token: $e');
+      return false;
+    }
+  }
+
+  /// Load an offline session for a user (returns session metadata)
+  /// Returns null if session doesn't exist or is expired
+  Future<Map<String, dynamic>?> loadOfflineSession(String email) async {
+    try {
+      final db = await database;
+      
+      final result = await db.query(
+        'offline_sessions',
+        where: 'user_email = ?',
+        whereArgs: [email],
+      );
+      
+      if (result.isEmpty) {
+        debugPrint('[OFFLINE_TOKEN] No session found for $email');
+        return null;
+      }
+      
+      final session = result.first;
+      final expiresAtStr = session['expires_at'] as String;
+      final expiresAt = DateTime.parse(expiresAtStr);
+      final now = DateTime.now();
+      
+      // Check if expired
+      if (now.isAfter(expiresAt)) {
+        debugPrint('[OFFLINE_TOKEN] Session expired for $email');
+        await db.delete('offline_sessions', where: 'user_email = ?', whereArgs: [email]);
+        return null;
+      }
+      
+      debugPrint('[OFFLINE_TOKEN] ✅ Loaded session for $email');
+      return session;
+    } catch (e) {
+      debugPrint('[OFFLINE_TOKEN] ❌ Error loading session: $e');
+      return null;
+    }
+  }
+
+  /// Clear an offline session (called on logout)
+  Future<void> clearOfflineSession(String email) async {
+    try {
+      final db = await database;
+      await db.delete(
+        'offline_sessions',
+        where: 'user_email = ?',
+        whereArgs: [email],
+      );
+      debugPrint('[OFFLINE_TOKEN] ✅ Cleared session for $email');
+    } catch (e) {
+      debugPrint('[OFFLINE_TOKEN] ❌ Error clearing session: $e');
+    }
+  }
+
+  /// Get SDP user by email only (for session restoration, no password check)
+  Future<Map<String, dynamic>?> getSdpByEmail(String email) async {
+    try {
+      final db = await database;
+      final result = await db.query(
+        'sdp',
+        where: 'email = ?',
+        whereArgs: [email],
+      );
+      return result.isNotEmpty ? result.first : null;
+    } catch (e) {
+      debugPrint('[DB] Error getting SDP by email: $e');
+      return null;
+    }
+  }
+
+  /// Get facilitator by email only (for session restoration, no password check)
+  Future<Map<String, dynamic>?> getFacilitatorByEmail(String email) async {
+    try {
+      final db = await database;
+      final result = await db.query(
+        'facilitator',
+        where: 'email = ?',
+        whereArgs: [email],
+      );
+      return result.isNotEmpty ? result.first : null;
+    } catch (e) {
+      debugPrint('[DB] Error getting facilitator by email: $e');
+      return null;
+    }
+  }
+
+  // ==================== END OFFLINE SESSION TOKEN METHODS ====================
 
   // Future<Map<String, dynamic>?> getSdp(String email, String password) async {
   //   final db = await database; // Assuming 'database' is your SQLite database instance.
@@ -4560,7 +4972,7 @@ updated_at TIMESTAMP
         ),
         endpoint: 'get_poe_questions',
         maxRetries: NetworkConfig.readOperationsMaxRetries,
-        timeoutSeconds: NetworkConfig.lightweightTimeout,
+        timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
       );
 
       if (response.statusCode == 200) {
@@ -6860,7 +7272,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
             ),
             endpoint: 'learner_profile_sync',
             maxRetries: NetworkConfig.syncOperationsMaxRetries,
-            timeoutSeconds: NetworkConfig.profileSyncTimeout,
+            timeout: Duration(seconds: NetworkConfig.profileSyncTimeout),
           );
 
           if (response.statusCode == 200) {
