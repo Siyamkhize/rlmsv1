@@ -297,7 +297,7 @@ class OfflineSyncQueueService {
         'X-Idempotency-Key': idempotencyKey,
       },
       body: jsonEncode(payload),
-    ).timeout(const Duration(seconds: 30));
+    ).timeout(const Duration(seconds: 90)); // Increased for 2G connectivity - see IMAGE_UPLOAD_AUDIT.md
     
     _log('info', 'http_response', {
       'action': action,
@@ -342,6 +342,18 @@ class OfflineSyncQueueService {
     List<Map<String, dynamic>> learnerClockings, {
     bool forceBatchEvenOnline = true, // Always batch by default
   }) async {
+    // Enforce maximum batch size for rural connectivity
+    const int MAX_BATCH_SIZE = 15; // ~2.9 MB payload, manageable on 2G
+    if (learnerClockings.length > MAX_BATCH_SIZE) {
+      return {
+        'success': false,
+        'error': 'Batch size exceeds maximum of $MAX_BATCH_SIZE learners. '
+                 'Current batch: ${learnerClockings.length} learners. '
+                 'Please submit this batch before adding more learners.',
+        'batch_size': learnerClockings.length,
+        'max_batch_size': MAX_BATCH_SIZE,
+      };
+    }
     
     // Generate batch idempotency key at TAP TIME
     final batchKey = const Uuid().v4();
@@ -500,7 +512,7 @@ class OfflineSyncQueueService {
         'X-Batch-Size': batchPayload['total_learners'].toString(),
       },
       body: jsonEncode(batchPayload),
-    ).timeout(const Duration(seconds: 60)); // Longer timeout for batch operations
+    ).timeout(const Duration(seconds: 180)); // Increased for 2G connectivity - see IMAGE_UPLOAD_AUDIT.md
     
     _log('info', 'batch_http_response', {
       'batch_id': batchKey.substring(0, 8),

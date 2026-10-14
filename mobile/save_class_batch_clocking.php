@@ -6,6 +6,9 @@
  * Uses same security and idempotency as individual clocking
  */
 
+// Set execution timeout for large batch processing on 2G connections
+set_time_limit(180); // 3 minutes - see IMAGE_UPLOAD_AUDIT.md
+
 // SECURITY: Disable detailed error output to clients
 error_reporting(E_ALL);
 ini_set('display_errors', 0);

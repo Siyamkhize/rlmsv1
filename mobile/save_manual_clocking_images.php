@@ -81,6 +81,44 @@ try {
         throw new Exception('Signature is required');
     }
 
+    // Check if images already uploaded for this clocking event (idempotency)
+    $existingCheck = $conn->prepare("
+        SELECT face_filename, signature_filename 
+        FROM learner_clocking_evidence 
+        WHERE learner_id = ? AND clock_date = ? AND clock_type = ?
+        LIMIT 1
+    ");
+    $existingCheck->bind_param("iss", $learnerID, $clockDate, $type);
+    $existingCheck->execute();
+    $existingResult = $existingCheck->get_result();
+
+    if ($existingResult->num_rows > 0) {
+        $existing = $existingResult->fetch_assoc();
+        
+        // Verify files still exist on disk
+        $faceFile = $facesDir . '/' . $existing['face_filename'];
+        $sigFile = $signaturesDir . '/' . $existing['signature_filename'];
+        
+        if (file_exists($faceFile) && file_exists($sigFile)) {
+            // Return existing filenames (idempotent response)
+            http_response_code(200);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Images already uploaded (idempotent response)',
+                'files' => [
+                    'face_' . $type => $existing['face_filename'],
+                    'signature_' . $type => $existing['signature_filename'],
+                ],
+                'learner_id' => $learnerID,
+                'clock_date' => $clockDate,
+                'type' => $type,
+                'idempotent' => true,
+            ]);
+            exit;
+        }
+        // If files missing on disk, continue with upload (re-upload lost files)
+    }
+
     // ------------------------------------------------------------------
     // STEP 1: decode and validate BOTH images before writing anything
     // ------------------------------------------------------------------

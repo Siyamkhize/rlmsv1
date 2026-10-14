@@ -1032,6 +1032,39 @@ class _SignatureGeofenceClockInPageState
 
   /// Batch mode: Store learner clocking data for later submission
   Future<void> _storeLearnerClockingData(String learnerID, String type) async {
+    // Warn user when approaching batch size limit
+    if (_batchClockings.length >= 15 && !_batchClockings.containsKey(learnerID)) {
+      final shouldContinue = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Batch Size Warning'),
+            content: const Text(
+              'You have reached 15 learners (recommended maximum for batch mode). '
+              'Batches larger than 15 may timeout on slow connections.\n\n'
+              'Would you like to submit this batch now?'
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Submit Batch Now'),
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+              TextButton(
+                child: const Text('Add Learner Anyway'),
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (shouldContinue == true) {
+        await _submitBatch();
+        return;
+      }
+    }
+    
     // Step 1: Get learner details for display
     final learner = widget.learners.firstWhere(
       (l) => l['LearnerID'].toString() == learnerID,
