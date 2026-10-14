@@ -85,6 +85,12 @@ class PersistentSyncService {
 
   /// Sync all data (learners, clocking records, etc.)
   Future<SyncResult> syncAllData() async {
+    if (_isSyncing) {
+      return SyncResult()
+        ..success = false
+        ..message = 'Sync already in progress';
+    }
+    _isSyncing = true;
     print('[PERSISTENT_SYNC] Starting full data sync');
 
     final result = SyncResult();
@@ -119,6 +125,8 @@ class PersistentSyncService {
       result.success = false;
       result.message = 'Sync failed: $e';
       print('[PERSISTENT_SYNC] Sync error: $e');
+    } finally {
+      _isSyncing = false;
     }
 
     return result;
@@ -166,7 +174,7 @@ class PersistentSyncService {
         ),
         endpoint: 'learners_by_class',
         maxRetries: NetworkConfig.syncOperationsMaxRetries,
-        timeoutSeconds: NetworkConfig.lightweightTimeout,
+        timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
       );
 
       if (response.statusCode != 200) {
@@ -336,7 +344,7 @@ class PersistentSyncService {
       endpoint:
           hasClockOut ? 'clocking_clockout_sync' : 'clocking_clockin_sync',
       maxRetries: NetworkConfig.syncOperationsMaxRetries,
-      timeoutSeconds: NetworkConfig.lightweightTimeout,
+      timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
     );
 
     if (response.statusCode == 200) {

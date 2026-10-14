@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:sqflite/sqflite.dart';
 import '../database_helper.dart';
@@ -13,6 +16,64 @@ class ManualClockingEvidenceSyncService {
   factory ManualClockingEvidenceSyncService() => _instance;
 
   ManualClockingEvidenceSyncService._internal();
+
+  // Concurrency control
+  static const int MAX_CONCURRENT_SYNCS = 3;
+  static int _activeSyncs = 0;
+  static final List<Function()> _syncQueue = [];
+
+  /// Execute sync operation with concurrency limits
+  Future<T> _executeConcurrencyControlled<T>(Future<T> Function() operation) async {
+    if (_activeSyncs >= MAX_CONCURRENT_SYNCS) {
+      print('[EVIDENCE_SYNC] Concurrency limit reached ($_activeSyncs/$MAX_CONCURRENT_SYNCS), queuing operation');
+      
+      // Create completer for queued operation
+      final completer = Completer<T>();
+      
+      _syncQueue.add(() async {
+        try {
+          final result = await operation();
+          completer.complete(result);
+        } catch (e) {
+          completer.completeError(e);
+        }
+      });
+      
+      return completer.future;
+    }
+    
+    _activeSyncs++;
+    print('[EVIDENCE_SYNC] Starting operation (active: $_activeSyncs/$MAX_CONCURRENT_SYNCS)');
+    
+    try {
+      final result = await operation();
+      return result;
+    } finally {
+      _activeSyncs--;
+      print('[EVIDENCE_SYNC] Completed operation (active: $_activeSyncs/$MAX_CONCURRENT_SYNCS)');
+      
+      // Process next queued operation if any
+      if (_syncQueue.isNotEmpty && _activeSyncs < MAX_CONCURRENT_SYNCS) {
+        final nextOperation = _syncQueue.removeAt(0);
+        Future.microtask(nextOperation);
+      }
+    }
+  }
+
+  /// Generate cryptographically secure idempotency token
+  /// Uses SHA-256 for security and collision resistance
+  String generateSecureIdempotencyToken() {
+    // Use cryptographically secure random generation
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final randomBytes = List.generate(16, (_) => Random.secure().nextInt(256));
+    final randomHex = randomBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    
+    // Combine timestamp + secure random for uniqueness and traceability
+    final tokenData = '${timestamp}_$randomHex';
+    final hash = sha256.convert(utf8.encode(tokenData));
+    
+    return 'clk_${hash.toString().substring(0, 32)}'; // 32-char hex subset
+  }
 
   /// Save manual clocking evidence offline
   /// Images are stored as base64 in SQLite temporarily
@@ -266,78 +327,79 @@ class ManualClockingEvidenceSyncService {
 
   /// Sync unsynced evidence to server
   Future<Map<String, dynamic>> syncToServer() async {
-    try {
-      // DEBUG: Inspect database contents first
-      await debugInspectDatabase();
+    return await _executeConcurrencyControlled(() async {
+      try {
+        // DEBUG: Inspect database contents first
+        await debugInspectDatabase();
 
-      final unsyncedRecords = await getUnsyncedEvidence();
+        final unsyncedRecords = await getUnsyncedEvidence();
 
-      if (unsyncedRecords.isEmpty) {
+        if (unsyncedRecords.isEmpty) {
+          return {
+            'success': true,
+            'message': 'No records to sync',
+            'synced_count': 0,
+          };
+        }
+
+        print(
+            '[EVIDENCE_SYNC] Starting sync of ${unsyncedRecords.length} records to server');
+
+        // Prepare records for sync with secure idempotency tokens
+        final recordsToSync = unsyncedRecords.map((record) {
+          return {
+            'LearnerID': record['LearnerID'],
+            'clock_date': record['clock_date'],
+            'signature_in_base64': record['signature_in'],
+            'signature_out_base64': record['signature_out'],
+            'face_in_base64': record['face_in'],
+            'face_out_base64': record['face_out'],
+            'idempotency_token': generateSecureIdempotencyToken(),
+          };
+        }).toList();
+
+        // Send to server with single attempt
+        final url =
+            Uri.parse('${AppConfig.baseUrl}/sync_manual_clocking_evidence.php');
+
+        final response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({'records': recordsToSync}),
+        ).timeout(const Duration(seconds: 10));
+
+        if (response.statusCode == 200) {
+          final result = json.decode(response.body);
+
+          if (result['success'] == true) {
+            // Mark successfully synced records
+            await _markRecordsAsSynced(result['results']);
+
+            print(
+                '[EVIDENCE_SYNC] ✅ Sync complete: ${result['success_count']} succeeded, ${result['fail_count']} failed');
+
+            return {
+              'success': true,
+              'message': result['message'],
+              'synced_count': result['success_count'],
+              'failed_count': result['fail_count'],
+              'results': result['results'],
+            };
+          } else {
+            throw Exception(result['error'] ?? 'Unknown server error');
+          }
+        } else {
+          throw Exception('Server returned status ${response.statusCode}');
+        }
+      } catch (e) {
+        print('[EVIDENCE_SYNC] ❌ Sync failed: $e');
         return {
-          'success': true,
-          'message': 'No records to sync',
+          'success': false,
+          'error': e.toString(),
           'synced_count': 0,
         };
       }
-
-      print(
-          '[EVIDENCE_SYNC] Starting sync of ${unsyncedRecords.length} records to server');
-
-      // Prepare records for sync (convert image paths to base64 if needed)
-      final recordsToSync = unsyncedRecords.map((record) {
-        return {
-          'LearnerID': record['LearnerID'],
-          'clock_date': record['clock_date'],
-          'signature_in_base64': record['signature_in'],
-          'signature_out_base64': record['signature_out'],
-          'face_in_base64': record['face_in'],
-          'face_out_base64': record['face_out'],
-        };
-      }).toList();
-
-      // Send to server
-      final url =
-          Uri.parse('${AppConfig.baseUrl}/sync_manual_clocking_evidence.php');
-
-      final response = await http
-          .post(
-            url,
-            headers: {'Content-Type': 'application/json'},
-            body: json.encode({'records': recordsToSync}),
-          )
-          .timeout(const Duration(seconds: 60));
-
-      if (response.statusCode == 200) {
-        final result = json.decode(response.body);
-
-        if (result['success'] == true) {
-          // Mark successfully synced records
-          await _markRecordsAsSynced(result['results']);
-
-          print(
-              '[EVIDENCE_SYNC] ✅ Sync complete: ${result['success_count']} succeeded, ${result['fail_count']} failed');
-
-          return {
-            'success': true,
-            'message': result['message'],
-            'synced_count': result['success_count'],
-            'failed_count': result['fail_count'],
-            'results': result['results'],
-          };
-        } else {
-          throw Exception(result['error'] ?? 'Unknown server error');
-        }
-      } else {
-        throw Exception('Server returned status ${response.statusCode}');
-      }
-    } catch (e) {
-      print('[EVIDENCE_SYNC] ❌ Sync failed: $e');
-      return {
-        'success': false,
-        'error': e.toString(),
-        'synced_count': 0,
-      };
-    }
+    });
   }
 
   /// Mark successfully synced records in local database
