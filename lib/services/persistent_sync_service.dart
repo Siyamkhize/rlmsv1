@@ -90,12 +90,14 @@ class PersistentSyncService {
         ..success = false
         ..message = 'Sync already in progress';
     }
+    
     _isSyncing = true;
-    print('[PERSISTENT_SYNC] Starting full data sync');
-
-    final result = SyncResult();
-
+    
     try {
+      print('[PERSISTENT_SYNC] Starting full data sync');
+
+      final result = SyncResult();
+
       // Check connectivity
       final connectivityResult = await Connectivity().checkConnectivity();
       final isConnected = connectivityResult.isNotEmpty &&
@@ -121,15 +123,17 @@ class PersistentSyncService {
       result.success = true;
       result.message = 'Sync completed successfully';
       print('[PERSISTENT_SYNC] Full sync completed: ${result.message}');
+      
+      return result;
     } catch (e) {
+      final result = SyncResult();
       result.success = false;
       result.message = 'Sync failed: $e';
       print('[PERSISTENT_SYNC] Sync error: $e');
+      return result;
     } finally {
       _isSyncing = false;
     }
-
-    return result;
   }
 
   /// Sync learners for all classes in local database
