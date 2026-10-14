@@ -15,6 +15,7 @@
 header('Content-Type: application/json');
 require_once 'connection.php';
 require_once 'security_functions.php';
+require_once 'idempotency_helpers.php';
 require_once 'evidence_helpers.php';
 require_once 'require_auth.php';
 
@@ -47,6 +48,23 @@ try {
 
     if (!$input || !is_array($input)) {
         throw new Exception('Invalid JSON input');
+    }
+    
+    // Extract idempotency key FIRST - before any processing
+    $idempotencyKey = $_SERVER['HTTP_X_IDEMPOTENCY_KEY'] ?? ($input['idempotency_key'] ?? null);
+    
+    if (!$idempotencyKey) {
+        throw new Exception('Idempotency key required');
+    }
+    
+    // Check idempotency BEFORE processing
+    $existing = idem_begin($conn, $user['user_id'], 'clock_out', $idempotencyKey);
+    if ($existing) {
+        // Return cached response for duplicate request
+        http_response_code($existing['response_code'] ?? 200);
+        echo $existing['response_body'];
+        error_log("[SAVE_MANUAL_CLOCKOUT] ✅ Idempotent response returned for key: $idempotencyKey");
+        exit;
     }
 
     // Required fields
@@ -161,7 +179,7 @@ try {
     $conn->commit();
 
     // Success response
-    echo json_encode([
+    $response = [
         'success' => true,
         'message' => 'Clock-out saved successfully',
         'learner_id' => $learnerID,
@@ -176,12 +194,22 @@ try {
             'longitude' => $longitude,
             'accuracy' => $accuracy
         ]
-    ]);
+    ];
+    
+    // Mark as complete in idempotency system
+    idem_finish($conn, $user['user_id'], $idempotencyKey, 200, json_encode($response));
+    
+    echo json_encode($response);
 
 } catch (Exception $e) {
     // Rollback on error
     if (isset($conn)) {
         $conn->rollback();
+    }
+    
+    // Abort idempotency (allow retry)
+    if (isset($idempotencyKey) && isset($user)) {
+        idem_abort($conn, $user['user_id'], $idempotencyKey);
     }
 
     http_response_code(400);

@@ -13,6 +13,7 @@
 header('Content-Type: application/json');
 require_once 'connection.php';
 require_once '../security_functions.php';
+require_once '../idempotency_helpers.php';
 require_once 'evidence_helpers.php';
 
 // Do not print PHP warnings into the JSON response
@@ -20,12 +21,47 @@ error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
+// SECURITY: Require authentication
+try {
+    $user = requireAuth($conn);
+    error_log("[SAVE_MANUAL_CLOCKIN] ✅ Authentication successful - User ID: " . $user['user_id']);
+} catch (Exception $e) {
+    error_log("[SAVE_MANUAL_CLOCKIN] ❌ Authentication failed: " . $e->getMessage());
+    throw $e;
+}
+
+// SECURITY: Apply rate limiting (15 clock-ins per minute)
+try {
+    applyRateLimit($conn, 'save_manual_clockin');
+    error_log("[SAVE_MANUAL_CLOCKIN] ✅ Rate limit check passed");
+} catch (Exception $e) {
+    error_log("[SAVE_MANUAL_CLOCKIN] ❌ Rate limit exceeded: " . $e->getMessage());
+    throw $e;
+}
+
 try {
     // Get JSON input
     $input = json_decode(file_get_contents('php://input'), true);
 
     if (!$input || !is_array($input)) {
         throw new Exception('Invalid JSON input');
+    }
+    
+    // Extract idempotency key FIRST - before any processing
+    $idempotencyKey = $_SERVER['HTTP_X_IDEMPOTENCY_KEY'] ?? ($input['idempotency_key'] ?? null);
+    
+    if (!$idempotencyKey) {
+        throw new Exception('Idempotency key required');
+    }
+    
+    // Check idempotency BEFORE processing
+    $existing = idem_begin($conn, $user['user_id'], 'clock_in', $idempotencyKey);
+    if ($existing) {
+        // Return cached response for duplicate request
+        http_response_code($existing['response_code'] ?? 200);
+        echo $existing['response_body'];
+        error_log("[SAVE_MANUAL_CLOCKIN] ✅ Idempotent response returned for key: $idempotencyKey");
+        exit;
     }
 
     // Required fields
@@ -128,7 +164,7 @@ try {
     $conn->commit();
 
     // Success response
-    echo json_encode([
+    $response = [
         'success' => true,
         'message' => 'Clock-in saved successfully',
         'manual_id' => $manualId,
@@ -144,12 +180,22 @@ try {
             'longitude' => $longitude,
             'accuracy' => $accuracy
         ]
-    ]);
+    ];
+    
+    // Mark as complete in idempotency system
+    idem_finish($conn, $user['user_id'], $idempotencyKey, 200, json_encode($response));
+    
+    echo json_encode($response);
 
 } catch (Exception $e) {
     // Rollback on error
     if (isset($conn)) {
         $conn->rollback();
+    }
+    
+    // Abort idempotency (allow retry)
+    if (isset($idempotencyKey) && isset($user)) {
+        idem_abort($conn, $user['user_id'], $idempotencyKey);
     }
 
     http_response_code(400);
