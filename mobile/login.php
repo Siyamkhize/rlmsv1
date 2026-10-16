@@ -72,8 +72,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    // Check for SDP credentials (email or client_name)
-    $stmt = $conn->prepare("SELECT sdp_id, client_name, password FROM sdp WHERE email = ? OR client_name = ?");
+    // Check for SDP credentials (email or client_name) - trim whitespace
+    $stmt = $conn->prepare("SELECT sdp_id, client_name, password FROM sdp WHERE TRIM(email) = TRIM(?) OR TRIM(client_name) = TRIM(?)");
     $stmt->bind_param("ss", $email, $email);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -209,158 +209,170 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             echo json_encode(['success' => false, 'message' => 'Invalid password for SDP.']);
         }
     } else {
-        // Check for client credentials
-        $stmt = $conn->prepare("SELECT * FROM client WHERE email = ? OR client_name = ?");
+        // Check for client credentials - trim whitespace
+        $stmt = $conn->prepare("SELECT * FROM client WHERE TRIM(email) = TRIM(?) OR TRIM(client_name) = TRIM(?)");
         $stmt->bind_param("ss", $email, $email);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($result->num_rows > 0) {
             $row = $result->fetch_assoc();
-            $_SESSION['role'] = 'client';
-            $_SESSION['client_name'] = $row['client_name'];
-            $_SESSION["logged_in"] = true;
             
-            // Generate auth token
-            $auth_token = createAuthToken($conn, $row['client_name'], 'client');
+            // Verify password
+            if (password_verify($password, $row['password'])) {
+                $_SESSION['role'] = 'client';
+                $_SESSION['client_name'] = $row['client_name'];
+                $_SESSION["logged_in"] = true;
+                
+                // Generate auth token
+                $auth_token = createAuthToken($conn, $row['client_name'], 'client');
 
-            echo json_encode([
-                'success' => true,
-                'role' => 'client',
-                'auth_token' => $auth_token
-            ]);
+                echo json_encode([
+                    'success' => true,
+                    'role' => 'client',
+                    'auth_token' => $auth_token
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Invalid password for client.']);
+            }
         } else {
-            // Check for facilitator, assessor, moderator, or ARPL_Assessor credentials (email or first name or last name)
-            $stmt = $conn->prepare("SELECT * FROM facilitator WHERE email = ? OR firstName = ? OR lastName = ?");
+            // Check for facilitator, assessor, moderator, or ARPL_Assessor credentials - trim whitespace
+            $stmt = $conn->prepare("SELECT * FROM facilitator WHERE TRIM(email) = TRIM(?) OR TRIM(firstName) = TRIM(?) OR TRIM(lastName) = TRIM(?)");
             $stmt->bind_param("sss", $email, $email, $email);
             $stmt->execute();
             $result = $stmt->get_result();
 
             if ($result->num_rows > 0) {
                 $row = $result->fetch_assoc();
-                // Normalize role to lowercase with underscores
-                $dbRole = trim(strtolower($row['role']));
                 
-                // Debug: Log the role detection
-                error_log("[LOGIN] Facilitator {$row['facilitator_id']}: DB role = '{$row['role']}', normalized = '$dbRole'");
-                
-                if (strpos($dbRole, 'arpl') !== false && strpos($dbRole, 'assessor') !== false) {
-                    // Matches: arpl_assessor, arpl_Assessor, ARPL_Assessor, etc.
-                    $role = 'arpl_assessor';
-                    error_log("[LOGIN] Detected ARPL Assessor role");
-                } elseif ((strpos($dbRole, 'arpl') !== false && strpos($dbRole, 'moderator') !== false) ||
-                          (strpos($dbRole, 'arpl') !== false && strpos($dbRole, 'modarator') !== false)) {
-                    // Matches: arpl_moderator, ARPL_Moderator, ARPL_Modarator, arpl_modarator (typo)
-                    $role = 'arpl_moderator';
-                    error_log("[LOGIN] Detected ARPL Moderator role");
-                } elseif ($dbRole === 'assessor') {
-                    $role = 'assessor';
-                    error_log("[LOGIN] Detected Assessor role");
-                } elseif ($dbRole === 'moderator') {
-                    $role = 'Moderator';
-                    error_log("[LOGIN] Detected Moderator role");
-                } else {
-                    $role = 'facilitator';
-                    error_log("[LOGIN] Defaulting to Facilitator role");
-                }
-
-                $_SESSION['role'] = $role;
-                $_SESSION['classID'] = $row['classID'];
-                $_SESSION['facilitator_id'] = $row['facilitator_id'];
-                $_SESSION["logged_in"] = true;
-                
-                // Generate auth token
-                $auth_token = createAuthToken($conn, $row['facilitator_id'], $role);
-                
-                // Log the final response role
-                error_log("[LOGIN] Final response role for facilitator {$row['facilitator_id']}: '$role'");
-
-                if ($role === 'assessor' || $role === 'Moderator' || $role === 'arpl_assessor' || $role === 'arpl_moderator') {
-                    $facilitator_id = $row['facilitator_id'];
-                    $sql = "
-                        SELECT s.project_id, s.Project_pathway, c.* 
-                        FROM class c
-                        JOIN sites s ON s.siteID = c.siteID
-                        JOIN facilitator f ON FIND_IN_SET(c.classID, f.classID) > 0
-                        WHERE f.facilitator_id = ?
-                    ";
-
-                    $stmt_classes = $conn->prepare($sql);
-                    if ($stmt_classes) {
-                        $stmt_classes->bind_param("s", $facilitator_id);
-                        $stmt_classes->execute();
-                        $result_classes = $stmt_classes->get_result();
-
-                        $classes = [];
-                        while ($class_row = $result_classes->fetch_assoc()) {
-                            $classes[] = array_map('strval', $class_row);
-                        }
-                        
-                        // Log the response data
-                        error_log("[LOGIN] Sending response - Role: '$role', Facilitator: $facilitator_id, Classes count: " . count($classes));
-                        if (count($classes) > 0) {
-                            error_log("[LOGIN] First class data: " . json_encode($classes[0]));
-                        }
-
-                        echo json_encode([
-                            'success' => true,
-                            'role' => $role,
-                            'facilitator_id' => $facilitator_id,
-                            'classes' => $classes,
-                            'auth_token' => $auth_token
-                        ]);
+                // Verify password
+                if (password_verify($password, $row['password'])) {
+                    // Normalize role to lowercase with underscores
+                    $dbRole = trim(strtolower($row['role']));
+                    
+                    // Debug: Log the role detection
+                    error_log("[LOGIN] Facilitator {$row['facilitator_id']}: DB role = '{$row['role']}', normalized = '$dbRole'");
+                    
+                    if (strpos($dbRole, 'arpl') !== false && strpos($dbRole, 'assessor') !== false) {
+                        // Matches: arpl_assessor, arpl_Assessor, ARPL_Assessor, etc.
+                        $role = 'arpl_assessor';
+                        error_log("[LOGIN] Detected ARPL Assessor role");
+                    } elseif ((strpos($dbRole, 'arpl') !== false && strpos($dbRole, 'moderator') !== false) ||
+                              (strpos($dbRole, 'arpl') !== false && strpos($dbRole, 'modarator') !== false)) {
+                        // Matches: arpl_moderator, ARPL_Moderator, ARPL_Modarator, arpl_modarator (typo)
+                        $role = 'arpl_moderator';
+                        error_log("[LOGIN] Detected ARPL Moderator role");
+                    } elseif ($dbRole === 'assessor') {
+                        $role = 'assessor';
+                        error_log("[LOGIN] Detected Assessor role");
+                    } elseif ($dbRole === 'moderator') {
+                        $role = 'Moderator';
+                        error_log("[LOGIN] Detected Moderator role");
                     } else {
-                        error_log("[LOGIN ERROR] Failed to prepare class information query");
-                        echo json_encode(['success' => false, 'error' => 'Failed to prepare class information query']);
+                        $role = 'facilitator';
+                        error_log("[LOGIN] Defaulting to Facilitator role");
                     }
-                    $stmt_classes->close();
-                } else {
-                    $classID = $row['classID'];
-                    $sql = "
-                        SELECT 
-                            ld.LearnerID, 
-                            ld.Title, 
-                            ld.Name, 
-                            ld.Surname, 
-                            ld.Email, 
-                            lc.clock_in_time, 
-                            lc.clock_out_time, 
-                            lc.contact_time
-                        FROM 
-                            learnerdetails ld
-                        LEFT JOIN 
-                            learner_clocking lc 
-                            ON ld.LearnerID = lc.LearnerID AND lc.clock_date = CURDATE()
-                        WHERE 
-                            ld.classID = ?
-                    ";
 
-                    $stmt_learners = $conn->prepare($sql);
-                    if ($stmt_learners) {
-                        $stmt_learners->bind_param("s", $classID);
-                        $stmt_learners->execute();
-                        $result_learners = $stmt_learners->get_result();
+                    $_SESSION['role'] = $role;
+                    $_SESSION['classID'] = $row['classID'];
+                    $_SESSION['facilitator_id'] = $row['facilitator_id'];
+                    $_SESSION["logged_in"] = true;
+                    
+                    // Generate auth token
+                    $auth_token = createAuthToken($conn, $row['facilitator_id'], $role);
+                    
+                    // Log the final response role
+                    error_log("[LOGIN] Final response role for facilitator {$row['facilitator_id']}: '$role'");
 
-                        $learners = [];
-                        while ($learner_row = $result_learners->fetch_assoc()) {
-                            $learners[] = array_map('strval', $learner_row);
+                    if ($role === 'assessor' || $role === 'Moderator' || $role === 'arpl_assessor' || $role === 'arpl_moderator') {
+                        $facilitator_id = $row['facilitator_id'];
+                        $sql = "
+                            SELECT s.project_id, s.Project_pathway, c.* 
+                            FROM class c
+                            JOIN sites s ON s.siteID = c.siteID
+                            JOIN facilitator f ON FIND_IN_SET(c.classID, f.classID) > 0
+                            WHERE f.facilitator_id = ?
+                        ";
+
+                        $stmt_classes = $conn->prepare($sql);
+                        if ($stmt_classes) {
+                            $stmt_classes->bind_param("s", $facilitator_id);
+                            $stmt_classes->execute();
+                            $result_classes = $stmt_classes->get_result();
+
+                            $classes = [];
+                            while ($class_row = $result_classes->fetch_assoc()) {
+                                $classes[] = array_map('strval', $class_row);
+                            }
+                            
+                            // Log the response data
+                            error_log("[LOGIN] Sending response - Role: '$role', Facilitator: $facilitator_id, Classes count: " . count($classes));
+                            if (count($classes) > 0) {
+                                error_log("[LOGIN] First class data: " . json_encode($classes[0]));
+                            }
+
+                            echo json_encode([
+                                'success' => true,
+                                'role' => $role,
+                                'facilitator_id' => $facilitator_id,
+                                'classes' => $classes,
+                                'auth_token' => $auth_token
+                            ]);
+                        } else {
+                            error_log("[LOGIN ERROR] Failed to prepare class information query");
+                            echo json_encode(['success' => false, 'error' => 'Failed to prepare class information query']);
                         }
-
-                        echo json_encode([
-                            'success' => true,
-                            'role' => $role,
-                            'classID' => $classID,
-                            'learners' => $learners,
-                            'auth_token' => $auth_token
-                        ]);
+                        $stmt_classes->close();
                     } else {
-                        echo json_encode(['success' => false, 'error' => 'Failed to prepare learner information query']);
+                        $classID = $row['classID'];
+                        $sql = "
+                            SELECT 
+                                ld.LearnerID, 
+                                ld.Title, 
+                                ld.Name, 
+                                ld.Surname, 
+                                ld.Email, 
+                                lc.clock_in_time, 
+                                lc.clock_out_time, 
+                                lc.contact_time
+                            FROM 
+                                learnerdetails ld
+                            LEFT JOIN 
+                                learner_clocking lc 
+                                ON ld.LearnerID = lc.LearnerID AND lc.clock_date = CURDATE()
+                            WHERE 
+                                ld.classID = ?
+                        ";
+
+                        $stmt_learners = $conn->prepare($sql);
+                        if ($stmt_learners) {
+                            $stmt_learners->bind_param("s", $classID);
+                            $stmt_learners->execute();
+                            $result_learners = $stmt_learners->get_result();
+
+                            $learners = [];
+                            while ($learner_row = $result_learners->fetch_assoc()) {
+                                $learners[] = array_map('strval', $learner_row);
+                            }
+
+                            echo json_encode([
+                                'success' => true,
+                                'role' => $role,
+                                'classID' => $classID,
+                                'learners' => $learners,
+                                'auth_token' => $auth_token
+                            ]);
+                        } else {
+                            echo json_encode(['success' => false, 'error' => 'Failed to prepare learner information query']);
+                        }
+                        $stmt_learners->close();
                     }
-                    $stmt_learners->close();
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Invalid password for facilitator.']);
                 }
             } else {
-                // Check for account_user table (web application users)
-                $stmt = $conn->prepare("SELECT * FROM account_user WHERE username = ? OR email = ?");
+                // Check for account_user table (web application users) - trim whitespace
+                $stmt = $conn->prepare("SELECT * FROM account_user WHERE TRIM(username) = TRIM(?) OR TRIM(email) = TRIM(?)");
                 $stmt->bind_param("ss", $email, $email);
                 $stmt->execute();
                 $result = $stmt->get_result();
