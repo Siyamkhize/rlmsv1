@@ -3760,28 +3760,49 @@ updated_at TIMESTAMP
   Future<Map<String, dynamic>?> getSdp(String email, String password) async {
     final db = await database;
 
+    // Trim email to remove whitespace
+    final trimmedEmail = email.trim();
+
     // Query the database for a user with the provided email only
     final result = await db.query(
       'sdp',
-      where: 'email = ?',
-      whereArgs: [email],
+      where: 'TRIM(email) = ?',
+      whereArgs: [trimmedEmail],
     );
 
     print("sdp Query Result: $result");
 
     if (result.isNotEmpty) {
       final user = result.first;
-      final hashedPassword = user['password'] as String;
+      final storedPassword = user['password'] as String?;
+      
+      if (storedPassword == null || storedPassword.isEmpty) {
+        print("No password set for SDP user");
+        return null;
+      }
 
-      // Verify the password using bcrypt
-      if (BCrypt.checkpw(password, hashedPassword)) {
+      // Check if password is hashed (bcrypt hashes start with $2)
+      final isHashed = storedPassword.startsWith('\$2');
+      
+      // Verify the password
+      bool passwordMatches = false;
+      if (isHashed) {
+        // Verify using bcrypt for hashed passwords
+        passwordMatches = BCrypt.checkpw(password, storedPassword);
+      } else {
+        // Direct comparison for plain text passwords (not recommended, but handle it)
+        passwordMatches = password == storedPassword;
+        print("⚠️ WARNING: Password is stored in plain text for SDP user $trimmedEmail");
+      }
+      
+      if (passwordMatches) {
         return user;
       } else {
         print("Password verification failed for SDP user");
         return null;
       }
     } else {
-      print("No SDP user found with email: $email");
+      print("No SDP user found with email: $trimmedEmail");
       return null;
     }
   }
