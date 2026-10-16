@@ -17,6 +17,7 @@ import 'services/face_embedding_service.dart';
 import 'repositories/face_verification_repository.dart';
 import 'widgets/simple_face_capture.dart';
 import 'services/offline_face_verification_service.dart';
+import 'services/timezone_validator.dart';
 import 'learner_security_questions_setup_page.dart';
 
 /// BACKUP CLOCK-IN PAGE
@@ -857,6 +858,20 @@ class _BackupClockInPageState extends State<BackupClockInPage>
   /// ========== CLOCK-IN FLOW ==========
   Future<void> _startBackupClockIn(String learnerId) async {
     if (_isClockingIn[learnerId] == true) {
+      return;
+    }
+
+    // CRITICAL: Verify device time is correct before allowing clock-in
+    final timeOk = await TimezoneValidator.ensureCorrectTime(context);
+    if (!timeOk) {
+      // User cancelled or time is wrong - block clock-in
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Clock-in cancelled: Device time must be corrected first'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
       return;
     }
 

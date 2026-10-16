@@ -12,6 +12,7 @@ import 'backup_clock_in_page.dart';
 import 'signature_geofence_clock_in_page.dart';
 import 'contact_less.dart';
 import 'services/fingerprint_service.dart';
+import 'services/timezone_validator.dart';
 import 'sync_service.dart' show syncSingleClockIn, syncSingleClockOut;
 import 'EnrollmentPage.dart';
 import 'facilitator_fingerprint_page.dart';
@@ -51,6 +52,9 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
+
+    // Note: Timezone validation is now blocking at clock-in time
+    // No need for non-blocking warning in dashboard anymore
 
     print(
         "[DASHBOARD] Initializing dashboard with classID: '${widget.classID}'");

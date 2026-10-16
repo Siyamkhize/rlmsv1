@@ -48,14 +48,14 @@ class SmartFramedCameraCapture extends StatefulWidget {
       _SmartFramedCameraCaptureState();
 }
 
-enum _Status { searching, adjusting, ready }
+enum _Status { searching, adjusting, livenessCheck, ready }
 
 class _FrameState {
   const _FrameState(this.status, this.hint, this.progress);
 
   final _Status status;
   final String hint;
-  final double progress; // 0..1 hold-still progress
+  final double progress; // 0..1 hold-still progress or liveness progress
 }
 
 class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
@@ -70,6 +70,13 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
   bool _busy = false;
   bool _captured = false;
   DateTime? _goodSince;
+  
+  // LIVENESS DETECTION ADDITIONS
+  bool _livenessCheckPassed = false;
+  List<double> _headYawHistory = []; // Track head rotation (left-right)
+  DateTime? _livenessStartTime;
+  static const double _livenessMotionThreshold = 8.0; // degrees of head movement required
+  static const int _livenessMaxDuration = 8; // seconds to complete liveness check
 
   @override
   void initState() {
@@ -304,7 +311,21 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
     } else if (off.dx.abs() > _oval.width * 0.12 ||
         off.dy.abs() > _oval.height * 0.12) {
       problem = 'Centre your face in the oval';
-    } else if ((face.headEulerAngleY ?? 0).abs() > 12 ||
+    }
+
+    if (problem != null) {
+      _reset(_Status.adjusting, problem);
+      return;
+    }
+
+    // LIVENESS CHECK: Require head movement to prove it's a live person
+    if (!_livenessCheckPassed) {
+      _performLivenessCheck(face);
+      return;
+    }
+
+    // FINAL POSITION CHECK: After liveness passed, check head angle and eyes
+    if ((face.headEulerAngleY ?? 0).abs() > 12 ||
         (face.headEulerAngleX ?? 0).abs() > 12 ||
         (face.headEulerAngleZ ?? 0).abs() > 12) {
       problem = 'Look straight at the camera';
@@ -330,8 +351,112 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
     if (progress >= 1.0) _capture();
   }
 
+  /// Liveness detection: Require user to turn their head slightly
+  void _performLivenessCheck(Face face) {
+    _livenessStartTime ??= DateTime.now();
+    
+    final headYaw = face.headEulerAngleY ?? 0.0;
+    _headYawHistory.add(headYaw);
+    
+    // Keep only last 30 frames (~1 second at 30fps)
+    if (_headYawHistory.length > 30) {
+      _headYawHistory.removeAt(0);
+    }
+    
+    // Check if enough time has passed (timeout after 8 seconds)
+    final elapsed = DateTime.now().difference(_livenessStartTime!);
+    if (elapsed.inSeconds > _livenessMaxDuration) {
+      // FAILED: No movement detected - likely a photo/screen
+      print('[LIVENESS] ✗ FAILED - No natural movement detected (possible photo/screen)');
+      
+      // Show error dialog and block clocking
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: Row(
+              children: const [
+                Icon(Icons.error, color: Colors.red, size: 28),
+                SizedBox(width: 8),
+                Expanded(child: Text('Liveness Check Failed')),
+              ],
+            ),
+            content: const Text(
+              'Unable to verify a real person. This appears to be a photo or screen image. '
+              'Clock in/out requires a live person.\n\n'
+              'Please try again with the actual person present.',
+              style: TextStyle(fontSize: 16),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close dialog
+                  Navigator.pop(context); // Close camera
+                },
+                child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
+    
+    // Need at least 10 samples to analyze motion
+    if (_headYawHistory.length < 10) {
+      _state.value = _FrameState(
+        _Status.livenessCheck,
+        'Slowly turn your head left, then right',
+        _headYawHistory.length / 10.0,
+      );
+      return;
+    }
+    
+    // Calculate range of head movement
+    final minYaw = _headYawHistory.reduce(math.min);
+    final maxYaw = _headYawHistory.reduce(math.max);
+    final yawRange = (maxYaw - minYaw).abs();
+    
+    print('[LIVENESS] Yaw range: $yawRange degrees (need ${_livenessMotionThreshold}+)');
+    
+    // Check if sufficient head movement detected
+    if (yawRange >= _livenessMotionThreshold) {
+      // PASSED: Real person detected (head moved naturally)
+      print('[LIVENESS] ✓ PASSED - Natural head movement detected');
+      _livenessCheckPassed = true;
+      HapticFeedback.lightImpact();
+      _state.value = const _FrameState(
+        _Status.ready,
+        '✓ Live person verified - now look straight',
+        1.0,
+      );
+      // Give user a moment to see the success message
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          _reset(_Status.adjusting, 'Center your face and look straight');
+        }
+      });
+    } else {
+      // Still waiting for movement
+      final progress = (yawRange / _livenessMotionThreshold).clamp(0.0, 1.0);
+      _state.value = _FrameState(
+        _Status.livenessCheck,
+        'Slowly turn your head left, then right',
+        progress,
+      );
+    }
+  }
+
   void _reset(_Status s, String hint) {
     _goodSince = null;
+    // Don't reset liveness if it already passed
+    if (s == _Status.searching || s == _Status.adjusting) {
+      if (!_livenessCheckPassed) {
+        _headYawHistory.clear();
+        _livenessStartTime = null;
+      }
+    }
     _state.value = _FrameState(s, hint, 0);
   }
 
@@ -340,23 +465,42 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
     if (_captured || controller == null) return;
 
     _captured = true;
+    print('[SMART_FRAMED_CAMERA] Starting capture...');
+
     try {
       await controller.stopImageStream();
+      print('[SMART_FRAMED_CAMERA] Image stream stopped, taking picture...');
+
       final photo = await controller.takePicture();
       HapticFeedback.mediumImpact();
+      print('[SMART_FRAMED_CAMERA] Picture taken, reading bytes...');
 
       // Read image bytes
       final Uint8List imageBytes = await photo.readAsBytes();
+      print(
+          '[SMART_FRAMED_CAMERA] Image bytes read: ${imageBytes.length} bytes');
 
-      // Add watermark
-      final Uint8List watermarkedBytes = await _addWatermarkToImage(imageBytes);
+      // Add watermark with timeout
+      Uint8List watermarkedBytes;
+      try {
+        print('[SMART_FRAMED_CAMERA] Starting watermark process...');
+        watermarkedBytes = await _addWatermarkToImage(imageBytes)
+            .timeout(const Duration(seconds: 10));
+        print('[SMART_FRAMED_CAMERA] Watermark completed successfully');
+      } catch (e) {
+        print(
+            '[SMART_FRAMED_CAMERA] Watermark failed, using original image: $e');
+        watermarkedBytes = imageBytes; // Fallback to original image
+      }
 
-      // Create temp file with watermark
+      // Create temp file with processed image
       final File tempFile = File(photo.path);
       await tempFile.writeAsBytes(watermarkedBytes);
+      print('[SMART_FRAMED_CAMERA] File written, calling onCapture...');
 
       if (mounted) {
         widget.onCapture(tempFile, watermarkedBytes);
+        print('[SMART_FRAMED_CAMERA] onCapture called, closing camera...');
         Navigator.of(context).pop();
       }
     } catch (e) {
@@ -553,41 +697,8 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
                   ),
                 ),
 
-                // Manual capture button (fallback)
-                Positioned(
-                  bottom: 40,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: GestureDetector(
-                      onTap: _captured ? null : _capture,
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                          border: Border.all(
-                            color: Colors.blue,
-                            width: 4,
-                          ),
-                        ),
-                        child: _captured
-                            ? const Padding(
-                                padding: EdgeInsets.all(20),
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 3,
-                                ),
-                              )
-                            : const Icon(
-                                Icons.camera_alt,
-                                size: 40,
-                                color: Colors.blue,
-                              ),
-                      ),
-                    ),
-                  ),
-                ),
+                // Manual capture button REMOVED - auto-capture only for security
+                // Prevents users from manually capturing photos/screens
               ]);
             }),
     );
@@ -597,6 +708,7 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
 Color _colorFor(_Status s) => switch (s) {
       _Status.searching => Colors.white,
       _Status.adjusting => const Color(0xFFFFB020),
+      _Status.livenessCheck => const Color(0xFF9B59B6), // Purple for liveness
       _Status.ready => const Color(0xFF2ECC71),
     };
 

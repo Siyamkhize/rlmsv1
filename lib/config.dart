@@ -3,16 +3,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AppConfig {
   // Local dev (phone must be on same Wi-Fi as the PC running the server) - DISABLED
-  // static const String serverHost = '192.168.0.84'; // Local dev IP
-  // static const int serverPort = 8080; // Local dev port
-  // static const String serverProtocol = 'http'; // Local dev uses HTTP
-  // static const String basePath = '/assessorReport2/mobile';
+  static const String serverHost = '192.168.0.84'; // Local dev IP
+  static const int serverPort = 8080; // Local dev port
+  static const String serverProtocol = 'http'; // Local dev uses HTTP
+  static const String basePath = '/assessorReport2/mobile';
 
   // Live server configuration - ONLINE (ACTIVE)
-  static const String serverHost = 'rlms.rlms.co.za'; // Live server domain
-  static const int serverPort = 443; // HTTPS port
-  static const String serverProtocol = 'https'; // Live server uses HTTPS
-  static const String basePath = '/mobile';
+//   static const String serverHost = 'rlms.rlms.co.za'; // Live server domain
+//   static const int serverPort = 443; // HTTPS port
+//   static const String serverProtocol = 'https'; // Live server uses HTTPS
+//   static const String basePath = '/mobile';
 
   // Base URL for all API calls
   // Result: http://192.168.0.84:8080/assessorReport2/mobile
@@ -224,7 +224,16 @@ class AppConfig {
   static Future<String?> getAuthToken() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('auth_token');
+      final token = prefs.getString('auth_token');
+      if (token != null) {
+        debugPrint('[AUTH] ✅ Token retrieved from storage');
+        debugPrint('[AUTH] Token length: ${token.length}');
+        debugPrint('[AUTH] Token first 16 chars: ${token.substring(0, token.length >= 16 ? 16 : token.length)}...');
+        debugPrint('[AUTH] Token last 16 chars: ...${token.substring(token.length >= 16 ? token.length - 16 : 0)}');
+      } else {
+        debugPrint('[AUTH] ❌ No token found in storage');
+      }
+      return token;
     } catch (e) {
       debugPrint('[AUTH] Error getting auth token: $e');
       return null;

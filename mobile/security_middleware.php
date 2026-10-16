@@ -40,13 +40,12 @@ header('Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token'
  * Apply rate limiting with standard limits
  * Convenience function for endpoint protection
  * 
- * @param int $max_requests Maximum requests per minute
+ * @param mysqli $conn Database connection
  * @param string $action Action identifier for rate limiting
+ * @param int $max_requests Maximum requests per minute (optional)
  */
 if (!function_exists('applyRateLimit')) {
-function applyRateLimit($max_requests = 10, $action = 'api_request') {
-    global $conn;
-    
+function applyRateLimit($conn, $action = 'api_request', $max_requests = 10) {
     if (!$conn) {
         // If no DB connection, skip rate limiting but log the attempt
         error_log("Rate limiting skipped - no database connection for action: $action");
@@ -153,23 +152,85 @@ function initializeRequestSecurity($conn, $endpoint_name) {
 }
 
 /**
- * Get client IP address (handles proxies)
+ * Get client IP address (handles proxies with security validation)
+ * Only trusts forwarded headers from configured proxy IPs
  */
 if (!function_exists('get_client_ip')) {
 function get_client_ip() {
-    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    $server_ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
     
-    // Check for IP from proxy
-    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-        $ip = $_SERVER['HTTP_CLIENT_IP'];
-    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        $ip = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0];
-    } elseif (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
-        // Cloudflare
-        $ip = $_SERVER['HTTP_CF_CONNECTING_IP'];
+    // Load trusted proxy configuration
+    $config_file = __DIR__ . '/config/trusted_proxies.php';
+    if (file_exists($config_file)) {
+        $config = include $config_file;
+    } else {
+        // Fallback: no trusted proxies configured
+        return filter_var($server_ip, FILTER_VALIDATE_IP) ? $server_ip : '0.0.0.0';
     }
     
-    return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : '0.0.0.0';
+    // Only trust headers from configured proxies
+    if (_ip_in_ranges($server_ip, $config['trusted_proxies'])) {
+        foreach ($config['proxy_headers'] as $header) {
+            if (!empty($_SERVER[$header])) {
+                // Handle comma-separated list (X-Forwarded-For can have multiple IPs)
+                $ip = explode(',', $_SERVER[$header])[0];
+                $ip = trim($ip);
+                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                    return $ip;
+                }
+            }
+        }
+    }
+    
+    return filter_var($server_ip, FILTER_VALIDATE_IP) ? $server_ip : '0.0.0.0';
+}
+}
+
+/**
+ * Check if IP is in any of the given ranges
+ * 
+ * @param string $ip IP address to check
+ * @param array $ranges Array of IP ranges (CIDR notation or single IPs)
+ * @return bool True if IP is in any range
+ */
+if (!function_exists('_ip_in_ranges')) {
+function _ip_in_ranges($ip, $ranges) {
+    foreach ($ranges as $range) {
+        if (_ip_in_range($ip, $range)) {
+            return true;
+        }
+    }
+    return false;
+}
+}
+
+/**
+ * Check if IP is in CIDR range
+ * 
+ * @param string $ip IP address to check
+ * @param string $range CIDR range (e.g., '192.168.1.0/24') or single IP
+ * @return bool True if IP is in range
+ */
+if (!function_exists('_ip_in_range')) {
+function _ip_in_range($ip, $range) {
+    // Handle single IP
+    if (strpos($range, '/') === false) {
+        return $ip === $range;
+    }
+    
+    // Handle CIDR range
+    list($subnet, $mask) = explode('/', $range);
+    
+    // Convert to long integers for comparison
+    $ip_long = ip2long($ip);
+    $subnet_long = ip2long($subnet);
+    $mask_long = ~((1 << (32 - $mask)) - 1);
+    
+    if ($ip_long === false || $subnet_long === false) {
+        return false;
+    }
+    
+    return ($ip_long & $mask_long) === ($subnet_long & $mask_long);
 }
 }
 
@@ -374,17 +435,19 @@ function validate_file_upload($file, $options = []) {
  */
 if (!function_exists('check_rate_limit')) {
 function check_rate_limit($conn, $ip, $action = 'api_request', $max_attempts = 60, $window_seconds = 60) {
-    // Create rate_limit table if it doesn't exist
-    $create_table = "
-        CREATE TABLE IF NOT EXISTS rate_limit (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            ip_address VARCHAR(45) NOT NULL,
-            action VARCHAR(50) NOT NULL,
-            attempt_time DATETIME NOT NULL,
-            INDEX idx_ip_action_time (ip_address, action, attempt_time)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    ";
-    $conn->query($create_table);
+    // NOTE: rate_limit table must be created by running mobile/run_migrations.php
+    // We no longer create tables in the per-request path for performance
+    
+    // Check if table exists (fail gracefully if not migrated yet)
+    $table_check = $conn->query("SHOW TABLES LIKE 'rate_limit'");
+    if (!$table_check || $table_check->num_rows === 0) {
+        error_log("SECURITY WARNING: rate_limit table not found. Run mobile/run_migrations.php");
+        return [
+            'allowed' => true, // Fail open for backwards compatibility
+            'message' => 'Rate limiting unavailable - migration required',
+            'remaining' => 999
+        ];
+    }
     
     // Clean old entries
     $cleanup_stmt = $conn->prepare("DELETE FROM rate_limit WHERE attempt_time < DATE_SUB(NOW(), INTERVAL ? SECOND)");
@@ -448,27 +511,40 @@ function check_rate_limit($conn, $ip, $action = 'api_request', $max_attempts = 6
  */
 if (!function_exists('validate_auth_token')) {
 function validate_auth_token($conn, $token, $required_role = null) {
+    error_log("[AUTH] validate_auth_token called");
+    
     // Sanitize token
     $token = preg_replace('/[^a-zA-Z0-9]/', '', $token);
     
     if (empty($token)) {
+        error_log("[AUTH] Token is empty after sanitization");
         return false;
     }
     
-    // Query auth_tokens table
+    // Hash the token to match stored token_hash (login.php stores hash('sha256', $token))
+    $token_hash = hash('sha256', $token);
+    error_log("[AUTH] Looking for token_hash: " . substr($token_hash, 0, 16) . "...");
+    
+    // Query auth_tokens table using token_hash and check for revoked_at IS NULL
     $stmt = $conn->prepare("
         SELECT user_id, user_role, created_at, expires_at 
         FROM auth_tokens 
-        WHERE token = ? 
+        WHERE token_hash = ? 
           AND expires_at > NOW()
-          AND is_active = 1
+          AND revoked_at IS NULL
     ");
     
-    $stmt->bind_param("s", $token);
+    if (!$stmt) {
+        error_log("[AUTH] Failed to prepare statement: " . $conn->error);
+        return false;
+    }
+    
+    $stmt->bind_param("s", $token_hash);
     $stmt->execute();
     $result = $stmt->get_result();
     
     if ($result->num_rows === 0) {
+        error_log("[AUTH] No matching token found or token expired/revoked");
         $stmt->close();
         return false;
     }
@@ -476,16 +552,21 @@ function validate_auth_token($conn, $token, $required_role = null) {
     $user = $result->fetch_assoc();
     $stmt->close();
     
+    error_log("[AUTH] Token validated for user: " . $user['user_id'] . " (" . $user['user_role'] . ")");
+    
     // Check role if specified
     if ($required_role !== null && $user['user_role'] !== $required_role) {
+        error_log("[AUTH] Role mismatch: expected $required_role, got " . $user['user_role']);
         return false;
     }
     
-    // Update last_used timestamp
-    $update_stmt = $conn->prepare("UPDATE auth_tokens SET last_used = NOW() WHERE token = ?");
-    $update_stmt->bind_param("s", $token);
-    $update_stmt->execute();
-    $update_stmt->close();
+    // Update last_used_at timestamp (correct column name)
+    $update_stmt = $conn->prepare("UPDATE auth_tokens SET last_used_at = NOW() WHERE token_hash = ?");
+    if ($update_stmt) {
+        $update_stmt->bind_param("s", $token_hash);
+        $update_stmt->execute();
+        $update_stmt->close();
+    }
     
     return $user;
 }
@@ -507,22 +588,15 @@ function log_security_event($event_type, $description, $metadata = []) {
         return;  // Silently fail if no connection
     }
     
-    // Create security_log table if it doesn't exist
-    $create_table = "
-        CREATE TABLE IF NOT EXISTS security_log (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            event_type VARCHAR(50) NOT NULL,
-            description TEXT,
-            ip_address VARCHAR(45),
-            user_id INT DEFAULT NULL,
-            metadata JSON,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            INDEX idx_event_type (event_type),
-            INDEX idx_ip_address (ip_address),
-            INDEX idx_created_at (created_at)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    ";
-    $conn->query($create_table);
+    // NOTE: security_log table must be created by running mobile/run_migrations.php
+    // We no longer create tables in the per-request path for performance
+    
+    // Check if table exists (fail gracefully if not migrated yet)
+    $table_check = $conn->query("SHOW TABLES LIKE 'security_log'");
+    if (!$table_check || $table_check->num_rows === 0) {
+        error_log("SECURITY WARNING: security_log table not found. Run mobile/run_migrations.php");
+        return; // Fail silently for backwards compatibility
+    }
     
     // Prepare metadata
     $metadata_json = json_encode($metadata);

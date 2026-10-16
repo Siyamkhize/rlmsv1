@@ -85,4 +85,14 @@ class FlutterDocScanner {
       throw ArgumentError.value(page, 'page', 'Must be at least 1');
     }
   }
+
+  /// Force-resets the scanner state by clearing any stuck native plugin state.
+  ///
+  /// Use this when the scanner reports "SCAN_IN_PROGRESS" but no scan is
+  /// actually running. This clears the native Android pendingResult flag.
+  ///
+  /// Throws [DocScanException] on failure.
+  Future<void> forceReset() {
+    return FlutterDocScannerPlatform.instance.forceReset();
+  }
 }

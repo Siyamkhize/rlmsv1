@@ -60,6 +60,9 @@ dependencies:
   # Face Recognition dependencies
   google_mlkit_face_detection: ^0.11.1
   tflite_flutter: ^0.11.0
+  # JWT and API middleware dependencies
+  dart_jsonwebtoken: ^2.14.0
+  shelf: ^1.4.1
 
 dev_dependencies:
   flutter_test:

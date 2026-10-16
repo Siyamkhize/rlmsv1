@@ -70,6 +70,18 @@ class FlutterDocScannerPlugin : MethodCallHandler, ActivityResultListener,
                 REQUEST_CODE_SCAN_URI,
                 intArrayOf(GmsDocumentScannerOptions.RESULT_FORMAT_JPEG)
             )
+            "forceReset" -> {
+                Log.w(TAG, "forceReset: Forcibly clearing stuck pendingResult")
+                synchronized(this) {
+                    if (pendingResult != null) {
+                        Log.w(TAG, "forceReset: pendingResult was non-null, clearing it now")
+                        pendingResult = null
+                    } else {
+                        Log.d(TAG, "forceReset: pendingResult was already null")
+                    }
+                }
+                result.success(true)
+            }
             else -> result.notImplemented()
         }
     }

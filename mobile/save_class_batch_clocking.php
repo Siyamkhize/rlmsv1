@@ -62,7 +62,7 @@ try {
     exit;
 }
 
-// Load require_auth.php
+// Load require_auth.php and authenticate immediately
 try {
     if (!file_exists(__DIR__ . '/require_auth.php')) {
         error_log("[BATCH_CLOCKING] CRITICAL: require_auth.php not found at: " . __DIR__ . '/require_auth.php');
@@ -70,12 +70,6 @@ try {
     }
     
     require_once('require_auth.php');
-    
-    // Check if requireAuth function exists
-    if (!function_exists('requireAuth')) {
-        error_log("[BATCH_CLOCKING] CRITICAL: requireAuth function not defined");
-        throw new Exception("Authentication system error");
-    }
     
 } catch (Exception $e) {
     http_response_code(503);
@@ -86,7 +80,28 @@ try {
     exit;
 }
 
-// Load idempotency_helpers.php
+// SECURITY: Authenticate user immediately after loading auth library
+// This ensures authentication always runs if the library loads successfully
+try {
+    $user = requireAuth($conn);
+    
+    if (!$user || !isset($user['user_id']) || empty($user['user_id'])) {
+        error_log("[BATCH_CLOCKING] Authentication failed - invalid user data");
+        throw new Exception("Authentication required");
+    }
+    
+    $userId = $user['user_id'];
+    
+} catch (Exception $e) {
+    http_response_code(401);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Authentication failed. Please login again.'
+    ]);
+    exit;
+}
+
+// Load idempotency_helpers.php after authentication
 try {
     if (!file_exists(__DIR__ . '/idempotency_helpers.php')) {
         error_log("[BATCH_CLOCKING] CRITICAL: idempotency_helpers.php not found at: " . __DIR__ . '/idempotency_helpers.php');
@@ -109,26 +124,6 @@ try {
     echo json_encode([
         'success' => false,
         'error' => 'An internal error occurred. Please try again.'
-    ]);
-    exit;
-}
-
-// Authenticate user
-try {
-    $user = requireAuth($conn);
-    
-    if (!$user || !isset($user['user_id']) || empty($user['user_id'])) {
-        error_log("[BATCH_CLOCKING] Authentication failed - invalid user data");
-        throw new Exception("Authentication required");
-    }
-    
-    $userId = $user['user_id'];
-    
-} catch (Exception $e) {
-    http_response_code(401);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Authentication failed. Please login again.'
     ]);
     exit;
 }

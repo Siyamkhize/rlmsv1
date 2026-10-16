@@ -2403,7 +2403,7 @@ class SyncService extends ChangeNotifier {
         () => http.get(Uri.parse(apiUrl)),
         endpoint: 'materials_received_sync',
         maxRetries: NetworkConfig.syncOperationsMaxRetries,
-        timeoutSeconds: NetworkConfig.lightweightTimeout,
+        timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
       );
 
       // Check if the response is successful
@@ -2761,25 +2761,35 @@ class SyncService extends ChangeNotifier {
 
   // Helper to get unsynced learners
   Future<List<Map<String, dynamic>>> _getUnsyncedLearners() async {
-    print('DEBUG: Starting _getUnsyncedLearners');
+    if (kDebugMode) {
+      print('DEBUG: Starting _getUnsyncedLearners');
+    }
     final db = await _dbHelper.database;
-    print('DEBUG: Database path: ${db.path}');
+    if (kDebugMode) {
+      print('DEBUG: Database path: ${db.path}');
+    }
     try {
       final result = await db.query(
         'learnerdetails',
         where: 'synced = ?',
         whereArgs: [0],
       );
-      print('DEBUG: Retrieved ${result.length} unsynced learners: $result');
+      if (kDebugMode) {
+        print('DEBUG: Retrieved ${result.length} unsynced learners: $result');
+      }
       return result;
     } catch (e) {
-      print('DEBUG: Error querying unsynced learners: $e');
+      if (kDebugMode) {
+        print('DEBUG: Error querying unsynced learners: $e');
+      }
       return [];
     }
   }
 
   Future<void> _markAsSynced(String learnerID) async {
-    print('DEBUG: Marking learner $learnerID as synced');
+    if (kDebugMode) {
+      print('DEBUG: Marking learner $learnerID as synced');
+    }
     final db = await _dbHelper.database;
     final updatedRows = await db.update(
       'learnerdetails',
@@ -2787,11 +2797,15 @@ class SyncService extends ChangeNotifier {
       where: 'LearnerID = ?',
       whereArgs: [learnerID],
     );
-    print('DEBUG: Updated $updatedRows rows for LearnerID $learnerID');
+    if (kDebugMode) {
+      print('DEBUG: Updated $updatedRows rows for LearnerID $learnerID');
+    }
   }
 
   Future<Map<String, dynamic>> syncLearnerDetails() async {
-    print('DEBUG: Starting syncLearnerDetails');
+    if (kDebugMode) {
+      print('DEBUG: Starting syncLearnerDetails');
+    }
     try {
       List<Map<String, dynamic>> unsyncedLearners =
           await _getUnsyncedLearners();
@@ -2815,7 +2829,9 @@ class SyncService extends ChangeNotifier {
           if (learnerID == null || learnerID.isEmpty) {
             errors.add(
                 'Skipping learner due to missing LearnerID: ${learner['Name'] ?? 'Unknown'}');
-            print('DEBUG: ${errors.last}');
+            if (kDebugMode) {
+              print('DEBUG: ${errors.last}');
+            }
             continue;
           }
 
@@ -2823,11 +2839,15 @@ class SyncService extends ChangeNotifier {
           if (idNumber == null || idNumber.isEmpty) {
             errors.add(
                 'Skipping learner due to missing IDNumber: ${learner['Name'] ?? 'Unknown'}');
-            print('DEBUG: ${errors.last}');
+            if (kDebugMode) {
+              print('DEBUG: ${errors.last}');
+            }
             continue;
           }
 
-          print('DEBUG: Sending request for learner $learnerID');
+          if (kDebugMode) {
+            print('DEBUG: Sending request for learner $learnerID');
+          }
 
           var request = http.MultipartRequest(
             'POST',
@@ -2901,10 +2921,13 @@ class SyncService extends ChangeNotifier {
             final value = learner[key]?.toString();
             if (!shouldExcludeValue(value)) {
               request.fields[key] = value!;
-              print('DEBUG: Including field $key = $value');
+              if (kDebugMode) {
+                print('DEBUG: Including field $key = $value');
+              }
             } else {
-              print(
-                  'DEBUG: Excluding field $key = $value (empty/default value)');
+              if (kDebugMode) {
+                print('DEBUG: Excluding field $key = $value (empty/default value)');
+              }
             }
           }
 
@@ -2946,28 +2969,38 @@ class SyncService extends ChangeNotifier {
             const Duration(seconds: 120),
             onTimeout: () {
               errors.add('Request timed out for LearnerID $learnerID');
-              print('DEBUG: ${errors.last}');
+              if (kDebugMode) {
+                print('DEBUG: ${errors.last}');
+              }
               return http.StreamedResponse(const Stream.empty(), 408);
             },
           );
 
-          print(
-              'DEBUG: Response status for $learnerID: ${response.statusCode}');
-          print('DEBUG: Response headers: ${response.headers}');
+          if (kDebugMode) {
+            print('DEBUG: Response status for $learnerID: ${response.statusCode}');
+            print('DEBUG: Response headers: ${response.headers}');
+          }
 
           String responseBody = await response.stream.bytesToString();
-          print('DEBUG: Raw response body for $learnerID: "$responseBody"');
+          
+          if (kDebugMode) {
+            print('DEBUG: Raw response body for $learnerID: "$responseBody"');
+          }
 
           if (response.statusCode != 200) {
             errors.add(
                 'Server error for LearnerID $learnerID: Status ${response.statusCode}, Response: $responseBody');
-            print('DEBUG: ${errors.last}');
+            if (kDebugMode) {
+              print('DEBUG: ${errors.last}');
+            }
             continue;
           }
 
           if (responseBody.isEmpty) {
             errors.add('Empty server response for LearnerID $learnerID');
-            print('DEBUG: ${errors.last}');
+            if (kDebugMode) {
+              print('DEBUG: ${errors.last}');
+            }
             continue;
           }
 
@@ -2976,21 +3009,29 @@ class SyncService extends ChangeNotifier {
             if (jsonResponse['success'] == true) {
               await _markAsSynced(learnerID);
               syncedCount++;
-              print('DEBUG: Successfully synced learner $learnerID');
+              if (kDebugMode) {
+                print('DEBUG: Successfully synced learner $learnerID');
+              }
             } else {
               errors.add(
                   'Server error for LearnerID $learnerID: ${jsonResponse['error'] ?? 'Unknown server error'}');
-              print('DEBUG: ${errors.last}');
+              if (kDebugMode) {
+                print('DEBUG: ${errors.last}');
+              }
             }
           } catch (e) {
             errors.add(
                 'Failed to parse server response for LearnerID $learnerID: $e. Response: $responseBody');
-            print('DEBUG: ${errors.last}');
+            if (kDebugMode) {
+              print('DEBUG: ${errors.last}');
+            }
           }
         } catch (e) {
           errors.add(
               'Error syncing LearnerID ${learner['LearnerID'] ?? 'unknown'}: $e - Data: $learner');
-          print('DEBUG: ${errors.last}');
+          if (kDebugMode) {
+            print('DEBUG: ${errors.last}');
+          }
         }
       }
 
@@ -3002,10 +3043,14 @@ class SyncService extends ChangeNotifier {
         'syncedCount': syncedCount,
         'errors': errors.isEmpty ? null : errors,
       };
-      print('DEBUG: Sync result: $result');
+      if (kDebugMode) {
+        print('DEBUG: Sync result: $result');
+      }
       return result;
     } catch (e) {
-      print('DEBUG: Sync process failed: $e');
+      if (kDebugMode) {
+        print('DEBUG: Sync process failed: $e');
+      }
       return {
         'success': false,
         'message': 'Sync failed: $e',

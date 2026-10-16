@@ -82,13 +82,19 @@ try {
     }
 
     // Check if images already uploaded for this clocking event (idempotency)
-    // clock_type removed — column does not exist in learner_clocking_evidence
+    // Using manual_clocking_evidence table
     $existingCheck = $conn->prepare("
-        SELECT face_filename, signature_filename 
-        FROM learner_clocking_evidence 
-        WHERE learner_id = ? AND clock_date = ?
+        SELECT face_in, signature_in 
+        FROM manual_clocking_evidence 
+        WHERE LearnerID = ? AND clock_date = ?
         LIMIT 1
     ");
+    
+    if (!$existingCheck) {
+        error_log("[SAVE_CLOCKING_IMAGES] ❌ Failed to prepare idempotency check: " . $conn->error);
+        throw new Exception('Database error: ' . $conn->error);
+    }
+    
     $existingCheck->bind_param("is", $learnerID, $clockDate);
     $existingCheck->execute();
     $existingResult = $existingCheck->get_result();
@@ -97,8 +103,8 @@ try {
         $existing = $existingResult->fetch_assoc();
         
         // Verify files still exist on disk
-        $faceFile = $facesDir . '/' . $existing['face_filename'];
-        $sigFile = $signaturesDir . '/' . $existing['signature_filename'];
+        $faceFile = $facesDir . '/' . $existing['face_in'];
+        $sigFile = $signaturesDir . '/' . $existing['signature_in'];
         
         if (file_exists($faceFile) && file_exists($sigFile)) {
             // Return existing filenames (idempotent response)
@@ -107,8 +113,8 @@ try {
                 'success' => true,
                 'message' => 'Images already uploaded (idempotent response)',
                 'files' => [
-                    'face_' . $type => $existing['face_filename'],
-                    'signature_' . $type => $existing['signature_filename'],
+                    'face_' . $type => $existing['face_in'],
+                    'signature_' . $type => $existing['signature_in'],
                 ],
                 'learner_id' => $learnerID,
                 'clock_date' => $clockDate,

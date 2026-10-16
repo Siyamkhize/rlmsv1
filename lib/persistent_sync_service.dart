@@ -51,7 +51,7 @@ class PersistentSyncService {
         ),
         endpoint: 'sync_learners',
         maxRetries: NetworkConfig.syncOperationsMaxRetries,
-        timeoutSeconds: NetworkConfig.lightweightTimeout,
+        timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
       );
 
       if (response.statusCode == 200) {

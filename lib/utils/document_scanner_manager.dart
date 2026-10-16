@@ -159,10 +159,20 @@ class DocumentScannerManager {
   }
 
   /// Force reset scanner state (emergency use only)
-  void forceReset() {
+  Future<void> forceReset() async {
     debugPrint('[SCANNER_MGR] Force resetting scanner state');
     _isScanning = false;
     _lastScanTime = DateTime.now().subtract(const Duration(minutes: 1));
+    
+    // NEW: Call native plugin to clear Android pendingResult
+    try {
+      final scanner = FlutterDocScanner();
+      await scanner.forceReset();
+      debugPrint('[SCANNER_MGR] Native plugin state cleared successfully');
+    } catch (e) {
+      debugPrint('[SCANNER_MGR] Failed to reset native plugin state: $e');
+      // Continue anyway - at least we cleared Dart-side state
+    }
   }
 
   /// Check if the scanner is in a problematic state (e.g., pendingResult null)
@@ -180,10 +190,10 @@ class DocumentScannerManager {
   }
 
   /// Recover from problematic state
-  void recoverFromProblematicState() {
+  Future<void> recoverFromProblematicState() async {
     if (isInProblematicState()) {
       debugPrint('[SCANNER_MGR] Recovering from problematic state');
-      forceReset();
+      await forceReset();
     }
   }
 }

@@ -1,12 +1,14 @@
 <?php
 include('connection.php');
+require_once __DIR__ . '/require_auth.php';
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 error_reporting(0); // Hide warnings
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 // SECURITY: Require authentication
-require_once __DIR__ . '/require_auth.php';
+/** @var mysqli $conn */
 $user = requireAuth($conn);
 $authenticated_user_id = $user['user_id'];
 $authenticated_role = $user['user_role'];

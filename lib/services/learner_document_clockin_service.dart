@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
@@ -165,7 +166,7 @@ class LearnerDocumentClockInService {
         try {
           Navigator.of(context, rootNavigator: true).pop();
         } catch (_) {}
-        DocumentScannerManager().forceReset();
+        DocumentScannerManager().forceReset(); // Fire and forget
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to scan document: $e'),
@@ -198,10 +199,47 @@ class LearnerDocumentClockInService {
   }
 
   Future<void> syncUnsyncedDocumentsForLearner(String learnerId) async {
-    if (!await hasNetworkConnectivity()) return;
+    // ===== DETAILED LOGGING FOR DEBUGGING =====
+    debugPrint('[DOC_UPLOAD] ========================================');
+    debugPrint('[DOC_UPLOAD] Starting sync for learner: $learnerId');
+    debugPrint('[DOC_UPLOAD] Timestamp: ${DateTime.now()}');
+    
+    if (!await hasNetworkConnectivity()) {
+      debugPrint('[DOC_UPLOAD] ❌ NO NETWORK CONNECTIVITY');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⚠️ No internet - Document saved locally, will sync when online'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+      return;
+    }
+    debugPrint('[DOC_UPLOAD] ✓ Network connectivity OK');
+
+    // Get auth token
+    final token = await AppConfig.getAuthToken();
+    debugPrint('[DOC_UPLOAD] Auth token present: ${token != null ? "YES" : "NO"}');
+    if (token == null) {
+      debugPrint('[DOC_UPLOAD] ❌ No auth token available');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⚠️ Auth token missing - Document saved locally only'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+      return;
+    }
 
     final dbHelper = DatabaseHelper();
     final learnerDocs = await dbHelper.fetchLearnerDocuments(learnerId);
+    debugPrint('[DOC_UPLOAD] Total documents in DB: ${learnerDocs.length}');
+    
     final unsynced = learnerDocs.where((doc) {
       final syncedVal = doc['synced'];
       final syncedInt = syncedVal is int
@@ -209,14 +247,47 @@ class LearnerDocumentClockInService {
           : int.tryParse(syncedVal?.toString() ?? '0') ?? 0;
       return syncedInt == 0;
     }).toList();
+    
+    debugPrint('[DOC_UPLOAD] Unsynced documents: ${unsynced.length}');
+    for (var doc in unsynced) {
+      debugPrint('[DOC_UPLOAD]   - ${doc['documentName']} (ID: ${doc['document_id']})');
+    }
+
+    int successCount = 0;
+    int failCount = 0;
+    String? lastError;
 
     for (final doc in unsynced) {
       final filePath = doc['learner_document']?.toString() ?? '';
       final documentName = doc['documentName']?.toString() ?? '';
-      if (filePath.isEmpty || !File(filePath).existsSync()) continue;
+      
+      debugPrint('[DOC_UPLOAD] ----------------------------------------');
+      debugPrint('[DOC_UPLOAD] Processing: $documentName');
+      debugPrint('[DOC_UPLOAD] File path: $filePath');
+      
+      if (filePath.isEmpty) {
+        debugPrint('[DOC_UPLOAD] ❌ File path is empty');
+        lastError = 'File path empty for $documentName';
+        failCount++;
+        continue;
+      }
+      
+      if (!File(filePath).existsSync()) {
+        debugPrint('[DOC_UPLOAD] ❌ File does not exist on disk');
+        lastError = 'File not found: $documentName';
+        failCount++;
+        continue;
+      }
+      
+      final fileSize = await File(filePath).length();
+      debugPrint('[DOC_UPLOAD] File exists, size: $fileSize bytes');
 
       try {
+        debugPrint('[DOC_UPLOAD] Building multipart request...');
+        debugPrint('[DOC_UPLOAD] Upload URL: $_uploadUrl');
+        
         final request = http.MultipartRequest('POST', Uri.parse(_uploadUrl))
+          ..headers['Authorization'] = 'Bearer $token'  // Add auth token
           ..fields['learner_id'] = learnerId
           ..fields['documentName'] = documentName
           ..fields['status'] = doc['status']?.toString() ?? 'Pending'
@@ -224,27 +295,92 @@ class LearnerDocumentClockInService {
               doc['upload_date']?.toString() ?? DateTime.now().toIso8601String()
           ..fields['synced'] = '1'
           ..fields['rejection_reason'] =
-              doc['rejection_reason']?.toString() ?? ''
-          ..files.add(await http.MultipartFile.fromPath(
-            'learner_document',
-            filePath,
-            filename: filePath.split(Platform.pathSeparator).last,
-          ));
+              doc['rejection_reason']?.toString() ?? '';
+        
+        debugPrint('[DOC_UPLOAD] Request fields: ${request.fields}');
+        debugPrint('[DOC_UPLOAD] Adding file to request...');
+        
+        request.files.add(await http.MultipartFile.fromPath(
+          'learner_document',
+          filePath,
+          filename: filePath.split(Platform.pathSeparator).last,
+        ));
+        
+        debugPrint('[DOC_UPLOAD] File added: ${request.files.first.filename}, ${request.files.first.length} bytes');
+        debugPrint('[DOC_UPLOAD] Sending request...');
 
         final response = await request.send();
         final body = await response.stream.bytesToString();
-        if (response.statusCode != 200) continue;
+        
+        debugPrint('[DOC_UPLOAD] ========== SERVER RESPONSE ==========');
+        debugPrint('[DOC_UPLOAD] Status code: ${response.statusCode}');
+        debugPrint('[DOC_UPLOAD] Response headers: ${response.headers}');
+        debugPrint('[DOC_UPLOAD] Response body: $body');
+        debugPrint('[DOC_UPLOAD] ===================================');
+        
+        if (response.statusCode != 200) {
+          debugPrint('[DOC_UPLOAD] ❌ HTTP ERROR ${response.statusCode}');
+          lastError = 'Server error ${response.statusCode} for $documentName';
+          failCount++;
+          continue;
+        }
 
         final decoded = jsonDecode(body);
+        debugPrint('[DOC_UPLOAD] Decoded response: $decoded');
+        
         if (decoded is Map && decoded['success'] == true) {
           final docId = doc['document_id'];
           final parsedId = docId is int ? docId : int.tryParse('$docId');
           if (parsedId != null) {
             await dbHelper.updateLearnerDocumentSynced(parsedId, 1);
+            debugPrint('[DOC_UPLOAD] ✅ SUCCESS: $documentName uploaded and marked as synced');
+            successCount++;
           }
+        } else {
+          final error = decoded['error'] ?? decoded['message'] ?? 'Unknown error';
+          debugPrint('[DOC_UPLOAD] ❌ UPLOAD FAILED: $error');
+          lastError = error.toString();
+          failCount++;
         }
-      } catch (_) {
-        // Keep local copy; will retry later.
+      } catch (e, stackTrace) {
+        debugPrint('[DOC_UPLOAD] ❌ EXCEPTION: $e');
+        debugPrint('[DOC_UPLOAD] Stack trace: $stackTrace');
+        lastError = e.toString();
+        failCount++;
+      }
+    }
+
+    // ===== SHOW RESULT TO USER =====
+    debugPrint('[DOC_UPLOAD] ========================================');
+    debugPrint('[DOC_UPLOAD] SYNC COMPLETE');
+    debugPrint('[DOC_UPLOAD] Success: $successCount, Failed: $failCount');
+    debugPrint('[DOC_UPLOAD] ========================================');
+
+    if (context.mounted) {
+      if (successCount > 0 && failCount == 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ $successCount document(s) uploaded to server'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else if (failCount > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '❌ Upload failed: $lastError\n'
+              'Success: $successCount, Failed: $failCount',
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 6),
+            action: SnackBarAction(
+              label: 'OK',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
+        );
       }
     }
   }

@@ -80,4 +80,17 @@ class MethodChannelFlutterDocScanner extends FlutterDocScannerPlatform {
       );
     }
   }
+
+  @override
+  Future<void> forceReset() async {
+    try {
+      await methodChannel.invokeMethod<void>('forceReset');
+    } on PlatformException catch (e) {
+      throw DocScanException(
+        code: e.code,
+        message: e.message ?? 'Failed to reset scanner state',
+        details: e.details,
+      );
+    }
+  }
 }

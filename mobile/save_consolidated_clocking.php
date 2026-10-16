@@ -1,26 +1,33 @@
 <?php
 /**
- * Save Consolidated Clocking
+ * Save Consolidated Clocking with Proper Offline-First Idempotency
  *
  * Combines 3 separate requests into 1:
  * 1. Image uploads (face + signature) 
  * 2. Clock-in/out record in manual_clocking table
  * 3. Evidence record in manual_clocking_evidence table
  * 
- * Reduces server load by 75% (4 requests → 1 request per learner action)
+ * CRITICAL: Uses tap-time generated idempotency keys for proper offline sync
  */
+
+// SECURITY: Enforce strict resource limits
+ini_set('memory_limit', '128M');        // Limit memory usage
+ini_set('max_execution_time', '30');    // 30 second max execution
+ini_set('post_max_size', '20M');        // Max POST size
+ini_set('upload_max_filesize', '10M');  // Max individual file
 
 header('Content-Type: application/json');
 
 // Load core dependencies with error handling
 try {
     require_once 'connection.php';
+    require_once 'idempotency_helpers.php';
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Database connection failed',
-        'message' => 'Unable to connect to database'
+        'error' => 'System initialization failed',
+        'message' => 'Service temporarily unavailable'
     ]);
     exit;
 }
@@ -40,7 +47,6 @@ ini_set('log_errors', 1);
 
 // SECURITY: Try to require authentication (with timeout protection)
 $user = null;
-$authEnabled = true;
 $authTimeout = 5; // 5 second timeout for authentication
 $originalTimeout = ini_get('max_execution_time'); // Store original timeout
 $authDuration = 0; // Initialize timing variables
@@ -81,8 +87,14 @@ try {
         set_time_limit($originalTimeout);
         
     } else {
-        error_log("[SAVE_CONSOLIDATED_CLOCKING] ⚠️ Authentication file not found - continuing without auth");
-        $authEnabled = false;
+        error_log("[SAVE_CONSOLIDATED_CLOCKING] ❌ Authentication file not found - BLOCKING REQUEST");
+        http_response_code(401);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Authentication required',
+            'message' => 'Authentication system not available. Access denied.'
+        ]);
+        exit; // CRITICAL: Must exit here - never continue without auth
     }
 } catch (Exception $e) {
     // Restore timeout on any error
@@ -107,15 +119,67 @@ try {
         ]);
         exit;
     } else {
-        // Auth system issue (timeout, unavailable, malformed) - continue with warning
-        error_log("[SAVE_CONSOLIDATED_CLOCKING] ⚠️ Continuing without authentication due to system issue");
-        $authEnabled = false;
+        // SECURITY: Auth system issue (timeout, unavailable, malformed) - FAIL CLOSED
+        error_log("[SAVE_CONSOLIDATED_CLOCKING] ❌ Authentication system issue - BLOCKING REQUEST");
+        http_response_code(401);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Authentication required',
+            'message' => 'Authentication failed. Access denied.',
+            'auth_duration' => $authDuration
+        ]);
+        exit; // CRITICAL: Must exit here - never continue without auth
     }
 }
 
-// SECURITY: Try to apply rate limiting (with timeout protection)
+// SECURITY: Check idempotency key FIRST (before any processing)
+$idempotencyKey = $_SERVER['HTTP_IDEMPOTENCY_KEY'] ?? '';
+if (!validate_idempotency_key($idempotencyKey)) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Missing or invalid idempotency key',
+        'message' => 'Idempotency-Key header must be a valid UUID v4'
+    ]);
+    exit;
+}
+
+// Check if this is a duplicate request (key already processed)
+$prev = idem_begin($conn, $user['user_id'], 'consolidated_clocking', $idempotencyKey);
+if ($prev) {
+    if ($prev['status'] === 'done') {
+        // Return the same response as before
+        http_response_code((int)$prev['response_code']);
+        echo $prev['response_body'];
+        exit;
+    }
+    // Still processing - shouldn't happen with proper client implementation
+    http_response_code(409);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Request already in progress',
+        'message' => 'This action is still being processed'
+    ]);
+    exit;
+}
+
+// SECURITY: Validate client timestamp
+$clientTimestamp = $_POST['client_timestamp'] ?? '';
+$timestampValidation = validate_client_timestamp($clientTimestamp);
+if (!$timestampValidation['valid']) {
+    idem_abort($conn, $user['user_id'], $idempotencyKey);
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Invalid timestamp',
+        'message' => $timestampValidation['error']
+    ]);
+    exit;
+}
+
+$actionTime = $timestampValidation['timestamp'];
 try {
-    if ($authEnabled && function_exists('applyRateLimit') && is_callable('applyRateLimit')) {
+    if (function_exists('applyRateLimit') && is_callable('applyRateLimit')) {
         $rateLimitStartTime = microtime(true);
         set_time_limit(3); // 3 second timeout for rate limiting
         
@@ -163,7 +227,38 @@ try {
         throw new Exception('Invalid JSON input');
     }
     
-    // Required fields with proper validation and sanitization
+    // SECURITY: Idempotency protection to prevent duplicate submissions
+    $idempotencyToken = isset($input['idempotency_token']) ? trim($input['idempotency_token']) : null;
+    
+    if ($idempotencyToken) {
+        // SECURITY: Validate token format (UUID v4 or secure clk_ format)
+        if (!validate_idempotency_key($idempotencyToken)) {
+            throw new Exception('Invalid idempotency token format. Expected UUID v4 or clk_[hex32] format.');
+        }
+        
+        // Check if we've already processed this exact request
+        $stmt = $conn->prepare("SELECT id, response_data FROM idempotency_log WHERE token = ? AND endpoint = 'save_consolidated_clocking'");
+        if ($stmt) {
+            $stmt->bind_param('s', $idempotencyToken);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if ($result->num_rows > 0) {
+                // Request already processed - return cached response
+                $row = $result->fetch_assoc();
+                error_log("[SAVE_CONSOLIDATED_CLOCKING] ⚠️ Duplicate request detected with token: $idempotencyToken, returning cached response");
+                
+                http_response_code(200);
+                echo $row['response_data']; // Return exact same response as before
+                $stmt->close();
+                exit;
+            }
+            $stmt->close();
+        }
+    } else {
+        // Generate idempotency token if not provided (for logging)
+        $idempotencyToken = 'auto_' . uniqid() . '_' . bin2hex(random_bytes(4));
+    }
     $learnerID = isset($input['learner_id']) ? intval($input['learner_id']) : 0;
     $classID = isset($input['class_id']) ? intval($input['class_id']) : null;
     $clockDate = isset($input['clock_date']) ? trim($input['clock_date']) : date('Y-m-d');
@@ -415,7 +510,7 @@ try {
         
         $conn->commit();
         
-        echo json_encode([
+        $response = json_encode([
             'success' => true,
             'message' => "Clock-{$type} saved successfully",
             'learner_id' => $learnerID,
@@ -423,12 +518,15 @@ try {
             'timestamp' => $timestamp,
             'face_filename' => $faceFilename,
             'signature_filename' => $signatureFilename,
+            'server_time' => date('Y-m-d H:i:s'),
+            'client_time' => $actionTime->format('Y-m-d H:i:s'),
+            'sync_status' => 'completed',
             'gps' => [
                 'latitude' => $latitude,
                 'longitude' => $longitude,
                 'accuracy' => $accuracy
             ],
-            'auth_status' => $authEnabled ? 'enabled' : 'disabled',
+            'auth_status' => 'enabled',
             'performance' => [
                 'auth_duration' => isset($authDuration) ? round($authDuration, 3) : null,
                 'rate_limit_duration' => isset($rateLimitDuration) ? round($rateLimitDuration, 3) : null,
@@ -441,6 +539,11 @@ try {
                 'php_timeout' => ini_get('max_execution_time')
             ]
         ]);
+        
+        // IDEMPOTENCY: Mark as successfully completed
+        idem_finish($conn, $user['user_id'], $idempotencyKey, 200, $response);
+        
+        echo $response;
         
     } catch (Exception $e) {
         $conn->rollback();
@@ -457,6 +560,11 @@ try {
     }
     
 } catch (Exception $e) {
+    // IDEMPOTENCY: Abort on failure to allow retry
+    if (isset($idempotencyKey) && isset($user['user_id'])) {
+        idem_abort($conn, $user['user_id'], $idempotencyKey);
+    }
+    
     // Rollback on error
     if (isset($conn)) {
         $conn->rollback();

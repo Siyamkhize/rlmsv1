@@ -1,0 +1,14 @@
+# Deny all direct access to evidence files
+<Files *>
+    Order deny,allow
+    Deny from all
+</Files>
+
+# Block directory listing
+Options -Indexes
+
+# Block PHP execution in evidence directories
+<FilesMatch "\.php$">
+    Order deny,allow
+    Deny from all
+</FilesMatch>

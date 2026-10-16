@@ -1,0 +1,3 @@
+# Deny all direct access to face photo files  
+Order deny,allow
+Deny from all

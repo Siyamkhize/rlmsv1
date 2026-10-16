@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "CRITICAL Authentication Security Fixes - Fix authentication bypass vulnerabilities in save_consolidated_clocking.php and other endpoints where auth failures allow continued processing. Ensure all endpoints fail closed and implement proper IP header validation.",
+  "status": "pending", 
+  "steps": [
+    "Fix save_consolidated_clocking.php authentication logic to fail closed - remove the system issue fallback path that allows processing without auth when requireAuth() throws non-critical exceptions",
+    "Fix upload_clocking_evidence_images.php to prevent client-supplied filename path traversal by using server-generated filenames exclusively", 
+    "Add IP header validation to security_middleware.php - only trust X-Forwarded-For headers from configured reverse proxies",
+    "Review and standardize authentication patterns across all mobile/*.php endpoints to ensure consistent fail-closed behavior",
+    "Add file access controls to manual_clocking_evidence directories - ensure learner photos/signatures cannot be accessed via direct URLs"
+  ],
+  "acceptance_criteria": [
+    "save_consolidated_clocking.php never processes clocking records when authentication fails - all auth exceptions result in 401 responses",
+    "upload_clocking_evidence_images.php generates all filenames server-side preventing directory traversal attacks", 
+    "IP headers are only trusted from whitelisted proxy sources defined in configuration",
+    "All PHP endpoints follow consistent authentication pattern with no bypass paths",
+    "Evidence files return 403/404 when accessed directly without authenticated API calls"
+  ],
+  "verification": [
+    "Test authentication bypass by sending requests without Bearer tokens - verify 401 responses",
+    "Test path traversal by sending malicious filenames - verify server-generated names only",
+    "Test direct file access to evidence directories - verify blocked access",
+    "Review all mobile/*.php files for consistent auth patterns"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

@@ -1,0 +1,11 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "findings": [
+    "get_poe.php path resolution failure - Change include('../connection.php') to require_once __DIR__ . '/connection.php' and verify require_once __DIR__ . '/require_auth.php' loads correctly. The current relative path puts require_auth.php one level up from where it actually exists.",
+    "auth_middleware.php doesn't exist - Either create the validateAuthToken wrapper as specified in the review criteria, or update the task documentation to reflect that endpoints use requireAuth() directly. The current implementation works but doesn't match the expected architecture.",
+    "No endpoint integration tests - test_auth_middleware.php validates token validation logic but doesn't test that real endpoints reject unauthenticated requests. Add curl-based tests hitting each endpoint without tokens, with expired tokens, and with valid tokens.",
+    "Rate limit configuration inconsistency - save_metadata.php uses 20 req/min, sync_learner.php uses 30 req/min, everything else uses 60 req/min. Document the reasoning (POE uploads are heavier, sync is batch-oriented) or standardize to a common limit with exceptions only where justified.",
+    "Missing auth verification in save_class_batch_clocking.php error paths - The endpoint validates connection.php and require_auth.php existence in try-catch blocks before calling requireAuth(), but if require_auth.php loads but requireAuth() is not defined, it throws an exception that logs 'Authentication system error' without actually attempting authentication. This creates a false-negative security check. Move requireAuth() call outside the validation block so authentication always runs if the library loads."
+  ],
+  "reviewDoc": "c:\\projects\\rlmss\\.agents\\tasks\\auth-middleware-review.md"
+}

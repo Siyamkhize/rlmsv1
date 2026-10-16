@@ -3,12 +3,14 @@
  * Fetch Municipalities - Returns list of municipalities for a specific district
  */
 
+// Disable error display to prevent HTML output in JSON response
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-require_once 'connection.php';
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
 
 header('Content-Type: application/json');
+
+require_once 'connection.php';
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');

@@ -565,9 +565,15 @@ class _LoginPageState extends State<LoginPage> {
 
           // Save auth token
           if (data.containsKey('auth_token') && data['auth_token'] != null) {
+            final token = data['auth_token'].toString();
             final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('auth_token', data['auth_token']);
-            debugPrint('[LOGIN] Auth token saved successfully');
+            await prefs.setString('auth_token', token);
+            debugPrint('[LOGIN] ✅ Auth token saved successfully');
+            debugPrint('[LOGIN] Token length: ${token.length}');
+            debugPrint('[LOGIN] Token first 16 chars: ${token.substring(0, token.length >= 16 ? 16 : token.length)}...');
+            debugPrint('[LOGIN] Token last 16 chars: ...${token.substring(token.length >= 16 ? token.length - 16 : 0)}');
+          } else {
+            debugPrint('[LOGIN] ❌ WARNING: No auth_token in login response!');
           }
 
           final role = data['role']?.toString() ?? '';

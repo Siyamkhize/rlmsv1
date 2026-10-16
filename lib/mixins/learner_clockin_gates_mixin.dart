@@ -91,7 +91,10 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
       return false;
     }
 
-    await Navigator.push(
+    // CRITICAL FIX: Use pushReplacement to avoid navigation stack issues
+    // This ensures we return to the CALLING page (signature_geofence_clock_in_page)
+    // instead of going back through the navigation history
+    final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (context) => LearnerDetailsPage(
@@ -103,6 +106,11 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
     );
 
     if (!mounted) return false;
+    
+    // If user explicitly cancelled from LearnerDetailsPage
+    if (result == false) {
+      return false;
+    }
 
     final refreshedLearner = await fetchLearnerForClockInValidation(learnerId);
     final refreshedMissing = learnerProfileMissingFieldLabels(
@@ -213,45 +221,84 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
     String learnerId,
   ) async {
     try {
+      debugPrint('[CLOCKIN_GATES] ===== Starting document check for learner: $learnerId =====');
+      
       if (!await hasNetworkConnectivity()) {
+        debugPrint('[CLOCKIN_GATES] No network connectivity - allowing clock-in');
         return {'allApproved': true, 'documents': []};
       }
 
+      // Get auth token
+      final token = await AppConfig.getAuthToken();
+      debugPrint('[CLOCKIN_GATES] Auth token present: ${token != null}');
+      
+      final headers = <String, String>{
+        'Content-Type': 'application/x-www-form-urlencoded',
+      };
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+        debugPrint('[CLOCKIN_GATES] Auth header added (token hidden for security)');
+      }
+
+      final url = AppConfig.buildUrl('get_document_statuses.php');
+      debugPrint('[CLOCKIN_GATES] Request URL: $url');
+      debugPrint('[CLOCKIN_GATES] Request body: learner_id=$learnerId');
+
       final response = await http
           .post(
-            Uri.parse(AppConfig.buildUrl('get_document_statuses.php')),
+            Uri.parse(url),
+            headers: headers,
             body: {'learner_id': learnerId},
           )
           .timeout(const Duration(seconds: 6));
 
+      debugPrint('[CLOCKIN_GATES] Response status: ${response.statusCode}');
+      debugPrint('[CLOCKIN_GATES] Response body length: ${response.body.length}');
+      debugPrint('[CLOCKIN_GATES] Response body: ${response.body}');
+
       if (response.statusCode != 200) {
+        debugPrint('[CLOCKIN_GATES] ❌ HTTP error - status ${response.statusCode}');
         return {'allApproved': false, 'documents': []};
       }
 
       final decoded = json.decode(response.body);
+      debugPrint('[CLOCKIN_GATES] Decoded JSON type: ${decoded.runtimeType}');
+      debugPrint('[CLOCKIN_GATES] Decoded success field: ${decoded['success']}');
+      
       if (decoded['success'] != true) {
+        debugPrint('[CLOCKIN_GATES] ❌ API returned success=false');
+        if (decoded['message'] != null) {
+          debugPrint('[CLOCKIN_GATES] Error message: ${decoded['message']}');
+        }
         return {'allApproved': false, 'documents': []};
       }
 
       final docsMap = decoded['documents'] as Map<String, dynamic>?;
       if (docsMap == null) {
+        debugPrint('[CLOCKIN_GATES] ❌ Documents map is null');
         return {'allApproved': false, 'documents': []};
       }
+
+      debugPrint('[CLOCKIN_GATES] Documents map keys: ${docsMap.keys.toList()}');
+      debugPrint('[CLOCKIN_GATES] Required documents: $learnerClockInRequiredDocuments');
 
       final List<Map<String, dynamic>> problemDocs = [];
 
       for (final requiredDoc in learnerClockInRequiredDocuments) {
         final normalizedName = requiredDoc.trim().toLowerCase();
+        debugPrint('[CLOCKIN_GATES] Checking required doc: "$requiredDoc" (normalized: "$normalizedName")');
 
         Map<String, dynamic>? docInfo;
         for (final entry in docsMap.entries) {
           if (entry.key.trim().toLowerCase() == normalizedName) {
             docInfo = entry.value as Map<String, dynamic>?;
+            debugPrint('[CLOCKIN_GATES]   ✓ Found match: ${entry.key} -> $docInfo');
             break;
           }
         }
 
         if (docInfo == null) {
+          debugPrint('[CLOCKIN_GATES]   ❌ Not found - marking as "Not Uploaded"');
           problemDocs.add({
             'name': requiredDoc,
             'status': 'Not Uploaded',
@@ -259,22 +306,33 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
           });
         } else {
           final status = docInfo['status']?.toString() ?? 'Pending';
+          debugPrint('[CLOCKIN_GATES]   Status: $status');
+          
           if (status.toLowerCase() != 'approved') {
+            debugPrint('[CLOCKIN_GATES]   ⚠️ Not approved - adding to problem docs');
             problemDocs.add({
               'name': requiredDoc,
               'status': status,
               'reason': docInfo['rejection_reason'],
             });
+          } else {
+            debugPrint('[CLOCKIN_GATES]   ✓ Approved');
           }
         }
       }
 
+      final allApproved = problemDocs.isEmpty;
+      debugPrint('[CLOCKIN_GATES] Problem docs count: ${problemDocs.length}');
+      debugPrint('[CLOCKIN_GATES] All approved: $allApproved');
+      debugPrint('[CLOCKIN_GATES] ===== Document check complete =====');
+
       return {
-        'allApproved': problemDocs.isEmpty,
+        'allApproved': allApproved,
         'documents': problemDocs,
       };
-    } catch (e) {
-      debugPrint('[CLOCKIN_GATES] Document status error: $e');
+    } catch (e, stackTrace) {
+      debugPrint('[CLOCKIN_GATES] ❌ EXCEPTION in document check: $e');
+      debugPrint('[CLOCKIN_GATES] Stack trace: $stackTrace');
       return {'allApproved': false, 'documents': []};
     }
   }

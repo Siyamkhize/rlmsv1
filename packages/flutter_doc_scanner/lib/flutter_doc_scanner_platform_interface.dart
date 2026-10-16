@@ -58,4 +58,12 @@ abstract class FlutterDocScannerPlatform extends PlatformInterface {
   Future<dynamic> getScanDocumentsUri(int page) {
     throw UnimplementedError('getScanDocumentsUri() has not been implemented.');
   }
+
+  /// Force-resets the scanner state by clearing any stuck native plugin state.
+  ///
+  /// Use this when the scanner reports "SCAN_IN_PROGRESS" but no scan is
+  /// actually running. This clears the native Android pendingResult flag.
+  Future<void> forceReset() {
+    throw UnimplementedError('forceReset() has not been implemented.');
+  }
 }

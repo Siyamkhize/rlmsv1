@@ -1,0 +1,7 @@
+{
+  "task_id": "task-rlmss-security-sync-overhaul",
+  "task_description": "Critical security and mobile synchronization overhaul for RLMSS Flutter + PHP application addressing authentication failures, retry logic, rate limiting, and file security",
+  "status": "pending",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null
+}

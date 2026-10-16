@@ -1,0 +1,31 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "findings": [
+    {
+      "issue": "onCreate missing offline_sessions table",
+      "severity": "critical",
+      "description": "Fresh installs crash on first offline login. Add the table creation SQL to onCreate so v18 fresh installs match v17→v18 migrations."
+    },
+    {
+      "issue": "Device binding not enforced",
+      "severity": "high",
+      "description": "Token validation ignores device_id, allowing cross-device replay. Compare stored device_id with current device in validateOfflineToken and fail if mismatched."
+    },
+    {
+      "issue": "No audit trail for token operations",
+      "severity": "medium",
+      "description": "Token creation, validation failures, expiry events, and logout aren't logged. Add security logging to detect brute force, replay attacks, or mass token theft."
+    },
+    {
+      "issue": "Token leakage via SharedPreferences",
+      "severity": "medium",
+      "description": "Plaintext tokens in SharedPreferences are readable by rooted devices or ADB backup extraction. Consider encrypted storage (EncryptedSharedPreferences on Android, Keychain on iOS) or accept the risk for this threat model."
+    },
+    {
+      "issue": "Session restoration bypasses password",
+      "severity": "low",
+      "description": "Auto-login on app startup never re-checks the password, relying only on token validity. This is by design for convenience, but if the user's SQLite password hash is changed externally (e.g., admin password reset), the token remains valid until expiry. Document this behavior or add a password_updated_at check."
+    }
+  ],
+  "reviewDoc": "c:\\projects\\rlmss\\.agents\\tasks\\offline-auth-tokens\\review.md"
+}

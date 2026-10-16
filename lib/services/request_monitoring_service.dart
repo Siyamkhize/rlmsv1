@@ -196,7 +196,6 @@ class RequestMonitoringService {
       'monitoring_window_minutes': _monitoringWindowMinutes,
       'total_events_in_window': windowEvents.length,
       'endpoints': endpointStats,
-      'http_client_stats': HttpClientService.getStats(),
     };
   }
   

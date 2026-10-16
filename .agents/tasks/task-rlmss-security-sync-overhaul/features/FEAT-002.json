@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-002", 
+  "type": "feat",
+  "description": "Mobile Synchronization & Retry Logic Improvements - Implement proper idempotency, controlled retry logic with exponential backoff, and prevent overlapping requests to handle unreliable rural mobile connections safely.",
+  "status": "pending",
+  "steps": [
+    "Add idempotency keys to clocking and evidence upload requests to prevent duplicate records on retry",
+    "Update HttpClientService retry logic to respect project guidelines - max 2 retries total, never retry 4xx errors, add exponential backoff with jitter",
+    "Modify persistent_sync_service.dart to prevent overlapping sync operations using proper locking mechanisms",
+    "Add request deduplication to manual_clocking_evidence_sync_service.dart to prevent duplicate evidence uploads",
+    "Implement proper queue management in signature_geofence_clock_in_page.dart to handle connection interruptions gracefully",
+    "Add circuit breaker pattern to HttpClientService to temporarily disable failing endpoints"
+  ],
+  "acceptance_criteria": [
+    "Repeated identical requests create only one clocking record due to idempotency keys",
+    "HTTP client never retries authentication errors (401/403) or validation errors (422)",  
+    "Sync operations use exponential backoff: 1s, 2s delays with jitter to prevent thundering herd",
+    "Multiple concurrent sync attempts are prevented through proper coordination",
+    "Failed requests remain queued locally and resume when connectivity restored",
+    "Circuit breaker temporarily disables endpoints after 5 consecutive failures"
+  ],
+  "verification": [
+    "Test duplicate request handling by simulating network timeouts during clocking submission",
+    "Verify 4xx errors are not retried by testing with invalid authentication tokens", 
+    "Test exponential backoff timing by monitoring request logs during simulated network issues",
+    "Test concurrent sync prevention by triggering multiple sync operations simultaneously",
+    "Test offline queue persistence by disconnecting during sync and reconnecting later"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

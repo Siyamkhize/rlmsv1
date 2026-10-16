@@ -1,0 +1,32 @@
+{
+  "id": "FEAT-004",
+  "type": "feat",
+  "description": "File Security & Resource Management - Implement secure file handling with size limits, memory management for image processing, temporary file cleanup, and consistent evidence filename handling across endpoints.",
+  "status": "pending", 
+  "steps": [
+    "Add request body size limits and image dimension validation before processing in all upload endpoints",
+    "Implement memory-constrained image processing with cleanup in save_manual_clocking_images.php watermarking",
+    "Add automatic cleanup of temporary files and failed upload artifacts across all endpoints",
+    "Standardize evidence filename generation patterns between save_consolidated_clocking.php and upload_clocking_evidence_images.php", 
+    "Implement image compression and resizing optimization to minimize upload bandwidth requirements",
+    "Add file integrity verification to ensure uploaded evidence files are not corrupted"
+  ],
+  "acceptance_criteria": [
+    "Upload requests are rejected if body size exceeds configured limits (10MB total)",
+    "Image processing never consumes more than 512MB memory per request", 
+    "Temporary files and failed uploads are cleaned up within 1 hour automatically",
+    "Evidence filenames follow consistent pattern: type_learnerID_date_timestamp.ext across all endpoints",
+    "Images are compressed to reduce bandwidth - face photos under 500KB, signatures under 250KB",
+    "File integrity checks prevent corrupted evidence from being stored"
+  ],
+  "verification": [
+    "Test large file upload rejection by sending oversized requests", 
+    "Monitor memory usage during concurrent image processing operations",
+    "Verify temporary file cleanup by checking filesystem after failed operations",
+    "Test filename consistency across different clocking endpoints", 
+    "Measure file sizes after compression to verify bandwidth optimization",
+    "Test corrupted file rejection by uploading malformed image data"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

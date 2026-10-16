@@ -15,6 +15,7 @@ import 'package:bcrypt/bcrypt.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter/foundation.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'utils/connectivity_utils.dart';
 import 'services/http_client_service.dart';
 import 'config/network_config.dart';
@@ -694,7 +695,7 @@ class DatabaseHelper {
   Future<Database> _initDatabase() async {
     final path = await getDatabasesPath();
     return openDatabase(join(path, _dbName),
-        version: 18, // ⬆️ BUMP for offline_sessions table
+        version: 20, // ⬆️ BUMP for manual_clocking_evidence table migration
         onUpgrade: (db, oldVersion, newVersion) async {
       debugPrint(
           '[DB] Upgrading database from version $oldVersion to $newVersion');
@@ -1311,6 +1312,77 @@ class DatabaseHelper {
               '[DB] ✅ Created offline_sessions table with indexes');
         } catch (e) {
           debugPrint('[DB] ❌ Error creating offline_sessions table: $e');
+        }
+      }
+
+      if (oldVersion < 19) {
+        // v19: Ensure location columns exist in learnerdetails table
+        debugPrint(
+            '[DB] ✅ v19 migration: Ensuring Province, District, Municipality columns exist');
+
+        try {
+          // Check if columns exist
+          final columns = await db.rawQuery("PRAGMA table_info('learnerdetails')");
+          final existingColumns =
+              columns.map((c) => c['name']?.toString().toLowerCase()).toSet();
+
+          if (!existingColumns.contains('province')) {
+            await db.execute(
+                'ALTER TABLE learnerdetails ADD COLUMN Province VARCHAR(100) NULL');
+            debugPrint('[DB] ✅ Added Province column to learnerdetails');
+          }
+
+          if (!existingColumns.contains('district')) {
+            await db.execute(
+                'ALTER TABLE learnerdetails ADD COLUMN District VARCHAR(100) NULL');
+            debugPrint('[DB] ✅ Added District column to learnerdetails');
+          }
+
+          if (!existingColumns.contains('municipality')) {
+            await db.execute(
+                'ALTER TABLE learnerdetails ADD COLUMN Municipality VARCHAR(100) NULL');
+            debugPrint('[DB] ✅ Added Municipality column to learnerdetails');
+          }
+
+          debugPrint('[DB] ✅ Location columns migration complete');
+        } catch (e) {
+          debugPrint('[DB] ❌ Error adding location columns: $e');
+        }
+      }
+
+      if (oldVersion < 20) {
+        // v20: Create manual_clocking_evidence table for signature + face photo evidence
+        debugPrint(
+            '[DB] ✅ v20 migration: Creating manual_clocking_evidence table');
+
+        try {
+          // Check if table already exists
+          final tables = await db.rawQuery(
+              "SELECT name FROM sqlite_master WHERE type='table' AND name='manual_clocking_evidence'");
+
+          if (tables.isEmpty) {
+            await db.execute('''
+              CREATE TABLE manual_clocking_evidence (
+                evidence_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                LearnerID INTEGER NOT NULL,
+                clock_date TEXT NOT NULL,
+                signature_in TEXT,
+                signature_out TEXT,
+                face_in TEXT,
+                face_out TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                synced INTEGER DEFAULT 0,
+                UNIQUE(LearnerID, clock_date),
+                FOREIGN KEY (LearnerID) REFERENCES learnerdetails(LearnerID)
+              )
+            ''');
+            debugPrint('[DB] ✅ Created manual_clocking_evidence table');
+          } else {
+            debugPrint('[DB] ℹ️ manual_clocking_evidence table already exists');
+          }
+        } catch (e) {
+          debugPrint('[DB] ❌ Error creating manual_clocking_evidence table: $e');
         }
       }
     }, onCreate: (db, dbVersion) async {
@@ -2031,7 +2103,6 @@ updated_at TIMESTAMP
             'classID': 999,
             'className': 'Offline Training Class',
             'siteID': 999,
-            'project_id': 999,
           },
           conflictAlgorithm: ConflictAlgorithm.ignore);
 
@@ -3443,11 +3514,16 @@ updated_at TIMESTAMP
 
   /// Insert manual clock-in (signature + geofence) offline
   /// Saves to: manual_clocking + manual_clocking_evidence tables
+  /// 
+  /// IMPORTANT: signature_in and face_in should be BASE64 strings for offline storage
+  /// These will be uploaded to server during sync and converted to filenames
   Future<void> insertManualClockInOffline(Map<String, dynamic> clockInData) async {
     final db = await database;
 
     final clockDate = clockInData['clock_date'];
     final learnerID = clockInData['LearnerID'];
+
+    print('[MANUAL_CLOCKING] Saving offline clock-in for learner $learnerID on $clockDate');
 
     // Check if record already exists
     final existing = await db.query(
@@ -3466,7 +3542,7 @@ updated_at TIMESTAMP
         'is_manual_attendance': 1,
         'synced': 0,
       });
-      print('[MANUAL_CLOCKING] Inserted offline clock-in for learner $learnerID');
+      print('[MANUAL_CLOCKING] ✅ Inserted offline clock-in for learner $learnerID');
     } else {
       await db.update(
         'manual_clocking',
@@ -3478,10 +3554,10 @@ updated_at TIMESTAMP
         where: 'LearnerID = ? AND clock_date = ?',
         whereArgs: [learnerID, clockDate],
       );
-      print('[MANUAL_CLOCKING] Updated offline clock-in for learner $learnerID');
+      print('[MANUAL_CLOCKING] ✅ Updated offline clock-in for learner $learnerID');
     }
 
-    // 2. Insert/Update manual_clocking_evidence table (if signature/face provided)
+    // 2. Insert/Update manual_clocking_evidence table (STORE BASE64 IMAGES)
     if (clockInData.containsKey('signature_in') || clockInData.containsKey('face_in')) {
       final evidenceExists = await db.query(
         'manual_clocking_evidence',
@@ -3489,17 +3565,23 @@ updated_at TIMESTAMP
         whereArgs: [learnerID, clockDate],
       );
 
+      // CRITICAL: Store base64 strings, NOT filenames
+      // These will be uploaded during sync
       final evidenceData = {
         'LearnerID': learnerID,
         'clock_date': clockDate,
-        if (clockInData.containsKey('signature_in')) 'signature_in': clockInData['signature_in'],
-        if (clockInData.containsKey('face_in')) 'face_in': clockInData['face_in'],
+        if (clockInData.containsKey('signature_in')) 
+          'signature_in': clockInData['signature_in'], // Base64 string
+        if (clockInData.containsKey('face_in')) 
+          'face_in': clockInData['face_in'], // Base64 string
         'synced': 0,
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
       };
 
       if (evidenceExists.isEmpty) {
         await db.insert('manual_clocking_evidence', evidenceData);
-        print('[MANUAL_CLOCKING] Inserted evidence for learner $learnerID');
+        print('[MANUAL_CLOCKING] ✅ Inserted evidence (base64 images) for learner $learnerID');
       } else {
         await db.update(
           'manual_clocking_evidence',
@@ -3507,38 +3589,55 @@ updated_at TIMESTAMP
           where: 'LearnerID = ? AND clock_date = ?',
           whereArgs: [learnerID, clockDate],
         );
-        print('[MANUAL_CLOCKING] Updated evidence for learner $learnerID');
+        print('[MANUAL_CLOCKING] ✅ Updated evidence (base64 images) for learner $learnerID');
+      }
+      
+      // DEBUG: Log image sizes
+      if (clockInData.containsKey('signature_in')) {
+        final sigSize = (clockInData['signature_in'] as String).length;
+        print('[MANUAL_CLOCKING] Signature image size: ${(sigSize / 1024).toStringAsFixed(1)} KB');
+      }
+      if (clockInData.containsKey('face_in')) {
+        final faceSize = (clockInData['face_in'] as String).length;
+        print('[MANUAL_CLOCKING] Face image size: ${(faceSize / 1024).toStringAsFixed(1)} KB');
       }
     }
   }
 
   /// Update manual clock-out (signature + geofence) offline
   /// Updates: manual_clocking + manual_clocking_evidence tables
+  /// 
+  /// IMPORTANT: signature_out and face_out should be BASE64 strings for offline storage
   Future<void> updateManualClockOutOffline(Map<String, dynamic> clockOutData) async {
     final db = await database;
 
     final clockDate = clockOutData['clock_date'];
     final learnerID = clockOutData['LearnerID'];
 
+    print('[MANUAL_CLOCKING] Saving offline clock-out for learner $learnerID on $clockDate');
+
     // 1. Update manual_clocking table
     await db.update(
       'manual_clocking',
       {
         'clock_out_time': clockOutData['clock_out_time'],
-        'contact_time': clockOutData['contact_time'],
+        'contact_time': clockOutData['clock_out_time'],
         'synced': 0,
       },
       where: 'LearnerID = ? AND clock_date = ?',
       whereArgs: [learnerID, clockDate],
     );
-    print('[MANUAL_CLOCKING] Updated offline clock-out for learner $learnerID');
+    print('[MANUAL_CLOCKING] ✅ Updated offline clock-out for learner $learnerID');
 
-    // 2. Update manual_clocking_evidence table (if signature/face provided)
+    // 2. Update manual_clocking_evidence table (STORE BASE64 IMAGES)
     if (clockOutData.containsKey('signature_out') || clockOutData.containsKey('face_out')) {
       final evidenceData = <String, dynamic>{
-        if (clockOutData.containsKey('signature_out')) 'signature_out': clockOutData['signature_out'],
-        if (clockOutData.containsKey('face_out')) 'face_out': clockOutData['face_out'],
+        if (clockOutData.containsKey('signature_out')) 
+          'signature_out': clockOutData['signature_out'], // Base64 string
+        if (clockOutData.containsKey('face_out')) 
+          'face_out': clockOutData['face_out'], // Base64 string
         'synced': 0,
+        'updated_at': DateTime.now().toIso8601String(),
       };
 
       await db.update(
@@ -3547,7 +3646,17 @@ updated_at TIMESTAMP
         where: 'LearnerID = ? AND clock_date = ?',
         whereArgs: [learnerID, clockDate],
       );
-      print('[MANUAL_CLOCKING] Updated offline clock-out evidence for learner $learnerID');
+      print('[MANUAL_CLOCKING] ✅ Updated offline clock-out evidence (base64 images) for learner $learnerID');
+      
+      // DEBUG: Log image sizes
+      if (clockOutData.containsKey('signature_out')) {
+        final sigSize = (clockOutData['signature_out'] as String).length;
+        print('[MANUAL_CLOCKING] Signature image size: ${(sigSize / 1024).toStringAsFixed(1)} KB');
+      }
+      if (clockOutData.containsKey('face_out')) {
+        final faceSize = (clockOutData['face_out'] as String).length;
+        print('[MANUAL_CLOCKING] Face image size: ${(faceSize / 1024).toStringAsFixed(1)} KB');
+      }
     }
   }
 
@@ -7298,10 +7407,17 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           debugPrint(
               '[SYNC-LEARNER-PROFILE] Syncing learner profile for $learnerId with fields: ${updateData.keys}');
 
+          // Get auth token
+          final prefs = await SharedPreferences.getInstance();
+          final token = prefs.getString('auth_token');
+
           final response = await HttpClientService.makeRequest(
             () => http.post(
               Uri.parse(AppConfig.updateLearnerUrl),
-              headers: {'Content-Type': 'application/json'},
+              headers: {
+                'Content-Type': 'application/json',
+                if (token != null) 'Authorization': 'Bearer $token',
+              },
               body: jsonEncode({
                 'LearnerID': learnerId,
                 'data': updateData,

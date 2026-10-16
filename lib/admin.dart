@@ -228,7 +228,7 @@ class _AdminPageState extends State<AdminPage> {
         () => http.get(Uri.parse(url)),
         endpoint: 'admin_learner_search',
         maxRetries: NetworkConfig.readOperationsMaxRetries,
-        timeoutSeconds: NetworkConfig.lightweightTimeout,
+        timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
       );
 
       List<Map<String, dynamic>> suggestions = [];
@@ -266,7 +266,7 @@ class _AdminPageState extends State<AdminPage> {
           () => http.get(Uri.parse(fallbackUrl)),
           endpoint: 'admin_learner_search_fallback',
           maxRetries: NetworkConfig.readOperationsMaxRetries,
-          timeoutSeconds: NetworkConfig.lightweightTimeout,
+          timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
         );
 
         if (fallbackResponse.statusCode == 200) {
@@ -296,7 +296,7 @@ class _AdminPageState extends State<AdminPage> {
           () => http.get(Uri.parse(globalUrl)),
           endpoint: 'admin_learner_search_global',
           maxRetries: NetworkConfig.readOperationsMaxRetries,
-          timeoutSeconds: NetworkConfig.lightweightTimeout,
+          timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
         );
 
         if (globalResponse.statusCode == 200) {
@@ -600,7 +600,7 @@ class _AdminPageState extends State<AdminPage> {
         () => http.get(uri),
         endpoint: 'admin_get_details',
         maxRetries: NetworkConfig.readOperationsMaxRetries,
-        timeoutSeconds: NetworkConfig.lightweightTimeout,
+        timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
       );
 
       debugPrint('[ADMIN] Response status: ${response.statusCode}');
@@ -1072,7 +1072,7 @@ class _AdminPageState extends State<AdminPage> {
         () => http.get(uri),
         endpoint: 'admin_search_learner_online',
         maxRetries: NetworkConfig.readOperationsMaxRetries,
-        timeoutSeconds: NetworkConfig.lightweightTimeout,
+        timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
       );
 
       print('[ADMIN] 📡 Server response status: ${response.statusCode}');
@@ -1289,7 +1289,7 @@ class _AdminPageState extends State<AdminPage> {
         ),
         endpoint: 'check_learner_documents',
         maxRetries: NetworkConfig.readOperationsMaxRetries,
-        timeoutSeconds: NetworkConfig.lightweightTimeout,
+        timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
       );
 
       print('Server response status: ${response.statusCode}');
@@ -1370,6 +1370,8 @@ class _AdminPageState extends State<AdminPage> {
       String learnerId, String documentName, String filePath) async {
     try {
       final dbHelper = DatabaseHelper();
+      
+      // Step 1: Save to local database first
       final document = {
         'learner_id': learnerId,
         'documentName': documentName,
@@ -1380,12 +1382,50 @@ class _AdminPageState extends State<AdminPage> {
       };
       await dbHelper.insertLearnerDocument(document);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$documentName uploaded locally')),
-      );
+      print('[DOCUMENT_UPLOAD] Document saved locally: $documentName');
+
+      // Step 2: Immediately try to sync to server
+      if (await _checkConnectivity()) {
+        print('[DOCUMENT_UPLOAD] Network available - syncing to server...');
+        try {
+          await _syncDocument(document);
+          print('[DOCUMENT_UPLOAD] ✅ Document synced to server successfully');
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$documentName uploaded to server successfully'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } catch (syncError) {
+          print('[DOCUMENT_UPLOAD] ❌ Sync failed: $syncError');
+          // Still saved locally - will sync later
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$documentName saved locally (will sync when online)'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      } else {
+        print('[DOCUMENT_UPLOAD] No network - saved locally only');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$documentName saved locally (offline)'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     } catch (e) {
+      print('[DOCUMENT_UPLOAD] ERROR: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to upload $documentName: $e')),
+        SnackBar(
+          content: Text('Failed to upload $documentName: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
       rethrow;
     }
@@ -1400,6 +1440,14 @@ class _AdminPageState extends State<AdminPage> {
       }
 
       var request = http.MultipartRequest('POST', Uri.parse(_uploadUrl));
+      
+      // SECURITY: Add authentication token
+      final authToken = await AppConfig.getAuthToken();
+      if (authToken != null) {
+        request.headers['Authorization'] = 'Bearer $authToken';
+        print('[DOCUMENT_SYNC] Added auth token to upload request');
+      }
+      
       request.fields['learner_id'] = document['learner_id'].toString();
       request.fields['documentName'] = document['documentName'];
       request.fields['status'] = document['status'];
@@ -1616,14 +1664,9 @@ class _AdminPageState extends State<AdminPage> {
                                     learnerId, selectedDocument!, pdfPath);
                                 // Close the dialog
                                 Navigator.pop(context);
-
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                        '$selectedDocument uploaded successfully'),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
+                                
+                                // Note: Success message is now shown inside uploadDocument()
+                                // based on whether sync to server succeeded or not
                               } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(

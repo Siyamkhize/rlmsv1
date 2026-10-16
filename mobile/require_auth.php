@@ -106,34 +106,8 @@ function requireAuth($conn, $required_role = null) {
     return $user;
 }
 
-/**
- * Apply rate limiting to API endpoint
- * 
- * @param mysqli $conn Database connection
- * @param string $action Action name for rate limiting
- */
-function applyRateLimit($conn, $action = 'api_request') {
-    $ip = get_client_ip();
-    $rate_check = check_rate_limit($conn, $ip, $action);
-    
-    if (!$rate_check['allowed']) {
-        http_response_code(429);
-        echo json_encode([
-            'success' => false,
-            'message' => $rate_check['message'],
-            'retry_after' => $rate_check['retry_after'] ?? null,
-            'error_code' => 'RATE_LIMIT_EXCEEDED'
-        ]);
-        
-        log_security_event('rate_limit_exceeded', 'Too many requests', [
-            'ip' => $ip,
-            'action' => $action,
-            'endpoint' => $_SERVER['PHP_SELF'] ?? 'unknown'
-        ]);
-        
-        exit;
-    }
-}
+// Note: applyRateLimit function is now defined in security_middleware.php
+// to avoid duplicate function definitions
 
 /**
  * Validate required POST parameters

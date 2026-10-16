@@ -1,55 +1,56 @@
 <?php
 /**
- * Setup Manual Clocking Evidence Folders
- * 
- * Creates folder structure for storing manual clocking evidence:
- * - manual_clocking_evidence/signatures/
- * - manual_clocking_evidence/faces/
+ * Setup Manual Clocking Folders
+ * Creates all required folders for storing clock-in evidence
  */
 
-$baseDir = __DIR__; // This is the mobile folder
-$evidenceDir = $baseDir . '/manual_clocking_evidence';
-$signaturesDir = $evidenceDir . '/signatures';
-$facesDir = $evidenceDir . '/faces';
+$basePath = __DIR__;
 
 $folders = [
-    $evidenceDir => 'Base evidence directory',
-    $signaturesDir => 'Signatures storage',
-    $facesDir => 'Face photos storage',
+    'manual_clocking_signatures',
+    'manual_clocking_faces',
+    'learner_clocking_signatures',
+    'learner_clocking_faces'
 ];
 
-echo "Setting up manual clocking evidence folders...\n\n";
+echo "====================================\n";
+echo "Setting Up Clocking Folders\n";
+echo "====================================\n\n";
 
-foreach ($folders as $folder => $description) {
-    if (!file_exists($folder)) {
-        if (mkdir($folder, 0755, true)) {
-            echo "✓ Created: $folder ($description)\n";
-        } else {
-            echo "✗ Failed to create: $folder\n";
-            exit(1);
-        }
+foreach ($folders as $folder) {
+    $fullPath = "$basePath/$folder";
+    
+    echo "Creating: $folder\n";
+    
+    if (is_dir($fullPath)) {
+        echo "  ✅ Already exists\n";
     } else {
-        echo "✓ Already exists: $folder\n";
+        if (mkdir($fullPath, 0755, true)) {
+            echo "  ✅ Created successfully\n";
+        } else {
+            echo "  ❌ Failed to create\n";
+        }
     }
     
-    // Create .htaccess to allow access
-    $htaccessPath = $folder . '/.htaccess';
+    // Create .htaccess to protect folder
+    $htaccessPath = "$fullPath/.htaccess";
     if (!file_exists($htaccessPath)) {
-        $htaccessContent = "Options -Indexes\n";
-        $htaccessContent .= "# Allow image access\n";
-        $htaccessContent .= "<FilesMatch \"\\.(jpg|jpeg|png|gif)$\">\n";
-        $htaccessContent .= "    Order Allow,Deny\n";
-        $htaccessContent .= "    Allow from all\n";
-        $htaccessContent .= "</FilesMatch>\n";
+        $htaccessContent = "# Protect clocking evidence files\n";
+        $htaccessContent .= "Order Deny,Allow\n";
+        $htaccessContent .= "Deny from all\n";
+        $htaccessContent .= "# Allow only from server requests\n";
+        $htaccessContent .= "Allow from 127.0.0.1\n";
+        $htaccessContent .= "Allow from ::1\n";
         
-        file_put_contents($htaccessPath, $htaccessContent);
-        echo "  ✓ Created .htaccess in $folder\n";
+        if (file_put_contents($htaccessPath, $htaccessContent)) {
+            echo "  ✅ Created .htaccess protection\n";
+        }
     }
+    
+    echo "\n";
 }
 
-echo "\n✓ Folder setup complete!\n";
-echo "\nFolder structure (inside mobile folder):\n";
-echo "  mobile/manual_clocking_evidence/\n";
-echo "  ├── signatures/  (signature images)\n";
-echo "  └── faces/       (face photos with watermarks)\n";
+echo "====================================\n";
+echo "Setup Complete!\n";
+echo "====================================\n";
 ?>

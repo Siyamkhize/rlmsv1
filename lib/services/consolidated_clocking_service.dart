@@ -34,6 +34,8 @@ class ConsolidatedClockingService {
       'longitude': longitude,
       'accuracy': accuracy,
       'timestamp': timestamp,
+      'device_epoch': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      'is_offline_sync': false, // Real-time clock-in
     };
 
     try {
@@ -89,6 +91,8 @@ class ConsolidatedClockingService {
       'longitude': longitude,
       'accuracy': accuracy,
       'timestamp': timestamp,
+      'device_epoch': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      'is_offline_sync': false, // Real-time clock-out
     };
 
     try {

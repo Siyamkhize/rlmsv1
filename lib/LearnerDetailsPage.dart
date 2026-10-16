@@ -2113,6 +2113,50 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           print(
               '[DROPDOWN] Municipalities now available: ${_municipalities.length}');
         }
+
+        // CRITICAL FIX: Auto-save location fields and SchoolCompletion to server immediately
+        final autoSaveFields = {
+          'Province',
+          'District',
+          'Municipality',
+          'SchoolCompletion'
+        };
+        if (autoSaveFields.contains(fieldKey)) {
+          print('[DROPDOWN] Auto-saving $fieldKey to server: $newValue');
+          try {
+            final isConnected = await _checkConnectivity();
+            if (isConnected) {
+              final response = await http.post(
+                Uri.parse(AppConfig.updateLearnerUrl),
+                headers: {'Content-Type': 'application/json'},
+                body: jsonEncode({
+                  'LearnerID': widget.learnerID,
+                  'data': {fieldKey: newValue},
+                }),
+              );
+
+              if (response.statusCode == 200) {
+                final jsonResponse = jsonDecode(response.body);
+                if (jsonResponse['success'] == true) {
+                  print('[DROPDOWN] ✅ $fieldKey saved to server successfully');
+                } else {
+                  print(
+                      '[DROPDOWN] ❌ Server rejected $fieldKey: ${jsonResponse['message']}');
+                }
+              } else {
+                print(
+                    '[DROPDOWN] ❌ HTTP error saving $fieldKey: ${response.statusCode}');
+              }
+            } else {
+              // Save locally when offline
+              await DatabaseHelper()
+                  .updateLearnerLocally(widget.learnerID, {fieldKey: newValue});
+              print('[DROPDOWN] 💾 $fieldKey saved locally (offline mode)');
+            }
+          } catch (e) {
+            print('[DROPDOWN] ⚠️ Error auto-saving $fieldKey: $e');
+          }
+        }
       },
       validator: isRequired
           ? (value) {

@@ -1,312 +1,146 @@
 import 'dart:convert';
+import 'dart:async';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart';
-import '../config/network_config.dart';
 
-/// Centralized HTTP client service with built-in retry protection
-///
-/// This service provides a single source of truth for all HTTP requests
-/// with conservative retry settings to prevent server overload.
-/// CRITICAL FIX: Ensures all requests use standard HTTPS port 443.
+/// Centralized HTTP client service with security-first defaults
+/// Implements retry configuration guidelines and prevents server overload
 class HttpClientService {
-  static const int _maxRetries =
-      0; // FIXED: Reduced from 2 to 0 to follow project guidelines
-  static const int _timeoutSeconds = 25; // UPDATED: Changed from 30 to 25
-  static const int _rateLimitWindowMs = 1000; // 1 second window
-  static const int _maxRequestsPerWindow =
-      5; // Max 5 requests per second per endpoint
+  // SECURITY: Circuit breaker state per endpoint
+  static final Map<String, DateTime> _circuitBreakerState = {};
+  static final Map<String, int> _failureCount = {};
+  static const int _maxFailures = 3;
+  static const Duration _circuitBreakerTimeout = Duration(minutes: 5);
 
-  // HTTP client singleton to prevent port allocation issues
-  static http.Client? _httpClient;
-
-  /// Get or create HTTP client with proper configuration
-  static http.Client _getHttpClient() {
-    if (_httpClient == null) {
-      _httpClient = http.Client();
-      if (kDebugMode) {
-        print('HttpClientService: Created new HTTP client instance');
-      }
-    }
-    return _httpClient!;
-  }
-
-  /// Dispose HTTP client (call on app shutdown)
-  static void dispose() {
-    _httpClient?.close();
-    _httpClient = null;
-    if (kDebugMode) {
-      print('HttpClientService: HTTP client disposed');
-    }
-  }
-
-  // Rate limiting tracking
-  static final Map<String, List<DateTime>> _requestHistory = {};
-  static final Map<String, DateTime> _lastRequestTime = {};
-
-  // Circuit breaker pattern tracking
-  static final Map<String, CircuitBreakerState> _circuitBreakers = {};
-  static const int _failureThreshold = 5; // Open circuit after 5 failures
-  static const int _recoveryTimeoutSeconds = 60; // Try again after 1 minute
-  static const int _halfOpenMaxAttempts = 3; // Max attempts in half-open state
-
-  /// Make an authenticated HTTP request with built-in protection
-  ///
-  /// [requestFunction] - Function that returns the HTTP request
-  /// [endpoint] - Endpoint identifier for rate limiting (optional)
-  /// [maxRetries] - Maximum retry attempts (default: 2, max allowed: 2)
-  /// [timeoutSeconds] - Request timeout (default: 30 seconds)
+  /// Make HTTP request with security controls
+  /// SECURITY: Default maxRetries = 0 per security guidelines
   static Future<http.Response> makeRequest(
     Future<http.Response> Function() requestFunction, {
-    String? endpoint,
-    int? maxRetries,
-    int? timeoutSeconds,
+    int maxRetries = 0, // SECURITY: Safe default - no retries
+    String endpoint = 'unknown',
+    Duration timeout = const Duration(seconds: 30),
+    bool respectCircuitBreaker = true,
   }) async {
-    // Use safe defaults - CRITICAL: maxRetries ≤ 2
-    final retries = (maxRetries != null && maxRetries <= 2)
-        ? maxRetries
-        : NetworkConfig.syncOperationsMaxRetries;
-    final timeout = timeoutSeconds ?? NetworkConfig.defaultTimeout;
-    endpoint = endpoint ?? 'unknown';
-
-    // CRITICAL: Validate endpoint uses HTTPS port 443
-    _validateEndpointConfiguration(endpoint);
-
-    // Circuit breaker check
-    final circuitState = _getCircuitBreakerState(endpoint);
-    if (circuitState == CircuitBreakerStatus.open) {
-      throw HttpClientException(
-        'Circuit breaker is OPEN for endpoint: $endpoint. '
-        'Endpoint is temporarily disabled due to repeated failures.',
-      );
+    // SECURITY: Enforce maximum retry limit
+    if (maxRetries > 2) {
+      throw Exception('maxRetries cannot exceed 2 (max 3 total attempts). Got: $maxRetries');
     }
 
-    // Rate limiting check
-    if (_isRateLimited(endpoint)) {
-      _recordFailure(endpoint, 'Rate limit exceeded');
-      throw HttpClientException(
-        'Rate limit exceeded for endpoint: $endpoint. '
-        'Max $_maxRequestsPerWindow requests per ${_rateLimitWindowMs}ms allowed.',
-      );
+    // SECURITY: Check circuit breaker
+    if (respectCircuitBreaker && _isCircuitBreakerOpen(endpoint)) {
+      throw Exception('Circuit breaker open for $endpoint. Service temporarily unavailable.');
     }
 
-    // Record request attempt
-    _recordRequest(endpoint);
-
-    int attempts = 0;
-    http.Response? lastResponse;
-    final client = _getHttpClient();
-
-    while (attempts <= retries) {
+    Exception? lastException;
+    
+    // Retry loop with security controls
+    for (int attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        // Apply timeout to the request with proper client
-        final response =
-            await requestFunction().timeout(Duration(seconds: timeout));
+        print('[HTTP_CLIENT] Attempt ${attempt + 1}/${maxRetries + 1} for $endpoint');
+        
+        final response = await requestFunction().timeout(
+          timeout,
+          onTimeout: () => throw TimeoutException(
+            'Request timeout after ${timeout.inSeconds}s', timeout),
+        );
 
-        // Check for HTTP error status codes
-        if (response.statusCode >= 400) {
-          throw HttpException(
-              'HTTP ${response.statusCode}: ${response.reasonPhrase}');
+        // Success - reset circuit breaker
+        _resetCircuitBreaker(endpoint);
+        
+        // SECURITY: Never retry authentication or client errors
+        if (response.statusCode == 401) {
+          throw HttpException('Authentication failed', uri: Uri.parse(endpoint));
+        } else if (response.statusCode == 403) {
+          throw HttpException('Access forbidden', uri: Uri.parse(endpoint));
+        } else if (response.statusCode == 429) {
+          throw HttpException('Rate limited', uri: Uri.parse(endpoint));
+        } else if (response.statusCode >= 400 && response.statusCode < 500) {
+          throw HttpException('Client error: ${response.statusCode}', 
+                            uri: Uri.parse(endpoint));
         }
 
-        // Record success and close circuit if it was half-open
-        _recordSuccess(endpoint);
-
-        // Log successful request with port information
-        if (kDebugMode) {
-          print(
-              'HttpClientService: Request to $endpoint succeeded on attempt ${attempts + 1} (using HTTPS:443)');
+        // Server errors - may retry if attempts remain
+        if (response.statusCode >= 500 && attempt < maxRetries) {
+          lastException = HttpException('Server error: ${response.statusCode}',
+                                      uri: Uri.parse(endpoint));
+          print('[HTTP_CLIENT] Server error ${response.statusCode}, will retry...');
+          await _delayBeforeRetry(attempt);
+          continue;
         }
 
         return response;
+        
       } catch (e) {
-        attempts++;
-        lastResponse = null;
-
-        // Record failure for circuit breaker
-        _recordFailure(endpoint, e.toString());
-
-        // Log attempt failure
-        if (kDebugMode) {
-          print(
-              'HttpClientService: Request to $endpoint failed on attempt $attempts: $e');
+        lastException = e is Exception ? e : Exception('Request failed: $e');
+        print('[HTTP_CLIENT] Error on attempt ${attempt + 1}: $e');
+        
+        // Track failures for circuit breaker
+        _recordFailure(endpoint);
+        
+        // Don't retry permanent errors
+        if (e is HttpException && 
+           (e.message.contains('Authentication') || 
+            e.message.contains('forbidden') ||
+            e.message.contains('Rate limited'))) {
+          rethrow;
         }
-
-        // Don't retry if we've reached the limit or circuit is open
-        if (attempts > retries ||
-            _getCircuitBreakerState(endpoint) == CircuitBreakerStatus.open) {
-          break;
-        }
-
-        // Brief delay between retries (exponential backoff)
-        if (attempts <= retries) {
-          final delayMs = 1000 * attempts; // 1s, 2s for attempts 1-2
-          await Future.delayed(Duration(milliseconds: delayMs));
+        
+        // Delay before retry (exponential backoff with jitter)
+        if (attempt < maxRetries) {
+          await _delayBeforeRetry(attempt);
         }
       }
     }
-
+    
     // All attempts failed
-    throw HttpClientException(
-      'Request to $endpoint failed after ${attempts} attempts. '
-      'Circuit breaker state: ${_getCircuitBreakerState(endpoint)}',
-    );
+    _openCircuitBreaker(endpoint);
+    throw lastException ?? Exception('All retry attempts failed for $endpoint');
   }
 
-  /// CRITICAL: Validate endpoint uses proper HTTPS configuration
-  static void _validateEndpointConfiguration(String endpoint) {
-    if (kDebugMode) {
-      // Check for common misconfigurations
-      if (endpoint.contains(':') && !endpoint.contains(':443')) {
-        print(
-            'WARNING: HttpClientService: Endpoint $endpoint may be using non-standard port');
-      }
-      if (endpoint.startsWith('http://')) {
-        print(
-            'WARNING: HttpClientService: Endpoint $endpoint is using HTTP instead of HTTPS');
-      }
-      if (!endpoint.startsWith('https://') && !endpoint.startsWith('http://')) {
-        print(
-            'HttpClientService: Processing endpoint: $endpoint (relative path)');
-      }
+  /// SECURITY: Exponential backoff with jitter to prevent thundering herd
+  static Future<void> _delayBeforeRetry(int attempt) async {
+    // Base delays: 1s, 2s, 4s with random jitter
+    final baseDelayMs = [1000, 2000, 4000][attempt.clamp(0, 2)];
+    final jitterMs = (baseDelayMs * 0.1 * (DateTime.now().millisecond % 100) / 100).round();
+    final totalDelayMs = baseDelayMs + jitterMs;
+    
+    print('[HTTP_CLIENT] Waiting ${totalDelayMs}ms before retry (attempt $attempt)...');
+    await Future.delayed(Duration(milliseconds: totalDelayMs));
+  }
+
+  /// Circuit breaker implementation
+  static bool _isCircuitBreakerOpen(String endpoint) {
+    final breakerTime = _circuitBreakerState[endpoint];
+    if (breakerTime == null) return false;
+    
+    // Check if timeout has passed
+    if (DateTime.now().isAfter(breakerTime.add(_circuitBreakerTimeout))) {
+      _circuitBreakerState.remove(endpoint);
+      _failureCount.remove(endpoint);
+      return false;
+    }
+    
+    return true;
+  }
+
+  static void _recordFailure(String endpoint) {
+    _failureCount[endpoint] = (_failureCount[endpoint] ?? 0) + 1;
+  }
+
+  static void _openCircuitBreaker(String endpoint) {
+    if ((_failureCount[endpoint] ?? 0) >= _maxFailures) {
+      _circuitBreakerState[endpoint] = DateTime.now();
+      print('[HTTP_CLIENT] Circuit breaker opened for $endpoint');
     }
   }
 
-  /// Check if endpoint is rate limited
-  static bool _isRateLimited(String endpoint) {
-    final now = DateTime.now();
-    final history = _requestHistory[endpoint] ?? [];
-
-    // Clean old requests outside the window
-    final windowStart =
-        now.subtract(Duration(milliseconds: _rateLimitWindowMs));
-    history.removeWhere((time) => time.isBefore(windowStart));
-    _requestHistory[endpoint] = history;
-
-    // Check if we're at the limit
-    return history.length >= _maxRequestsPerWindow;
+  static void _resetCircuitBreaker(String endpoint) {
+    _failureCount.remove(endpoint);
+    _circuitBreakerState.remove(endpoint);
   }
 
-  /// Record a request attempt for rate limiting
-  static void _recordRequest(String endpoint) {
-    final now = DateTime.now();
-    _requestHistory[endpoint] = _requestHistory[endpoint] ?? [];
-    _requestHistory[endpoint]!.add(now);
-    _lastRequestTime[endpoint] = now;
-  }
-
-  /// Get request statistics for monitoring
-  static Map<String, dynamic> getStats() {
-    final stats = <String, dynamic>{};
-
-    for (final endpoint in _requestHistory.keys) {
-      final history = _requestHistory[endpoint]!;
-      final lastRequest = _lastRequestTime[endpoint];
-
-      stats[endpoint] = {
-        'total_requests': history.length,
-        'last_request': lastRequest?.toIso8601String(),
-        'requests_in_window': history
-            .where((time) => time.isAfter(DateTime.now()
-                .subtract(Duration(milliseconds: _rateLimitWindowMs))))
-            .length,
-      };
-    }
-
-    return stats;
-  }
-
-  /// Reset rate limiting (for testing)
-  static void resetRateLimit() {
-    _requestHistory.clear();
-    _lastRequestTime.clear();
-  }
-
-  /// Circuit breaker pattern - check if endpoint should be temporarily disabled
+  /// Check if endpoint is healthy (circuit breaker closed)
   static bool isEndpointHealthy(String endpoint) {
-    final state = _getCircuitBreakerState(endpoint);
-    return state != CircuitBreakerStatus.open;
+    return !_isCircuitBreakerOpen(endpoint);
   }
-
-  /// Get circuit breaker state for endpoint
-  static CircuitBreakerStatus _getCircuitBreakerState(String endpoint) {
-    final circuitBreaker = _circuitBreakers[endpoint];
-    if (circuitBreaker == null) {
-      _circuitBreakers[endpoint] = CircuitBreakerState();
-      return CircuitBreakerStatus.closed;
-    }
-
-    final now = DateTime.now();
-
-    // Check if we should transition from open to half-open
-    if (circuitBreaker.status == CircuitBreakerStatus.open &&
-        circuitBreaker.lastFailure != null) {
-      final timeSinceFailure = now.difference(circuitBreaker.lastFailure!);
-      if (timeSinceFailure.inSeconds >= _recoveryTimeoutSeconds) {
-        circuitBreaker.status = CircuitBreakerStatus.halfOpen;
-        circuitBreaker.halfOpenAttempts = 0;
-      }
-    }
-
-    return circuitBreaker.status;
-  }
-
-  /// Record a successful request
-  static void _recordSuccess(String endpoint) {
-    final circuitBreaker = _circuitBreakers[endpoint];
-    if (circuitBreaker != null) {
-      if (circuitBreaker.status == CircuitBreakerStatus.halfOpen) {
-        // Success in half-open state - close the circuit
-        circuitBreaker.status = CircuitBreakerStatus.closed;
-        circuitBreaker.failures = 0;
-        circuitBreaker.lastFailure = null;
-      } else if (circuitBreaker.status == CircuitBreakerStatus.closed) {
-        // Reset failure count on success
-        circuitBreaker.failures = 0;
-      }
-    }
-  }
-
-  /// Record a failed request
-  static void _recordFailure(String endpoint, String error) {
-    final circuitBreaker = _circuitBreakers[endpoint] ?? CircuitBreakerState();
-    _circuitBreakers[endpoint] = circuitBreaker;
-
-    circuitBreaker.failures++;
-    circuitBreaker.lastFailure = DateTime.now();
-
-    if (circuitBreaker.status == CircuitBreakerStatus.halfOpen) {
-      circuitBreaker.halfOpenAttempts++;
-      // If we've exceeded half-open attempts, go back to open
-      if (circuitBreaker.halfOpenAttempts >= _halfOpenMaxAttempts) {
-        circuitBreaker.status = CircuitBreakerStatus.open;
-      }
-    } else if (circuitBreaker.failures >= _failureThreshold) {
-      // Open the circuit after threshold failures
-      circuitBreaker.status = CircuitBreakerStatus.open;
-    }
-
-    if (kDebugMode) {
-      print('HttpClientService: Circuit breaker for $endpoint - '
-          'Status: ${circuitBreaker.status}, Failures: ${circuitBreaker.failures}');
-    }
-  }
-}
-
-/// Circuit breaker states
-enum CircuitBreakerStatus { closed, open, halfOpen }
-
-/// Circuit breaker state tracking
-class CircuitBreakerState {
-  CircuitBreakerStatus status = CircuitBreakerStatus.closed;
-  int failures = 0;
-  DateTime? lastFailure;
-  int halfOpenAttempts = 0;
-
-  CircuitBreakerState();
-}
-
-/// Exception thrown by HttpClientService
-class HttpClientException extends HttpException {
-  HttpClientException(String message) : super(message);
 }

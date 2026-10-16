@@ -28,6 +28,7 @@ import 'sync_service.dart'
 import 'utils/clocking_logger.dart';
 import 'utils/fingerprint_error_handler.dart';
 import 'utils/scanner_pdf_resolver.dart';
+import 'services/timezone_validator.dart';
 import 'utils/document_scanner_manager.dart';
 import 'utils/monitoring_mixin.dart';
 import 'debug_log_viewer.dart';
@@ -312,7 +313,7 @@ class _ClockInPageState extends State<ClockInPage>
       print('[DOC_SCAN] App paused - possibly opening scanner');
     } else if (state == AppLifecycleState.detached) {
       print('[DOC_SCAN] App detached - resetting scanner state');
-      DocumentScannerManager().forceReset();
+      DocumentScannerManager().forceReset(); // Fire and forget
     }
   }
 
@@ -2528,6 +2529,20 @@ class _ClockInPageState extends State<ClockInPage>
       return;
     }
 
+    // CRITICAL: Verify device time is correct before allowing clock-in
+    final timeOk = await TimezoneValidator.ensureCorrectTime(context);
+    if (!timeOk) {
+      // User cancelled or time is wrong - block clock-in
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Clock-in cancelled: Device time must be corrected first'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
     // CRITICAL SAFETY CHECK: Prevent multiple learners from clocking simultaneously
     if (_currentLearnerIdForClocking != null &&
         _currentLearnerIdForClocking != learnerId) {
@@ -4665,7 +4680,7 @@ class _ClockInPageState extends State<ClockInPage>
         errorMessage =
             'Scanner is busy. Please close any other scanning apps and try again in a few seconds.';
         // Force reset scanner state for next attempt
-        DocumentScannerManager().forceReset();
+        DocumentScannerManager().forceReset(); // Fire and forget
       } else if (e.toString().contains('pendingResult is null') ||
           e.toString().contains('onActivityResult') ||
           e.toString().contains('requestCode=213312') ||
@@ -4679,7 +4694,7 @@ class _ClockInPageState extends State<ClockInPage>
             '• Make sure no other camera/scanner apps are running\n'
             '• Try scanning fewer pages at once';
         // Force reset scanner state
-        DocumentScannerManager().forceReset();
+        DocumentScannerManager().forceReset(); // Fire and forget
       } else if (e.toString().contains('Scanner timeout') ||
           e.toString().contains('session timed out')) {
         errorMessage =
@@ -5754,6 +5769,7 @@ class _ClockInPageState extends State<ClockInPage>
 
           // Add learner to list (with or without clocking)
           widget.learners.add({
+            // Keep original fields for backward compatibility
             'LearnerID': learnerId,
             'Name': learner['Name']?.toString() ?? 'N/A',
             'Surname': learner['Surname']?.toString() ?? 'N/A',
@@ -5766,6 +5782,9 @@ class _ClockInPageState extends State<ClockInPage>
                 hasClocking ? contactTime : '', // Empty if no clocking
             'clock_date': hasClocking ? clockDate : '', // Empty if no clocking
             'has_clocking': hasClocking.toString(), // Convert boolean to string
+            // Add signature page expected fields for compatibility
+            'learner_id': learnerId,
+            'learner_name': learner['Name']?.toString() ?? 'N/A',
           });
         }
 

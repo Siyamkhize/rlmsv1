@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-003",
+  "type": "feat", 
+  "description": "Rate Limiting & Request Logging Improvements - Fix mismatched applyRateLimit() function arguments, optimize database operations, and implement proper rate limiting for shared IP scenarios like mobile carrier NAT.",
+  "status": "pending",
+  "steps": [
+    "Fix applyRateLimit() function signature mismatches between security_middleware.php and upload_clocking_evidence_images.php", 
+    "Move database table creation logic out of request processing path in security_middleware.php - implement lazy table creation",
+    "Add database indexes for rate limiting queries to improve performance under load",
+    "Implement tiered rate limiting - separate limits for individual users vs shared IP addresses", 
+    "Optimize request logging to avoid blocking normal application requests", 
+    "Add rate limit bypass for whitelisted IP ranges (offices, testing environments)"
+  ],
+  "acceptance_criteria": [
+    "All applyRateLimit() calls use consistent function signatures across codebase",
+    "Database table creation happens once during setup, not during every request",
+    "Rate limiting queries execute in under 100ms with proper indexes",
+    "Shared IPs (mobile carrier NAT) have higher rate limits than individual IPs", 
+    "Request logging adds less than 50ms overhead to normal requests",
+    "Whitelisted IP ranges can bypass rate limiting for testing/admin access"
+  ],
+  "verification": [
+    "Test rate limiting function calls work without argument errors",
+    "Verify database performance under rate limiting load with concurrent requests",
+    "Test shared IP rate limiting with multiple users behind same NAT", 
+    "Measure request logging overhead with performance profiling",
+    "Test rate limit bypass for configured whitelist IP ranges"
+  ],
+  "blocked_reason": null, 
+  "findings": ""
+}

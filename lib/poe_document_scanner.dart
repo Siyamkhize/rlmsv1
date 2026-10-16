@@ -210,7 +210,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
       print('[DOC_SCAN] App detached while scanning - force cleanup');
       _isScanning = false;
       final scannerManager = DocumentScannerManager();
-      scannerManager.forceReset();
+      scannerManager.forceReset(); // Fire and forget
     }
   }
 
