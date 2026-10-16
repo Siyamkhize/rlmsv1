@@ -7299,16 +7299,20 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     }
   }
 
-  Future<void> syncUnsyncedLearnerProfiles() async {
+  Future<void> syncUnsyncedLearnerProfiles({int batchSize = 5, int maxToSync = 20}) async {
     try {
       debugPrint(
-          '[SYNC-LEARNER-PROFILE] Starting sync of unsynced learner profiles');
+          '[SYNC-LEARNER-PROFILE] Starting lazy sync of unsynced learner profiles (batch: $batchSize, max: $maxToSync)');
 
       final db = await database;
+      
+      // LAZY LOADING: Only fetch a limited number at a time
       final unsyncedLearners = await db.query(
         'learnerdetails',
         where: 'synced = ?',
         whereArgs: [0],
+        limit: maxToSync,  // Limit to prevent loading thousands of records
+        orderBy: 'LearnerID ASC',  // Consistent ordering
       );
 
       if (unsyncedLearners.isEmpty) {
@@ -7317,7 +7321,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       }
 
       debugPrint(
-          '[SYNC-LEARNER-PROFILE] Found ${unsyncedLearners.length} unsynced learner profiles');
+          '[SYNC-LEARNER-PROFILE] Found ${unsyncedLearners.length} unsynced learner profiles (limited to $maxToSync)');
 
       // Check internet connectivity
       bool hasInternet = false;
@@ -7336,7 +7340,12 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       }
 
       int syncedCount = 0;
-      for (var learner in unsyncedLearners) {
+      int batchCount = 0;
+      
+      // QUEUING: Process in small batches with delays between batches
+      for (var i = 0; i < unsyncedLearners.length; i++) {
+        var learner = unsyncedLearners[i];
+        
         try {
           final learnerId = learner['LearnerID'].toString();
 
@@ -7452,10 +7461,27 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           debugPrint(
               '[SYNC-LEARNER-PROFILE] Error syncing learner profile: $e');
         }
+        
+        // BATCH QUEUING: Add delay after each batch
+        batchCount++;
+        if (batchCount >= batchSize && i < unsyncedLearners.length - 1) {
+          debugPrint('[SYNC-LEARNER-PROFILE] Batch complete ($batchCount records), waiting 500ms before next batch...');
+          await Future.delayed(Duration(milliseconds: 500));
+          batchCount = 0;
+        } else if (i < unsyncedLearners.length - 1) {
+          // Small delay between individual requests within a batch
+          await Future.delayed(Duration(milliseconds: 100));
+        }
       }
 
       debugPrint(
           '[SYNC-LEARNER-PROFILE] Successfully synced $syncedCount/${unsyncedLearners.length} learner profiles');
+      
+      // If we synced all records in this batch and reached the limit, 
+      // there might be more unsynced records
+      if (unsyncedLearners.length == maxToSync && syncedCount > 0) {
+        debugPrint('[SYNC-LEARNER-PROFILE] More unsynced records may exist. Run sync again to continue.');
+      }
     } catch (e) {
       debugPrint(
           '[SYNC-LEARNER-PROFILE] Error syncing unsynced learner profiles: $e');
