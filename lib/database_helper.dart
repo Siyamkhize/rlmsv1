@@ -2221,6 +2221,16 @@ updated_at TIMESTAMP
 
   Future<void> _seedLocationTables(Database db) async {
     try {
+      // Check if province table exists first
+      final tableExists = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='province'"
+      );
+      
+      if (tableExists.isEmpty) {
+        debugPrint('[DB_SEED] ⚠ Province table does not exist yet, skipping location seed');
+        return;
+      }
+      
       // Check if provinces already exist
       final existingProvinces = await db.query('province', limit: 1);
       if (existingProvinces.isNotEmpty) {
