@@ -10786,7 +10786,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                                 ),
                                 color: currentRating == level
                                     ? _getLevelColorAppxD(level)
-                                        .withValues(alpha: 0.2)
+                                        .withOpacity(0.2)
                                     : Colors.transparent,
                               ),
                               child: Center(

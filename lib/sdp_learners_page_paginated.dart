@@ -742,7 +742,7 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
                       _isOnlineMode ? 'Online' : 'Offline',
                       style: const TextStyle(fontSize: 11),
                     ),
-                    backgroundColor: Colors.white.withValues(alpha: 0.9),
+                    backgroundColor: Colors.white.withOpacity(0.9),
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
@@ -856,7 +856,7 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
+                              color: Colors.black.withOpacity(0.1),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -883,7 +883,7 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
                                 style: const TextStyle(fontSize: 12),
                               ) : null,
                               onTap: () => _selectSearchSuggestion(suggestion),
-                              hoverColor: Colors.blue.withValues(alpha: 0.1),
+                              hoverColor: Colors.blue.withOpacity(0.1),
                             );
                           },
                         ),
