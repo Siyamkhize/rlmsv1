@@ -1964,6 +1964,9 @@ class _ClockInPageState extends State<ClockInPage>
         orElse: () => null,
       );
 
+      if (!mounted) return;
+      if (!context.mounted) return;
+      
       if (learner == null) {
         FingerprintErrorHandler.showError(
           context,
@@ -2019,12 +2022,16 @@ class _ClockInPageState extends State<ClockInPage>
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
+                onPressed: () {
+                  if (!context.mounted) return;
+                  Navigator.of(context).pop(false);
+                },
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: () {
                   if (idController.text == idNumber) {
+                    if (!context.mounted) return;
                     Navigator.of(context).pop(true);
                   } else {
                     if (!context.mounted) return;
@@ -2254,6 +2261,8 @@ class _ClockInPageState extends State<ClockInPage>
       }
     } catch (e) {
       debugPrint('[BACKUP_CLOCK_IN] Error: $e');
+      if (!mounted) return;
+      if (!context.mounted) return;
       FingerprintErrorHandler.showError(
         context,
         'Backup clock-in failed: $e',
@@ -2270,6 +2279,7 @@ class _ClockInPageState extends State<ClockInPage>
   Future<bool> _checkGeofenceAndGPS() async {
     // Check if we have site coordinates
     if (_siteLat == null || _siteLon == null) {
+      if (!context.mounted) return false;
       FingerprintErrorHandler.showError(
         context,
         'Site coordinates not available',
@@ -2450,6 +2460,8 @@ class _ClockInPageState extends State<ClockInPage>
       await _performClockOut(learnerId, isBackup: true);
     } catch (e) {
       debugPrint('[BACKUP_CLOCK_OUT] Error: $e');
+      if (!mounted) return;
+      if (!context.mounted) return;
       FingerprintErrorHandler.showError(
         context,
         'Backup clock-out failed: $e',
@@ -2653,9 +2665,14 @@ class _ClockInPageState extends State<ClockInPage>
     print('[CLOCK_IN] All mandatory checks complete. Now detecting scanner...');
     final scanner = await _detectScanner();
 
+    if (!mounted) return;
+    if (!context.mounted) return;
+    
     if (scanner == 'none') {
       print('[CLOCK_IN] No scanner detected - showing backup method dialog');
       final useBackup = await _showBackupMethodDialog();
+      if (!mounted) return;
+      if (!context.mounted) return;
       if (useBackup == true) {
         // Enter backup flow (ID verification → signature → GPS → clock-in)
         // All mandatory checks already done above, so skip them in backup flow
@@ -2680,6 +2697,9 @@ class _ClockInPageState extends State<ClockInPage>
       return;
     }
     final templates = await DatabaseHelper().getAllTemplates(learnerIdInt);
+
+    if (!mounted) return;
+    if (!context.mounted) return;
 
     // Evaluate available templates per scanner
     final hasZkLeft = (templates['zkteco_left_template']?.isNotEmpty ?? false);
@@ -2766,10 +2786,13 @@ class _ClockInPageState extends State<ClockInPage>
         if (hasNew) {
           // Re-run verification flow
           await _verifyAndClockIn(learnerId);
+          if (!mounted) return;
+          if (!context.mounted) return;
           return;
         }
       }
       // If user backed out or no new template, show guidance
+      if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -2847,6 +2870,8 @@ class _ClockInPageState extends State<ClockInPage>
             errorMessage = 'Timeout waiting for fingerprint. Please try again.';
           }
 
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(errorMessage),
@@ -2863,6 +2888,8 @@ class _ClockInPageState extends State<ClockInPage>
           _currentLearnerIdForClocking = null;
           _currentClockingAction = null;
         });
+        if (!mounted) return;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -2877,6 +2904,8 @@ class _ClockInPageState extends State<ClockInPage>
       if (match) {
         // GEOFENCING CHECK: Verify user is within 50 meters before allowing clock-in
         print('[CLOCK_IN] Fingerprint matched - checking geofence...');
+        if (!mounted) return;
+        if (!context.mounted) return;
         _showProgressDialog('Checking location...');
 
         bool withinRadius = await _checkLocationAndRadius();
@@ -2988,6 +3017,8 @@ class _ClockInPageState extends State<ClockInPage>
           // initMonitoring(learnerId);
 
           // UI already updated above, just show sync success message
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Clock-in synced to server!'),
@@ -3010,6 +3041,8 @@ class _ClockInPageState extends State<ClockInPage>
           // initMonitoring(learnerId);
 
           // UI already updated above, just show offline message
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Clock-in saved locally (will sync when online)'),
@@ -3017,6 +3050,8 @@ class _ClockInPageState extends State<ClockInPage>
           );
         }
       } else {
+        if (!mounted) return;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Fingerprint does not match!'),
@@ -3025,6 +3060,8 @@ class _ClockInPageState extends State<ClockInPage>
       }
     } catch (e) {
       _hideProgressDialog();
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text('Verification error: $e'),
@@ -3041,6 +3078,8 @@ class _ClockInPageState extends State<ClockInPage>
 
   Future<bool> _ensureLearnerProfileComplete(String learnerId) async {
     final learner = await _getLearnerForValidation(learnerId);
+    if (!mounted) return false;
+    if (!context.mounted) return false;
     if (learner == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -3059,6 +3098,7 @@ class _ClockInPageState extends State<ClockInPage>
 
     final learnerIdInt = int.tryParse(learnerId);
     if (learnerIdInt == null) {
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Invalid learner ID for profile completion.'),
@@ -3068,6 +3108,8 @@ class _ClockInPageState extends State<ClockInPage>
       return false;
     }
 
+    if (!mounted) return false;
+    if (!context.mounted) return false;
     final shouldOpenProfile = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
@@ -3120,6 +3162,8 @@ class _ClockInPageState extends State<ClockInPage>
       return false;
     }
 
+    if (!mounted) return false;
+    if (!context.mounted) return false;
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -3134,6 +3178,8 @@ class _ClockInPageState extends State<ClockInPage>
     if (!mounted) return false;
 
     final refreshedLearner = await _getLearnerForValidation(learnerId);
+    if (!mounted) return false;
+    if (!context.mounted) return false;
     final refreshedMissing =
         learnerProfileMissingFieldLabels(refreshedLearner ?? {});
 
@@ -4867,6 +4913,7 @@ class _ClockInPageState extends State<ClockInPage>
 
   Future<void> _verifyAndClockOut(String learnerId) async {
     if (_isClockingIn[learnerId] == true || _isInitializing) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(_isInitializing
@@ -4879,6 +4926,7 @@ class _ClockInPageState extends State<ClockInPage>
     // CRITICAL SAFETY CHECK: Prevent multiple learners from clocking simultaneously
     if (_currentLearnerIdForClocking != null &&
         _currentLearnerIdForClocking != learnerId) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Another learner is currently clocking. Please wait.'),
@@ -4890,6 +4938,8 @@ class _ClockInPageState extends State<ClockInPage>
 
     final existingAttendance = await DatabaseHelper()
         .getAttendanceForDay(learnerId, _getCurrentDateString());
+    if (!mounted) return;
+    if (!context.mounted) return;
     if (existingAttendance == null ||
         existingAttendance['clock_in_time'] == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -4907,9 +4957,14 @@ class _ClockInPageState extends State<ClockInPage>
         await DatabaseHelper().getAllTemplates(int.parse(learnerId));
     final scanner = await _detectScanner();
 
+    if (!mounted) return;
+    if (!context.mounted) return;
+
     // NEW: If no scanner detected, ask if user wants to use backup signature method
     if (scanner == 'none') {
       final useBackup = await _showBackupMethodDialog();
+      if (!mounted) return;
+      if (!context.mounted) return;
       if (useBackup == true) {
         // Enter backup flow: ID check → signature → geofence → GPS → clock-out
         await _backupClockOutFlow(learnerId);
@@ -4937,6 +4992,7 @@ class _ClockInPageState extends State<ClockInPage>
     if (scanner == 'futronic' &&
         !(hasFutLeft || hasFutRight) &&
         (hasZkLeft || hasZkRight)) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -4949,6 +5005,7 @@ class _ClockInPageState extends State<ClockInPage>
     if (scanner == 'zkteco' &&
         !(hasZkLeft || hasZkRight) &&
         (hasFutLeft || hasFutRight)) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -5001,9 +5058,13 @@ class _ClockInPageState extends State<ClockInPage>
         if (hasNew) {
           // Re-run clock-out attempt
           await _verifyAndClockOut(learnerId);
+          if (!mounted) return;
+          if (!context.mounted) return;
           return;
         }
       }
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Enrollment required to clock out'),
@@ -5081,6 +5142,8 @@ class _ClockInPageState extends State<ClockInPage>
             errorMessage = 'Timeout waiting for fingerprint. Please try again.';
           }
 
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(errorMessage),
@@ -5220,6 +5283,8 @@ class _ClockInPageState extends State<ClockInPage>
           await DatabaseHelper().updateClocking(
               existingAttendance['clocking_id'], updatedAttendance);
           // UI already updated above, just show sync success message
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Clock-out synced to server!'),
@@ -5236,6 +5301,8 @@ class _ClockInPageState extends State<ClockInPage>
           await DatabaseHelper().updateClocking(
               existingAttendance['clocking_id'], updatedAttendance);
           // UI already updated above, just show offline message
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content:
@@ -5244,6 +5311,8 @@ class _ClockInPageState extends State<ClockInPage>
           );
         }
       } else {
+        if (!mounted) return;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Fingerprint does not match!'),
@@ -5252,6 +5321,8 @@ class _ClockInPageState extends State<ClockInPage>
       }
     } catch (e) {
       _hideProgressDialog();
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text('Verification error: $e'),
@@ -5747,6 +5818,8 @@ class _ClockInPageState extends State<ClockInPage>
       debugPrint('[LOAD] ❌ Error loading offline learners: $e');
       debugPrint('[LOAD] Stack trace: ${StackTrace.current}');
 
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error loading offline learners: $e'),
@@ -5830,6 +5903,8 @@ class _ClockInPageState extends State<ClockInPage>
         _filterLearners();
       });
     } catch (e) {
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading all learners: $e')),
       );
@@ -6095,11 +6170,13 @@ class _ClockInPageState extends State<ClockInPage>
                           .syncClassClockingFromServer(widget.classID);
                       await _loadAllLearnersFromLocalDatabase();
                       if (mounted) {
+                        if (!context.mounted) return;
                         FingerprintErrorHandler.showSuccess(
                             context, 'Current day records synced from server!');
                       }
                     } catch (e) {
                       if (mounted) {
+                        if (!context.mounted) return;
                         FingerprintErrorHandler.showError(context,
                             'Failed to sync current day records from server');
                       }
@@ -6123,6 +6200,7 @@ class _ClockInPageState extends State<ClockInPage>
                         debugPrint(
                             '[BUTTON] ========================================');
 
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Syncing learners from server...'),
@@ -6145,6 +6223,7 @@ class _ClockInPageState extends State<ClockInPage>
                               '[BUTTON] _loadLearnersFromLocalDatabase completed');
 
                           if (mounted) {
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Learners synced successfully'),
@@ -6158,6 +6237,7 @@ class _ClockInPageState extends State<ClockInPage>
                           debugPrint('[BUTTON] Stack trace: $stackTrace');
 
                           if (mounted) {
+                            if (!context.mounted) return;
                             FingerprintErrorHandler.showError(
                                 context, 'Sync failed: $e');
                           }
