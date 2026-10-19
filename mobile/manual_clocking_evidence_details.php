@@ -26,17 +26,17 @@ $query = "
         s.siteID,
         c.className as ClassName,
         c.classID,
-        lc.clock_in_time,
-        lc.clock_out_time,
-        lc.contact_time as actual_contact_time
+        mc.clock_in_time,
+        mc.clock_out_time,
+        mc.contact_time as actual_contact_time
     FROM manual_clocking_evidence mce
     LEFT JOIN learnerdetails ld ON mce.LearnerID = ld.LearnerID
     LEFT JOIN class c ON ld.classID = c.classID
     LEFT JOIN sites s ON c.siteID = s.siteID
     LEFT JOIN project p ON s.project_id = p.project_id
-    LEFT JOIN learner_clocking lc ON (
-        mce.LearnerID = lc.LearnerID 
-        AND mce.clock_date = lc.clock_date
+    LEFT JOIN manual_clocking mc ON (
+        mce.LearnerID = mc.LearnerID 
+        AND mce.clock_date = mc.clock_date
     )
     WHERE mce.evidence_id = ?
 ";
@@ -219,42 +219,87 @@ function getEvidenceFileUrl($evidenceBaseUrl, $filename) {
             font-weight: 600;
         }
         
-        .evidence-container {
+        .evidence-section {
+            margin-bottom: 2rem;
+        }
+        
+        .evidence-section h4 {
+            color: #2c3e50;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .evidence-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 2rem;
-            margin-top: 1.5rem;
+            margin-bottom: 2rem;
         }
         
         .evidence-box {
             background: white;
-            border-radius: 12px;
+            border-radius: 15px;
             padding: 1.5rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .evidence-box:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.15);
         }
         
         .evidence-box h5 {
             color: #2c3e50;
             font-weight: 700;
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
+            margin-bottom: 1.25rem;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f8f9fa;
         }
         
         .evidence-box img {
             max-width: 100%;
             height: auto;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
             cursor: pointer;
             transition: all 0.3s ease;
-            max-height: 400px;
+            max-height: 350px;
             object-fit: contain;
+            background: #f8f9fa;
+            padding: 0.5rem;
         }
         
         .evidence-box img:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            transform: scale(1.03);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .evidence-filename {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .evidence-filename small {
+            color: #6c757d;
+            font-weight: 600;
+            word-break: break-all;
         }
         
         .no-evidence {
@@ -453,99 +498,111 @@ function getEvidenceFileUrl($evidenceBaseUrl, $filename) {
                 <h5 class="mb-0"><i class="fas fa-images"></i> Evidence Photos & Signatures</h5>
             </div>
             <div class="card-body">
-                <div class="evidence-container">
-                    <!-- Signature In -->
-                    <div class="evidence-box">
-                        <h5><i class="fas fa-signature text-primary"></i> Signature - Clock In</h5>
-                        <?php if ($evidence['signature_in'] && file_exists(getEvidenceFilePath($evidenceBasePath, $evidence['signature_in']))): ?>
-                            <img 
-                                src="<?php echo htmlspecialchars(getEvidenceFileUrl($evidenceBaseUrl, $evidence['signature_in'])); ?>" 
-                                alt="Signature Clock In"
-                                onclick="showModal(this.src, 'Signature - Clock In')"
-                            >
-                            <div class="mt-3">
-                                <small class="text-muted">
-                                    <i class="fas fa-file"></i> 
-                                    <?php echo basename($evidence['signature_in']); ?>
-                                </small>
-                            </div>
-                        <?php else: ?>
-                            <div class="no-evidence">
-                                <i class="fas fa-image-slash"></i>
-                                <p class="mb-0">No signature captured for clock in</p>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <!-- Face Photo In -->
-                    <div class="evidence-box">
-                        <h5><i class="fas fa-face-smile text-info"></i> Face Photo - Clock In</h5>
-                        <?php if ($evidence['face_in'] && file_exists(getEvidenceFilePath($evidenceBasePath, $evidence['face_in']))): ?>
-                            <img 
-                                src="<?php echo htmlspecialchars(getEvidenceFileUrl($evidenceBaseUrl, $evidence['face_in'])); ?>" 
-                                alt="Face Photo Clock In"
-                                onclick="showModal(this.src, 'Face Photo - Clock In')"
-                            >
-                            <div class="mt-3">
-                                <small class="text-muted">
-                                    <i class="fas fa-file"></i> 
-                                    <?php echo basename($evidence['face_in']); ?>
-                                </small>
-                            </div>
-                        <?php else: ?>
-                            <div class="no-evidence">
-                                <i class="fas fa-image-slash"></i>
-                                <p class="mb-0">No face photo captured for clock in</p>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <!-- Signature Out -->
-                    <div class="evidence-box">
-                        <h5><i class="fas fa-signature text-success"></i> Signature - Clock Out</h5>
-                        <?php if ($evidence['signature_out'] && file_exists(getEvidenceFilePath($evidenceBasePath, $evidence['signature_out']))): ?>
-                            <img 
-                                src="<?php echo htmlspecialchars(getEvidenceFileUrl($evidenceBaseUrl, $evidence['signature_out'])); ?>" 
-                                alt="Signature Clock Out"
-                                onclick="showModal(this.src, 'Signature - Clock Out')"
-                            >
-                            <div class="mt-3">
-                                <small class="text-muted">
-                                    <i class="fas fa-file"></i> 
-                                    <?php echo basename($evidence['signature_out']); ?>
-                                </small>
-                            </div>
-                        <?php else: ?>
-                            <div class="no-evidence">
-                                <i class="fas fa-image-slash"></i>
-                                <p class="mb-0">No signature captured for clock out</p>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <!-- Face Photo Out -->
-                    <div class="evidence-box">
-                        <h5><i class="fas fa-face-smile text-warning"></i> Face Photo - Clock Out</h5>
-                        <?php if ($evidence['face_out'] && file_exists(getEvidenceFilePath($evidenceBasePath, $evidence['face_out']))): ?>
-                            <img 
-                                src="<?php echo htmlspecialchars(getEvidenceFileUrl($evidenceBaseUrl, $evidence['face_out'])); ?>" 
-                                alt="Face Photo Clock Out"
-                                onclick="showModal(this.src, 'Face Photo - Clock Out')"
-                            >
-                            <div class="mt-3">
-                                <small class="text-muted">
-                                    <i class="fas fa-file"></i> 
-                                    <?php echo basename($evidence['face_out']); ?>
-                                </small>
-                            </div>
-                        <?php else: ?>
-                            <div class="no-evidence">
-                                <i class="fas fa-image-slash"></i>
-                                <p class="mb-0">No face photo captured for clock out</p>
-                            </div>
-                        <?php endif; ?>
+                
+                <!-- Clock In Evidence -->
+                <div class="evidence-section">
+                    <h4><i class="fas fa-sign-in-alt"></i> Clock In Evidence</h4>
+                    <div class="evidence-row">
+                        <!-- Signature In -->
+                        <div class="evidence-box">
+                            <h5><i class="fas fa-signature text-primary"></i> Signature</h5>
+                            <?php if ($evidence['signature_in'] && file_exists(getEvidenceFilePath($evidenceBasePath, $evidence['signature_in']))): ?>
+                                <img 
+                                    src="<?php echo htmlspecialchars(getEvidenceFileUrl($evidenceBaseUrl, $evidence['signature_in'])); ?>" 
+                                    alt="Signature Clock In"
+                                    onclick="showModal(this.src, 'Clock In Signature')"
+                                >
+                                <div class="evidence-filename">
+                                    <small>
+                                        <i class="fas fa-file-image"></i> 
+                                        <?php echo htmlspecialchars(basename($evidence['signature_in'])); ?>
+                                    </small>
+                                </div>
+                            <?php else: ?>
+                                <div class="no-evidence">
+                                    <i class="fas fa-image-slash"></i>
+                                    <p class="mb-0">No signature captured</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <!-- Face Photo In -->
+                        <div class="evidence-box">
+                            <h5><i class="fas fa-face-smile text-info"></i> Face Photo</h5>
+                            <?php if ($evidence['face_in'] && file_exists(getEvidenceFilePath($evidenceBasePath, $evidence['face_in']))): ?>
+                                <img 
+                                    src="<?php echo htmlspecialchars(getEvidenceFileUrl($evidenceBaseUrl, $evidence['face_in'])); ?>" 
+                                    alt="Face Photo Clock In"
+                                    onclick="showModal(this.src, 'Clock In Face Photo')"
+                                >
+                                <div class="evidence-filename">
+                                    <small>
+                                        <i class="fas fa-file-image"></i> 
+                                        <?php echo htmlspecialchars(basename($evidence['face_in'])); ?>
+                                    </small>
+                                </div>
+                            <?php else: ?>
+                                <div class="no-evidence">
+                                    <i class="fas fa-image-slash"></i>
+                                    <p class="mb-0">No face photo captured</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
+                
+                <!-- Clock Out Evidence -->
+                <div class="evidence-section">
+                    <h4><i class="fas fa-sign-out-alt"></i> Clock Out Evidence</h4>
+                    <div class="evidence-row">
+                        <!-- Signature Out -->
+                        <div class="evidence-box">
+                            <h5><i class="fas fa-signature text-success"></i> Signature</h5>
+                            <?php if ($evidence['signature_out'] && file_exists(getEvidenceFilePath($evidenceBasePath, $evidence['signature_out']))): ?>
+                                <img 
+                                    src="<?php echo htmlspecialchars(getEvidenceFileUrl($evidenceBaseUrl, $evidence['signature_out'])); ?>" 
+                                    alt="Signature Clock Out"
+                                    onclick="showModal(this.src, 'Clock Out Signature')"
+                                >
+                                <div class="evidence-filename">
+                                    <small>
+                                        <i class="fas fa-file-image"></i> 
+                                        <?php echo htmlspecialchars(basename($evidence['signature_out'])); ?>
+                                    </small>
+                                </div>
+                            <?php else: ?>
+                                <div class="no-evidence">
+                                    <i class="fas fa-image-slash"></i>
+                                    <p class="mb-0">No signature captured</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <!-- Face Photo Out -->
+                        <div class="evidence-box">
+                            <h5><i class="fas fa-face-smile text-warning"></i> Face Photo</h5>
+                            <?php if ($evidence['face_out'] && file_exists(getEvidenceFilePath($evidenceBasePath, $evidence['face_out']))): ?>
+                                <img 
+                                    src="<?php echo htmlspecialchars(getEvidenceFileUrl($evidenceBaseUrl, $evidence['face_out'])); ?>" 
+                                    alt="Face Photo Clock Out"
+                                    onclick="showModal(this.src, 'Clock Out Face Photo')"
+                                >
+                                <div class="evidence-filename">
+                                    <small>
+                                        <i class="fas fa-file-image"></i> 
+                                        <?php echo htmlspecialchars(basename($evidence['face_out'])); ?>
+                                    </small>
+                                </div>
+                            <?php else: ?>
+                                <div class="no-evidence">
+                                    <i class="fas fa-image-slash"></i>
+                                    <p class="mb-0">No face photo captured</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+                
             </div>
         </div>
         
