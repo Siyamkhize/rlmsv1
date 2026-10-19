@@ -921,9 +921,12 @@ if ($allClassesResult) {
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     
     <script>
-        // Pre-loaded data from PHP
+        // Pre-loaded data from PHP for cascading filters
         var allSites = <?php echo json_encode($allSitesData); ?>;
         var allClasses = <?php echo json_encode($allClassesData); ?>;
+        
+        console.log('Loaded sites:', allSites.length);
+        console.log('Loaded classes:', allClasses.length);
         
         $(document).ready(function() {
             // Initialize DataTable
@@ -942,29 +945,57 @@ if ($allClassesResult) {
                 $('#modalEvidence').attr('src', 'manual_clocking_evidence/' + evidence);
             });
             
+            /**
+             * CASCADING FILTER LOGIC:
+             * Project → Sites (belonging to project)
+             * Site → Classes (belonging to site)  
+             * Class → Learners (belonging to class - shown in table)
+             */
+            
             // Filter sites dropdown based on selected project
             function filterSites(projectId) {
                 var siteSelect = document.getElementById('site_select');
                 var currentSiteVal = siteSelect.value;
                 
-                // Rebuild site options
+                console.log('Filtering sites for project:', projectId);
+                
+                // Clear and rebuild site options
                 siteSelect.innerHTML = '<option value="0">All Sites</option>';
-                var sitesToShow = (projectId == 0) ? allSites : allSites.filter(function(s) { return s.project_id == projectId; });
+                
+                // Show only sites that belong to the selected project
+                var sitesToShow = [];
+                if (projectId == 0 || projectId == '0') {
+                    // Show all sites when no project selected
+                    sitesToShow = allSites;
+                } else {
+                    // Filter sites by project_id
+                    sitesToShow = allSites.filter(function(site) {
+                        return parseInt(site.project_id) === parseInt(projectId);
+                    });
+                }
+                
+                console.log('Sites to show:', sitesToShow.length);
+                
                 sitesToShow.forEach(function(site) {
                     var opt = document.createElement('option');
                     opt.value = site.id;
                     opt.textContent = site.name;
-                    if (site.id == currentSiteVal) opt.selected = true;
                     siteSelect.appendChild(opt);
                 });
                 
-                // If the previously selected site is no longer available, reset it
-                if (siteSelect.value != currentSiteVal) {
-                    siteSelect.value = '0';
+                // Try to preserve the previously selected site if it's still available
+                var stillAvailable = sitesToShow.some(function(site) {
+                    return site.id == currentSiteVal;
+                });
+                
+                if (stillAvailable) {
+                    siteSelect.value = currentSiteVal;
+                } else {
+                    siteSelect.value = '0'; // Reset to "All Sites"
                 }
                 
-                // Now cascade to classes
-                filterClasses(siteSelect.value, projectId);
+                // Cascade to classes filter
+                filterClasses(parseInt(siteSelect.value) || 0, projectId);
             }
 
             // Filter classes dropdown based on selected site (and optionally project)
@@ -972,41 +1003,81 @@ if ($allClassesResult) {
                 var classSelect = document.getElementById('class_select');
                 var currentClassVal = classSelect.value;
                 
+                console.log('Filtering classes for site:', siteId, 'project:', projectId);
+                
+                // Clear and rebuild class options
                 classSelect.innerHTML = '<option value="0">All Classes</option>';
                 
-                var classesToShow;
+                var classesToShow = [];
+                
                 if (siteId > 0) {
-                    classesToShow = allClasses.filter(function(c) { return c.site_id == siteId; });
+                    // PRIORITY 1: If site is selected, show only classes belonging to that site
+                    classesToShow = allClasses.filter(function(cls) {
+                        return parseInt(cls.site_id) === parseInt(siteId);
+                    });
                 } else if (projectId > 0) {
-                    // Get site IDs for this project first
-                    var siteIds = allSites.filter(function(s) { return s.project_id == projectId; }).map(function(s) { return s.id; });
-                    classesToShow = allClasses.filter(function(c) { return siteIds.indexOf(c.site_id) !== -1; });
+                    // PRIORITY 2: If only project is selected, show classes from all sites in that project
+                    var siteIdsInProject = allSites
+                        .filter(function(site) {
+                            return parseInt(site.project_id) === parseInt(projectId);
+                        })
+                        .map(function(site) {
+                            return parseInt(site.id);
+                        });
+                    
+                    classesToShow = allClasses.filter(function(cls) {
+                        return siteIdsInProject.indexOf(parseInt(cls.site_id)) !== -1;
+                    });
                 } else {
+                    // No filters selected - show all classes
                     classesToShow = allClasses;
                 }
+                
+                console.log('Classes to show:', classesToShow.length);
                 
                 classesToShow.forEach(function(cls) {
                     var opt = document.createElement('option');
                     opt.value = cls.id;
                     opt.textContent = cls.name;
-                    if (cls.id == currentClassVal) opt.selected = true;
                     classSelect.appendChild(opt);
                 });
                 
-                if (classSelect.value != currentClassVal) {
-                    classSelect.value = '0';
+                // Try to preserve the previously selected class if it's still available
+                var stillAvailable = classesToShow.some(function(cls) {
+                    return cls.id == currentClassVal;
+                });
+                
+                if (stillAvailable) {
+                    classSelect.value = currentClassVal;
+                } else {
+                    classSelect.value = '0'; // Reset to "All Classes"
                 }
             }
 
-            // Wire up change events
+            // Wire up change events for cascading filters
             document.getElementById('project_select').addEventListener('change', function() {
-                filterSites(parseInt(this.value) || 0);
+                var projectId = parseInt(this.value) || 0;
+                console.log('Project changed to:', projectId);
+                
+                // When project changes:
+                // 1. Filter sites to show only sites in this project
+                // 2. This will cascade to filter classes
+                filterSites(projectId);
             });
 
             document.getElementById('site_select').addEventListener('change', function() {
+                var siteId = parseInt(this.value) || 0;
                 var projectId = parseInt(document.getElementById('project_select').value) || 0;
-                filterClasses(parseInt(this.value) || 0, projectId);
+                console.log('Site changed to:', siteId);
+                
+                // When site changes:
+                // 1. Filter classes to show only classes in this site
+                filterClasses(siteId, projectId);
             });
+            
+            // Note: The learner filtering happens on the server side when form is submitted
+            // The table shows evidence records filtered by the selected Project/Site/Class
+            console.log('Cascading filters initialized');
         });
     </script>
 </body>
