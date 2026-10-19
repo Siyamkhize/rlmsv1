@@ -72,9 +72,10 @@ if ($hasClockIn && $hasClockOut) {
     $statusIcon = 'fa-times-circle';
 }
 
-// Evidence base path - folder is in same directory as this file (inside mobile folder)
-$evidenceBasePath = __DIR__ . '/manual_clocking_evidence/';
-$evidenceBaseUrl = 'manual_clocking_evidence/';
+// Evidence base path
+// Note: This file is deployed to ROOT level, but evidence folder is inside mobile/
+$evidenceBasePath = __DIR__ . '/mobile/manual_clocking_evidence/';
+$evidenceBaseUrl = 'mobile/manual_clocking_evidence/';
 ?>
 <!DOCTYPE html>
 <html lang="en">
