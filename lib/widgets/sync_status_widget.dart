@@ -34,7 +34,7 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
     Connectivity().onConnectivityChanged.listen((result) {
       if (mounted) {
         setState(() {
-          _isOnline = result != ConnectivityResult.none;
+          _isOnline = !result.contains(ConnectivityResult.none);
         });
       }
     });
@@ -44,7 +44,7 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
     final result = await Connectivity().checkConnectivity();
     if (mounted) {
       setState(() {
-        _isOnline = result != ConnectivityResult.none;
+        _isOnline = !result.contains(ConnectivityResult.none);
       });
     }
   }
@@ -247,7 +247,7 @@ class _CompactSyncStatusWidgetState extends State<CompactSyncStatusWidget> {
     Connectivity().onConnectivityChanged.listen((result) {
       if (mounted) {
         setState(() {
-          _isOnline = result != ConnectivityResult.none;
+          _isOnline = !result.contains(ConnectivityResult.none);
         });
       }
     });
@@ -257,7 +257,7 @@ class _CompactSyncStatusWidgetState extends State<CompactSyncStatusWidget> {
     final result = await Connectivity().checkConnectivity();
     if (mounted) {
       setState(() {
-        _isOnline = result != ConnectivityResult.none;
+        _isOnline = !result.contains(ConnectivityResult.none);
       });
     }
   }

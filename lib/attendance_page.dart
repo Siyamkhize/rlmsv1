@@ -274,10 +274,7 @@ class _AttendancePageState extends State<AttendancePage> {
 
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
-      final isOffline = connectivityResult is List
-          ? (connectivityResult.isEmpty ||
-              connectivityResult.first == ConnectivityResult.none)
-          : (connectivityResult == ConnectivityResult.none);
+      final isOffline = connectivityResult.contains(ConnectivityResult.none);
 
       if (isOffline) {
         print('[ATTENDANCE] No internet connection - skipping server sync');

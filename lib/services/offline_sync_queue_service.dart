@@ -566,12 +566,7 @@ class OfflineSyncQueueService {
   Future<bool> _hasConnectivity() async {
     try {
       final result = await Connectivity().checkConnectivity();
-      // connectivity_plus returns List<ConnectivityResult> in newer versions
-      if (result is List) {
-        final resultList = result as List;
-        return resultList.isNotEmpty && resultList.first != ConnectivityResult.none;
-      }
-      return result != ConnectivityResult.none;
+      return !result.contains(ConnectivityResult.none);
     } catch (e) {
       _log('error', 'connectivity_check_failed', {
         'error_type': e.runtimeType.toString(),
@@ -837,14 +832,7 @@ class OfflineSyncQueueService {
   
   void _startConnectivityListener() {
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((result) {
-      // Handle both single result and list result based on connectivity_plus version
-      bool isOnline;
-      if (result is List) {
-        final resultList = result as List;
-        isOnline = resultList.isNotEmpty && resultList.first != ConnectivityResult.none;
-      } else {
-        isOnline = result != ConnectivityResult.none;
-      }
+      bool isOnline = !result.contains(ConnectivityResult.none);
       
       _log('info', 'connectivity_change', {
         'current_state': result.toString(),

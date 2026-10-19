@@ -200,7 +200,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
   Future<void> _loadAssessorExpiryFromServer(
       Map<String, dynamic> localData) async {
     var connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult != ConnectivityResult.none) {
+    if (!connectivityResult.contains(ConnectivityResult.none)) {
       try {
         final response = await http.get(
           Uri.parse(
@@ -247,7 +247,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
   // }
   Future<void> _loadOnlineProfileImage() async {
     var connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult != ConnectivityResult.none) {
+    if (!connectivityResult.contains(ConnectivityResult.none)) {
       try {
         final response = await http.get(
           Uri.parse(
@@ -558,7 +558,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
     if (profileImagePath == null ||
         !await Connectivity()
             .checkConnectivity()
-            .then((r) => r != ConnectivityResult.none)) {
+            .then((r) => !r.contains(ConnectivityResult.none))) {
       return;
     }
     int maxRetries = 3;
@@ -610,7 +610,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
   Future<void> _syncDataOnline() async {
     if (!await Connectivity()
         .checkConnectivity()
-        .then((r) => r != ConnectivityResult.none)) {
+        .then((r) => !r.contains(ConnectivityResult.none))) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('No internet connection'),

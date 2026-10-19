@@ -648,6 +648,7 @@ class _ClockInPageState extends State<ClockInPage>
           '[CLOCK_IN] Scanned template length: ${scannedTemplate?.length}');
 
       if (scannedTemplate == null) {
+        if (!mounted) return;
         FingerprintErrorHandler.showError(context, 'Fingerprint scan failed');
         setState(() => _isClockingIn[learnerId] = false);
         return;
@@ -688,6 +689,7 @@ class _ClockInPageState extends State<ClockInPage>
         if ((leftTemplate == null || leftTemplate.isEmpty) &&
             (rightTemplate == null || rightTemplate.isEmpty)) {
           debugPrint('[CLOCK_IN] No fingerprints found for learner $learnerId');
+          if (!mounted) return;
           FingerprintErrorHandler.showError(context,
               'No fingerprints enrolled for this learner. Please enroll fingerprints first.');
           return;
@@ -752,6 +754,7 @@ class _ClockInPageState extends State<ClockInPage>
                 existingAttendance['clock_in_time'].toString().isNotEmpty) {
               print(
                   '[CLOCK_IN] ❌ Learner $learnerId already clocked in today at ${existingAttendance['clock_in_time']}');
+              if (!mounted) return;
               FingerprintErrorHandler.showInfo(context,
                   'Already clocked in today at ${existingAttendance['clock_in_time']}');
               setState(() => _isClockingIn[learnerId] = false);
@@ -861,6 +864,8 @@ class _ClockInPageState extends State<ClockInPage>
             // Start monitoring service for this learner
             initMonitoring(int.parse(learnerId));
 
+            if (!mounted) return;
+            
             // Show appropriate message
             if (synced) {
               print('[CLOCK_IN] ✅ Clock-in synced to server successfully');
@@ -904,6 +909,7 @@ class _ClockInPageState extends State<ClockInPage>
 
             if (existingAttendance == null ||
                 existingAttendance['clock_in_time'] == null) {
+              if (!mounted) return;
               FingerprintErrorHandler.showInfo(
                   context, 'Cannot clock out. No prior clock-in found.');
               setState(() => _isClockingIn[learnerId] = false);
@@ -915,6 +921,7 @@ class _ClockInPageState extends State<ClockInPage>
               if (missedMonitoring) {
                 print(
                     '[CLOCK_OUT] ❌ Clock-out blocked: Learner $learnerId missed all monitoring attempts');
+                if (!mounted) return;
                 FingerprintErrorHandler.showError(context,
                     'You missed monitoring for the day. You cannot clock out. Next time make sure you are in the class full day.');
                 setState(() => _isClockingIn[learnerId] = false);
@@ -1072,12 +1079,14 @@ class _ClockInPageState extends State<ClockInPage>
           debugPrint(
               '[CLOCK_IN] ❌ This fingerprint does NOT belong to this learner');
           debugPrint('[CLOCK_IN] ❌ CLOCKING DENIED - Fingerprint mismatch');
+          if (!mounted) return;
           FingerprintErrorHandler.showError(context,
               'Fingerprint does NOT match this learner! Clocking denied.');
           setState(() => _isClockingIn[learnerId] = false);
         }
       } catch (e) {
         debugPrint('[CLOCK_IN] Verification error: $e');
+        if (!mounted) return;
         FingerprintErrorHandler.showError(context, e.toString());
       } finally {
         setState(() {

@@ -1746,7 +1746,7 @@ class _MaterialFormState extends State<MaterialForm> {
 
     // Check connectivity
     final connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult == ConnectivityResult.none) {
+    if (connectivityResult.contains(ConnectivityResult.none)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text("No internet connection. Please try again later.")),

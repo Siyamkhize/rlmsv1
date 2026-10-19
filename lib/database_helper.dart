@@ -5341,7 +5341,7 @@ updated_at TIMESTAMP
     try {
       // Check connectivity first
       var connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      if (connectivityResult.contains(ConnectivityResult.none)) {
         print("No internet connection, skipping server check");
         return null;
       }
@@ -7650,7 +7650,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       try {
         // Check connectivity first
         final connectivityResult = await Connectivity().checkConnectivity();
-        if (connectivityResult != ConnectivityResult.none) {
+        if (!connectivityResult.contains(ConnectivityResult.none)) {
           debugPrint(
               '[SYNC] Internet available, attempting immediate sync for $scannerType template');
 
@@ -8988,7 +8988,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     Timer.periodic(const Duration(seconds: 30), (timer) async {
       try {
         final connectivityResult = await Connectivity().checkConnectivity();
-        if (connectivityResult != ConnectivityResult.none) {
+        if (!connectivityResult.contains(ConnectivityResult.none)) {
           await syncUnsyncedFingerprints();
         }
       } catch (e) {

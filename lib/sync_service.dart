@@ -22,11 +22,7 @@ Future<bool> syncSingleClockIn(Map<String, dynamic> attendance) async {
   final connectivityResult = await Connectivity().checkConnectivity();
   print('Connectivity result: $connectivityResult');
 
-  // Handle both List and single ConnectivityResult
-  final isOffline = connectivityResult is List
-      ? (connectivityResult.isEmpty ||
-          connectivityResult.first == ConnectivityResult.none)
-      : (connectivityResult == ConnectivityResult.none);
+  final isOffline = connectivityResult.contains(ConnectivityResult.none);
 
   if (isOffline) {
     print('No internet connection - returning false');
@@ -136,11 +132,7 @@ Future<bool> syncSingleClockOut(Map<String, dynamic> attendance) async {
   final connectivityResult = await Connectivity().checkConnectivity();
   print('Connectivity result: $connectivityResult');
 
-  // Handle both List and single ConnectivityResult
-  final isOffline = connectivityResult is List
-      ? (connectivityResult.isEmpty ||
-          connectivityResult.first == ConnectivityResult.none)
-      : (connectivityResult == ConnectivityResult.none);
+  final isOffline = connectivityResult.contains(ConnectivityResult.none);
 
   if (isOffline) {
     print('No internet connection - returning false');
@@ -1497,7 +1489,7 @@ class SyncService extends ChangeNotifier {
 
   Future<bool> isConnected() async {
     final connectivityResult = await Connectivity().checkConnectivity();
-    return connectivityResult != ConnectivityResult.none;
+    return !connectivityResult.contains(ConnectivityResult.none);
   }
 
   void showSyncError(String message) {

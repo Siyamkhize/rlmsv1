@@ -574,6 +574,10 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
 
   Future<bool> _submitLearnerData(BuildContext context,
       Map<String, dynamic> learnerData, Map<String, dynamic>? bankData) async {
+    // Extract context refs BEFORE any awaits
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    
     try {
       final dbHelper = DatabaseHelper();
 
@@ -583,7 +587,8 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
         learnerData['classID'],
       );
 
-      if (existingLearner != null && mounted) {
+      if (existingLearner != null) {
+        if (!mounted) return false;
         // Learner exists in same project - show confirmation dialog
         final shouldUpdate = await showDialog<bool>(
           context: context,
@@ -631,11 +636,9 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
         syncResult = await _syncWithBackend(learnerData, bankData);
       }
 
-      if (!mounted) return false;
-
       // Show appropriate success message
       if (syncResult) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             content: Text(existingLearner != null
                 ? 'Learner updated successfully and synced with server'
@@ -644,7 +647,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           ),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             content: Text(isOnline
                 ? (existingLearner != null
@@ -659,12 +662,12 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
       }
 
       // Navigate back
-      Navigator.pop(context, true); // Return true to indicate success
+      navigator.pop(true); // Return true to indicate success
       return true;
     } catch (e) {
       print('Error adding learner: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             content: Text('Error adding learner: $e'),
             backgroundColor: Colors.red,

@@ -166,7 +166,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
       print('⚡ Fetching learners for classID: ${widget.classID}');
 
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      if (connectivityResult.contains(ConnectivityResult.none)) {
         print('❌ No internet connection. Attempting local database fetch...');
         await fetchLearnerss(widget.classID);
         return;
@@ -575,7 +575,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
   Future<bool> _checkConnectivity() async {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
-      return connectivityResult != ConnectivityResult.none;
+      return !connectivityResult.contains(ConnectivityResult.none);
     } catch (e) {
       return false;
     }

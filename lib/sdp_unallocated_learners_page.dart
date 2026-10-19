@@ -142,7 +142,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
 
   Future<bool> _checkConnectivity() async {
     final connectivityResult = await Connectivity().checkConnectivity();
-    return connectivityResult != ConnectivityResult.none;
+    return !connectivityResult.contains(ConnectivityResult.none);
   }
 
   /// Fetch paginated learners from server
