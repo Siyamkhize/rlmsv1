@@ -73,8 +73,8 @@ if ($hasClockIn && $hasClockOut) {
 }
 
 // Evidence base path
-$evidenceBasePath = __DIR__ . '/manual_clocking_evidence/';
-$evidenceBaseUrl = 'manual_clocking_evidence/';
+$evidenceBasePath = __DIR__ . '/mobile/manual_clocking_evidence/';
+$evidenceBaseUrl = '/mobile/manual_clocking_evidence/';
 ?>
 <!DOCTYPE html>
 <html lang="en">
