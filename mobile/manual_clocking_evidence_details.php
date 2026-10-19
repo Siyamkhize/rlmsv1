@@ -9,10 +9,11 @@ if ($evidence_id <= 0) {
 }
 
 // Fetch evidence record with all related information
+// Using LEFT JOINs to show evidence even if learner data is incomplete
 $query = "
     SELECT 
         mce.*,
-        CONCAT(ld.Name, ' ', ld.Surname) as learner_name,
+        CONCAT(COALESCE(ld.Name, 'Unknown'), ' ', COALESCE(ld.Surname, '')) as learner_name,
         ld.IDNumber,
         ld.Title,
         ld.Name as learner_first_name,
@@ -29,7 +30,7 @@ $query = "
         lc.clock_out_time,
         lc.contact_time as actual_contact_time
     FROM manual_clocking_evidence mce
-    INNER JOIN learnerdetails ld ON mce.LearnerID = ld.LearnerID
+    LEFT JOIN learnerdetails ld ON mce.LearnerID = ld.LearnerID
     LEFT JOIN class c ON ld.classID = c.classID
     LEFT JOIN sites s ON c.siteID = s.siteID
     LEFT JOIN project p ON s.project_id = p.project_id
@@ -76,6 +77,36 @@ if ($hasClockIn && $hasClockOut) {
 // Note: This file is deployed to ROOT level, but evidence folder is inside mobile/
 $evidenceBasePath = __DIR__ . '/mobile/manual_clocking_evidence/';
 $evidenceBaseUrl = 'mobile/manual_clocking_evidence/';
+
+// Helper function to get the full file path with subfolder
+function getEvidenceFilePath($evidenceBasePath, $filename) {
+    if (empty($filename)) return '';
+    
+    // Determine subfolder based on filename prefix
+    if (strpos($filename, 'signature_') === 0) {
+        return $evidenceBasePath . 'signatures/' . $filename;
+    } elseif (strpos($filename, 'face_') === 0) {
+        return $evidenceBasePath . 'faces/' . $filename;
+    }
+    
+    // Fallback: try direct path
+    return $evidenceBasePath . $filename;
+}
+
+// Helper function to get the URL with subfolder
+function getEvidenceFileUrl($evidenceBaseUrl, $filename) {
+    if (empty($filename)) return '';
+    
+    // Determine subfolder based on filename prefix
+    if (strpos($filename, 'signature_') === 0) {
+        return $evidenceBaseUrl . 'signatures/' . $filename;
+    } elseif (strpos($filename, 'face_') === 0) {
+        return $evidenceBaseUrl . 'faces/' . $filename;
+    }
+    
+    // Fallback: try direct path
+    return $evidenceBaseUrl . $filename;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -426,9 +457,9 @@ $evidenceBaseUrl = 'mobile/manual_clocking_evidence/';
                     <!-- Signature In -->
                     <div class="evidence-box">
                         <h5><i class="fas fa-signature text-primary"></i> Signature - Clock In</h5>
-                        <?php if ($evidence['signature_in'] && file_exists($evidenceBasePath . $evidence['signature_in'])): ?>
+                        <?php if ($evidence['signature_in'] && file_exists(getEvidenceFilePath($evidenceBasePath, $evidence['signature_in']))): ?>
                             <img 
-                                src="<?php echo $evidenceBaseUrl . htmlspecialchars($evidence['signature_in']); ?>" 
+                                src="<?php echo htmlspecialchars(getEvidenceFileUrl($evidenceBaseUrl, $evidence['signature_in'])); ?>" 
                                 alt="Signature Clock In"
                                 onclick="showModal(this.src, 'Signature - Clock In')"
                             >
@@ -449,9 +480,9 @@ $evidenceBaseUrl = 'mobile/manual_clocking_evidence/';
                     <!-- Face Photo In -->
                     <div class="evidence-box">
                         <h5><i class="fas fa-face-smile text-info"></i> Face Photo - Clock In</h5>
-                        <?php if ($evidence['face_in'] && file_exists($evidenceBasePath . $evidence['face_in'])): ?>
+                        <?php if ($evidence['face_in'] && file_exists(getEvidenceFilePath($evidenceBasePath, $evidence['face_in']))): ?>
                             <img 
-                                src="<?php echo $evidenceBaseUrl . htmlspecialchars($evidence['face_in']); ?>" 
+                                src="<?php echo htmlspecialchars(getEvidenceFileUrl($evidenceBaseUrl, $evidence['face_in'])); ?>" 
                                 alt="Face Photo Clock In"
                                 onclick="showModal(this.src, 'Face Photo - Clock In')"
                             >
@@ -472,9 +503,9 @@ $evidenceBaseUrl = 'mobile/manual_clocking_evidence/';
                     <!-- Signature Out -->
                     <div class="evidence-box">
                         <h5><i class="fas fa-signature text-success"></i> Signature - Clock Out</h5>
-                        <?php if ($evidence['signature_out'] && file_exists($evidenceBasePath . $evidence['signature_out'])): ?>
+                        <?php if ($evidence['signature_out'] && file_exists(getEvidenceFilePath($evidenceBasePath, $evidence['signature_out']))): ?>
                             <img 
-                                src="<?php echo $evidenceBaseUrl . htmlspecialchars($evidence['signature_out']); ?>" 
+                                src="<?php echo htmlspecialchars(getEvidenceFileUrl($evidenceBaseUrl, $evidence['signature_out'])); ?>" 
                                 alt="Signature Clock Out"
                                 onclick="showModal(this.src, 'Signature - Clock Out')"
                             >
@@ -495,9 +526,9 @@ $evidenceBaseUrl = 'mobile/manual_clocking_evidence/';
                     <!-- Face Photo Out -->
                     <div class="evidence-box">
                         <h5><i class="fas fa-face-smile text-warning"></i> Face Photo - Clock Out</h5>
-                        <?php if ($evidence['face_out'] && file_exists($evidenceBasePath . $evidence['face_out'])): ?>
+                        <?php if ($evidence['face_out'] && file_exists(getEvidenceFilePath($evidenceBasePath, $evidence['face_out']))): ?>
                             <img 
-                                src="<?php echo $evidenceBaseUrl . htmlspecialchars($evidence['face_out']); ?>" 
+                                src="<?php echo htmlspecialchars(getEvidenceFileUrl($evidenceBaseUrl, $evidence['face_out'])); ?>" 
                                 alt="Face Photo Clock Out"
                                 onclick="showModal(this.src, 'Face Photo - Clock Out')"
                             >
