@@ -1544,6 +1544,8 @@ class _AdminPageState extends State<AdminPage> {
 
       setState(() {});
     } catch (e) {
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error syncing documents: $e')),
       );
