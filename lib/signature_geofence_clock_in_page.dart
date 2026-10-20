@@ -139,12 +139,15 @@ class _SignatureGeofenceClockInPageState
 
       // Check location permission
       final permission = await Geolocator.checkPermission();
+      if (!mounted) return;
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
         final newPermission = await Geolocator.requestPermission();
+        if (!mounted) return;
         if (newPermission == LocationPermission.denied ||
             newPermission == LocationPermission.deniedForever) {
           print('[SIGNATURE_GEO] Location permission denied');
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('⚠️ Location permission required for geofencing'),
@@ -166,6 +169,7 @@ class _SignatureGeofenceClockInPageState
         final gpsPosition = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
         ).timeout(const Duration(seconds: 30));
+        if (!mounted) return;
 
         setState(() {
           _currentPosition = gpsPosition;
@@ -193,6 +197,7 @@ class _SignatureGeofenceClockInPageState
           final networkPosition = await Geolocator.getCurrentPosition(
             desiredAccuracy: LocationAccuracy.medium,
           ).timeout(const Duration(seconds: 15));
+          if (!mounted) return;
 
           setState(() {
             _currentPosition = networkPosition;
@@ -213,6 +218,7 @@ class _SignatureGeofenceClockInPageState
               '[SIGNATURE_GEO] ⚠️ Network location obtained: ${networkPosition.latitude}, ${networkPosition.longitude}, accuracy: ${networkPosition.accuracy}m');
           
           // Show warning that network location is less accurate
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -226,6 +232,8 @@ class _SignatureGeofenceClockInPageState
           setState(() => _isLoadingLocation = false);
           
           // Show error with retry option
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('❌ GPS not available. Go outdoors and retry.'),
@@ -478,6 +486,8 @@ class _SignatureGeofenceClockInPageState
     } catch (e) {
       print('[SIGNATURE_GEO] Error loading learners: $e');
       print('[SIGNATURE_GEO] Stack trace: ${StackTrace.current}');
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error loading learners: $e')));
@@ -693,6 +703,7 @@ class _SignatureGeofenceClockInPageState
 
     // Step 1: STRICT GEOFENCING - Check if location is available and within range
     if (_currentPosition == null || _siteLat == null || _siteLon == null) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -714,6 +725,7 @@ class _SignatureGeofenceClockInPageState
 
     // STRICT ENFORCEMENT: Block if outside 50m radius
     if (distance > 50) {
+      if (!context.mounted) return;
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -782,6 +794,7 @@ class _SignatureGeofenceClockInPageState
     // Step 2: Now show signature dialog (photo was already captured in _handleClockIn/_handleClockOut)
     _signatureController.clear();
 
+    if (!context.mounted) return;
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -902,6 +915,7 @@ class _SignatureGeofenceClockInPageState
           ElevatedButton(
             onPressed: () async {
               if (_signatureController.isEmpty) {
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Please provide a signature')),
                 );
@@ -911,6 +925,7 @@ class _SignatureGeofenceClockInPageState
               // Store signature per learner ID
               try {
                 final signatureBytes = await _signatureController.toPngBytes();
+                if (!mounted) return;
                 if (signatureBytes != null) {
                   final learnerIdInt = int.parse(learnerID);
                   _learnerSignatureBytes[learnerIdInt] = signatureBytes;
@@ -920,6 +935,7 @@ class _SignatureGeofenceClockInPageState
                 print('Error storing signature: $e');
               }
 
+              if (!context.mounted) return;
               Navigator.of(context).pop(true);
             },
             child: const Text('Confirm'),
@@ -946,9 +962,11 @@ class _SignatureGeofenceClockInPageState
     // CRITICAL: Verify device time is correct before allowing clock-in
     debugPrint('[SIGNATURE_GEO] Checking device time...');
     final timeOk = await TimezoneValidator.ensureCorrectTime(context);
+    if (!mounted) return;
     if (!timeOk) {
       debugPrint('[SIGNATURE_GEO] ❌ Device time check failed');
       // User cancelled or time is wrong - block clock-in
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Clock-in cancelled: Device time must be corrected first'),
@@ -964,6 +982,7 @@ class _SignatureGeofenceClockInPageState
     final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     if (clockInTimes[learnerID]?.isNotEmpty == true) {
       debugPrint('[SIGNATURE_GEO] ⚠️ Already clocked in at ${clockInTimes[learnerID]}');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -979,6 +998,7 @@ class _SignatureGeofenceClockInPageState
     try {
       debugPrint('[SIGNATURE_GEO] Step 1: Checking profile completion...');
       final profileOk = await ensureLearnerProfileCompleteForClockIn(learnerID);
+      if (!mounted) return;
       if (!profileOk) {
         debugPrint('[SIGNATURE_GEO] ❌ Profile check failed - stopping');
         return;
@@ -987,6 +1007,7 @@ class _SignatureGeofenceClockInPageState
 
       debugPrint('[SIGNATURE_GEO] Step 2: Checking documents...');
       final docsOk = await ensureLearnerDocumentsCompleteForClockIn(learnerID);
+      if (!mounted) return;
       if (!docsOk) {
         debugPrint('[SIGNATURE_GEO] ❌ Document check failed - stopping');
         return;
@@ -1003,6 +1024,7 @@ class _SignatureGeofenceClockInPageState
       );
       final learnerName = '${learnerData['Name']} ${learnerData['Surname']}';
 
+      if (!context.mounted) return;
       final faceResult = await Navigator.push<Map<String, dynamic>>(
         context,
         MaterialPageRoute(
@@ -1017,6 +1039,7 @@ class _SignatureGeofenceClockInPageState
           ),
         ),
       );
+      if (!mounted) return;
 
       // Check if camera was closed without capturing (user cancelled)
       if (!_learnerPhotoBytes.containsKey(int.parse(learnerID))) {
@@ -1034,6 +1057,7 @@ class _SignatureGeofenceClockInPageState
       print(
           '[SIGNATURE_GEO] Starting signature capture for learner: $learnerID');
       await _showSignatureDialog(learnerID, true); // true = isClockIn
+      if (!mounted) return;
 
       // Check if signature was captured successfully
       if (!_learnerSignatureBytes.containsKey(int.parse(learnerID))) {
@@ -1054,6 +1078,7 @@ class _SignatureGeofenceClockInPageState
           print('[SIGNATURE_GEO] 🚀 Attempting ONLINE clock-in for learner: $learnerID');
           try {
             await _clockInOnline(learnerID, '');
+            if (!mounted) return;
             print('[SIGNATURE_GEO] ✅ ONLINE clock-in succeeded');
           } catch (onlineError) {
             print('[SIGNATURE_GEO] ❌ ONLINE clock-in FAILED: $onlineError');
@@ -1061,6 +1086,7 @@ class _SignatureGeofenceClockInPageState
             
             // Fall back to offline mode if online fails
             await _clockInOffline(learnerID, clockInTime);
+            if (!mounted) return;
             
             // Trigger sync immediately (will try to upload what we just saved)
             print('[SIGNATURE_GEO] 🔄 Triggering immediate sync after offline save');
@@ -1069,6 +1095,7 @@ class _SignatureGeofenceClockInPageState
         } else {
           print('[SIGNATURE_GEO] 💾 Using OFFLINE clock-in (no network)');
           await _clockInOffline(learnerID, clockInTime);
+          if (!mounted) return;
         }
 
         setState(() {
@@ -1078,6 +1105,8 @@ class _SignatureGeofenceClockInPageState
     } catch (e) {
       print('[SIGNATURE_GEO] ⚠️ CRITICAL Clock-in error: $e');
       print('[SIGNATURE_GEO] Stack trace: ${StackTrace.current}');
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(
@@ -1095,6 +1124,7 @@ class _SignatureGeofenceClockInPageState
 
     // Check if learner hasn't clocked in yet
     if (clockInTimes[learnerID]?.isEmpty != false) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Learner must clock in first before clocking out'),
@@ -1106,6 +1136,7 @@ class _SignatureGeofenceClockInPageState
 
     // Check if learner already clocked out today (prevent duplicates)
     if (clockOutTimes[learnerID]?.isNotEmpty == true) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -1128,6 +1159,7 @@ class _SignatureGeofenceClockInPageState
       );
       final learnerName = '${learnerData['Name']} ${learnerData['Surname']}';
 
+      if (!context.mounted) return;
       final faceResult = await Navigator.push<Map<String, dynamic>>(
         context,
         MaterialPageRoute(
@@ -1141,6 +1173,7 @@ class _SignatureGeofenceClockInPageState
           ),
         ),
       );
+      if (!mounted) return;
 
       // Check if camera was closed without capturing (user cancelled)
       if (!_learnerPhotoBytes.containsKey(int.parse(learnerID))) {
@@ -1158,6 +1191,7 @@ class _SignatureGeofenceClockInPageState
       print(
           '[SIGNATURE_GEO] Starting signature capture for clock-out: $learnerID');
       await _showSignatureDialog(learnerID, false); // false = isClockOut
+      if (!mounted) return;
 
       // Check if signature was captured successfully
       if (!_learnerSignatureBytes.containsKey(int.parse(learnerID))) {
@@ -1175,8 +1209,10 @@ class _SignatureGeofenceClockInPageState
 
         if (_isOnline) {
           await _clockOutOnline(learnerID, '', synced: false);
+          if (!mounted) return;
         } else {
           await _clockOutOffline(learnerID, clockOutTime, clockDate);
+          if (!mounted) return;
         }
 
         setState(() {
@@ -1185,6 +1221,8 @@ class _SignatureGeofenceClockInPageState
       }
     } catch (e) {
       print('[SIGNATURE_GEO] Clock-out error: $e');
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Clock-out failed: $e')));
@@ -1197,6 +1235,7 @@ class _SignatureGeofenceClockInPageState
   Future<void> _storeLearnerClockingData(String learnerID, String type) async {
     // Warn at 14 so the 15th addition triggers the alert (>= 15 was off-by-one)
     if (_batchClockings.length >= 14 && !_batchClockings.containsKey(learnerID)) {
+      if (!context.mounted) return;
       final shouldContinue = await showDialog<bool>(
         context: context,
         barrierDismissible: false,
@@ -1221,9 +1260,11 @@ class _SignatureGeofenceClockInPageState
           );
         },
       );
+      if (!mounted) return;
 
       if (shouldContinue == true) {
         await _submitBatch();
+        if (!mounted) return;
         return;
       }
     }
@@ -1240,6 +1281,7 @@ class _SignatureGeofenceClockInPageState
     
     // Verify photo and signature were already captured in current flow
     if (!_learnerPhotoBytes.containsKey(learnerIdInt)) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Photo not captured. Batch collection aborted.'),
@@ -1250,6 +1292,7 @@ class _SignatureGeofenceClockInPageState
     }
     
     if (!_learnerSignatureBytes.containsKey(learnerIdInt)) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Signature not captured. Batch collection aborted.'),
@@ -1285,6 +1328,7 @@ class _SignatureGeofenceClockInPageState
 
     setState(() {});
 
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -1299,6 +1343,7 @@ class _SignatureGeofenceClockInPageState
   /// Submit collected batch clockings using OfflineSyncQueueService
   Future<void> _submitBatch() async {
     if (_batchClockings.isEmpty) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('No learner clockings collected'),
@@ -1320,10 +1365,11 @@ class _SignatureGeofenceClockInPageState
         widget.classID,
         learnerClockings,
       );
+      if (!mounted) return;
 
       // Handle batch size rejection from queue service
       if (result['success'] == false) {
-        if (mounted) {
+        if (mounted && context.mounted) {
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
@@ -1375,6 +1421,7 @@ class _SignatureGeofenceClockInPageState
             ? '✅ Batch submitted successfully (${learnerClockings.length} learners)'
             : '📤 Batch queued for sync (${learnerClockings.length} learners)';
 
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
@@ -1387,6 +1434,7 @@ class _SignatureGeofenceClockInPageState
       }
     } catch (e) {
       print('[SIGNATURE_GEO] Batch submission error: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Batch submission failed: $e'),
@@ -1553,6 +1601,8 @@ class _SignatureGeofenceClockInPageState
 
         print('[SIGNATURE_GEO] ✅✅✅ Clock-in COMPLETELY SUCCESSFUL for learner: $learnerID (SYNCED TO SERVER)');
 
+        if (!mounted) return;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result['message'] ?? 'Clock-in successful'),
@@ -1735,6 +1785,8 @@ class _SignatureGeofenceClockInPageState
         final hasClockOut = clockOutTimes[learnerID]?.isNotEmpty == true;
         final isComplete = hasClockIn && hasClockOut;
 
+        if (!mounted) return;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(
@@ -1827,6 +1879,8 @@ class _SignatureGeofenceClockInPageState
 
       print('[SIGNATURE_GEO] 🟠 Learner $learnerID marked as UNSYNCED (offline data)');
 
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('⚠️ Clock-in saved locally. Will sync when online.'),
@@ -1835,6 +1889,8 @@ class _SignatureGeofenceClockInPageState
       );
     } catch (e) {
       print('[SIGNATURE_GEO] Offline clock-in error: $e');
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving offline clock-in: $e')),
       );
@@ -1862,6 +1918,8 @@ class _SignatureGeofenceClockInPageState
       );
 
       if (existingRecords.isEmpty) {
+        if (!mounted) return;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No clock-in record found for today.')),
         );
@@ -1961,6 +2019,8 @@ class _SignatureGeofenceClockInPageState
       final hasClockOut = clockOutTimes[learnerID]?.isNotEmpty == true;
       final isComplete = hasClockIn && hasClockOut;
 
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(isComplete
@@ -1972,6 +2032,8 @@ class _SignatureGeofenceClockInPageState
       );
     } catch (e) {
       print('[SIGNATURE_GEO] Offline clock-out error: $e');
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving offline clock-out: $e')),
       );
@@ -1995,6 +2057,8 @@ class _SignatureGeofenceClockInPageState
       );
 
       if (existingRecords.isEmpty) {
+        if (!mounted) return;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No clock-in record found for today.')),
         );
@@ -2041,6 +2105,8 @@ class _SignatureGeofenceClockInPageState
       final hasClockOut = clockOutTimes[learnerID]?.isNotEmpty == true;
       final isComplete = hasClockIn && hasClockOut;
 
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(isComplete
@@ -2052,6 +2118,8 @@ class _SignatureGeofenceClockInPageState
       );
     } catch (e) {
       print('[SIGNATURE_GEO] Error updating clock-out: $e');
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error updating clock-out: $e')));
@@ -2643,7 +2711,7 @@ class _SignatureGeofenceClockInPageState
           print('[SIGNATURE_GEO] ⏳ $remainingCount records remaining (will sync in next batch)');
         }
         
-        if (syncedCount > 0 && mounted) {
+        if (syncedCount > 0 && mounted && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('✅ Synced $syncedCount offline record(s) to server${remainingCount > 0 ? ' ($remainingCount remaining)' : ''}'),
