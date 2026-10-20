@@ -5955,6 +5955,8 @@ class _AppealFormDetailPageState extends State<AppealFormDetailPage> {
               _isSubmitting = false;
             });
           }
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text(_responseMessage)));
         } else {
@@ -5963,6 +5965,8 @@ class _AppealFormDetailPageState extends State<AppealFormDetailPage> {
                 'Server error: ${response.statusCode} - ${response.body}';
             _isSubmitting = false;
           });
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text(_responseMessage)));
         }
@@ -7023,6 +7027,8 @@ class _PotholeChecklistLearnerListPageState
         }
       }
     } catch (e) {
+      if (!mounted) return;
+      if (!context.mounted) return;
       _showError(context, 'Error scanning document: $e');
     }
   }
@@ -8666,6 +8672,8 @@ class _PotholeChecklistScannedViewPageState
       }
     } catch (e) {
       print('DEBUG: Error opening document: $e');
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text('Error opening document: $e'),
@@ -9984,6 +9992,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
       }
 
       if (activities.isEmpty) {
+        if (!context.mounted) return;
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -12347,6 +12356,8 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
                     );
                   } catch (e) {
                     print('[APPX H] ERROR: $e');
+                    if (!mounted) return;
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Error opening toolkit: $e'),
@@ -12365,6 +12376,7 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
         },
       );
     } catch (e) {
+      if (!context.mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error: $e')));
