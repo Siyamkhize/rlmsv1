@@ -589,6 +589,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
 
       if (existingLearner != null) {
         if (!mounted) return false;
+        if (!context.mounted) return false;
         // Learner exists in same project - show confirmation dialog
         final shouldUpdate = await showDialog<bool>(
           context: context,
@@ -618,6 +619,8 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
             );
           },
         );
+        if (!mounted) return false;
+        if (!context.mounted) return false;
 
         if (shouldUpdate != true) {
           // User cancelled

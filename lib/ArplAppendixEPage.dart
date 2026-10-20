@@ -130,6 +130,8 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
         final data = json.decode(response.body);
 
         if (data['status'] == 'success') {
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(data['message'] ?? 'Ratings saved successfully'),

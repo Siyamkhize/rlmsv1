@@ -552,13 +552,13 @@ class _ArplPOETabState extends State<ArplPOETab> {
                           await launchUrl(uri,
                               mode: LaunchMode.externalApplication);
                         } else {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content:
-                                      Text('Could not open the ARPL page')),
-                            );
-                          }
+                          if (!mounted) return;
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content:
+                                    Text('Could not open the ARPL page')),
+                          );
                         }
                       },
                       icon: const Icon(Icons.assessment),
