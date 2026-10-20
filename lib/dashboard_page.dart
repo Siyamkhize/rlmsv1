@@ -1147,6 +1147,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
         // Close scanning dialog if still open
         try {
+          if (!mounted) return;
+          if (!context.mounted) return;
           Navigator.of(context).pop();
         } catch (navError) {
           print('[CLOCK_IN] Error closing dialog: $navError');
@@ -1160,6 +1162,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
       // Close scanning dialog if still open
       try {
+        if (!mounted) return;
+        if (!context.mounted) return;
         Navigator.of(context).pop();
       } catch (navError) {
         print('[CLOCK_IN] Error closing dialog: $navError');

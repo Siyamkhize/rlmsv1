@@ -2472,6 +2472,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
     } catch (e, stackTrace) {
       print('Error: $e');
       print('StackTrace: $stackTrace');
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -2480,6 +2482,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
 
   // Save form offline (simplified version)
   Future<void> saveMaterialFormOffline() async {
+    if (!mounted) return;
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Offline saving not implemented yet')),
     );

@@ -1511,6 +1511,8 @@ class _AdminPageState extends State<AdminPage> {
 
   Future<void> syncUnsyncedDocuments() async {
     if (!await _checkConnectivity()) {
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No internet connection, cannot sync')),
       );
@@ -1526,6 +1528,8 @@ class _AdminPageState extends State<AdminPage> {
         await _syncDocument(doc);
       }
 
+      if (!mounted) return;
+      if (!context.mounted) return;
       if (unsyncedDocs.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

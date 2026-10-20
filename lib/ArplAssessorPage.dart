@@ -1030,10 +1030,14 @@ class _UnitStandardDetailPageState extends State<UnitStandardDetailPage> {
             _isSubmitting = false;
           });
           if (data['status'] == 'success') {
+            if (!mounted) return;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Form saved successfully!')),
             );
           } else {
+            if (!mounted) return;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Error: ${data['message']}')),
             );
@@ -1044,6 +1048,8 @@ class _UnitStandardDetailPageState extends State<UnitStandardDetailPage> {
                 'Server error: ${response.statusCode} - ${response.body}';
             _isSubmitting = false;
           });
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Server error: ${response.statusCode}')),
           );
@@ -1054,6 +1060,8 @@ class _UnitStandardDetailPageState extends State<UnitStandardDetailPage> {
           _isSubmitting = false;
         });
         print("Exception: $e");
+        if (!mounted) return;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
@@ -1437,11 +1445,15 @@ class _AssessmentPlanDetailPageState extends State<AssessmentPlanDetailPage> {
             _isSubmitting = false;
           });
           if (data['status'] == 'success') {
+            if (!mounted) return;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                   content: Text('Assessment plan saved successfully!')),
             );
           } else {
+            if (!mounted) return;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Error: ${data['message']}')),
             );
@@ -1452,6 +1464,8 @@ class _AssessmentPlanDetailPageState extends State<AssessmentPlanDetailPage> {
                 'Server error: ${response.statusCode} - ${response.body}';
             _isSubmitting = false;
           });
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Server error: ${response.statusCode}')),
           );
@@ -1462,6 +1476,8 @@ class _AssessmentPlanDetailPageState extends State<AssessmentPlanDetailPage> {
           _isSubmitting = false;
         });
         print("Exception: $e");
+        if (!mounted) return;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
