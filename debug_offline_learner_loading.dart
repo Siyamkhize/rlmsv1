@@ -7,7 +7,7 @@ import 'lib/database_helper.dart';
 class DebugOfflineLearnerLoading extends StatelessWidget {
   final String classID = '134'; // Your class ID
 
-  const DebugOfflineLearnerLoading({Key? key}) : super(key: key);
+  const DebugOfflineLearnerLoading({super.key});
 
   Future<void> debugLearnerLoading(BuildContext context) async {
     final dbHelper = DatabaseHelper();
@@ -88,11 +88,11 @@ class DebugOfflineLearnerLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Debug Offline Learner Loading')),
+      appBar: AppBar(title: const Text('Debug Offline Learner Loading')),
       body: Center(
         child: ElevatedButton(
           onPressed: () => debugLearnerLoading(context),
-          child: Text('Run Debug Test'),
+          child: const Text('Run Debug Test'),
         ),
       ),
     );

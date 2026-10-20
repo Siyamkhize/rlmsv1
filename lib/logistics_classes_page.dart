@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 import 'config.dart';
-import 'logistics_LearningMaterialFormPage.dart';
+import 'logistics_learning_material_form_page.dart';
 
 class LogisticsClassesPage extends StatefulWidget {
   final String logisticsId;

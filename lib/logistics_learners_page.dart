@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'config.dart';
 import 'poe_submit.dart';
-import 'logistics_LearningMaterialFormPage.dart';
+import 'logistics_learning_material_form_page.dart';
 
 class LogisticsLearnersPage extends StatefulWidget {
   final String logisticsId;
