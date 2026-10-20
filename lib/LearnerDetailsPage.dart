@@ -1640,6 +1640,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           print('[SIG_UPDATE] Offline - saving learner signature locally...');
           await DatabaseHelper().saveSignatureLocally(
               widget.learnerID, signaturePath, 'signature');
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Learner signature saved locally')),
           );
@@ -1666,6 +1667,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           print('[SIG_UPDATE] Offline - saving witness signature locally...');
           await DatabaseHelper().saveSignatureLocally(
               widget.learnerID, signaturePath, 'witness_signature');
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Witness signature saved locally')),
           );
@@ -1686,6 +1688,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         } else {
           await DatabaseHelper().saveInitialsLocally(widget.learnerID,
               _learnerInitialsController.text, 'learner_initials');
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Learner initials saved locally')),
           );
@@ -1701,6 +1704,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         } else {
           await DatabaseHelper().saveInitialsLocally(widget.learnerID,
               _witnessInitialsController.text, 'witness_initials');
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Witness initials saved locally')),
           );
@@ -1731,6 +1735,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       }
     } catch (e) {
       print('Error updating data: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error updating data: $e')),
       );
@@ -3793,11 +3798,13 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
   Future<void> _downloadAgreement() async {
     try {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Downloading agreement...')),
       );
       await _downloadAndSaveWordDocument();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error downloading agreement: $e'),
@@ -3827,6 +3834,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             final jsonResponse = jsonDecode(response.body);
             print(
                 '[AGREEMENT_DOWNLOAD] Server error: ${jsonResponse['error']}');
+            if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -3850,6 +3858,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           print(
               '[AGREEMENT_DOWNLOAD] File size: ${response.bodyBytes.length} bytes');
 
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Agreement downloaded successfully!'),
@@ -3863,6 +3872,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         } else {
           // Unknown content type
           print('[AGREEMENT_DOWNLOAD] Unexpected content type: $contentType');
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Unexpected response format from server'),
@@ -3873,6 +3883,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       } else {
         print('[AGREEMENT_DOWNLOAD] Failed with HTTP ${response.statusCode}');
         print('[AGREEMENT_DOWNLOAD] Response body: ${response.body}');
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -3883,6 +3894,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     } catch (e, stackTrace) {
       print('[AGREEMENT_DOWNLOAD] Exception: $e');
       print('[AGREEMENT_DOWNLOAD] Stack trace: $stackTrace');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error downloading agreement: $e'),
@@ -4024,6 +4036,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           print('$fieldName uploaded successfully');
         } else {
           print('$fieldName upload failed: ${jsonResponse['message']}');
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text(
@@ -4034,6 +4047,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         }
       } else {
         print('Failed to upload $fieldName: HTTP ${response.statusCode}');
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -4044,6 +4058,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       }
     } catch (e) {
       print('Error uploading $fieldName: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error uploading $fieldName: $e')),
       );
@@ -4139,6 +4154,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                           '[DB_SYNC] ✅ In-memory learnerData refreshed with $fieldName: ${learnerData![fieldName]}');
                     }
 
+                    if (!mounted) return false;
+                    if (!context.mounted) return false;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('$fieldName saved locally')),
                     );
@@ -4156,6 +4173,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                         '[SIG_SAVE] Marked witness signature as already saved');
                   }
 
+                  if (!mounted) return false;
+                  if (!context.mounted) return false;
                   Navigator.pop(context);
                 }
               } else {
@@ -4254,11 +4273,15 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                         '[DB_SYNC] ✅ In-memory learnerData refreshed with $fieldName: ${learnerData![fieldName]}');
                   }
 
+                  if (!mounted) return false;
+                  if (!context.mounted) return false;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('$fieldName saved locally')),
                   );
                 }
                 saved = true;
+                if (!mounted) return false;
+                if (!context.mounted) return false;
                 Navigator.pop(context);
               }
             },
@@ -4466,6 +4489,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       }
 
       // Use direct camera navigation - no external app launch
+      if (!mounted) return;
+      if (!context.mounted) return;
       final imagePath = await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => CameraPreviewScreen(
@@ -4474,6 +4499,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           ),
         ),
       );
+      if (!mounted) return;
+      if (!context.mounted) return;
 
       if (imagePath != null) {
         print('Image captured: $imagePath');
@@ -4493,17 +4520,19 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         // Save to local DB immediately (offline-first - never lose the image)
         await saveImageLocally(savedImagePath);
 
-        if (mounted) {
-          final isConnected = await _checkConnectivity();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(isConnected
-                  ? 'Photo captured and saved!'
-                  : 'Photo saved locally (will sync when online)'),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 2),
-            ),
-          );
+        if (!mounted) return;
+        final isConnected = await _checkConnectivity();
+        if (!mounted) return;
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isConnected
+                ? 'Photo captured and saved!'
+                : 'Photo saved locally (will sync when online)'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
         }
       } else {
         print('No image captured - user cancelled');
@@ -4577,17 +4606,19 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             // Save to local DB immediately (offline-first)
             await saveImageLocally(savedPath);
 
-            if (mounted) {
-              final isConnected = await _checkConnectivity();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(isConnected
-                      ? 'Image selected and saved!'
-                      : 'Image saved locally (will sync when online)'),
-                  backgroundColor: Colors.green,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
+            if (!mounted) return;
+            final isConnected = await _checkConnectivity();
+            if (!mounted) return;
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(isConnected
+                    ? 'Image selected and saved!'
+                    : 'Image saved locally (will sync when online)'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
+              ),
+            );
             }
           } else {
             throw Exception('Selected image file is empty');
@@ -4707,9 +4738,13 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
   Future<void> _capturePhoto() async {
     try {
       final image = await widget.cameraController.takePicture();
+      if (!mounted) return;
+      if (!context.mounted) return;
       Navigator.pop(context, image.path);
     } catch (e) {
       print('Error capturing photo: $e');
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error capturing photo: $e')),
       );

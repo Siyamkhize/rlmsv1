@@ -878,6 +878,8 @@ class _AdminPageState extends State<AdminPage> {
       setState(() {
         _isLoading = false;
       });
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading offline sites: $e')),
       );
@@ -938,6 +940,8 @@ class _AdminPageState extends State<AdminPage> {
         });
 
         // Show success message
+        if (!mounted) return;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Found: ${learner['surname']} ${learner['name']}'),
@@ -950,6 +954,8 @@ class _AdminPageState extends State<AdminPage> {
           _searchedLearner = null;
         });
 
+        if (!mounted) return;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('No learner found with ID number: $idNumber'),
@@ -963,6 +969,8 @@ class _AdminPageState extends State<AdminPage> {
         _searchedLearner = null;
       });
 
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error searching for learner: $e'),
@@ -1391,6 +1399,8 @@ class _AdminPageState extends State<AdminPage> {
           await _syncDocument(document);
           print('[DOCUMENT_UPLOAD] ✅ Document synced to server successfully');
           
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('$documentName uploaded to server successfully'),
@@ -1401,6 +1411,8 @@ class _AdminPageState extends State<AdminPage> {
         } catch (syncError) {
           print('[DOCUMENT_UPLOAD] ❌ Sync failed: $syncError');
           // Still saved locally - will sync later
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('$documentName saved locally (will sync when online)'),
@@ -1411,6 +1423,8 @@ class _AdminPageState extends State<AdminPage> {
         }
       } else {
         print('[DOCUMENT_UPLOAD] No network - saved locally only');
+        if (!mounted) return;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('$documentName saved locally (offline)'),
@@ -1421,6 +1435,8 @@ class _AdminPageState extends State<AdminPage> {
       }
     } catch (e) {
       print('[DOCUMENT_UPLOAD] ERROR: $e');
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to upload $documentName: $e'),
@@ -1622,6 +1638,8 @@ class _AdminPageState extends State<AdminPage> {
                                 final status =
                                     await Permission.camera.request();
                                 if (!status.isGranted) {
+                                  if (!mounted) return;
+                                  if (!context.mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(
@@ -1663,11 +1681,15 @@ class _AdminPageState extends State<AdminPage> {
                                 await uploadDocument(
                                     learnerId, selectedDocument!, pdfPath);
                                 // Close the dialog
+                                if (!mounted) return;
+                                if (!context.mounted) return;
                                 Navigator.pop(context);
                                 
                                 // Note: Success message is now shown inside uploadDocument()
                                 // based on whether sync to server succeeded or not
                               } catch (e) {
+                                if (!mounted) return;
+                                if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                       content:
