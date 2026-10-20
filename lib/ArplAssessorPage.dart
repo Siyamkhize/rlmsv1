@@ -2723,6 +2723,7 @@ class _POETabState extends State<POETab> {
                               mode: LaunchMode.externalApplication);
                         } else {
                           if (mounted) {
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                   content:
@@ -3688,6 +3689,9 @@ class _POETabState extends State<POETab> {
       print('[POETab] Response status: ${response.statusCode}');
       print('[POETab] Response body: ${response.body}');
 
+      if (!mounted) return;
+      if (!context.mounted) return;
+
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
 
@@ -3890,6 +3894,9 @@ class _POETabState extends State<POETab> {
           .timeout(const Duration(seconds: 15));
       print('[POETab] save_marks.php status: ${response.statusCode}');
       print('[POETab] save_marks.php body: ${response.body}');
+
+      if (!mounted) return;
+      if (!context.mounted) return;
 
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
@@ -4125,6 +4132,7 @@ class _ExerciseTileState extends State<ExerciseTile> {
                       if (filePath.isNotEmpty) {
                         final serveUrl =
                             await AppConfig.buildServeFileUrl(filePath);
+                        if (!context.mounted) return;
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -4504,6 +4512,8 @@ class ClassInfoPage extends StatelessWidget {
         mode: LaunchMode.externalApplication,
       );
       print('launchUrl result: $launched');
+      if (!mounted) return;
+      if (!context.mounted) return;
       if (!launched) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to launch $url')),
@@ -4511,6 +4521,8 @@ class ClassInfoPage extends StatelessWidget {
       }
     } catch (e) {
       print('Error launching URL: $e');
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error launching URL: $e')),
       );
@@ -5085,12 +5097,16 @@ class _AssessmentReviewDetailPageState
       String className = await _fetchClassName(classId);
 
       // Update the form fields
+      if (!mounted) return;
+      if (!context.mounted) return;
       setState(() {
         _assessorNameController.text =
             '$facilitatorFirstName $facilitatorLastName';
         _venueController.text = className;
       });
     } catch (e) {
+      if (!mounted) return;
+      if (!context.mounted) return;
       setState(() {
         _responseMessage = 'Error fetching facilitator or class details: $e';
       });
@@ -5151,6 +5167,8 @@ class _AssessmentReviewDetailPageState
         );
 
         print("Raw response: ${response.statusCode} - ${response.body}");
+        if (!mounted) return;
+        if (!context.mounted) return;
         if (response.statusCode == 200) {
           var data = jsonDecode(response.body);
           setState(() {
@@ -5179,6 +5197,8 @@ class _AssessmentReviewDetailPageState
           );
         }
       } catch (e) {
+        if (!mounted) return;
+        if (!context.mounted) return;
         setState(() {
           _responseMessage = 'Error saving review: $e';
           _isSubmitting = false;
@@ -5913,6 +5933,9 @@ class _AppealFormDetailPageState extends State<AppealFormDetailPage> {
 
         print('Raw server response: ${response.body}'); // Debug raw response
 
+        if (!mounted) return;
+        if (!context.mounted) return;
+
         if (response.statusCode == 200) {
           try {
             var data = jsonDecode(response.body);
@@ -5944,6 +5967,8 @@ class _AppealFormDetailPageState extends State<AppealFormDetailPage> {
               .showSnackBar(SnackBar(content: Text(_responseMessage)));
         }
       } catch (e) {
+        if (!mounted) return;
+        if (!context.mounted) return;
         setState(() {
           _responseMessage = 'Error saving appeal: $e';
           _isSubmitting = false;
@@ -6804,11 +6829,14 @@ class _PotholeChecklistLearnerListPageState
     try {
       final file = File(documentPath);
       if (await file.exists()) {
+        if (!context.mounted) return;
         await OpenFile.open(documentPath);
       } else {
+        if (!context.mounted) return;
         _showError(context, 'Document file not found');
       }
     } catch (e) {
+      if (!context.mounted) return;
       _showError(context, 'Error opening document: $e');
     }
   }
@@ -6944,6 +6972,7 @@ class _PotholeChecklistLearnerListPageState
                 );
 
                 if (mounted) {
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content:
@@ -6961,20 +6990,29 @@ class _PotholeChecklistLearnerListPageState
                   setState(() {});
                 }
               } else {
+                if (!mounted) return;
+                if (!context.mounted) return;
                 _showError(context, 'Failed to save scanned document');
               }
             } else {
+              if (!mounted) return;
+              if (!context.mounted) return;
               _showError(context, 'Could not read scanned file');
             }
           } catch (e) {
+            if (!mounted) return;
+            if (!context.mounted) return;
             _showError(context, 'Error processing scan: $e');
           }
         } else {
+          if (!mounted) return;
+          if (!context.mounted) return;
           _showError(context, 'No valid PDF from scanner');
         }
       } else {
         // User cancelled
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Scanning cancelled'),
@@ -7149,6 +7187,8 @@ class _PotholeChecklistLearnerListPageState
         return;
       }
 
+      if (!context.mounted) return;
+
       // Show loading dialog
       showDialog(
         context: context,
@@ -7209,6 +7249,7 @@ class _PotholeChecklistLearnerListPageState
       }
 
       // Close loading dialog
+      if (!context.mounted) return;
       Navigator.of(context).pop();
 
       if (jsonResponse['status'] == 'success') {
@@ -7247,6 +7288,7 @@ class _PotholeChecklistLearnerListPageState
       }
     } catch (e) {
       // Close loading dialog if still open
+      if (!context.mounted) return;
       if (Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
@@ -7626,6 +7668,8 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        if (!mounted) return;
+        if (!context.mounted) return;
         if (data['status'] == 'success') {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -7639,6 +7683,8 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
         throw Exception('Server error: ${response.statusCode}');
       }
     } catch (e) {
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text('Error saving LogBook marks: $e'),
@@ -7689,6 +7735,8 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        if (!mounted) return;
+        if (!context.mounted) return;
         if (data['status'] == 'success') {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -7703,6 +7751,8 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
         throw Exception('Server error: ${response.statusCode}');
       }
     } catch (e) {
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text('Error saving marks: $e'),
@@ -8544,6 +8594,8 @@ class _PotholeChecklistScannedViewPageState
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        if (!mounted) return;
+        if (!context.mounted) return;
         if (data['status'] == 'success') {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -8557,6 +8609,8 @@ class _PotholeChecklistScannedViewPageState
         throw Exception('Server error: ${response.statusCode}');
       }
     } catch (e) {
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text('Error saving marks: $e'),
@@ -9845,6 +9899,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
       }
 
       if (ratings.isEmpty) {
+        if (!context.mounted) return;
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please rate at least one activity')),
@@ -9865,6 +9920,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         body: jsonEncode(payload),
       );
 
+      if (!context.mounted) return;
       Navigator.pop(context); // Hide loader
 
       final res = jsonDecode(response.body);
@@ -9885,6 +9941,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         );
       }
     } catch (e) {
+      if (!context.mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
@@ -9948,6 +10005,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         body: jsonEncode(payload),
       );
 
+      if (!context.mounted) return;
       Navigator.pop(context); // Hide loader
 
       final res = jsonDecode(response.body);
@@ -9968,6 +10026,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         );
       }
     } catch (e) {
+      if (!context.mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
@@ -10004,10 +10063,12 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         body: jsonEncode(payload),
       );
 
+      if (!context.mounted) return;
       Navigator.pop(context);
       final res = jsonDecode(response.body);
       _showArplSaveResult(res, 'Feedback Saved');
     } catch (e) {
+      if (!context.mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -10036,10 +10097,12 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         body: jsonEncode(payload),
       );
 
+      if (!context.mounted) return;
       Navigator.pop(context);
       final res = jsonDecode(response.body);
       _showArplSaveResult(res, 'Criteria Saved');
     } catch (e) {
+      if (!context.mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -10317,6 +10380,9 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
       print('[ARPL-E] Response status: ${response.statusCode}');
       print('[ARPL-E] Response body: ${response.body}');
 
+      if (!mounted) return;
+      if (!context.mounted) return;
+
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
         print('[ARPL-E] Save response: $result');
@@ -10340,6 +10406,8 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
       }
     } catch (e) {
       print('[ARPL-E] Error saving: $e');
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error saving: $e'),
@@ -11859,6 +11927,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
           }
 
           if (mounted) {
+            if (!context.mounted) return;
             // Show success dialog with option to view complete toolkit
             showDialog(
               context: context,
@@ -11971,6 +12040,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
           }
         } else {
           if (mounted) {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error: ${data['message']}'),
@@ -11984,6 +12054,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
       print('[APPX H] Error saving: $e');
       print('[APPX H] Stack trace: $stackTrace');
       if (mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error saving: $e'),
@@ -12184,6 +12255,7 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
         body: jsonEncode(payload),
       );
 
+      if (!context.mounted) return;
       Navigator.pop(context);
       final res = jsonDecode(response.body);
 

@@ -1641,6 +1641,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           await DatabaseHelper().saveSignatureLocally(
               widget.learnerID, signaturePath, 'signature');
           if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Learner signature saved locally')),
           );
@@ -1668,6 +1669,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           await DatabaseHelper().saveSignatureLocally(
               widget.learnerID, signaturePath, 'witness_signature');
           if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Witness signature saved locally')),
           );
@@ -1689,6 +1691,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           await DatabaseHelper().saveInitialsLocally(widget.learnerID,
               _learnerInitialsController.text, 'learner_initials');
           if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Learner initials saved locally')),
           );
@@ -1705,6 +1708,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           await DatabaseHelper().saveInitialsLocally(widget.learnerID,
               _witnessInitialsController.text, 'witness_initials');
           if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Witness initials saved locally')),
           );
@@ -1736,6 +1740,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     } catch (e) {
       print('Error updating data: $e');
       if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error updating data: $e')),
       );
@@ -3731,8 +3736,6 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
   /// 2. Profile complete (signature, initials, witness_signature, witness_initials)
   /// 3. ID Document approved in learner_documents table
   Future<void> _checkAgreementEligibility() async {
-    if (!mounted) return;
-
     setState(() {
       _isCheckingEligibility = true;
     });
@@ -3745,6 +3748,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         Uri.parse(AppConfig.checkAgreementEligibilityUrl),
         body: {'learner_id': widget.learnerID},
       );
+
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -3799,12 +3804,14 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
   Future<void> _downloadAgreement() async {
     try {
       if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Downloading agreement...')),
       );
       await _downloadAndSaveWordDocument();
     } catch (e) {
       if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error downloading agreement: $e'),
@@ -3835,6 +3842,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             print(
                 '[AGREEMENT_DOWNLOAD] Server error: ${jsonResponse['error']}');
             if (!mounted) return;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -3859,6 +3867,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
               '[AGREEMENT_DOWNLOAD] File size: ${response.bodyBytes.length} bytes');
 
           if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Agreement downloaded successfully!'),
@@ -3873,6 +3882,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           // Unknown content type
           print('[AGREEMENT_DOWNLOAD] Unexpected content type: $contentType');
           if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Unexpected response format from server'),
@@ -3884,6 +3894,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         print('[AGREEMENT_DOWNLOAD] Failed with HTTP ${response.statusCode}');
         print('[AGREEMENT_DOWNLOAD] Response body: ${response.body}');
         if (!mounted) return;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -3895,6 +3906,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       print('[AGREEMENT_DOWNLOAD] Exception: $e');
       print('[AGREEMENT_DOWNLOAD] Stack trace: $stackTrace');
       if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error downloading agreement: $e'),
@@ -4037,6 +4049,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         } else {
           print('$fieldName upload failed: ${jsonResponse['message']}');
           if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text(
@@ -4048,6 +4061,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       } else {
         print('Failed to upload $fieldName: HTTP ${response.statusCode}');
         if (!mounted) return;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -4059,6 +4073,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     } catch (e) {
       print('Error uploading $fieldName: $e');
       if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error uploading $fieldName: $e')),
       );
