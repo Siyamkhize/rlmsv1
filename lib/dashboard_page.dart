@@ -403,6 +403,8 @@ class _DashboardPageState extends State<DashboardPage> {
       setState(() {
         _isScanning = false;
       });
+      if (!mounted) return;
+      if (!context.mounted) return;
       Navigator.of(context).pop(); // Close scanning dialog
       _showErrorDialog('Futronic Error', 'Futronic scan failed: $e',
           skipPop: true);
@@ -417,6 +419,8 @@ class _DashboardPageState extends State<DashboardPage> {
       setState(() {
         _isScanning = false;
       });
+      if (!mounted) return;
+      if (!context.mounted) return;
       Navigator.of(context).pop(); // Close scanning dialog
       _showErrorDialog('ZKTeco Error', 'ZKTeco scan failed: $e', skipPop: true);
     }
@@ -1013,6 +1017,8 @@ class _DashboardPageState extends State<DashboardPage> {
         if (!scanningDialogAlreadyClosed) {
           try {
             print('[HANDLE_MATCHED] Checking if can pop dialog...');
+            if (!mounted) return;
+            if (!context.mounted) return;
             if (Navigator.of(context).canPop()) {
               print('[HANDLE_MATCHED] Can pop - closing scanning dialog');
               Navigator.of(context).pop(); // Close scanning dialog
@@ -1030,18 +1036,15 @@ class _DashboardPageState extends State<DashboardPage> {
 
         // Add a longer delay to ensure the scanning dialog is fully closed
         Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            print(
-                '[HANDLE_MATCHED] Showing delayed error dialog - widget still mounted');
-            _showErrorDialog('Already Completed',
-                '$learnerName has already completed clocking for today.',
-                skipPop: true);
-            print(
-                '[HANDLE_MATCHED] Error dialog shown - should stay on dashboard');
-          } else {
-            print(
-                '[HANDLE_MATCHED] Widget disposed before showing error dialog - this might indicate crash');
-          }
+          if (!mounted) return;
+          if (!context.mounted) return;
+          print(
+              '[HANDLE_MATCHED] Showing delayed error dialog - widget still mounted');
+          _showErrorDialog('Already Completed',
+              '$learnerName has already completed clocking for today.',
+              skipPop: true);
+          print(
+              '[HANDLE_MATCHED] Error dialog shown - should stay on dashboard');
         });
       }
 
@@ -1053,6 +1056,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
       // Safely close scanning dialog during error
       try {
+        if (!mounted) return;
+        if (!context.mounted) return;
         if (Navigator.of(context).canPop()) {
           print('[HANDLE_MATCHED] Closing scanning dialog due to error');
           Navigator.of(context).pop();
@@ -1065,15 +1070,12 @@ class _DashboardPageState extends State<DashboardPage> {
 
       // Add delay before showing error dialog to prevent navigation conflicts
       Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted) {
-          print('[HANDLE_MATCHED] Showing error dialog after delay');
-          _showErrorDialog(
-              'Processing Error', 'Error handling matched learner: $e',
-              skipPop: true);
-        } else {
-          print(
-              '[HANDLE_MATCHED] Widget disposed during error - cannot show error dialog');
-        }
+        if (!mounted) return;
+        if (!context.mounted) return;
+        print('[HANDLE_MATCHED] Showing error dialog after delay');
+        _showErrorDialog(
+            'Processing Error', 'Error handling matched learner: $e',
+            skipPop: true);
       });
     }
   }
@@ -2217,6 +2219,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
         if (facilitatorId != null) {
           debugPrint('[DASHBOARD] Navigating to FacilitatorFingerprintPage...');
+          if (!mounted) return;
+          if (!context.mounted) return;
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -2230,6 +2234,8 @@ class _DashboardPageState extends State<DashboardPage> {
           );
         } else {
           debugPrint('[DASHBOARD] Facilitator ID is null');
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content:
@@ -2248,6 +2254,8 @@ class _DashboardPageState extends State<DashboardPage> {
               allFacilitators.map((f) => f['classID']).toSet().toList();
           debugPrint('[DASHBOARD] Available classIDs: $availableClassIDs');
 
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -2257,6 +2265,8 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           );
         } else {
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('No facilitator data found. Please log in again.'),
@@ -2268,6 +2278,8 @@ class _DashboardPageState extends State<DashboardPage> {
     } catch (e, stackTrace) {
       debugPrint('[DASHBOARD] Error navigating to fingerprints: $e');
       debugPrint('[DASHBOARD] Stack trace: $stackTrace');
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),

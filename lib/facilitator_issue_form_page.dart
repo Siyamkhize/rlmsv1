@@ -640,6 +640,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
       }
     } catch (e) {
       print('Error fetching online data: $e');
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading data from API: $e')),
       );
@@ -677,6 +679,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
       }
     } catch (e) {
       print('Error fetching offline data: $e');
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading offline data: $e')),
       );
@@ -1692,6 +1696,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
                 if (signatureBytes != null) {
                   onSignatureCaptured(signatureBytes);
                 }
+                if (!mounted) return;
+                if (!context.mounted) return;
                 Navigator.pop(context);
                 setState(() {});
               },
@@ -2014,6 +2020,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
     // Check connectivity
     final connectivityResult = await Connectivity().checkConnectivity();
     if (connectivityResult.contains(ConnectivityResult.none)) {
+      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text("No internet connection. Please try again later.")),
@@ -2331,6 +2339,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
         print('   - Failed Count: ${failedSubmissions.length}');
         print('   - Failed Items: $failedSubmissions');
 
+        if (!mounted) return;
+        if (!context.mounted) return;
         if (allSuccessful) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -2361,6 +2371,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
         });
 
         // Refresh the page to update existing quantities
+        if (!mounted) return;
+        if (!context.mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -2413,6 +2425,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
         print('Decoded Response: $responseBody');
 
         if (responseBody['success']) {
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Material issued to facilitator successfully!')),
@@ -2429,6 +2443,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
           });
 
           // Navigate to the same page
+          if (!mounted) return;
+          if (!context.mounted) return;
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -2437,6 +2453,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             ),
           );
         } else {
+          if (!mounted) return;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text(
@@ -2445,6 +2463,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
         }
       } catch (e) {
         print('JSON Decode Error: $e');
+        if (!mounted) return;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Invalid server response: $e')),
         );
