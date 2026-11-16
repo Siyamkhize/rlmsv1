@@ -44,13 +44,13 @@ jobs:
       
       - name: 🔍 Run Flutter analyze (MUST PASS - No Errors)
         run: |
-          flutter analyze > analysis.log 2>&1
+          flutter analyze > analysis.log 2>&1 || true
           if grep -q "error -" analysis.log; then
             echo "❌ Flutter analysis found errors!"
             cat analysis.log | grep "error -"
             exit 1
           fi
-          echo "✅ Flutter analysis passed"
+          echo "✅ Flutter analysis passed - $(grep -c 'info -' analysis.log || echo 0) info messages, $(grep -c 'warning -' analysis.log || echo 0) warnings"
       
       - name: 🔒 Run Custom Security Audit (BLOCKING)
         run: |

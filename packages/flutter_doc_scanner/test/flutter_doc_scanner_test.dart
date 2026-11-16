@@ -15,16 +15,27 @@ class MockFlutterDocScannerPlatform
       Future.value(['path/to/image1.png', 'path/to/image2.png']);
 
   @override
-  Future<dynamic> getScannedDocumentAsImages(int page, String imageFormat, double quality) =>
-      Future.value({'images': ['path/to/image1.png'], 'count': 1});
+  Future<dynamic> getScannedDocumentAsImages(
+          int page, String imageFormat, double quality) =>
+      Future.value({
+        'images': ['path/to/image1.png'],
+        'count': 1
+      });
 
   @override
   Future<dynamic> getScannedDocumentAsPdf(int page) =>
       Future.value({'pdfUri': 'path/to/doc.pdf', 'pageCount': 2});
 
   @override
-  Future<dynamic> getScanDocumentsUri(int page) =>
-      Future.value({'images': ['content://uri1'], 'count': 1});
+  Future<dynamic> getScanDocumentsUri(int page) => Future.value({
+        'images': ['content://uri1'],
+        'count': 1
+      });
+
+  @override
+  Future<void> forceReset() async {
+    // Mock implementation - no-op for testing
+  }
 }
 
 class MockCancelledScannerPlatform
@@ -37,13 +48,20 @@ class MockCancelledScannerPlatform
   Future<dynamic> getScanDocuments(int page) => Future.value(null);
 
   @override
-  Future<dynamic> getScannedDocumentAsImages(int page, String imageFormat, double quality) => Future.value(null);
+  Future<dynamic> getScannedDocumentAsImages(
+          int page, String imageFormat, double quality) =>
+      Future.value(null);
 
   @override
   Future<dynamic> getScannedDocumentAsPdf(int page) => Future.value(null);
 
   @override
   Future<dynamic> getScanDocumentsUri(int page) => Future.value(null);
+
+  @override
+  Future<void> forceReset() async {
+    // Mock implementation - no-op for testing
+  }
 }
 
 void main() {
