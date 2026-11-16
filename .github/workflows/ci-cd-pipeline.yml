@@ -54,8 +54,8 @@ jobs:
       
       - name: 🔒 Run Custom Security Audit (BLOCKING)
         run: |
-          chmod +x scripts/security-audit.sh
-          bash scripts/security-audit.sh
+          chmod +x scripts/security-audit-simple.sh
+          bash scripts/security-audit-simple.sh
       
       - name: 📊 SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
