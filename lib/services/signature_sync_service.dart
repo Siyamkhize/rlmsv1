@@ -13,7 +13,7 @@ class SignatureSyncService {
   /// Sync all unsynced signature files to server
   /// Returns: number of files successfully synced
   static Future<int> syncAllSignatures() async {
-    print('[SIGNATURE_SYNC] Starting signature sync...');
+    debugPrint('[SIGNATURE_SYNC] Starting signature sync...');
     
     try {
       // Get signatures directory
@@ -21,7 +21,7 @@ class SignatureSyncService {
       final signaturesDir = Directory('${directory.path}/signatures');
       
       if (!await signaturesDir.exists()) {
-        print('[SIGNATURE_SYNC] Signatures directory does not exist');
+        debugPrint('[SIGNATURE_SYNC] Signatures directory does not exist');
         return 0;
       }
 
@@ -35,7 +35,7 @@ class SignatureSyncService {
           .where((file) => file.path.endsWith('.png'))
           .toList();
 
-      print('[SIGNATURE_SYNC] Found ${files.length} signature files');
+      debugPrint('[SIGNATURE_SYNC] Found ${files.length} signature files');
       
       if (files.isEmpty) {
         return 0;
@@ -49,7 +49,7 @@ class SignatureSyncService {
         
         // Skip if already synced
         if (syncedFiles.contains(filename)) {
-          print('[SIGNATURE_SYNC] Skipping already synced: $filename');
+          debugPrint('[SIGNATURE_SYNC] Skipping already synced: $filename');
           continue;
         }
         
@@ -60,20 +60,20 @@ class SignatureSyncService {
           successCount++;
           // Mark as synced
           await _markFileSynced(filename);
-          print('[SIGNATURE_SYNC] ✅ Synced: $filename');
+          debugPrint('[SIGNATURE_SYNC] ✅ Synced: $filename');
         } else {
-          print('[SIGNATURE_SYNC] ❌ Failed: $filename');
+          debugPrint('[SIGNATURE_SYNC] ❌ Failed: $filename');
         }
         
         // Small delay between uploads to avoid overwhelming server
         await Future.delayed(const Duration(milliseconds: 200));
       }
       
-      print('[SIGNATURE_SYNC] Sync complete: $successCount/${ files.length} files synced');
+      debugPrint('[SIGNATURE_SYNC] Sync complete: $successCount/${ files.length} files synced');
       return successCount;
       
     } catch (e) {
-      print('[SIGNATURE_SYNC] Error during sync: $e');
+      debugPrint('[SIGNATURE_SYNC] Error during sync: $e');
       return 0;
     }
   }
@@ -111,12 +111,12 @@ class SignatureSyncService {
         final decoded = json.decode(responseBody);
         return decoded['success'] == true;
       } else {
-        print('[SIGNATURE_SYNC] Upload failed (${response.statusCode}): $responseBody');
+        debugPrint('[SIGNATURE_SYNC] Upload failed (${response.statusCode}): $responseBody');
         return false;
       }
       
     } catch (e) {
-      print('[SIGNATURE_SYNC] Upload error for $filename: $e');
+      debugPrint('[SIGNATURE_SYNC] Upload error for $filename: $e');
       return false;
     }
   }
@@ -141,7 +141,7 @@ class SignatureSyncService {
   static Future<void> clearSyncHistory() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_syncedFilesKey);
-    print('[SIGNATURE_SYNC] Sync history cleared');
+    debugPrint('[SIGNATURE_SYNC] Sync history cleared');
   }
 
   /// Get count of unsynced signature files
@@ -168,7 +168,7 @@ class SignatureSyncService {
 
       return unsyncedCount;
     } catch (e) {
-      print('[SIGNATURE_SYNC] Error getting unsynced count: $e');
+      debugPrint('[SIGNATURE_SYNC] Error getting unsynced count: $e');
       return 0;
     }
   }

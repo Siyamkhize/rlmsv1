@@ -65,18 +65,18 @@ class _InductionPageState extends State<InductionPage> {
           enableAudio: false,
         );
         await _cameraController!.initialize();
-        print('Camera initialized: ${_cameras![_selectedCameraIndex].name}');
+        debugPrint('Camera initialized: ${_cameras![_selectedCameraIndex].name}');
         setState(() {
           _isCameraReady = true;
         });
       } else {
-        print('No cameras available');
+        debugPrint('No cameras available');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No cameras available')),
         );
       }
     } catch (e) {
-      print('Camera initialization error: $e');
+      debugPrint('Camera initialization error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to initialize camera: $e')),
       );
@@ -96,7 +96,7 @@ class _InductionPageState extends State<InductionPage> {
         enableAudio: false,
       );
       await _cameraController!.initialize();
-      print('Switched to camera: ${_cameras![_selectedCameraIndex].name}');
+      debugPrint('Switched to camera: ${_cameras![_selectedCameraIndex].name}');
       setState(() {
         _isCameraReady = true;
       });
@@ -110,13 +110,13 @@ class _InductionPageState extends State<InductionPage> {
           _isCapturing = true;
         });
         _capturedImage = await _cameraController!.takePicture();
-        print('Image captured: ${_capturedImage!.path}');
+        debugPrint('Image captured: ${_capturedImage!.path}');
         if (mounted) {
           Navigator.of(context).pop(true);
         }
       }
     } catch (e) {
-      print('Error capturing image: $e');
+      debugPrint('Error capturing image: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to capture image: $e')),
       );
@@ -144,8 +144,8 @@ class _InductionPageState extends State<InductionPage> {
     final db = await dbHelper.database;
     final classes = await db.query('class');
     final sites = await db.query('sites');
-    print('Class table contents on init: $classes');
-    print('Sites table contents on init: $sites');
+    debugPrint('Class table contents on init: $classes');
+    debugPrint('Sites table contents on init: $sites');
 
     await _loadLearnersFromLocalDatabase();
     await _fetchClockingDataFromServer();
@@ -168,7 +168,7 @@ class _InductionPageState extends State<InductionPage> {
 
     // Individual server fetches disabled - induction data is only clocked once in entire program
     // This prevents FormatException errors from broken get_indaction_data.php endpoint
-    print(
+    debugPrint(
         '[INDUCTION] Individual server fetches disabled - induction is one-time only');
   }
 
@@ -192,9 +192,9 @@ class _InductionPageState extends State<InductionPage> {
           where: 'LearnerID = ? AND clock_date = ?',
           whereArgs: [learnerID, record['clock_date'].toString()],
         );
-        print('Synced offline clock-in for $learnerID');
+        debugPrint('Synced offline clock-in for $learnerID');
       } catch (e) {
-        print('Failed to sync offline clock-in: $e');
+        debugPrint('Failed to sync offline clock-in: $e');
       }
     }
   }
@@ -243,7 +243,7 @@ class _InductionPageState extends State<InductionPage> {
 
       await _fetchClockingDataFromServer();
     } catch (e) {
-      print('Error refreshing data: $e');
+      debugPrint('Error refreshing data: $e');
     }
   }
 
@@ -312,7 +312,7 @@ class _InductionPageState extends State<InductionPage> {
   Future<bool> _isWithinSiteRadius(String classID, double userLat,
       double userLon, double userAccuracy) async {
     if (userAccuracy > 50) {
-      print('Geolocation accuracy too low: $userAccuracy meters');
+      debugPrint('Geolocation accuracy too low: $userAccuracy meters');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Geolocation accuracy too low. Please enable GPS.')),
@@ -326,9 +326,9 @@ class _InductionPageState extends State<InductionPage> {
 
       final classes = await db.query('class');
       final sites = await db.query('sites');
-      print('Class table contents: $classes');
-      print('Sites table contents: $sites');
-      print(
+      debugPrint('Class table contents: $classes');
+      debugPrint('Sites table contents: $sites');
+      debugPrint(
           'Querying coordinates for classID: $classID (type: ${classID.runtimeType})');
 
       final result = await db.rawQuery(
@@ -338,19 +338,19 @@ class _InductionPageState extends State<InductionPage> {
 
       if (result.isEmpty) {
         if (classes.isEmpty) {
-          print('Class table is empty');
+          debugPrint('Class table is empty');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('No class data available in local database.')),
           );
         } else if (sites.isEmpty) {
-          print('Sites table is empty');
+          debugPrint('Sites table is empty');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('No site data available in local database.')),
           );
         } else {
-          print('No matching class or site found for classID: $classID');
+          debugPrint('No matching class or site found for classID: $classID');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('No site coordinates found for class $classID.')),
@@ -363,7 +363,7 @@ class _InductionPageState extends State<InductionPage> {
       final siteLon = double.tryParse(result.first['longitude'].toString());
 
       if (siteLat == null || siteLon == null) {
-        print(
+        debugPrint(
             'Invalid site coordinates for classID: $classID, lat: ${result.first['latitude']}, lon: ${result.first['longitude']}');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -374,7 +374,7 @@ class _InductionPageState extends State<InductionPage> {
 
       final distance = _calculateDistance(userLat, userLon, siteLat, siteLon);
 
-      print('Distance to site for classID $classID: $distance meters');
+      debugPrint('Distance to site for classID $classID: $distance meters');
       if (distance > 100) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -385,7 +385,7 @@ class _InductionPageState extends State<InductionPage> {
       }
       return true;
     } catch (e, stackTrace) {
-      print(
+      debugPrint(
           'Error checking site radius for classID $classID: $e\nStack trace: $stackTrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error checking location: $e')),
@@ -517,7 +517,7 @@ class _InductionPageState extends State<InductionPage> {
         'classID': widget.classID,
       };
 
-      print('Sending online clock-in request: $payload');
+      debugPrint('Sending online clock-in request: $payload');
 
       final response = await http
           .post(
@@ -527,7 +527,7 @@ class _InductionPageState extends State<InductionPage> {
           )
           .timeout(const Duration(seconds: 10));
 
-      print(
+      debugPrint(
           'Raw server response (status ${response.statusCode}): "${response.body}"');
 
       dynamic result;
@@ -551,7 +551,7 @@ class _InductionPageState extends State<InductionPage> {
             'Server error: ${response.statusCode} - ${result['message'] ?? response.body}');
       }
     } catch (e) {
-      print('Online clock-in failed for learnerID: $learnerID: $e');
+      debugPrint('Online clock-in failed for learnerID: $learnerID: $e');
       throw Exception('Online clock-in failed: $e');
     }
   }
@@ -573,11 +573,11 @@ class _InductionPageState extends State<InductionPage> {
         if (signatureImage != null) {
           signatureBase64 = base64Encode(signatureImage);
         } else {
-          print(
+          debugPrint(
               'Warning: Failed to generate signature image, sending empty signature.');
         }
       } catch (e) {
-        print(
+        debugPrint(
             'Warning: Signature generation failed: $e, sending empty signature.');
       }
 
@@ -626,7 +626,7 @@ class _InductionPageState extends State<InductionPage> {
         'classID': widget.classID,
       };
 
-      print('Sending online clock-out request: $payload');
+      debugPrint('Sending online clock-out request: $payload');
 
       final response = await http
           .post(
@@ -636,14 +636,14 @@ class _InductionPageState extends State<InductionPage> {
           )
           .timeout(const Duration(seconds: 30));
 
-      print(
+      debugPrint(
           'Raw server response (status ${response.statusCode}): "${response.body}"');
 
       dynamic result;
       try {
         result = jsonDecode(response.body);
       } catch (e) {
-        print('Failed to parse server response: "${response.body}"');
+        debugPrint('Failed to parse server response: "${response.body}"');
         throw Exception('Failed to parse server response: ${response.body}');
       }
 
@@ -664,10 +664,10 @@ class _InductionPageState extends State<InductionPage> {
               final contactTimeDuration =
                   clockOutDateTime.difference(clockInDateTime);
               contactTime = formatDuration(contactTimeDuration);
-              print(
+              debugPrint(
                   'Calculated contact time: $contactTime for learnerID=$learnerID');
             } catch (e) {
-              print('Error calculating contact time: $e');
+              debugPrint('Error calculating contact time: $e');
             }
           }
         }
@@ -684,14 +684,14 @@ class _InductionPageState extends State<InductionPage> {
             'Server error: ${response.statusCode} - ${result['message'] ?? response.body}');
       }
     } catch (e) {
-      print('Online clock-out failed: $e');
+      debugPrint('Online clock-out failed: $e');
       throw Exception('Online clock-out failed: $e');
     }
   }
 
   Future<void> _clockInOffline(String learnerID, String clockInTime) async {
     try {
-      print(
+      debugPrint(
           'Starting offline clock-in for learnerID: $learnerID at $clockInTime');
       final dbHelper = DatabaseHelper();
       final clockDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -749,7 +749,7 @@ class _InductionPageState extends State<InductionPage> {
         return;
       }
       await signatureFile.writeAsBytes(signatureImage);
-      print(
+      debugPrint(
           'Signature saved at: $signaturePath, file exists: ${await signatureFile.exists()}');
 
       // Store clock-in data
@@ -764,9 +764,9 @@ class _InductionPageState extends State<InductionPage> {
         'user_accuracy': position.accuracy.toString(),
       };
 
-      print('Inserting clock-in data: $clockInData');
+      debugPrint('Inserting clock-in data: $clockInData');
       await dbHelper.insertInductionClocking(clockInData);
-      print('Offline clock-in inserted successfully for learnerID: $learnerID');
+      debugPrint('Offline clock-in inserted successfully for learnerID: $learnerID');
 
       setState(() {
         clockInTimes[learnerID] = clockInTime;
@@ -777,7 +777,7 @@ class _InductionPageState extends State<InductionPage> {
             content: Text('Clock-in saved locally. Will sync when online.')),
       );
     } catch (e, stackTrace) {
-      print(
+      debugPrint(
           'Offline clock-in error for learnerID: $learnerID: $e\nStack trace: $stackTrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving offline clock-in: $e')),
@@ -815,7 +815,7 @@ class _InductionPageState extends State<InductionPage> {
               clockOutDateTime.difference(clockInDateTime);
           contactTime = formatDuration(contactTimeDuration);
         } catch (e) {
-          print('Error calculating contact time: $e');
+          debugPrint('Error calculating contact time: $e');
         }
       }
 
@@ -838,7 +838,7 @@ class _InductionPageState extends State<InductionPage> {
             content: Text('Clock-out saved locally. Will sync when online.')),
       );
     } catch (e) {
-      print('Offline clock-out error: $e');
+      debugPrint('Offline clock-out error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving offline clock-out: $e')),
       );
@@ -1085,7 +1085,7 @@ class _InductionPageState extends State<InductionPage> {
                                             final success =
                                                 await clockInLearner(learnerID);
                                             if (!success) {
-                                              print(
+                                              debugPrint(
                                                   'Clock-in failed for learnerID: $learnerID');
                                             }
                                           },

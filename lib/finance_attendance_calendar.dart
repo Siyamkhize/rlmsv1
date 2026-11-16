@@ -75,7 +75,7 @@ class _FinanceAttendanceCalendarState extends State<FinanceAttendanceCalendar> {
         });
       }
     } catch (e) {
-      print('Error fetching attendance: $e');
+      debugPrint('Error fetching attendance: $e');
       setState(() {
         isLoading = false;
       });
@@ -140,7 +140,7 @@ class _FinanceAttendanceCalendarState extends State<FinanceAttendanceCalendar> {
         isSaving = false;
       });
 
-      print('Error saving attendance: $e');
+      debugPrint('Error saving attendance: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),

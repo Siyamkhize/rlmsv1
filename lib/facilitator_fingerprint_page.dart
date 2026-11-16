@@ -10,9 +10,7 @@ import 'package:sqflite/sqflite.dart';
 import 'config.dart';
 import 'utils/fingerprint_error_handler.dart';
 import 'package:signature/signature.dart';
-import 'facilitator_face_enroll_page.dart';
 import 'facilitator_face_clockin_page.dart';
-import 'repositories/facilitator_face_repository.dart';
 
 class FacilitatorFingerprintPage extends StatefulWidget {
   final int facilitatorId;

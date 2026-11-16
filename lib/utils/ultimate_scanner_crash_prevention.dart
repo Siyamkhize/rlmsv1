@@ -269,19 +269,19 @@ class UltimateScannerCrashPrevention {
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            title: const Row(
+          builder: (context) => const AlertDialog(
+            title: Row(
               children: [
                 Icon(Icons.refresh, color: Colors.orange),
                 SizedBox(width: 8),
                 Text('Scanner Reset Required'),
               ],
             ),
-            content: const Text(
+            content: Text(
                 'The scanner needs to be reset after multiple uses to prevent crashes.\n\n'
                 'This is normal behavior to keep your app stable.\n\n'
                 'Resetting scanner system...'),
-            actions: const [
+            actions: [
               // No actions - this is automatic
             ],
           ),

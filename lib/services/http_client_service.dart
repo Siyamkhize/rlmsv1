@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -36,7 +35,7 @@ class HttpClientService {
     // Retry loop with security controls
     for (int attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        print('[HTTP_CLIENT] Attempt ${attempt + 1}/${maxRetries + 1} for $endpoint');
+        debugPrint('[HTTP_CLIENT] Attempt ${attempt + 1}/${maxRetries + 1} for $endpoint');
         
         final response = await requestFunction().timeout(
           timeout,
@@ -63,7 +62,7 @@ class HttpClientService {
         if (response.statusCode >= 500 && attempt < maxRetries) {
           lastException = HttpException('Server error: ${response.statusCode}',
                                       uri: Uri.parse(endpoint));
-          print('[HTTP_CLIENT] Server error ${response.statusCode}, will retry...');
+          debugPrint('[HTTP_CLIENT] Server error ${response.statusCode}, will retry...');
           await _delayBeforeRetry(attempt);
           continue;
         }
@@ -72,7 +71,7 @@ class HttpClientService {
         
       } catch (e) {
         lastException = e is Exception ? e : Exception('Request failed: $e');
-        print('[HTTP_CLIENT] Error on attempt ${attempt + 1}: $e');
+        debugPrint('[HTTP_CLIENT] Error on attempt ${attempt + 1}: $e');
         
         // Track failures for circuit breaker
         _recordFailure(endpoint);
@@ -104,7 +103,7 @@ class HttpClientService {
     final jitterMs = (baseDelayMs * 0.1 * (DateTime.now().millisecond % 100) / 100).round();
     final totalDelayMs = baseDelayMs + jitterMs;
     
-    print('[HTTP_CLIENT] Waiting ${totalDelayMs}ms before retry (attempt $attempt)...');
+    debugPrint('[HTTP_CLIENT] Waiting ${totalDelayMs}ms before retry (attempt $attempt)...');
     await Future.delayed(Duration(milliseconds: totalDelayMs));
   }
 
@@ -130,7 +129,7 @@ class HttpClientService {
   static void _openCircuitBreaker(String endpoint) {
     if ((_failureCount[endpoint] ?? 0) >= _maxFailures) {
       _circuitBreakerState[endpoint] = DateTime.now();
-      print('[HTTP_CLIENT] Circuit breaker opened for $endpoint');
+      debugPrint('[HTTP_CLIENT] Circuit breaker opened for $endpoint');
     }
   }
 

@@ -228,7 +228,7 @@ class _AdminPageState extends State<AdminPage> {
         () => http.get(Uri.parse(url)),
         endpoint: 'admin_learner_search',
         maxRetries: NetworkConfig.readOperationsMaxRetries,
-        timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
+        timeout: const Duration(seconds: NetworkConfig.lightweightTimeout),
       );
 
       List<Map<String, dynamic>> suggestions = [];
@@ -266,7 +266,7 @@ class _AdminPageState extends State<AdminPage> {
           () => http.get(Uri.parse(fallbackUrl)),
           endpoint: 'admin_learner_search_fallback',
           maxRetries: NetworkConfig.readOperationsMaxRetries,
-          timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
+          timeout: const Duration(seconds: NetworkConfig.lightweightTimeout),
         );
 
         if (fallbackResponse.statusCode == 200) {
@@ -296,7 +296,7 @@ class _AdminPageState extends State<AdminPage> {
           () => http.get(Uri.parse(globalUrl)),
           endpoint: 'admin_learner_search_global',
           maxRetries: NetworkConfig.readOperationsMaxRetries,
-          timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
+          timeout: const Duration(seconds: NetworkConfig.lightweightTimeout),
         );
 
         if (globalResponse.statusCode == 200) {
@@ -318,7 +318,7 @@ class _AdminPageState extends State<AdminPage> {
         });
       }
     } catch (e) {
-      print('[ADMIN] Smart search autocomplete error: $e');
+      debugPrint('[ADMIN] Smart search autocomplete error: $e');
       if (mounted) {
         setState(() {
           _searchSuggestions.clear();
@@ -600,7 +600,7 @@ class _AdminPageState extends State<AdminPage> {
         () => http.get(uri),
         endpoint: 'admin_get_details',
         maxRetries: NetworkConfig.readOperationsMaxRetries,
-        timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
+        timeout: const Duration(seconds: NetworkConfig.lightweightTimeout),
       );
 
       debugPrint('[ADMIN] Response status: ${response.statusCode}');
@@ -1000,33 +1000,33 @@ class _AdminPageState extends State<AdminPage> {
       final cacheTime = _searchCacheTimestamps[cacheKey];
       if (cacheTime != null &&
           DateTime.now().difference(cacheTime) < _cacheExpiry) {
-        print('[ADMIN] ✅ Cache HIT for ID: $idNumber');
+        debugPrint('[ADMIN] ✅ Cache HIT for ID: $idNumber');
         return _searchCache[cacheKey];
       } else {
         // Cache expired
         _searchCache.remove(cacheKey);
         _searchCacheTimestamps.remove(cacheKey);
-        print('[ADMIN] ⏰ Cache EXPIRED for ID: $idNumber');
+        debugPrint('[ADMIN] ⏰ Cache EXPIRED for ID: $idNumber');
       }
     }
 
-    print('[ADMIN] ❌ Cache MISS for ID: $idNumber');
+    debugPrint('[ADMIN] ❌ Cache MISS for ID: $idNumber');
 
     // Try local database first (faster!) - PROJECT-FILTERED SEARCH
-    print('[ADMIN] 🔍 Searching local database first (PROJECT-FILTERED)...');
+    debugPrint('[ADMIN] 🔍 Searching local database first (PROJECT-FILTERED)...');
     final localResult = await _searchLearnerOffline(idNumber);
     if (localResult != null) {
-      print('[ADMIN] ✅ Found in local database!');
+      debugPrint('[ADMIN] ✅ Found in local database!');
       // Cache the local result
       _searchCache[cacheKey] = localResult;
       _searchCacheTimestamps[cacheKey] = DateTime.now();
-      print(
+      debugPrint(
           '[ADMIN] 💾 Cached local result for ID: $idNumber (expires in 24 hours)');
       return localResult;
     }
 
     // Not found locally, try server with PROJECT FILTERING
-    print(
+    debugPrint(
         '[ADMIN] ⚠️ Not found locally, searching server with PROJECT FILTERING...');
 
     try {
@@ -1074,23 +1074,23 @@ class _AdminPageState extends State<AdminPage> {
         queryParameters: queryParams,
       );
 
-      print('[ADMIN] Searching learner online (PROJECT-FILTERED): $uri');
+      debugPrint('[ADMIN] Searching learner online (PROJECT-FILTERED): $uri');
 
       final response = await HttpClientService.makeRequest(
         () => http.get(uri),
         endpoint: 'admin_search_learner_online',
         maxRetries: NetworkConfig.readOperationsMaxRetries,
-        timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
+        timeout: const Duration(seconds: NetworkConfig.lightweightTimeout),
       );
 
-      print('[ADMIN] 📡 Server response status: ${response.statusCode}');
-      print('[ADMIN] 📡 Server response body: ${response.body}');
+      debugPrint('[ADMIN] 📡 Server response status: ${response.statusCode}');
+      debugPrint('[ADMIN] 📡 Server response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
-        print('[ADMIN] 📦 Parsed JSON: $jsonData');
-        print('[ADMIN] 📦 Success: ${jsonData['success']}');
-        print('[ADMIN] 📦 Learners: ${jsonData['learners']}');
+        debugPrint('[ADMIN] 📦 Parsed JSON: $jsonData');
+        debugPrint('[ADMIN] 📦 Success: ${jsonData['success']}');
+        debugPrint('[ADMIN] 📦 Learners: ${jsonData['learners']}');
 
         // Check if we got the "Search parameter is required" error and log it
         if (jsonData['success'] == false &&
@@ -1098,17 +1098,17 @@ class _AdminPageState extends State<AdminPage> {
                     ?.toString()
                     .contains('Search parameter is required') ==
                 true) {
-          print(
+          debugPrint(
               '[ADMIN] ⚠️ Server expects different parameter name. Error: ${jsonData['message']}');
         }
 
         if (jsonData['success'] == true && jsonData['learners'] != null) {
           final learners = jsonData['learners'] as List;
-          print('[ADMIN] 📦 Learners count: ${learners.length}');
+          debugPrint('[ADMIN] 📦 Learners count: ${learners.length}');
 
           if (learners.isNotEmpty) {
             final learnerData = learners[0] as Map<String, dynamic>;
-            print(
+            debugPrint(
                 '[ADMIN] ✅ Found learner: ${learnerData['surname']}, ${learnerData['name']}');
 
             // Convert all fields to strings to avoid type mismatch errors
@@ -1126,26 +1126,26 @@ class _AdminPageState extends State<AdminPage> {
             // Cache the normalized result
             _searchCache[cacheKey] = normalizedData;
             _searchCacheTimestamps[cacheKey] = DateTime.now();
-            print(
+            debugPrint(
                 '[ADMIN] 💾 Cached server result for ID: $idNumber (expires in 24 hours)');
 
             // Return the normalized learner data
             return normalizedData;
           } else {
-            print('[ADMIN] ⚠️ Server returned empty learners array');
+            debugPrint('[ADMIN] ⚠️ Server returned empty learners array');
           }
         } else {
-          print(
+          debugPrint(
               '[ADMIN] ⚠️ Server returned success=false or no learners field');
         }
       } else {
-        print('[ADMIN] ❌ Server returned status code: ${response.statusCode}');
+        debugPrint('[ADMIN] ❌ Server returned status code: ${response.statusCode}');
       }
 
-      print('[ADMIN] ❌ No learner found on server');
+      debugPrint('[ADMIN] ❌ No learner found on server');
       return null;
     } catch (e) {
-      print('[ADMIN] Error searching online: $e');
+      debugPrint('[ADMIN] Error searching online: $e');
       return null;
     }
   }
@@ -1278,7 +1278,7 @@ class _AdminPageState extends State<AdminPage> {
           '[ADMIN] OFFLINE: No learner found with ID $idNumber in current project context');
       return null;
     } catch (e) {
-      print('[ADMIN] Error searching offline: $e');
+      debugPrint('[ADMIN] Error searching offline: $e');
       return null;
     }
   }
@@ -1286,9 +1286,9 @@ class _AdminPageState extends State<AdminPage> {
   // Helper methods for document upload
   Future<List<String>> _fetchServerDocuments(String learnerId) async {
     try {
-      print('Fetching server documents for learner: $learnerId');
-      print('Request URL: $_checkDocsUrl');
-      print('Request body: {"learner_id": "$learnerId"}');
+      debugPrint('Fetching server documents for learner: $learnerId');
+      debugPrint('Request URL: $_checkDocsUrl');
+      debugPrint('Request body: {"learner_id": "$learnerId"}');
 
       final response = await HttpClientService.makeRequest(
         () => http.post(
@@ -1297,36 +1297,36 @@ class _AdminPageState extends State<AdminPage> {
         ),
         endpoint: 'check_learner_documents',
         maxRetries: NetworkConfig.readOperationsMaxRetries,
-        timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
+        timeout: const Duration(seconds: NetworkConfig.lightweightTimeout),
       );
 
-      print('Server response status: ${response.statusCode}');
-      print('Server response body: ${response.body}');
+      debugPrint('Server response status: ${response.statusCode}');
+      debugPrint('Server response body: ${response.body}');
 
       if (response.statusCode == 200) {
         try {
           final jsonResponse = jsonDecode(response.body);
-          print('Parsed JSON response: $jsonResponse');
+          debugPrint('Parsed JSON response: $jsonResponse');
 
           if (jsonResponse['success'] == true) {
             final documents = List<String>.from(jsonResponse['documents']);
-            print('Successfully fetched server documents: $documents');
+            debugPrint('Successfully fetched server documents: $documents');
             return documents;
           } else {
-            print('Server returned error: ${jsonResponse['message']}');
+            debugPrint('Server returned error: ${jsonResponse['message']}');
             throw Exception(jsonResponse['message']);
           }
         } catch (e) {
-          print('Error parsing JSON response: $e');
-          print('Raw response: ${response.body}');
+          debugPrint('Error parsing JSON response: $e');
+          debugPrint('Raw response: ${response.body}');
           return [];
         }
       } else {
-        print('Server error: ${response.statusCode}');
+        debugPrint('Server error: ${response.statusCode}');
         throw Exception('Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching server documents: $e');
+      debugPrint('Error fetching server documents: $e');
       return [];
     }
   }
@@ -1340,25 +1340,25 @@ class _AdminPageState extends State<AdminPage> {
       final localDocs = await dbHelper.fetchLearnerDocuments(learnerId);
       existingDocs =
           localDocs.map((doc) => doc['documentName'] as String).toList();
-      print('Local documents for $learnerId: $existingDocs');
+      debugPrint('Local documents for $learnerId: $existingDocs');
 
       // Check server if online
       if (await _checkConnectivity()) {
         final serverDocs = await _fetchServerDocuments(learnerId);
-        print('Server documents for $learnerId: $serverDocs');
+        debugPrint('Server documents for $learnerId: $serverDocs');
         for (var doc in serverDocs) {
           if (!existingDocs.contains(doc)) {
             existingDocs.add(doc);
           }
         }
       } else {
-        print('No internet connection, skipping server check for $learnerId');
+        debugPrint('No internet connection, skipping server check for $learnerId');
       }
 
-      print('Combined existing documents for $learnerId: $existingDocs');
+      debugPrint('Combined existing documents for $learnerId: $existingDocs');
       return existingDocs;
     } catch (e) {
-      print('Error getting existing documents: $e');
+      debugPrint('Error getting existing documents: $e');
       return [];
     }
   }
@@ -1369,7 +1369,7 @@ class _AdminPageState extends State<AdminPage> {
       // Check if there are any documents that can still be uploaded
       return requiredDocuments.any((doc) => !existingDocs.contains(doc));
     } catch (e) {
-      print('Error checking if documents can be uploaded: $e');
+      debugPrint('Error checking if documents can be uploaded: $e');
       return false;
     }
   }
@@ -1390,14 +1390,14 @@ class _AdminPageState extends State<AdminPage> {
       };
       await dbHelper.insertLearnerDocument(document);
 
-      print('[DOCUMENT_UPLOAD] Document saved locally: $documentName');
+      debugPrint('[DOCUMENT_UPLOAD] Document saved locally: $documentName');
 
       // Step 2: Immediately try to sync to server
       if (await _checkConnectivity()) {
-        print('[DOCUMENT_UPLOAD] Network available - syncing to server...');
+        debugPrint('[DOCUMENT_UPLOAD] Network available - syncing to server...');
         try {
           await _syncDocument(document);
-          print('[DOCUMENT_UPLOAD] ✅ Document synced to server successfully');
+          debugPrint('[DOCUMENT_UPLOAD] ✅ Document synced to server successfully');
           
           if (!mounted) return;
           if (!context.mounted) return;
@@ -1409,7 +1409,7 @@ class _AdminPageState extends State<AdminPage> {
             ),
           );
         } catch (syncError) {
-          print('[DOCUMENT_UPLOAD] ❌ Sync failed: $syncError');
+          debugPrint('[DOCUMENT_UPLOAD] ❌ Sync failed: $syncError');
           // Still saved locally - will sync later
           if (!mounted) return;
           if (!context.mounted) return;
@@ -1422,7 +1422,7 @@ class _AdminPageState extends State<AdminPage> {
           );
         }
       } else {
-        print('[DOCUMENT_UPLOAD] No network - saved locally only');
+        debugPrint('[DOCUMENT_UPLOAD] No network - saved locally only');
         if (!mounted) return;
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1434,7 +1434,7 @@ class _AdminPageState extends State<AdminPage> {
         );
       }
     } catch (e) {
-      print('[DOCUMENT_UPLOAD] ERROR: $e');
+      debugPrint('[DOCUMENT_UPLOAD] ERROR: $e');
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1461,7 +1461,7 @@ class _AdminPageState extends State<AdminPage> {
       final authToken = await AppConfig.getAuthToken();
       if (authToken != null) {
         request.headers['Authorization'] = 'Bearer $authToken';
-        print('[DOCUMENT_SYNC] Added auth token to upload request');
+        debugPrint('[DOCUMENT_SYNC] Added auth token to upload request');
       }
       
       request.fields['learner_id'] = document['learner_id'].toString();
@@ -1481,8 +1481,8 @@ class _AdminPageState extends State<AdminPage> {
 
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
-      print('Sync response status: ${response.statusCode}');
-      print('Sync response body: $responseBody');
+      debugPrint('Sync response status: ${response.statusCode}');
+      debugPrint('Sync response body: $responseBody');
 
       if (response.statusCode == 200) {
         try {
@@ -1491,7 +1491,7 @@ class _AdminPageState extends State<AdminPage> {
             final dbHelper = DatabaseHelper();
             await dbHelper.updateLearnerDocumentSynced(
                 document['document_id'], 1);
-            print(
+            debugPrint(
                 'Document synced: ${document['documentName']} for learner ${document['learner_id']}');
           } else {
             throw Exception(
@@ -1504,7 +1504,7 @@ class _AdminPageState extends State<AdminPage> {
         throw Exception('Server error: ${response.statusCode} - $responseBody');
       }
     } catch (e) {
-      print('Error syncing document: $e');
+      debugPrint('Error syncing document: $e');
       rethrow;
     }
   }
@@ -1522,7 +1522,7 @@ class _AdminPageState extends State<AdminPage> {
     try {
       final dbHelper = DatabaseHelper();
       final unsyncedDocs = await dbHelper.fetchUnsyncedLearnerDocuments();
-      print('Found ${unsyncedDocs.length} unsynced documents');
+      debugPrint('Found ${unsyncedDocs.length} unsynced documents');
 
       for (var doc in unsyncedDocs) {
         await _syncDocument(doc);
@@ -1725,12 +1725,12 @@ class _AdminPageState extends State<AdminPage> {
       final resolved = _resolveSdpIdentifier();
       if (resolved != null && resolved.isNotEmpty) {
         identifier = resolved;
-        print('[ADMIN] Resolved SDP identifier from site data: $identifier');
+        debugPrint('[ADMIN] Resolved SDP identifier from site data: $identifier');
       }
     }
 
     if (identifier.isEmpty) {
-      print(
+      debugPrint(
           '[ADMIN] ERROR: No SDP identifier found. widget.sdp="${widget.sdp}", _siteData count=${_siteData.length}');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1742,7 +1742,7 @@ class _AdminPageState extends State<AdminPage> {
       return;
     }
 
-    print('[ADMIN] Opening SDP learners with identifier: $identifier');
+    debugPrint('[ADMIN] Opening SDP learners with identifier: $identifier');
 
     final dynamic inferredName = _siteData.isNotEmpty
         ? (_siteData.first['sdp_name'] ??

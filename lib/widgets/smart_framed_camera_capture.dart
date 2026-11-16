@@ -14,7 +14,6 @@
 
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,13 +34,13 @@ class SmartFramedCameraCapture extends StatefulWidget {
   final Duration holdDuration;
 
   const SmartFramedCameraCapture({
-    Key? key,
+    super.key,
     required this.learnerID,
     required this.learnerName,
     required this.onCapture,
     this.lens = CameraLensDirection.back,
     this.holdDuration = const Duration(milliseconds: 1000),
-  }) : super(key: key);
+  });
 
   @override
   State<SmartFramedCameraCapture> createState() =>
@@ -73,7 +72,7 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
   
   // LIVENESS DETECTION ADDITIONS
   bool _livenessCheckPassed = false;
-  List<double> _headYawHistory = []; // Track head rotation (left-right)
+  final List<double> _headYawHistory = []; // Track head rotation (left-right)
   DateTime? _livenessStartTime;
   static const double _livenessMotionThreshold = 8.0; // degrees of head movement required
   static const int _livenessMaxDuration = 8; // seconds to complete liveness check
@@ -114,7 +113,7 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
       setState(() => _controller = controller);
       await controller.startImageStream(_onFrame);
     } catch (e) {
-      print('[SMART_FRAMED_CAMERA] Error initializing camera: $e');
+      debugPrint('[SMART_FRAMED_CAMERA] Error initializing camera: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Camera error: $e')),
@@ -176,12 +175,12 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
     final rotation =
         InputImageRotationValue.fromRawValue(cam.sensorOrientation);
     if (rotation == null) {
-      print('[SMART_CAMERA] Invalid rotation');
+      debugPrint('[SMART_CAMERA] Invalid rotation');
       return null;
     }
 
     if (image.planes.isEmpty) {
-      print('[SMART_CAMERA] No image planes available');
+      debugPrint('[SMART_CAMERA] No image planes available');
       return null;
     }
 
@@ -199,7 +198,7 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
         bytes = _yuv420ToNv21(image);
         bytesPerRow = image.width; // NV21 Y plane has no padding
       } else {
-        print('[SMART_CAMERA] Unsupported plane count: ${image.planes.length}');
+        debugPrint('[SMART_CAMERA] Unsupported plane count: ${image.planes.length}');
         return null;
       }
 
@@ -239,14 +238,14 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
     try {
       final input = _toInputImage(image, controller.description);
       if (input == null) {
-        print('[SMART_CAMERA] Failed to convert camera image to InputImage');
+        debugPrint('[SMART_CAMERA] Failed to convert camera image to InputImage');
         return;
       }
 
       final faces = await _detector.processImage(input);
       if (!mounted || _captured) return;
 
-      print('[SMART_CAMERA] Detected ${faces.length} face(s)');
+      debugPrint('[SMART_CAMERA] Detected ${faces.length} face(s)');
 
       // Upright image size (sensor is landscape, we are in portrait).
       final sensor = controller.description.sensorOrientation;
@@ -256,7 +255,7 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
 
       _evaluate(faces, Size(uw, uh), controller.description.lensDirection);
     } catch (e) {
-      print('[SMART_CAMERA] Error processing frame: $e');
+      debugPrint('[SMART_CAMERA] Error processing frame: $e');
     } finally {
       _busy = false;
     }
@@ -367,7 +366,7 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
     final elapsed = DateTime.now().difference(_livenessStartTime!);
     if (elapsed.inSeconds > _livenessMaxDuration) {
       // FAILED: No movement detected - likely a photo/screen
-      print('[LIVENESS] ✗ FAILED - No natural movement detected (possible photo/screen)');
+      debugPrint('[LIVENESS] ✗ FAILED - No natural movement detected (possible photo/screen)');
       
       // Show error dialog and block clocking
       if (mounted) {
@@ -375,8 +374,8 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
           context: context,
           barrierDismissible: false,
           builder: (context) => AlertDialog(
-            title: Row(
-              children: const [
+            title: const Row(
+              children: [
                 Icon(Icons.error, color: Colors.red, size: 28),
                 SizedBox(width: 8),
                 Expanded(child: Text('Liveness Check Failed')),
@@ -418,12 +417,12 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
     final maxYaw = _headYawHistory.reduce(math.max);
     final yawRange = (maxYaw - minYaw).abs();
     
-    print('[LIVENESS] Yaw range: $yawRange degrees (need ${_livenessMotionThreshold}+)');
+    debugPrint('[LIVENESS] Yaw range: $yawRange degrees (need $_livenessMotionThreshold+)');
     
     // Check if sufficient head movement detected
     if (yawRange >= _livenessMotionThreshold) {
       // PASSED: Real person detected (head moved naturally)
-      print('[LIVENESS] ✓ PASSED - Natural head movement detected');
+      debugPrint('[LIVENESS] ✓ PASSED - Natural head movement detected');
       _livenessCheckPassed = true;
       HapticFeedback.lightImpact();
       _state.value = const _FrameState(
@@ -465,30 +464,30 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
     if (_captured || controller == null) return;
 
     _captured = true;
-    print('[SMART_FRAMED_CAMERA] Starting capture...');
+    debugPrint('[SMART_FRAMED_CAMERA] Starting capture...');
 
     try {
       await controller.stopImageStream();
-      print('[SMART_FRAMED_CAMERA] Image stream stopped, taking picture...');
+      debugPrint('[SMART_FRAMED_CAMERA] Image stream stopped, taking picture...');
 
       final photo = await controller.takePicture();
       HapticFeedback.mediumImpact();
-      print('[SMART_FRAMED_CAMERA] Picture taken, reading bytes...');
+      debugPrint('[SMART_FRAMED_CAMERA] Picture taken, reading bytes...');
 
       // Read image bytes
       final Uint8List imageBytes = await photo.readAsBytes();
-      print(
+      debugPrint(
           '[SMART_FRAMED_CAMERA] Image bytes read: ${imageBytes.length} bytes');
 
       // Add watermark with timeout
       Uint8List watermarkedBytes;
       try {
-        print('[SMART_FRAMED_CAMERA] Starting watermark process...');
+        debugPrint('[SMART_FRAMED_CAMERA] Starting watermark process...');
         watermarkedBytes = await _addWatermarkToImage(imageBytes)
             .timeout(const Duration(seconds: 10));
-        print('[SMART_FRAMED_CAMERA] Watermark completed successfully');
+        debugPrint('[SMART_FRAMED_CAMERA] Watermark completed successfully');
       } catch (e) {
-        print(
+        debugPrint(
             '[SMART_FRAMED_CAMERA] Watermark failed, using original image: $e');
         watermarkedBytes = imageBytes; // Fallback to original image
       }
@@ -496,19 +495,18 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
       // Create temp file with processed image
       final File tempFile = File(photo.path);
       await tempFile.writeAsBytes(watermarkedBytes);
-      print('[SMART_FRAMED_CAMERA] File written, calling onCapture...');
+      debugPrint('[SMART_FRAMED_CAMERA] File written, calling onCapture...');
 
       if (mounted) {
         widget.onCapture(tempFile, watermarkedBytes);
-        print('[SMART_FRAMED_CAMERA] onCapture called, closing camera...');
+        debugPrint('[SMART_FRAMED_CAMERA] onCapture called, closing camera...');
         Navigator.of(context).pop();
       }
     } catch (e) {
-      print('[SMART_FRAMED_CAMERA] Capture error: $e');
+      debugPrint('[SMART_FRAMED_CAMERA] Capture error: $e');
       _captured = false;
       _goodSince = null;
       if (mounted &&
-          controller != null &&
           !controller.value.isStreamingImages) {
         await controller.startImageStream(_onFrame);
       }
@@ -568,7 +566,7 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
       ),
     )
       ..pushStyle(ui.TextStyle(color: const Color(0xFFFFFFFF)))
-      ..addText('${widget.learnerName}'); // Just name, no label
+      ..addText(widget.learnerName); // Just name, no label
 
     final titleParagraph = titleBuilder.build()
       ..layout(ui.ParagraphConstraints(width: width - 40));

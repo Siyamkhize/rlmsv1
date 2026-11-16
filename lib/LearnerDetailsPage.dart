@@ -214,7 +214,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     _tabController.addListener(() {
       if (_tabController.index == 4 && !_tabController.indexIsChanging) {
         // Agreement tab selected (index 4 = 5th tab)
-        print('[AGREEMENT_TAB] Agreement tab selected - checking eligibility');
+        debugPrint('[AGREEMENT_TAB] Agreement tab selected - checking eligibility');
         _checkAgreementEligibility();
       }
     });
@@ -224,15 +224,15 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
 
-    print('[LIFECYCLE] App state changed to: $state');
+    debugPrint('[LIFECYCLE] App state changed to: $state');
 
     // Handle different app lifecycle states
     switch (state) {
       case AppLifecycleState.paused:
         // App is going to background - could be ML Kit scanner launching
-        print('[LIFECYCLE] App paused - checking if ML Kit scanner is active');
+        debugPrint('[LIFECYCLE] App paused - checking if ML Kit scanner is active');
         if (_cameraManager.isMLKitScannerActive) {
-          print(
+          debugPrint(
               '[LIFECYCLE] ML Kit scanner is active - app paused for document scanning');
         } else {
           // Normal pause - release camera resources
@@ -242,10 +242,10 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
       case AppLifecycleState.resumed:
         // App is coming back to foreground
-        print('[LIFECYCLE] App resumed');
+        debugPrint('[LIFECYCLE] App resumed');
         // If ML Kit was active and we're resuming, it likely finished
         if (_cameraManager.isMLKitScannerActive) {
-          print(
+          debugPrint(
               '[LIFECYCLE] App resumed after ML Kit scanner - marking scanner inactive');
           _cameraManager.markMLKitScannerInactive();
         }
@@ -253,19 +253,19 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
       case AppLifecycleState.detached:
         // App is being terminated
-        print(
+        debugPrint(
             '[LIFECYCLE] App detached - force releasing all camera resources');
         _cameraManager.forceReleaseCameraAccess('App lifecycle: detached');
         break;
 
       case AppLifecycleState.inactive:
         // App is inactive (e.g., phone call, notification panel)
-        print('[LIFECYCLE] App inactive');
+        debugPrint('[LIFECYCLE] App inactive');
         break;
 
       case AppLifecycleState.hidden:
         // App is hidden
-        print('[LIFECYCLE] App hidden');
+        debugPrint('[LIFECYCLE] App hidden');
         break;
     }
   }
@@ -295,15 +295,15 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       idNumber = learnerData?['IDNumber']?.toString().trim();
     }
 
-    print('[ID_CALC] ===== CALCULATE FROM ID NUMBER =====');
-    print(
+    debugPrint('[ID_CALC] ===== CALCULATE FROM ID NUMBER =====');
+    debugPrint(
         '[ID_CALC] IDNumber controller text: "${_controllers['IDNumber']?.text}"');
-    print('[ID_CALC] IDNumber from learnerData: "${learnerData?['IDNumber']}"');
-    print('[ID_CALC] Final IDNumber used: "$idNumber"');
+    debugPrint('[ID_CALC] IDNumber from learnerData: "${learnerData?['IDNumber']}"');
+    debugPrint('[ID_CALC] Final IDNumber used: "$idNumber"');
 
     if (idNumber == null || idNumber.length < 6) {
       // Need at least 6 characters for date calculation
-      print('[ID_CALC] ❌ ID number too short or null: "$idNumber"');
+      debugPrint('[ID_CALC] ❌ ID number too short or null: "$idNumber"');
       return;
     }
 
@@ -316,7 +316,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       final gender =
           idNumber.length >= 10 ? _calculateGenderFromID(idNumber) : null;
 
-      print('[ID_CALC] Calculated values: Age=$age, Gender=$gender, DOB=$dob');
+      debugPrint('[ID_CALC] Calculated values: Age=$age, Gender=$gender, DOB=$dob');
 
       // Check if we should update (always update if offline or if values are wrong)
       bool shouldUpdate = false;
@@ -325,7 +325,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       final currentAge = learnerData?['Age']?.toString();
       final currentGender = learnerData?['Gender']?.toString();
 
-      print(
+      debugPrint(
           '[ID_CALC] Current values: Age="$currentAge", Gender="$currentGender"');
 
       // Always update if:
@@ -345,7 +345,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
               currentAge == '0' ||
               int.tryParse(currentAge) != age)) {
         shouldUpdate = true;
-        print('[ID_CALC] 🔄 Age needs update: "$currentAge" → "$age"');
+        debugPrint('[ID_CALC] 🔄 Age needs update: "$currentAge" → "$age"');
       }
 
       if (gender != null &&
@@ -354,26 +354,26 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
               currentGender == 'Unknown' ||
               currentGender != gender)) {
         shouldUpdate = true;
-        print('[ID_CALC] 🔄 Gender needs update: "$currentGender" → "$gender"');
+        debugPrint('[ID_CALC] 🔄 Gender needs update: "$currentGender" → "$gender"');
       }
 
       if (dob != null && isDefaultDOB) {
         shouldUpdate = true;
-        print('[ID_CALC] 🔄 DOB needs update: "$currentDOB" → calculated DOB');
+        debugPrint('[ID_CALC] 🔄 DOB needs update: "$currentDOB" → calculated DOB');
       }
 
       // Force update if we're offline (to fix any wrong cached values)
       final isOffline = !await _checkConnectivity();
       if (isOffline && (age != null || gender != null)) {
         shouldUpdate = true;
-        print('[ID_CALC] 🔄 Forcing update because offline mode');
+        debugPrint('[ID_CALC] 🔄 Forcing update because offline mode');
       }
 
       // Also force update if any value is obviously wrong (regardless of online/offline)
       if ((currentAge == '0' || currentGender == 'Unknown' || isDefaultDOB) &&
           (age != null || gender != null)) {
         shouldUpdate = true;
-        print('[ID_CALC] 🔄 Forcing update because values are obviously wrong');
+        debugPrint('[ID_CALC] 🔄 Forcing update because values are obviously wrong');
       }
 
       if (shouldUpdate) {
@@ -384,7 +384,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             if (_controllers['Age'] != null) {
               _controllers['Age']!.text = age.toString();
             }
-            print('[ID_CALC] ✅ Updated Age to: $age');
+            debugPrint('[ID_CALC] ✅ Updated Age to: $age');
           }
 
           // Update Gender field (only if we have enough digits)
@@ -393,7 +393,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             if (_controllers['Gender'] != null) {
               _controllers['Gender']!.text = gender;
             }
-            print('[ID_CALC] ✅ Updated Gender to: $gender');
+            debugPrint('[ID_CALC] ✅ Updated Gender to: $gender');
           }
 
           // Update Date of Birth field (DateOfBirth is visible, DOB is hidden)
@@ -406,14 +406,14 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             }
             // Also store in DOB field for database compatibility (but DOB field is hidden from UI)
             learnerData!['DOB'] = dobString;
-            print('[ID_CALC] ✅ Updated DOB to: $dobString');
+            debugPrint('[ID_CALC] ✅ Updated DOB to: $dobString');
           }
 
           // Update minor status
           _isMinor = age != null && age < 18;
         });
 
-        print(
+        debugPrint(
             '[ID_CALC] ✅ Auto-calculated from ID $idNumber: Age=$age, Gender=$gender, DOB=$dob, IsMinor=$_isMinor');
 
         // CRITICAL: Save calculated values to database for offline persistence
@@ -421,10 +421,10 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           _saveCalculatedValuesToDatabase(age, gender, dob);
         }
       } else {
-        print('[ID_CALC] ℹ️ No update needed - current values are correct');
+        debugPrint('[ID_CALC] ℹ️ No update needed - current values are correct');
       }
     } catch (e) {
-      print('[ID_CALC] ❌ Error calculating from ID number: $e');
+      debugPrint('[ID_CALC] ❌ Error calculating from ID number: $e');
     }
   }
 
@@ -451,10 +451,10 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       if (updateData.isNotEmpty) {
         await DatabaseHelper()
             .updateLearnerLocally(widget.learnerID, updateData);
-        print('[ID_CALC] 💾 Saved calculated values to database: $updateData');
+        debugPrint('[ID_CALC] 💾 Saved calculated values to database: $updateData');
       }
     } catch (e) {
-      print('[ID_CALC] ❌ Error saving calculated values to database: $e');
+      debugPrint('[ID_CALC] ❌ Error saving calculated values to database: $e');
     }
   }
 
@@ -611,12 +611,12 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     for (final keys in _profileValidationRuleKeys) {
       if (_isProfileRuleMissing(keys)) {
         final key = _resolveProfileFieldKey(keys);
-        print(
+        debugPrint(
             '[DEBUG] _getCurrentlyMissingFieldKeys: missing rule $keys, key: $key');
         missing.add(key);
       }
     }
-    print('[DEBUG] _getCurrentlyMissingFieldKeys: final missing: $missing');
+    debugPrint('[DEBUG] _getCurrentlyMissingFieldKeys: final missing: $missing');
     return missing;
   }
 
@@ -628,12 +628,12 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
   bool _canCloseMissingProfileFlow() {
     final missing = _getCurrentlyMissingFieldKeys();
-    print('[DEBUG] _canCloseMissingProfileFlow: missing fields: $missing');
-    print(
+    debugPrint('[DEBUG] _canCloseMissingProfileFlow: missing fields: $missing');
+    debugPrint(
         '[DEBUG] _areEditableDetailsComplete(): ${_areEditableDetailsComplete()}');
-    print(
+    debugPrint(
         '[DEBUG] _needsProfileImageCapture: $_needsProfileImageCapture, missing profile_image: ${missing.contains('profile_image')}');
-    print(
+    debugPrint(
         '[DEBUG] _needsSignatureCapture: $_needsSignatureCapture, missing signature: ${missing.contains('signature')}');
     if (!_areEditableDetailsComplete()) return false;
     if (_needsProfileImageCapture && missing.contains('profile_image')) {
@@ -685,7 +685,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
   void _updateTabController() {
     final newLength = _isMinor ? 6 : 5;
-    print(
+    debugPrint(
         '[GUARDIAN] Updating tab controller: isMinor=$_isMinor, newLength=$newLength, currentLength=${_tabController.length}');
     if (_tabController.length != newLength) {
       final oldIndex = _tabController.index;
@@ -695,16 +695,16 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         vsync: this,
         initialIndex: oldIndex < newLength ? oldIndex : 0,
       );
-      print('[GUARDIAN] Tab controller updated to $newLength tabs');
+      debugPrint('[GUARDIAN] Tab controller updated to $newLength tabs');
     }
   }
 
   // Calculate age from ID number (South African format: YYMMDDGGGGSAAZ)
   int? _calculateAgeFromID(String? idNumber) {
-    print('[GUARDIAN] Calculating age from ID: $idNumber');
+    debugPrint('[GUARDIAN] Calculating age from ID: $idNumber');
 
     if (idNumber == null || idNumber.length < 6) {
-      print('[GUARDIAN] ID number is null or too short');
+      debugPrint('[GUARDIAN] ID number is null or too short');
       return null;
     }
 
@@ -715,11 +715,11 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
       // Validate month and day
       if (month < 1 || month > 12) {
-        print('[GUARDIAN] Invalid month: $month');
+        debugPrint('[GUARDIAN] Invalid month: $month');
         return null;
       }
       if (day < 1 || day > 31) {
-        print('[GUARDIAN] Invalid day: $day');
+        debugPrint('[GUARDIAN] Invalid day: $day');
         return null;
       }
 
@@ -732,7 +732,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
       // Check if birth date is not in the future
       if (birthDate.isAfter(today)) {
-        print('[GUARDIAN] Birth date is in the future: $birthDate');
+        debugPrint('[GUARDIAN] Birth date is in the future: $birthDate');
         return null;
       }
 
@@ -743,34 +743,34 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         age--;
       }
 
-      print('[GUARDIAN] Birth date: $birthDate, Age: $age');
+      debugPrint('[GUARDIAN] Birth date: $birthDate, Age: $age');
       return age;
     } catch (e) {
-      print('[GUARDIAN] Error calculating age from ID: $e');
+      debugPrint('[GUARDIAN] Error calculating age from ID: $e');
       return null;
     }
   }
 
   // Calculate gender from South African ID number
   String? _calculateGenderFromID(String? idNumber) {
-    print('[GENDER] Calculating gender from ID: $idNumber');
+    debugPrint('[GENDER] Calculating gender from ID: $idNumber');
 
     if (idNumber == null || idNumber.length < 10) {
-      print('[GENDER] ID number is null or too short (need 10 digits)');
+      debugPrint('[GENDER] ID number is null or too short (need 10 digits)');
       return null;
     }
 
     try {
       // Gender digit is at position 6 (0-indexed)
       final genderDigit = int.parse(idNumber.substring(6, 7));
-      print('[GENDER] Gender digit: $genderDigit');
+      debugPrint('[GENDER] Gender digit: $genderDigit');
 
       // 0-4 = Female, 5-9 = Male
       final gender = genderDigit < 5 ? 'Female' : 'Male';
-      print('[GENDER] Calculated gender: $gender');
+      debugPrint('[GENDER] Calculated gender: $gender');
       return gender;
     } catch (e) {
-      print('[GENDER] Error calculating gender from ID: $e');
+      debugPrint('[GENDER] Error calculating gender from ID: $e');
       return null;
     }
   }
@@ -788,11 +788,11 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
       // Validate month and day
       if (month < 1 || month > 12) {
-        print('[DOB] Invalid month: $month');
+        debugPrint('[DOB] Invalid month: $month');
         return null;
       }
       if (day < 1 || day > 31) {
-        print('[DOB] Invalid day: $day');
+        debugPrint('[DOB] Invalid day: $day');
         return null;
       }
 
@@ -803,13 +803,13 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
       // Check if birth date is not in the future
       if (birthDate.isAfter(DateTime.now())) {
-        print('[DOB] Birth date is in the future: $birthDate');
+        debugPrint('[DOB] Birth date is in the future: $birthDate');
         return null;
       }
 
       return birthDate;
     } catch (e) {
-      print('[DOB] Error calculating DOB from ID: $e');
+      debugPrint('[DOB] Error calculating DOB from ID: $e');
       return null;
     }
   }
@@ -827,12 +827,12 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         setState(() {
           bankDetails = result.first;
         });
-        print('[BANK] Bank details loaded: ${bankDetails!['BankName']}');
+        debugPrint('[BANK] Bank details loaded: ${bankDetails!['BankName']}');
       } else {
-        print('[BANK] No bank details found for learner ${widget.learnerID}');
+        debugPrint('[BANK] No bank details found for learner ${widget.learnerID}');
       }
     } catch (e) {
-      print('[BANK] Error fetching bank details: $e');
+      debugPrint('[BANK] Error fetching bank details: $e');
     }
   }
 
@@ -844,11 +844,11 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           .fetchGuardianDetails(int.parse(widget.learnerID));
 
       if (guardianData != null) {
-        print(
+        debugPrint(
             '[GUARDIAN] Guardian data loaded for learner ${widget.learnerID}');
       }
     } catch (e) {
-      print('[GUARDIAN] Error fetching guardian data: $e');
+      debugPrint('[GUARDIAN] Error fetching guardian data: $e');
     }
   }
 
@@ -857,7 +857,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     setState(() {
       _provinces = List<String>.from(_fallbackSouthAfricanProvinces);
     });
-    print('[LOCATION] Using fallback provinces (${_provinces.length} items)');
+    debugPrint('[LOCATION] Using fallback provinces (${_provinces.length} items)');
   }
 
   Future<void> _loadLocationCascadesIfNeeded() async {
@@ -875,12 +875,12 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
   // Fetch location data methods
   Future<void> _fetchProvinces() async {
-    print('[LOCATION] _fetchProvinces called (server-first approach)');
+    debugPrint('[LOCATION] _fetchProvinces called (server-first approach)');
 
     try {
       // Try server first
       final url = AppConfig.buildUrl('fetch_provinces.php');
-      print('[LOCATION] Fetching from server: $url');
+      debugPrint('[LOCATION] Fetching from server: $url');
 
       final response = await http.get(
         Uri.parse(url),
@@ -890,12 +890,12 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         },
       ).timeout(const Duration(seconds: 10));
 
-      print('[LOCATION] Server response status: ${response.statusCode}');
-      print('[LOCATION] Server response body: ${response.body}');
+      debugPrint('[LOCATION] Server response status: ${response.statusCode}');
+      debugPrint('[LOCATION] Server response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('[LOCATION] Decoded data: $data');
+        debugPrint('[LOCATION] Decoded data: $data');
 
         if (data['success'] == true && data['data']?['provinces'] != null) {
           final provincesData = data['data']['provinces'];
@@ -905,22 +905,22 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                 provincesData.map((p) => p['name'] as String),
               );
             });
-            print(
+            debugPrint(
                 '[LOCATION] ✅ Server provinces loaded: $_provinces (${_provinces.length} items)');
             return; // Success - no need for fallback
           }
         }
-        print('[LOCATION] ⚠️ Server returned invalid provinces data');
+        debugPrint('[LOCATION] ⚠️ Server returned invalid provinces data');
       } else {
-        print('[LOCATION] ⚠️ Server returned HTTP ${response.statusCode}');
+        debugPrint('[LOCATION] ⚠️ Server returned HTTP ${response.statusCode}');
       }
     } catch (e) {
-      print('[LOCATION] ⚠️ Server request failed: $e');
+      debugPrint('[LOCATION] ⚠️ Server request failed: $e');
     }
 
     // Server failed - try local database fallback
     try {
-      print('[LOCATION] 🔄 Trying local database fallback...');
+      debugPrint('[LOCATION] 🔄 Trying local database fallback...');
       final localProvinces = await DatabaseHelper().getProvincesFromLocal();
 
       if (localProvinces.isNotEmpty) {
@@ -929,27 +929,27 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             localProvinces.map((p) => p['name'] as String),
           );
         });
-        print(
+        debugPrint(
             '[LOCATION] ✅ Local database provinces loaded: $_provinces (${_provinces.length} items)');
         return; // Success with local data
       } else {
-        print('[LOCATION] ⚠️ Local database has no provinces');
+        debugPrint('[LOCATION] ⚠️ Local database has no provinces');
       }
     } catch (e) {
-      print('[LOCATION] ⚠️ Local database fallback failed: $e');
+      debugPrint('[LOCATION] ⚠️ Local database fallback failed: $e');
     }
 
     // Both server and local failed - use hardcoded fallback
-    print('[LOCATION] 🔄 Using hardcoded fallback provinces...');
+    debugPrint('[LOCATION] 🔄 Using hardcoded fallback provinces...');
     _ensureFallbackProvincesLoaded();
   }
 
   Future<void> _fetchDistricts(String province) async {
-    print(
+    debugPrint(
         '[LOCATION] _fetchDistricts called for province: $province (server-first approach)');
 
     if (province.trim().isEmpty) {
-      print('[LOCATION] Province is empty, skipping districts fetch');
+      debugPrint('[LOCATION] Province is empty, skipping districts fetch');
       setState(() {
         _districts = [];
         _municipalities = [];
@@ -961,7 +961,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       // Try server first
       final url = AppConfig.buildUrl('fetch_districts.php',
           queryParams: {'province': province});
-      print('[LOCATION] Fetching from server: $url');
+      debugPrint('[LOCATION] Fetching from server: $url');
 
       final response = await http.get(
         Uri.parse(url),
@@ -971,12 +971,12 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         },
       ).timeout(const Duration(seconds: 10));
 
-      print('[LOCATION] Server response status: ${response.statusCode}');
-      print('[LOCATION] Server response body: ${response.body}');
+      debugPrint('[LOCATION] Server response status: ${response.statusCode}');
+      debugPrint('[LOCATION] Server response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('[LOCATION] Decoded data: $data');
+        debugPrint('[LOCATION] Decoded data: $data');
 
         if (data['success'] == true) {
           final districtsData = data['data']?['districts'];
@@ -990,25 +990,25 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
               _municipalities =
                   []; // Reset municipalities when province changes
             });
-            print(
+            debugPrint(
                 '[LOCATION] ✅ Server districts loaded: $_districts (${_districts.length} items)');
             return; // Success - no need for fallback
           }
         }
-        print(
+        debugPrint(
             '[LOCATION] ⚠️ Server returned invalid districts data: ${data['message'] ?? 'No message'}');
       } else {
-        print(
+        debugPrint(
             '[LOCATION] ⚠️ Server returned HTTP ${response.statusCode}: ${response.body}');
       }
     } catch (e) {
-      print('[LOCATION] ⚠️ Server request failed: $e');
-      print('[LOCATION] Stack trace: ${StackTrace.current}');
+      debugPrint('[LOCATION] ⚠️ Server request failed: $e');
+      debugPrint('[LOCATION] Stack trace: ${StackTrace.current}');
     }
 
     // Server failed - try local database fallback
     try {
-      print(
+      debugPrint(
           '[LOCATION] 🔄 Trying local database fallback for province: $province');
       final localDistricts =
           await DatabaseHelper().getDistrictsFromLocal(province);
@@ -1020,19 +1020,19 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           );
           _municipalities = []; // Reset municipalities when province changes
         });
-        print(
+        debugPrint(
             '[LOCATION] ✅ Local database districts loaded: $_districts (${_districts.length} items)');
         return; // Success with local data
       } else {
-        print(
+        debugPrint(
             '[LOCATION] ⚠️ Local database has no districts for province: $province');
       }
     } catch (e) {
-      print('[LOCATION] ⚠️ Local database fallback failed: $e');
+      debugPrint('[LOCATION] ⚠️ Local database fallback failed: $e');
     }
 
     // Both server and local failed - clear districts
-    print('[LOCATION] ❌ No districts found for province: $province');
+    debugPrint('[LOCATION] ❌ No districts found for province: $province');
     setState(() {
       _districts = [];
       _municipalities = [];
@@ -1040,11 +1040,11 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
   }
 
   Future<void> _fetchMunicipalities(String district) async {
-    print(
+    debugPrint(
         '[LOCATION] _fetchMunicipalities called for district: $district (server-first approach)');
 
     if (district.trim().isEmpty) {
-      print('[LOCATION] District is empty, skipping municipalities fetch');
+      debugPrint('[LOCATION] District is empty, skipping municipalities fetch');
       setState(() {
         _municipalities = [];
       });
@@ -1055,7 +1055,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       // Try server first
       final url = AppConfig.buildUrl('fetch_municipalities.php',
           queryParams: {'district': district});
-      print('[LOCATION] Fetching from server: $url');
+      debugPrint('[LOCATION] Fetching from server: $url');
 
       final response = await http.get(
         Uri.parse(url),
@@ -1065,12 +1065,12 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         },
       ).timeout(const Duration(seconds: 10));
 
-      print('[LOCATION] Server response status: ${response.statusCode}');
-      print('[LOCATION] Server response body: ${response.body}');
+      debugPrint('[LOCATION] Server response status: ${response.statusCode}');
+      debugPrint('[LOCATION] Server response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('[LOCATION] Decoded data: $data');
+        debugPrint('[LOCATION] Decoded data: $data');
 
         if (data['success'] == true) {
           final municipalitiesData = data['data']?['municipalities'];
@@ -1082,25 +1082,25 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                 municipalitiesData.map((m) => m['name'] as String),
               );
             });
-            print(
+            debugPrint(
                 '[LOCATION] ✅ Server municipalities loaded: $_municipalities (${_municipalities.length} items)');
             return; // Success - no need for fallback
           }
         }
-        print(
+        debugPrint(
             '[LOCATION] ⚠️ Server returned invalid municipalities data: ${data['message'] ?? 'No message'}');
       } else {
-        print(
+        debugPrint(
             '[LOCATION] ⚠️ Server returned HTTP ${response.statusCode}: ${response.body}');
       }
     } catch (e) {
-      print('[LOCATION] ⚠️ Server request failed: $e');
-      print('[LOCATION] Stack trace: ${StackTrace.current}');
+      debugPrint('[LOCATION] ⚠️ Server request failed: $e');
+      debugPrint('[LOCATION] Stack trace: ${StackTrace.current}');
     }
 
     // Server failed - try local database fallback
     try {
-      print(
+      debugPrint(
           '[LOCATION] 🔄 Trying local database fallback for district: $district');
       final localMunicipalities =
           await DatabaseHelper().getMunicipalitiesFromLocal(district);
@@ -1111,19 +1111,19 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             localMunicipalities.map((m) => m['name'] as String),
           );
         });
-        print(
+        debugPrint(
             '[LOCATION] ✅ Local database municipalities loaded: $_municipalities (${_municipalities.length} items)');
         return; // Success with local data
       } else {
-        print(
+        debugPrint(
             '[LOCATION] ⚠️ Local database has no municipalities for district: $district');
       }
     } catch (e) {
-      print('[LOCATION] ⚠️ Local database fallback failed: $e');
+      debugPrint('[LOCATION] ⚠️ Local database fallback failed: $e');
     }
 
     // Both server and local failed - clear municipalities
-    print('[LOCATION] ❌ No municipalities found for district: $district');
+    debugPrint('[LOCATION] ❌ No municipalities found for district: $district');
     setState(() {
       _municipalities = [];
     });
@@ -1198,21 +1198,21 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                 age = _calculateAgeFromID(learnerData!['IDNumber']);
               }
               _isMinor = age != null && age < 18;
-              print('[GUARDIAN] ===== ONLINE FETCH =====');
-              print(
+              debugPrint('[GUARDIAN] ===== ONLINE FETCH =====');
+              debugPrint(
                   '[GUARDIAN] IDNumber: ${learnerData!['IDNumber']}, Age: $age, Is Minor: $_isMinor');
-              print(
+              debugPrint(
                   '[GUARDIAN] Tab controller will be updated to ${_isMinor ? 5 : 4} tabs');
               _updateTabController();
             });
-            print(
+            debugPrint(
                 'Learner data fetched from online database: ${learnerData!.keys.toList()}');
 
             // Update local database with server data to keep them in sync
-            print('[SYNC] Updating local database with server data...');
+            debugPrint('[SYNC] Updating local database with server data...');
             await DatabaseHelper()
                 .updateLearnerDetails(widget.learnerID, learnerData!);
-            print(
+            debugPrint(
                 '[SYNC] Local database updated with signature: ${learnerData!['signature']}');
 
             await fetchBankDetails();
@@ -1222,15 +1222,15 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             await _checkAgreementEligibility();
             return;
           } else {
-            print('Online fetch failed: ${jsonResponse['message']}');
+            debugPrint('Online fetch failed: ${jsonResponse['message']}');
           }
         } else {
-          print('Online fetch failed with status: ${response.statusCode}');
+          debugPrint('Online fetch failed with status: ${response.statusCode}');
         }
       }
 
       // Fallback to local database
-      print('Fetching from local database...');
+      debugPrint('Fetching from local database...');
       final localLearnerData =
           await DatabaseHelper().fetchLearnerByID(widget.learnerID);
       if (localLearnerData != null) {
@@ -1255,14 +1255,14 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             age = _calculateAgeFromID(learnerData!['IDNumber']);
           }
           _isMinor = age != null && age < 18;
-          print('[GUARDIAN] ===== LOCAL FETCH =====');
-          print(
+          debugPrint('[GUARDIAN] ===== LOCAL FETCH =====');
+          debugPrint(
               '[GUARDIAN] IDNumber: ${learnerData!['IDNumber']}, Age: $age, Is Minor: $_isMinor');
-          print(
+          debugPrint(
               '[GUARDIAN] Tab controller will be updated to ${_isMinor ? 5 : 4} tabs');
           _updateTabController();
         });
-        print(
+        debugPrint(
             'Learner data fetched from local database: ${learnerData!.keys.toList()}');
         await _loadLocationCascadesIfNeeded();
         await fetchBankDetails();
@@ -1282,7 +1282,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         }
       }
     } catch (e) {
-      print('Error fetching learner details: $e');
+      debugPrint('Error fetching learner details: $e');
       if (mounted) {
         setState(() {
           learnerData = {"message": "Error: $e"};
@@ -1308,7 +1308,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     // Signatures and initials are stored in learnerdetails table
     // and will be synced automatically with learner data
     // No separate sync needed
-    print(
+    debugPrint(
         'Sync local data called - signatures/initials stored in learnerdetails table');
   }
 
@@ -1336,7 +1336,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     try {
       final idNumber = learnerData?['IDNumber']?.toString();
       if (idNumber == null || idNumber.length < 6) {
-        print('[AGE_UPDATE] ID number not available or invalid: $idNumber');
+        debugPrint('[AGE_UPDATE] ID number not available or invalid: $idNumber');
         return;
       }
 
@@ -1348,12 +1348,12 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
         if (age != null) {
           updateData['Age'] = age.toString();
-          print('[AGE_UPDATE] Calculated age: $age');
+          debugPrint('[AGE_UPDATE] Calculated age: $age');
         }
 
         if (gender != null) {
           updateData['Gender'] = gender;
-          print('[AGE_UPDATE] Calculated gender: $gender');
+          debugPrint('[AGE_UPDATE] Calculated gender: $gender');
         }
 
         // Update local data first
@@ -1383,26 +1383,26 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           if (response.statusCode == 200) {
             final jsonResponse = jsonDecode(response.body);
             if (jsonResponse['success'] == true) {
-              print('[AGE_UPDATE] Age/Gender updated successfully online');
+              debugPrint('[AGE_UPDATE] Age/Gender updated successfully online');
             } else {
-              print(
+              debugPrint(
                   '[AGE_UPDATE] Failed to update online: ${jsonResponse['message']}');
               await DatabaseHelper()
                   .updateLearnerLocally(widget.learnerID, updateData);
             }
           } else {
-            print('[AGE_UPDATE] Server error: ${response.statusCode}');
+            debugPrint('[AGE_UPDATE] Server error: ${response.statusCode}');
             await DatabaseHelper()
                 .updateLearnerLocally(widget.learnerID, updateData);
           }
         } else {
           await DatabaseHelper()
               .updateLearnerLocally(widget.learnerID, updateData);
-          print('[AGE_UPDATE] Age/Gender updated locally (offline)');
+          debugPrint('[AGE_UPDATE] Age/Gender updated locally (offline)');
         }
       }
     } catch (e) {
-      print('[AGE_UPDATE] Error updating age/gender: $e');
+      debugPrint('[AGE_UPDATE] Error updating age/gender: $e');
     }
   }
 
@@ -1414,9 +1414,9 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       _cameraController =
           CameraController(firstCamera, ResolutionPreset.medium);
       await _cameraController!.initialize();
-      print('[CAMERA] Camera initialized successfully');
+      debugPrint('[CAMERA] Camera initialized successfully');
     } catch (e) {
-      print('[CAMERA] Camera initialization failed: $e');
+      debugPrint('[CAMERA] Camera initialization failed: $e');
       throw Exception('Camera initialization failed: $e');
     }
   }
@@ -1426,7 +1426,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     try {
       final idNumber = learnerData?['IDNumber']?.toString();
       if (idNumber == null || idNumber.length < 6) {
-        print('[FORCE_UPDATE] ID number not available: $idNumber');
+        debugPrint('[FORCE_UPDATE] ID number not available: $idNumber');
         return;
       }
 
@@ -1450,7 +1450,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           forceUpdateData['DateOfBirth'] = dobString;
         }
 
-        print(
+        debugPrint(
             '[FORCE_UPDATE] Force updating Age: $age, Gender: $gender, DOB: $dob');
 
         // Update local data first
@@ -1485,20 +1485,20 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           );
 
           if (response.statusCode == 200) {
-            print('[FORCE_UPDATE] Force update successful online');
+            debugPrint('[FORCE_UPDATE] Force update successful online');
           } else {
-            print('[FORCE_UPDATE] Online force update failed, saving locally');
+            debugPrint('[FORCE_UPDATE] Online force update failed, saving locally');
             await DatabaseHelper()
                 .updateLearnerLocally(widget.learnerID, forceUpdateData);
           }
         } else {
           await DatabaseHelper()
               .updateLearnerLocally(widget.learnerID, forceUpdateData);
-          print('[FORCE_UPDATE] Force update saved locally');
+          debugPrint('[FORCE_UPDATE] Force update saved locally');
         }
       }
     } catch (e) {
-      print('[FORCE_UPDATE] Error in force update: $e');
+      debugPrint('[FORCE_UPDATE] Error in force update: $e');
     }
   }
 
@@ -1540,7 +1540,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       updateData.remove('DOB');
 
       if (updateData.isEmpty) {
-        print('[UPDATE] No learner fields to save');
+        debugPrint('[UPDATE] No learner fields to save');
         return;
       }
 
@@ -1573,29 +1573,29 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           if (response.statusCode == 200) {
             final jsonResponse = jsonDecode(response.body);
             if (jsonResponse['success'] == true) {
-              print('Learner information synced online successfully');
+              debugPrint('Learner information synced online successfully');
             } else {
-              print(
+              debugPrint(
                   'Online sync rejected (local copy kept): ${jsonResponse['message']}');
             }
           } else {
-            print(
+            debugPrint(
                 'Online sync failed (local copy kept): HTTP ${response.statusCode}');
           }
         } catch (e) {
-          print('Online sync error (local copy kept): $e');
+          debugPrint('Online sync error (local copy kept): $e');
         }
       } else {
-        print('Learner information saved locally (offline)');
+        debugPrint('Learner information saved locally (offline)');
       }
     } catch (e) {
-      print('Error updating learner information: $e');
+      debugPrint('Error updating learner information: $e');
       rethrow;
     }
   }
 
   Future<void> _updateData() async {
-    print('Updating learner data for learner_id: ${widget.learnerID}');
+    debugPrint('Updating learner data for learner_id: ${widget.learnerID}');
     try {
       // Show loading indicator
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1609,7 +1609,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       if (capturedImage != null) {
         final isConnected = await _checkConnectivity();
         if (isConnected) {
-          print('Uploading captured image...');
+          debugPrint('Uploading captured image...');
           await _uploadImage(capturedImage!.path);
         } else {
           await saveImageLocally(capturedImage!.path);
@@ -1629,15 +1629,15 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       final learnerSignatureBytes =
           await _learnerSignatureController.toPngBytes();
       if (learnerSignatureBytes != null && !_learnerSignatureAlreadySaved) {
-        print('[SIG_UPDATE] Saving learner signature from _updateData()...');
+        debugPrint('[SIG_UPDATE] Saving learner signature from _updateData()...');
         final signaturePath = await _saveSignatureImage(
             learnerSignatureBytes, 'learner_signature');
         bool isConnected = await _checkConnectivity();
         if (isConnected) {
-          print('[SIG_UPDATE] Online - uploading learner signature...');
+          debugPrint('[SIG_UPDATE] Online - uploading learner signature...');
           await _uploadSignature(signaturePath, 'signature');
         } else {
-          print('[SIG_UPDATE] Offline - saving learner signature locally...');
+          debugPrint('[SIG_UPDATE] Offline - saving learner signature locally...');
           await DatabaseHelper().saveSignatureLocally(
               widget.learnerID, signaturePath, 'signature');
           if (!mounted) return;
@@ -1648,24 +1648,24 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         }
         _learnerSignatureAlreadySaved = true;
       } else if (_learnerSignatureAlreadySaved) {
-        print('[SIG_UPDATE] Skipping learner signature - already saved');
+        debugPrint('[SIG_UPDATE] Skipping learner signature - already saved');
       } else {
-        print('[SIG_UPDATE] No learner signature data to save');
+        debugPrint('[SIG_UPDATE] No learner signature data to save');
       }
 
       // Handle witness signature
       final witnessSignatureBytes =
           await _witnessSignatureController.toPngBytes();
       if (witnessSignatureBytes != null && !_witnessSignatureAlreadySaved) {
-        print('[SIG_UPDATE] Saving witness signature from _updateData()...');
+        debugPrint('[SIG_UPDATE] Saving witness signature from _updateData()...');
         final signaturePath = await _saveSignatureImage(
             witnessSignatureBytes, 'witness_signature');
         bool isConnected = await _checkConnectivity();
         if (isConnected) {
-          print('[SIG_UPDATE] Online - uploading witness signature...');
+          debugPrint('[SIG_UPDATE] Online - uploading witness signature...');
           await _uploadSignature(signaturePath, 'witness_signature');
         } else {
-          print('[SIG_UPDATE] Offline - saving witness signature locally...');
+          debugPrint('[SIG_UPDATE] Offline - saving witness signature locally...');
           await DatabaseHelper().saveSignatureLocally(
               widget.learnerID, signaturePath, 'witness_signature');
           if (!mounted) return;
@@ -1676,9 +1676,9 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         }
         _witnessSignatureAlreadySaved = true;
       } else if (_witnessSignatureAlreadySaved) {
-        print('[SIG_UPDATE] Skipping witness signature - already saved');
+        debugPrint('[SIG_UPDATE] Skipping witness signature - already saved');
       } else {
-        print('[SIG_UPDATE] No witness signature data to save');
+        debugPrint('[SIG_UPDATE] No witness signature data to save');
       }
 
       // Handle learner initials
@@ -1729,16 +1729,16 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           ),
         );
 
-        print('[DEBUG] _updateData: checking _canCloseMissingProfileFlow()...');
+        debugPrint('[DEBUG] _updateData: checking _canCloseMissingProfileFlow()...');
         if (_isMissingProfileOnlyMode && _canCloseMissingProfileFlow()) {
-          print('[DEBUG] _updateData: closing missing profile flow!');
+          debugPrint('[DEBUG] _updateData: closing missing profile flow!');
           Navigator.pop(context, true);
         } else {
-          print('[DEBUG] _updateData: NOT closing missing profile flow!');
+          debugPrint('[DEBUG] _updateData: NOT closing missing profile flow!');
         }
       }
     } catch (e) {
-      print('Error updating data: $e');
+      debugPrint('Error updating data: $e');
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2092,7 +2092,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       onChanged: (String? newValue) async {
         if (newValue == null) return;
 
-        print('[DROPDOWN] $fieldKey changed to: $newValue');
+        debugPrint('[DROPDOWN] $fieldKey changed to: $newValue');
 
         setState(() {
           learnerData![fieldKey] = newValue;
@@ -2100,27 +2100,27 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
         // Handle cascading location dropdowns
         if (fieldKey == 'Province') {
-          print(
+          debugPrint(
               '[DROPDOWN] Province changed to: $newValue, fetching districts...');
           await _fetchDistricts(newValue);
           // Clear district and municipality when province changes
           setState(() {
             learnerData!['District'] = '';
             learnerData!['Municipality'] = '';
-            print(
+            debugPrint(
                 '[DROPDOWN] Cleared District and Municipality after Province change');
           });
-          print('[DROPDOWN] Districts now available: ${_districts.length}');
+          debugPrint('[DROPDOWN] Districts now available: ${_districts.length}');
         } else if (fieldKey == 'District') {
-          print(
+          debugPrint(
               '[DROPDOWN] District changed to: $newValue, fetching municipalities...');
           await _fetchMunicipalities(newValue);
           // Clear municipality when district changes
           setState(() {
             learnerData!['Municipality'] = '';
-            print('[DROPDOWN] Cleared Municipality after District change');
+            debugPrint('[DROPDOWN] Cleared Municipality after District change');
           });
-          print(
+          debugPrint(
               '[DROPDOWN] Municipalities now available: ${_municipalities.length}');
         }
 
@@ -2132,7 +2132,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           'SchoolCompletion'
         };
         if (autoSaveFields.contains(fieldKey)) {
-          print('[DROPDOWN] Auto-saving $fieldKey to server: $newValue');
+          debugPrint('[DROPDOWN] Auto-saving $fieldKey to server: $newValue');
           try {
             final isConnected = await _checkConnectivity();
             if (isConnected) {
@@ -2148,23 +2148,23 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
               if (response.statusCode == 200) {
                 final jsonResponse = jsonDecode(response.body);
                 if (jsonResponse['success'] == true) {
-                  print('[DROPDOWN] ✅ $fieldKey saved to server successfully');
+                  debugPrint('[DROPDOWN] ✅ $fieldKey saved to server successfully');
                 } else {
-                  print(
+                  debugPrint(
                       '[DROPDOWN] ❌ Server rejected $fieldKey: ${jsonResponse['message']}');
                 }
               } else {
-                print(
+                debugPrint(
                     '[DROPDOWN] ❌ HTTP error saving $fieldKey: ${response.statusCode}');
               }
             } else {
               // Save locally when offline
               await DatabaseHelper()
                   .updateLearnerLocally(widget.learnerID, {fieldKey: newValue});
-              print('[DROPDOWN] 💾 $fieldKey saved locally (offline mode)');
+              debugPrint('[DROPDOWN] 💾 $fieldKey saved locally (offline mode)');
             }
           } catch (e) {
-            print('[DROPDOWN] ⚠️ Error auto-saving $fieldKey: $e');
+            debugPrint('[DROPDOWN] ⚠️ Error auto-saving $fieldKey: $e');
           }
         }
       },
@@ -2370,7 +2370,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         },
       );
     } catch (e) {
-      print('Error showing image capture options: $e');
+      debugPrint('Error showing image capture options: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -2987,7 +2987,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
   Widget _buildSignatureDisplay(String signatureField, String title) {
     String? signaturePath = learnerData?[signatureField]?.toString();
 
-    print('[SIG_DISPLAY] Building display for $signatureField: $signaturePath');
+    debugPrint('[SIG_DISPLAY] Building display for $signatureField: $signaturePath');
 
     if (signaturePath != null && signaturePath.isNotEmpty) {
       return FutureBuilder<String>(
@@ -3020,7 +3020,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             );
           }
           final signatureUrl = snapshot.data!;
-          print('[SIG_DISPLAY] Loading signature from URL: $signatureUrl');
+          debugPrint('[SIG_DISPLAY] Loading signature from URL: $signatureUrl');
           return Container(
             height: 150,
             decoration: BoxDecoration(
@@ -3061,7 +3061,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         },
       );
     } else {
-      print('[SIG_DISPLAY] No signature path found for $signatureField');
+      debugPrint('[SIG_DISPLAY] No signature path found for $signatureField');
       return Container(
         height: 150,
         decoration: BoxDecoration(
@@ -3306,7 +3306,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                                     ],
                                   ),
                                 );
-                              }).toList()
+                              })
                             else
                               // Fallback to old format if details not available
                               ..._agreementMissingRequirements
@@ -3315,7 +3315,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                                             left: 8.0, bottom: 4.0),
                                         child: Row(
                                           children: [
-                                            Icon(Icons.close,
+                                            const Icon(Icons.close,
                                                 color: Colors.red, size: 18),
                                             const SizedBox(width: 8),
                                             Expanded(
@@ -3330,7 +3330,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                                           ],
                                         ),
                                       ))
-                                  .toList(),
+                                  ,
                           ],
                         ),
                       ),
@@ -3603,7 +3603,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         child: hasInitials
             ? Center(
                 child: Text(
-                  initialsText!,
+                  initialsText,
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -3651,16 +3651,16 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           ? ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: FutureBuilder<String>(
-                future: AppConfig.buildServeFileUrl(signaturePath!),
+                future: AppConfig.buildServeFileUrl(signaturePath),
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
                     final imageUrl = snapshot.data!;
-                    print('[SIG_DISPLAY] Loading image from: $imageUrl');
+                    debugPrint('[SIG_DISPLAY] Loading image from: $imageUrl');
                     return Image.network(
                       imageUrl,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
-                        print('[SIG_DISPLAY] Error loading $field: $error');
+                        debugPrint('[SIG_DISPLAY] Error loading $field: $error');
                         return Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -3681,7 +3681,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                       },
                     );
                   } else if (snapshot.hasError) {
-                    print(
+                    debugPrint(
                         '[SIG_DISPLAY] Error building URL for $field: ${snapshot.error}');
                     return Center(
                       child: Column(
@@ -3701,7 +3701,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                       ),
                     );
                   } else {
-                    return Center(
+                    return const Center(
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
@@ -3741,7 +3741,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     });
 
     try {
-      print(
+      debugPrint(
           '[AGREEMENT_CHECK] Checking eligibility for learner: ${widget.learnerID}');
 
       final response = await http.post(
@@ -3753,7 +3753,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('[AGREEMENT_CHECK] Response: $data');
+        debugPrint('[AGREEMENT_CHECK] Response: $data');
 
         if (data['success'] == true) {
           if (mounted) {
@@ -3769,14 +3769,14 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           }
 
           if (_isAgreementEligible) {
-            print(
+            debugPrint(
                 '[AGREEMENT_CHECK] ✅ Learner is eligible to download agreement');
           } else {
-            print(
+            debugPrint(
                 '[AGREEMENT_CHECK] ❌ Learner NOT eligible. Missing: $_agreementMissingRequirements');
           }
         } else {
-          print('[AGREEMENT_CHECK] Error: ${data['error']}');
+          debugPrint('[AGREEMENT_CHECK] Error: ${data['error']}');
           if (mounted) {
             setState(() {
               _isCheckingEligibility = false;
@@ -3784,7 +3784,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           }
         }
       } else {
-        print('[AGREEMENT_CHECK] HTTP error: ${response.statusCode}');
+        debugPrint('[AGREEMENT_CHECK] HTTP error: ${response.statusCode}');
         if (mounted) {
           setState(() {
             _isCheckingEligibility = false;
@@ -3792,7 +3792,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         }
       }
     } catch (e) {
-      print('[AGREEMENT_CHECK] Exception: $e');
+      debugPrint('[AGREEMENT_CHECK] Exception: $e');
       if (mounted) {
         setState(() {
           _isCheckingEligibility = false;
@@ -3825,9 +3825,9 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     final downloadUrl =
         '${AppConfig.downloadAgreementPdfUrl}?learner_id=${widget.learnerID}';
     try {
-      print(
+      debugPrint(
           '[AGREEMENT_DOWNLOAD] Downloading PDF for LearnerID: ${widget.learnerID}');
-      print('[AGREEMENT_DOWNLOAD] URL: $downloadUrl');
+      debugPrint('[AGREEMENT_DOWNLOAD] URL: $downloadUrl');
 
       final response = await http.get(Uri.parse(downloadUrl));
 
@@ -3839,7 +3839,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           // Error response
           try {
             final jsonResponse = jsonDecode(response.body);
-            print(
+            debugPrint(
                 '[AGREEMENT_DOWNLOAD] Server error: ${jsonResponse['error']}');
             if (!mounted) return;
             if (!context.mounted) return;
@@ -3853,7 +3853,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             );
             return;
           } catch (e) {
-            print('[AGREEMENT_DOWNLOAD] Failed to parse error response: $e');
+            debugPrint('[AGREEMENT_DOWNLOAD] Failed to parse error response: $e');
           }
         } else if (contentType.contains('application/pdf')) {
           // PDF response - save and open
@@ -3862,8 +3862,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           final tempFilePath = '${tempDir.path}/$fileName';
           final tempFile = File(tempFilePath);
           await tempFile.writeAsBytes(response.bodyBytes);
-          print('[AGREEMENT_DOWNLOAD] PDF downloaded to: $tempFilePath');
-          print(
+          debugPrint('[AGREEMENT_DOWNLOAD] PDF downloaded to: $tempFilePath');
+          debugPrint(
               '[AGREEMENT_DOWNLOAD] File size: ${response.bodyBytes.length} bytes');
 
           if (!mounted) return;
@@ -3880,19 +3880,19 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           await OpenFile.open(tempFilePath);
         } else {
           // Unknown content type
-          print('[AGREEMENT_DOWNLOAD] Unexpected content type: $contentType');
+          debugPrint('[AGREEMENT_DOWNLOAD] Unexpected content type: $contentType');
           if (!mounted) return;
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+            const SnackBar(
               content: Text('Unexpected response format from server'),
               backgroundColor: Colors.orange,
             ),
           );
         }
       } else {
-        print('[AGREEMENT_DOWNLOAD] Failed with HTTP ${response.statusCode}');
-        print('[AGREEMENT_DOWNLOAD] Response body: ${response.body}');
+        debugPrint('[AGREEMENT_DOWNLOAD] Failed with HTTP ${response.statusCode}');
+        debugPrint('[AGREEMENT_DOWNLOAD] Response body: ${response.body}');
         if (!mounted) return;
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -3903,8 +3903,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         );
       }
     } catch (e, stackTrace) {
-      print('[AGREEMENT_DOWNLOAD] Exception: $e');
-      print('[AGREEMENT_DOWNLOAD] Stack trace: $stackTrace');
+      debugPrint('[AGREEMENT_DOWNLOAD] Exception: $e');
+      debugPrint('[AGREEMENT_DOWNLOAD] Stack trace: $stackTrace');
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -3928,19 +3928,19 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
   }
 
   Future<void> _uploadSignature(String signaturePath, String fieldName) async {
-    print('[SIG_UPLOAD] ========================================');
-    print('[SIG_UPLOAD] STARTING UPLOAD PROCESS');
-    print('[SIG_UPLOAD] Field: $fieldName');
-    print('[SIG_UPLOAD] Path: $signaturePath');
-    print('[SIG_UPLOAD] LearnerID: ${widget.learnerID}');
-    print('[SIG_UPLOAD] ========================================');
+    debugPrint('[SIG_UPLOAD] ========================================');
+    debugPrint('[SIG_UPLOAD] STARTING UPLOAD PROCESS');
+    debugPrint('[SIG_UPLOAD] Field: $fieldName');
+    debugPrint('[SIG_UPLOAD] Path: $signaturePath');
+    debugPrint('[SIG_UPLOAD] LearnerID: ${widget.learnerID}');
+    debugPrint('[SIG_UPLOAD] ========================================');
 
     final imageName = signaturePath.split('/').last;
 
     // Check if file actually exists
     final file = File(signaturePath);
     if (!await file.exists()) {
-      print('[SIG_UPLOAD] ❌ FILE NOT FOUND: $signaturePath');
+      debugPrint('[SIG_UPLOAD] ❌ FILE NOT FOUND: $signaturePath');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -3953,13 +3953,13 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     }
 
     final imageBytes = await File(signaturePath).readAsBytes();
-    print('[SIG_UPLOAD] ✅ File loaded: ${imageBytes.length} bytes');
+    debugPrint('[SIG_UPLOAD] ✅ File loaded: ${imageBytes.length} bytes');
 
     try {
-      print('[SIG_UPLOAD] Starting upload for $fieldName');
-      print('[SIG_UPLOAD] File: $imageName, Size: ${imageBytes.length} bytes');
-      print('[SIG_UPLOAD] URL: ${AppConfig.saveSignatureUrl}');
-      print('[SIG_UPLOAD] Learner ID: ${widget.learnerID}');
+      debugPrint('[SIG_UPLOAD] Starting upload for $fieldName');
+      debugPrint('[SIG_UPLOAD] File: $imageName, Size: ${imageBytes.length} bytes');
+      debugPrint('[SIG_UPLOAD] URL: ${AppConfig.saveSignatureUrl}');
+      debugPrint('[SIG_UPLOAD] Learner ID: ${widget.learnerID}');
 
       var request = http.MultipartRequest(
         'POST',
@@ -3972,24 +3972,24 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       ));
       request.fields['learner_id'] = widget.learnerID.trim();
 
-      print('[SIG_UPLOAD] Sending request...');
+      debugPrint('[SIG_UPLOAD] Sending request...');
       var response = await request.send();
       var responseBody = await response.stream.bytesToString();
 
-      print('[SIG_UPLOAD] Response status: ${response.statusCode}');
-      print('[SIG_UPLOAD] Response body: $responseBody');
+      debugPrint('[SIG_UPLOAD] Response status: ${response.statusCode}');
+      debugPrint('[SIG_UPLOAD] Response body: $responseBody');
 
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(responseBody);
         if (jsonResponse['success']) {
-          print('[SIG_UPLOAD] ✅ $fieldName uploaded successfully');
+          debugPrint('[SIG_UPLOAD] ✅ $fieldName uploaded successfully');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('$fieldName uploaded successfully')),
             );
           }
         } else {
-          print('[SIG_UPLOAD] ❌ Upload failed: ${jsonResponse['message']}');
+          debugPrint('[SIG_UPLOAD] ❌ Upload failed: ${jsonResponse['message']}');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -4002,7 +4002,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
               .saveSignatureLocally(widget.learnerID, signaturePath, fieldName);
         }
       } else {
-        print('[SIG_UPLOAD] ❌ HTTP error ${response.statusCode}');
+        debugPrint('[SIG_UPLOAD] ❌ HTTP error ${response.statusCode}');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -4015,8 +4015,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             .saveSignatureLocally(widget.learnerID, signaturePath, fieldName);
       }
     } catch (e, stackTrace) {
-      print('[SIG_UPLOAD] ❌ Exception: $e');
-      print('[SIG_UPLOAD] Stack trace: $stackTrace');
+      debugPrint('[SIG_UPLOAD] ❌ Exception: $e');
+      debugPrint('[SIG_UPLOAD] Stack trace: $stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -4032,7 +4032,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
   Future<void> _uploadInitialsToServer(
       String initials, String fieldName) async {
     try {
-      print('Uploading $fieldName for learner_id: ${widget.learnerID}');
+      debugPrint('Uploading $fieldName for learner_id: ${widget.learnerID}');
       final response = await http.post(
         Uri.parse(AppConfig.saveInitialsUrl),
         body: {
@@ -4041,13 +4041,13 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           'value': initials,
         },
       );
-      print('$fieldName upload response: ${response.body}');
+      debugPrint('$fieldName upload response: ${response.body}');
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(response.body);
         if (jsonResponse['success']) {
-          print('$fieldName uploaded successfully');
+          debugPrint('$fieldName uploaded successfully');
         } else {
-          print('$fieldName upload failed: ${jsonResponse['message']}');
+          debugPrint('$fieldName upload failed: ${jsonResponse['message']}');
           if (!mounted) return;
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -4059,7 +4059,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
               .saveInitialsLocally(widget.learnerID, initials, fieldName);
         }
       } else {
-        print('Failed to upload $fieldName: HTTP ${response.statusCode}');
+        debugPrint('Failed to upload $fieldName: HTTP ${response.statusCode}');
         if (!mounted) return;
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -4071,7 +4071,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             .saveInitialsLocally(widget.learnerID, initials, fieldName);
       }
     } catch (e) {
-      print('Error uploading $fieldName: $e');
+      debugPrint('Error uploading $fieldName: $e');
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -4101,7 +4101,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           TextButton(
             onPressed: () async {
               if (controller.isNotEmpty) {
-                print(
+                debugPrint(
                     '[SIG_SAVE] Saving $fieldName from signature pad dialog...');
                 final signatureBytes = await controller.toPngBytes();
                 if (signatureBytes != null) {
@@ -4109,12 +4109,12 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                       await _saveSignatureImage(signatureBytes, fieldName);
                   bool isConnected = await _checkConnectivity();
                   if (isConnected) {
-                    print(
+                    debugPrint(
                         '[SIG_SAVE] Online - uploading $fieldName to server...');
                     await _uploadSignature(signaturePath, fieldName);
 
                     // Refresh data from server to get the updated signature filename
-                    print(
+                    debugPrint(
                         '[DB_SYNC] Fetching updated learner data from server after signature save...');
                     try {
                       final response = await http.get(
@@ -4126,38 +4126,38 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                         if (jsonResponse['success'] == true) {
                           final serverData =
                               Map<String, dynamic>.from(jsonResponse['data']);
-                          print(
+                          debugPrint(
                               '[DB_SYNC] Server data fetched: signature=${serverData['signature']}, witness_signature=${serverData['witness_signature']}');
 
                           // Update local database with server data
                           await DatabaseHelper().updateLearnerDetails(
                               widget.learnerID, serverData);
-                          print(
+                          debugPrint(
                               '[DB_SYNC] Local database updated with server data');
 
                           // Update in-memory learnerData to reflect the saved signature
                           setState(() {
                             learnerData = serverData;
                           });
-                          print(
+                          debugPrint(
                               '[DB_SYNC] ✅ In-memory learnerData refreshed with signature: ${learnerData!['signature']}');
                         } else {
-                          print(
+                          debugPrint(
                               '[DB_SYNC] ⚠️ Failed to fetch from server: ${jsonResponse['message']}');
                         }
                       } else {
-                        print('[DB_SYNC] ⚠️ HTTP error ${response.statusCode}');
+                        debugPrint('[DB_SYNC] ⚠️ HTTP error ${response.statusCode}');
                       }
                     } catch (e) {
-                      print('[DB_SYNC] ⚠️ Exception during data refresh: $e');
+                      debugPrint('[DB_SYNC] ⚠️ Exception during data refresh: $e');
                     }
                   } else {
-                    print('[SIG_SAVE] Offline - saving $fieldName locally...');
+                    debugPrint('[SIG_SAVE] Offline - saving $fieldName locally...');
                     await DatabaseHelper().saveSignatureLocally(
                         widget.learnerID, signaturePath, fieldName);
 
                     // Refresh in-memory data from local database
-                    print(
+                    debugPrint(
                         '[DB_SYNC] Refreshing in-memory data from local database...');
                     final localData = await DatabaseHelper()
                         .fetchLearnerByID(widget.learnerID);
@@ -4165,7 +4165,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                       setState(() {
                         learnerData = localData;
                       });
-                      print(
+                      debugPrint(
                           '[DB_SYNC] ✅ In-memory learnerData refreshed with $fieldName: ${learnerData![fieldName]}');
                     }
 
@@ -4180,11 +4180,11 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                   // Mark this signature as already saved to avoid duplicate saves
                   if (fieldName == 'signature') {
                     _learnerSignatureAlreadySaved = true;
-                    print(
+                    debugPrint(
                         '[SIG_SAVE] Marked learner signature as already saved');
                   } else if (fieldName == 'witness_signature') {
                     _witnessSignatureAlreadySaved = true;
-                    print(
+                    debugPrint(
                         '[SIG_SAVE] Marked witness signature as already saved');
                   }
 
@@ -4193,7 +4193,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                   Navigator.pop(context);
                 }
               } else {
-                print('[SIG_SAVE] Controller is empty for $fieldName');
+                debugPrint('[SIG_SAVE] Controller is empty for $fieldName');
               }
             },
             child: const Text('Save'),
@@ -4234,7 +4234,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                   await _uploadInitialsToServer(controller.text, fieldName);
 
                   // Refresh data from server to get the updated initials
-                  print(
+                  debugPrint(
                       '[DB_SYNC] Fetching updated learner data from server after initials save...');
                   try {
                     final response = await http.get(
@@ -4246,37 +4246,37 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                       if (jsonResponse['success'] == true) {
                         final serverData =
                             Map<String, dynamic>.from(jsonResponse['data']);
-                        print(
+                        debugPrint(
                             '[DB_SYNC] Server data fetched: learner_initials=${serverData['learner_initials']}, witness_initials=${serverData['witness_initials']}');
 
                         // Update local database with server data
                         await DatabaseHelper()
                             .updateLearnerDetails(widget.learnerID, serverData);
-                        print(
+                        debugPrint(
                             '[DB_SYNC] Local database updated with server data');
 
                         // Update in-memory learnerData
                         setState(() {
                           learnerData = serverData;
                         });
-                        print(
+                        debugPrint(
                             '[DB_SYNC] ✅ In-memory learnerData refreshed with $fieldName: ${learnerData![fieldName]}');
                       } else {
-                        print(
+                        debugPrint(
                             '[DB_SYNC] ⚠️ Failed to fetch from server: ${jsonResponse['message']}');
                       }
                     } else {
-                      print('[DB_SYNC] ⚠️ HTTP error ${response.statusCode}');
+                      debugPrint('[DB_SYNC] ⚠️ HTTP error ${response.statusCode}');
                     }
                   } catch (e) {
-                    print('[DB_SYNC] ⚠️ Exception during data refresh: $e');
+                    debugPrint('[DB_SYNC] ⚠️ Exception during data refresh: $e');
                   }
                 } else {
                   await DatabaseHelper().saveInitialsLocally(
                       widget.learnerID, controller.text, fieldName);
 
                   // Refresh in-memory data from local database
-                  print(
+                  debugPrint(
                       '[DB_SYNC] Refreshing in-memory data from local database...');
                   final localData =
                       await DatabaseHelper().fetchLearnerByID(widget.learnerID);
@@ -4284,7 +4284,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                     setState(() {
                       learnerData = localData;
                     });
-                    print(
+                    debugPrint(
                         '[DB_SYNC] ✅ In-memory learnerData refreshed with $fieldName: ${learnerData![fieldName]}');
                   }
 
@@ -4325,7 +4325,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           'Learner Initials', _learnerInitialsController, 'learner_initials');
 
       // Recheck agreement eligibility after learner signatures are saved
-      print(
+      debugPrint(
           '[AGREEMENT_CHECK] Rechecking eligibility after learner signatures saved');
       await _checkAgreementEligibility();
     }
@@ -4339,35 +4339,35 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           'Witness Initials', _witnessInitialsController, 'witness_initials');
 
       // Recheck agreement eligibility after witness signatures are saved
-      print(
+      debugPrint(
           '[AGREEMENT_CHECK] Rechecking eligibility after witness signatures saved');
       await _checkAgreementEligibility();
     }
   }
 
   Future<void> _uploadImage(String imagePath) async {
-    print('[IMG_UPLOAD] ========================================');
-    print('[IMG_UPLOAD] STARTING IMAGE UPLOAD PROCESS');
-    print('[IMG_UPLOAD] Path: $imagePath');
-    print('[IMG_UPLOAD] LearnerID: ${widget.learnerID}');
-    print('[IMG_UPLOAD] ========================================');
+    debugPrint('[IMG_UPLOAD] ========================================');
+    debugPrint('[IMG_UPLOAD] STARTING IMAGE UPLOAD PROCESS');
+    debugPrint('[IMG_UPLOAD] Path: $imagePath');
+    debugPrint('[IMG_UPLOAD] LearnerID: ${widget.learnerID}');
+    debugPrint('[IMG_UPLOAD] ========================================');
 
     try {
       // Validate image file exists and is readable
       final File imageFile = File(imagePath);
       if (!await imageFile.exists()) {
-        print('[IMG_UPLOAD] ❌ FILE NOT FOUND: $imagePath');
+        debugPrint('[IMG_UPLOAD] ❌ FILE NOT FOUND: $imagePath');
         throw Exception('Image file does not exist: $imagePath');
       }
 
       final int fileSize = await imageFile.length();
       if (fileSize == 0) {
-        print('[IMG_UPLOAD] ❌ FILE IS EMPTY');
+        debugPrint('[IMG_UPLOAD] ❌ FILE IS EMPTY');
         throw Exception('Image file is empty');
       }
 
-      print('[IMG_UPLOAD] ✅ File loaded: $fileSize bytes');
-      print('[IMG_UPLOAD] URL: ${AppConfig.saveImageUrl}');
+      debugPrint('[IMG_UPLOAD] ✅ File loaded: $fileSize bytes');
+      debugPrint('[IMG_UPLOAD] URL: ${AppConfig.saveImageUrl}');
 
       final imageName = imagePath.split('/').last;
       final imageBytes = await imageFile.readAsBytes();
@@ -4385,26 +4385,26 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
       request.fields['learner_id'] = widget.learnerID.trim();
 
-      print('[IMG_UPLOAD] Sending request...');
+      debugPrint('[IMG_UPLOAD] Sending request...');
 
       // Add timeout to prevent hanging
       var response = await request.send().timeout(
         const Duration(seconds: 30),
         onTimeout: () {
-          print('[IMG_UPLOAD] ❌ TIMEOUT after 30 seconds');
+          debugPrint('[IMG_UPLOAD] ❌ TIMEOUT after 30 seconds');
           throw Exception(
               'Upload timeout - please check your internet connection');
         },
       );
 
       var responseBody = await response.stream.bytesToString();
-      print('[IMG_UPLOAD] Response status: ${response.statusCode}');
-      print('[IMG_UPLOAD] Response body: $responseBody');
+      debugPrint('[IMG_UPLOAD] Response status: ${response.statusCode}');
+      debugPrint('[IMG_UPLOAD] Response body: $responseBody');
 
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(responseBody);
         if (jsonResponse['success']) {
-          print('[IMG_UPLOAD] ✅ Image uploaded successfully');
+          debugPrint('[IMG_UPLOAD] ✅ Image uploaded successfully');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -4414,7 +4414,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             );
           }
         } else {
-          print('[IMG_UPLOAD] ❌ Upload failed: ${jsonResponse['message']}');
+          debugPrint('[IMG_UPLOAD] ❌ Upload failed: ${jsonResponse['message']}');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -4427,7 +4427,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           await saveImageLocally(imagePath);
         }
       } else {
-        print('[IMG_UPLOAD] ❌ HTTP error ${response.statusCode}');
+        debugPrint('[IMG_UPLOAD] ❌ HTTP error ${response.statusCode}');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -4440,8 +4440,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         await saveImageLocally(imagePath);
       }
     } catch (e, stackTrace) {
-      print('[IMG_UPLOAD] ❌ Exception: $e');
-      print('[IMG_UPLOAD] Stack trace: $stackTrace');
+      debugPrint('[IMG_UPLOAD] ❌ Exception: $e');
+      debugPrint('[IMG_UPLOAD] Stack trace: $stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -4454,7 +4454,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       // Try to save locally as fallback
       try {
         await saveImageLocally(imagePath);
-        print('[IMG_UPLOAD] ⚠️ Saved locally as fallback');
+        debugPrint('[IMG_UPLOAD] ⚠️ Saved locally as fallback');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -4464,7 +4464,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           );
         }
       } catch (localError) {
-        print('[IMG_UPLOAD] ❌ Error saving locally: $localError');
+        debugPrint('[IMG_UPLOAD] ❌ Error saving locally: $localError');
       }
     }
   }
@@ -4518,14 +4518,14 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       if (!context.mounted) return;
 
       if (imagePath != null) {
-        print('Image captured: $imagePath');
+        debugPrint('Image captured: $imagePath');
         final directory = await getApplicationDocumentsDirectory();
         final savedImagePath =
             '${directory.path}/learnerImages_${widget.learnerID}.png';
 
         final capturedFile = File(imagePath);
         await capturedFile.copy(savedImagePath);
-        print('Image saved to: $savedImagePath');
+        debugPrint('Image saved to: $savedImagePath');
 
         if (!mounted) return;
         setState(() {
@@ -4549,10 +4549,10 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           ),
         );
       } else {
-        print('No image captured - user cancelled');
+        debugPrint('No image captured - user cancelled');
       }
     } catch (e) {
-      print('Error capturing photo: $e');
+      debugPrint('Error capturing photo: $e');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -4605,7 +4605,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         final File imageFile = File(image.path);
         if (await imageFile.exists()) {
           final int fileSize = await imageFile.length();
-          print('Selected image size: $fileSize bytes');
+          debugPrint('Selected image size: $fileSize bytes');
 
           if (fileSize > 0) {
             // Copy to app directory so file persists (gallery path may be temporary)
@@ -4641,10 +4641,10 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         }
       } else {
         // User cancelled - not an error
-        print('User cancelled image selection');
+        debugPrint('User cancelled image selection');
       }
     } catch (e) {
-      print('Error picking image: $e');
+      debugPrint('Error picking image: $e');
 
       // Clear any partial state
       if (!mounted) return;
@@ -4695,10 +4695,10 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       }
 
       await DatabaseHelper().saveImageLocally(widget.learnerID, imagePath);
-      print(
+      debugPrint(
           'Image saved locally for learner_id: ${widget.learnerID} ($fileSize bytes)');
     } catch (e) {
-      print('Error saving image locally: $e');
+      debugPrint('Error saving image locally: $e');
       rethrow; // Re-throw so caller can handle
     }
   }
@@ -4755,7 +4755,7 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
       if (!context.mounted) return;
       Navigator.pop(context, image.path);
     } catch (e) {
-      print('Error capturing photo: $e');
+      debugPrint('Error capturing photo: $e');
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

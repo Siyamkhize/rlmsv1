@@ -125,7 +125,7 @@ class _LearnerMaterialSelectionPageState
         }
       }
     } catch (e) {
-      print('Error loading received materials: $e');
+      debugPrint('Error loading received materials: $e');
     }
   }
 
@@ -205,7 +205,7 @@ class _LearnerMaterialSelectionPageState
         }
       }
     } catch (e) {
-      print('Error fetching unit standards: $e');
+      debugPrint('Error fetching unit standards: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading unit standards: $e')),
@@ -238,7 +238,7 @@ class _LearnerMaterialSelectionPageState
         }
       }
     } catch (e) {
-      print('Error loading existing submissions: $e');
+      debugPrint('Error loading existing submissions: $e');
     }
   }
 
@@ -374,7 +374,7 @@ class _LearnerMaterialSelectionPageState
         throw Exception('Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error updating materials: $e');
+      debugPrint('Error updating materials: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

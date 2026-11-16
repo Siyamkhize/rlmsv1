@@ -63,7 +63,7 @@ class FingerprintService {
                   false; // Clear block when enrollment completes
               _operationTimeout?.cancel();
               if (kDebugMode) {
-                print('Enrollment completed, emergency block cleared');
+                debugPrint('Enrollment completed, emergency block cleared');
               }
             }
           } else {
@@ -79,7 +79,7 @@ class FingerprintService {
             _blockAllOperations = false; // Clear block on enrollment success
             _operationTimeout?.cancel();
             if (kDebugMode) {
-              print('Enrollment success, emergency block cleared');
+              debugPrint('Enrollment success, emergency block cleared');
             }
           } else {
             _enrollSuccessController.addError('Invalid success data');
@@ -93,7 +93,7 @@ class FingerprintService {
             _blockAllOperations = false; // Clear block on enrollment success
             _operationTimeout?.cancel();
             if (kDebugMode) {
-              print('Enrollment success (string), emergency block cleared');
+              debugPrint('Enrollment success (string), emergency block cleared');
             }
           } else if (call.arguments is Map) {
             _enrollSuccessController
@@ -103,7 +103,7 @@ class FingerprintService {
             _blockAllOperations = false; // Clear block on enrollment success
             _operationTimeout?.cancel();
             if (kDebugMode) {
-              print('Enrollment success (map), emergency block cleared');
+              debugPrint('Enrollment success (map), emergency block cleared');
             }
           } else {
             _enrollSuccessController.addError('Invalid success data');
@@ -129,12 +129,12 @@ class FingerprintService {
           break;
         default:
           if (kDebugMode) {
-            print('FingerprintService: Unknown method call: ${call.method}');
+            debugPrint('FingerprintService: Unknown method call: ${call.method}');
           }
       }
     } catch (e) {
       if (kDebugMode) {
-        print('FingerprintService: Error handling method call: $e');
+        debugPrint('FingerprintService: Error handling method call: $e');
       }
     }
   }
@@ -178,14 +178,14 @@ class FingerprintService {
   Future<bool> isSensorConnected() async {
     if (_blockAllOperations) {
       if (kDebugMode) {
-        print('isSensorConnected: Blocked due to emergency block');
+        debugPrint('isSensorConnected: Blocked due to emergency block');
       }
       return true; // Assume connected during block
     }
 
     if (_isChecking) {
       if (kDebugMode) {
-        print('isSensorConnected: Already checking sensor status');
+        debugPrint('isSensorConnected: Already checking sensor status');
       }
       return false;
     }
@@ -195,7 +195,7 @@ class FingerprintService {
       final bool? isConnected =
           await _channel.invokeMethod('isSensorConnected');
       if (kDebugMode) {
-        print('isSensorConnected: $isConnected');
+        debugPrint('isSensorConnected: $isConnected');
       }
       return isConnected ?? false;
     } on PlatformException catch (e) {
@@ -203,7 +203,7 @@ class FingerprintService {
           e.message ?? e.toString());
       _sensorStatusController.add(friendlyError);
       if (kDebugMode) {
-        print('isSensorConnected error: ${e.message}');
+        debugPrint('isSensorConnected error: ${e.message}');
       }
       return false;
     } finally {
@@ -214,7 +214,7 @@ class FingerprintService {
   Future<void> _ensureSensorFree() async {
     if (isBusy) {
       if (kDebugMode) {
-        print('Sensor is busy, attempting to cancel current operation');
+        debugPrint('Sensor is busy, attempting to cancel current operation');
       }
 
       try {
@@ -223,7 +223,7 @@ class FingerprintService {
         await Future.delayed(const Duration(milliseconds: 800));
       } catch (e) {
         if (kDebugMode) {
-          print('Error during force cancel: $e');
+          debugPrint('Error during force cancel: $e');
         }
       }
     }
@@ -236,11 +236,11 @@ class FingerprintService {
       _isCapturing = false;
       _operationTimeout?.cancel();
       if (kDebugMode) {
-        print('Force cancelled all operations');
+        debugPrint('Force cancelled all operations');
       }
     } on PlatformException catch (e) {
       if (kDebugMode) {
-        print('Force cancel error: ${e.message}');
+        debugPrint('Force cancel error: ${e.message}');
       }
     }
   }
@@ -249,15 +249,15 @@ class FingerprintService {
   void setEmergencyBlock(bool blocked) {
     _blockAllOperations = blocked;
     if (kDebugMode) {
-      print('Emergency block ${blocked ? 'ENABLED' : 'DISABLED'}');
+      debugPrint('Emergency block ${blocked ? 'ENABLED' : 'DISABLED'}');
     }
   }
 
   /// Force clear ALL busy states - use only when service is stuck
   Future<void> forceResetAllStates() async {
     if (kDebugMode) {
-      print('Force resetting ALL FingerprintService states');
-      print(
+      debugPrint('Force resetting ALL FingerprintService states');
+      debugPrint(
           'Before reset: isEnrolling=$_isEnrolling, isCapturing=$_isCapturing, isChecking=$_isChecking, isVerifying=$_isVerifying, blocked=$_blockAllOperations');
     }
 
@@ -267,10 +267,10 @@ class FingerprintService {
     try {
       // Try to cancel any ongoing operations first
       await _channel.invokeMethod('cancelEnrollment').catchError((e) {
-        if (kDebugMode) print('Cancel during force reset: $e');
+        if (kDebugMode) debugPrint('Cancel during force reset: $e');
       });
     } catch (e) {
-      if (kDebugMode) print('Error during cancel in force reset: $e');
+      if (kDebugMode) debugPrint('Error during cancel in force reset: $e');
     }
 
     // Force clear ALL internal flags
@@ -287,17 +287,17 @@ class FingerprintService {
     _blockAllOperations = false;
 
     if (kDebugMode) {
-      print(
+      debugPrint(
           'After reset: isEnrolling=$_isEnrolling, isCapturing=$_isCapturing, isChecking=$_isChecking, isVerifying=$_isVerifying, blocked=$_blockAllOperations');
-      print('Force reset complete, isBusy=$isBusy');
+      debugPrint('Force reset complete, isBusy=$isBusy');
     }
   }
 
   /// Simple manual reset for stuck states
   void manualReset() {
     if (kDebugMode) {
-      print('Manual reset: Clearing all busy states');
-      print(
+      debugPrint('Manual reset: Clearing all busy states');
+      debugPrint(
           'Before manual reset: isEnrolling=$_isEnrolling, isCapturing=$_isCapturing, isChecking=$_isChecking, isVerifying=$_isVerifying');
     }
 
@@ -309,9 +309,9 @@ class FingerprintService {
     _blockAllOperations = false;
 
     if (kDebugMode) {
-      print(
+      debugPrint(
           'After manual reset: isEnrolling=$_isEnrolling, isCapturing=$_isCapturing, isChecking=$_isChecking, isVerifying=$_isVerifying');
-      print('Manual reset complete, isBusy=$isBusy');
+      debugPrint('Manual reset complete, isBusy=$isBusy');
     }
   }
 
@@ -342,7 +342,7 @@ class FingerprintService {
           _blockAllOperations = false; // Clear block on timeout
           _enrollStatusController.add('Enrollment timeout - please try again');
           if (kDebugMode) {
-            print('Enrollment timeout for $finger');
+            debugPrint('Enrollment timeout for $finger');
           }
         }
       });
@@ -351,7 +351,7 @@ class FingerprintService {
       debugPrint(
           '[ENROLL] FingerprintService.startEnrollment completed for $finger');
       if (kDebugMode) {
-        print('Started enrollment for $finger');
+        debugPrint('Started enrollment for $finger');
       }
     } on PlatformException catch (e) {
       _isEnrolling = false;
@@ -369,7 +369,7 @@ class FingerprintService {
 
       _enrollStatusController.add('Error starting enrollment: ${e.message}');
       if (kDebugMode) {
-        print('startEnrollment error: ${e.message}');
+        debugPrint('startEnrollment error: ${e.message}');
       }
       rethrow;
     }
@@ -395,14 +395,14 @@ class FingerprintService {
           _isCapturing = false;
           _enrollStatusController.add('Capture timeout - please try again');
           if (kDebugMode) {
-            print('Capture timeout');
+            debugPrint('Capture timeout');
           }
         }
       });
 
       await _channel.invokeMethod('startCapture');
       if (kDebugMode) {
-        print('Started fingerprint capture');
+        debugPrint('Started fingerprint capture');
       }
     } on PlatformException catch (e) {
       _isCapturing = false;
@@ -419,7 +419,7 @@ class FingerprintService {
 
       _enrollStatusController.add('Error starting capture: ${e.message}');
       if (kDebugMode) {
-        print('startCapture error: ${e.message}');
+        debugPrint('startCapture error: ${e.message}');
       }
       rethrow;
     }
@@ -433,14 +433,14 @@ class FingerprintService {
         'scannedTemplate': scannedTemplate,
       });
       if (kDebugMode) {
-        print(
+        debugPrint(
             'matchTemplates: stored length=${storedTemplate.length}, scanned length=${scannedTemplate.length}, match=$match');
       }
       return match ?? false;
     } on PlatformException catch (e) {
       _enrollStatusController.add('Error matching templates: ${e.message}');
       if (kDebugMode) {
-        print('matchTemplates error: ${e.message}');
+        debugPrint('matchTemplates error: ${e.message}');
       }
       return false;
     }
@@ -460,12 +460,12 @@ class FingerprintService {
       _isCapturing = false;
       _operationTimeout?.cancel();
       if (kDebugMode) {
-        print('Enrollment cancelled');
+        debugPrint('Enrollment cancelled');
       }
     } on PlatformException catch (e) {
       _enrollStatusController.add('Error cancelling enrollment: ${e.message}');
       if (kDebugMode) {
-        print('cancelEnrollment error: ${e.message}');
+        debugPrint('cancelEnrollment error: ${e.message}');
       }
       rethrow;
     }
@@ -474,7 +474,7 @@ class FingerprintService {
   Future<void> _resetSensor() async {
     try {
       if (kDebugMode) {
-        print('Attempting to reset sensor...');
+        debugPrint('Attempting to reset sensor...');
       }
 
       // Cancel any ongoing operations
@@ -487,11 +487,11 @@ class FingerprintService {
       await isSensorConnected();
 
       if (kDebugMode) {
-        print('Sensor reset completed');
+        debugPrint('Sensor reset completed');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error during sensor reset: $e');
+        debugPrint('Error during sensor reset: $e');
       }
     }
   }
@@ -561,7 +561,7 @@ class FingerprintService {
     }
 
     if (kDebugMode) {
-      print('FingerprintService disposed successfully');
+      debugPrint('FingerprintService disposed successfully');
     }
   }
 }

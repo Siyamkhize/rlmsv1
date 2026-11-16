@@ -30,12 +30,12 @@ class CentralizedLogger {
       );
       
       if (response.statusCode == 200) {
-        print('✅ Logs sent to server successfully');
+        debugPrint('✅ Logs sent to server successfully');
       } else {
-        print('❌ Failed to send logs: ${response.statusCode}');
+        debugPrint('❌ Failed to send logs: ${response.statusCode}');
       }
     } catch (e) {
-      print('❌ Error sending logs to server: $e');
+      debugPrint('❌ Error sending logs to server: $e');
     }
   }
   

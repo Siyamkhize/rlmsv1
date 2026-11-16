@@ -10,44 +10,44 @@ class DatabaseRepairTool {
 
   /// Complete repair: Drop table, recreate, and sync
   Future<Map<String, dynamic>> repairFacilitatorTable() async {
-    print('\n');
-    print('╔═══════════════════════════════════════════════════════════╗');
-    print('║       DATABASE REPAIR TOOL - FACILITATOR TABLE           ║');
-    print('╚═══════════════════════════════════════════════════════════╝');
-    print('\n');
+    debugPrint('\n');
+    debugPrint('╔═══════════════════════════════════════════════════════════╗');
+    debugPrint('║       DATABASE REPAIR TOOL - FACILITATOR TABLE           ║');
+    debugPrint('╚═══════════════════════════════════════════════════════════╝');
+    debugPrint('\n');
 
     try {
       final db = await _dbHelper.database;
 
       // Step 1: Check current state
-      print('┌─────────────────────────────────────────────────────────┐');
-      print('│ STEP 1: Analyzing Current Database State               │');
-      print('└─────────────────────────────────────────────────────────┘');
+      debugPrint('┌─────────────────────────────────────────────────────────┐');
+      debugPrint('│ STEP 1: Analyzing Current Database State               │');
+      debugPrint('└─────────────────────────────────────────────────────────┘');
 
       try {
         final currentCount =
             await db.rawQuery('SELECT COUNT(*) as count FROM facilitator');
-        print('✓ Current records: ${currentCount.first['count']}');
+        debugPrint('✓ Current records: ${currentCount.first['count']}');
 
         final tableInfo = await db.rawQuery('PRAGMA table_info(facilitator)');
-        print('✓ Current columns: ${tableInfo.length}');
-        print('  Columns: ${tableInfo.map((c) => c['name']).join(', ')}');
+        debugPrint('✓ Current columns: ${tableInfo.length}');
+        debugPrint('  Columns: ${tableInfo.map((c) => c['name']).join(', ')}');
       } catch (e) {
-        print('⚠ Table may not exist or is corrupted: $e');
+        debugPrint('⚠ Table may not exist or is corrupted: $e');
       }
 
       // Step 2: Drop existing table
-      print('\n┌─────────────────────────────────────────────────────────┐');
-      print('│ STEP 2: Dropping Old Table                             │');
-      print('└─────────────────────────────────────────────────────────┘');
+      debugPrint('\n┌─────────────────────────────────────────────────────────┐');
+      debugPrint('│ STEP 2: Dropping Old Table                             │');
+      debugPrint('└─────────────────────────────────────────────────────────┘');
 
       await db.execute('DROP TABLE IF EXISTS facilitator');
-      print('✓ Old table dropped');
+      debugPrint('✓ Old table dropped');
 
       // Step 3: Create fresh table with correct schema
-      print('\n┌─────────────────────────────────────────────────────────┐');
-      print('│ STEP 3: Creating Fresh Table                           │');
-      print('└─────────────────────────────────────────────────────────┘');
+      debugPrint('\n┌─────────────────────────────────────────────────────────┐');
+      debugPrint('│ STEP 3: Creating Fresh Table                           │');
+      debugPrint('└─────────────────────────────────────────────────────────┘');
 
       await db.execute('''
         CREATE TABLE facilitator (
@@ -71,34 +71,34 @@ class DatabaseRepairTool {
           futronic_right_template TEXT
         )
       ''');
-      print('✓ Fresh table created with correct schema');
+      debugPrint('✓ Fresh table created with correct schema');
 
       // Verify table creation
       final newTableInfo = await db.rawQuery('PRAGMA table_info(facilitator)');
-      print('✓ Verified columns: ${newTableInfo.length}');
+      debugPrint('✓ Verified columns: ${newTableInfo.length}');
       for (var col in newTableInfo) {
-        print('  - ${col['name']} (${col['type']})');
+        debugPrint('  - ${col['name']} (${col['type']})');
       }
 
       // Step 4: Fetch data from server
-      print('\n┌─────────────────────────────────────────────────────────┐');
-      print('│ STEP 4: Fetching Data from Server                      │');
-      print('└─────────────────────────────────────────────────────────┘');
+      debugPrint('\n┌─────────────────────────────────────────────────────────┐');
+      debugPrint('│ STEP 4: Fetching Data from Server                      │');
+      debugPrint('└─────────────────────────────────────────────────────────┘');
 
-      print('URL: ${AppConfig.syncFacilitatorUrl}');
+      debugPrint('URL: ${AppConfig.syncFacilitatorUrl}');
       final response = await http
           .get(Uri.parse(AppConfig.syncFacilitatorUrl))
           .timeout(const Duration(seconds: 30));
 
-      print('✓ Server response: ${response.statusCode}');
-      print('✓ Response size: ${response.body.length} bytes');
+      debugPrint('✓ Server response: ${response.statusCode}');
+      debugPrint('✓ Response size: ${response.body.length} bytes');
 
       if (response.statusCode != 200) {
         throw Exception('Server error: ${response.statusCode}');
       }
 
       final List<dynamic> serverData = json.decode(response.body);
-      print('✓ Parsed ${serverData.length} facilitator records');
+      debugPrint('✓ Parsed ${serverData.length} facilitator records');
 
       if (serverData.isEmpty) {
         return {
@@ -109,18 +109,18 @@ class DatabaseRepairTool {
       }
 
       // Show first record
-      print('\nFirst record from server:');
+      debugPrint('\nFirst record from server:');
       final first = serverData[0];
-      print('  facilitator_id: ${first['facilitator_id']}');
-      print('  firstName: "${first['firstName']}"');
-      print('  lastName: "${first['lastName']}"');
-      print('  email: "${first['email']}"');
-      print('  classID: ${first['classID']}');
+      debugPrint('  facilitator_id: ${first['facilitator_id']}');
+      debugPrint('  firstName: "${first['firstName']}"');
+      debugPrint('  lastName: "${first['lastName']}"');
+      debugPrint('  email: "${first['email']}"');
+      debugPrint('  classID: ${first['classID']}');
 
       // Step 5: Insert data with explicit SQL
-      print('\n┌─────────────────────────────────────────────────────────┐');
-      print('│ STEP 5: Inserting Data (Direct SQL)                    │');
-      print('└─────────────────────────────────────────────────────────┘');
+      debugPrint('\n┌─────────────────────────────────────────────────────────┐');
+      debugPrint('│ STEP 5: Inserting Data (Direct SQL)                    │');
+      debugPrint('└─────────────────────────────────────────────────────────┘');
 
       int successCount = 0;
       int errorCount = 0;
@@ -128,9 +128,9 @@ class DatabaseRepairTool {
       for (var i = 0; i < serverData.length; i++) {
         final facilitator = serverData[i];
 
-        print('\nRecord ${i + 1}/${serverData.length}:');
-        print('  ID: ${facilitator['facilitator_id']}');
-        print('  Name: ${facilitator['firstName']} ${facilitator['lastName']}');
+        debugPrint('\nRecord ${i + 1}/${serverData.length}:');
+        debugPrint('  ID: ${facilitator['facilitator_id']}');
+        debugPrint('  Name: ${facilitator['firstName']} ${facilitator['lastName']}');
 
         try {
           // Use direct SQL INSERT to ensure data goes in exactly as-is
@@ -163,7 +163,7 @@ class DatabaseRepairTool {
             facilitator['futronic_right_template'],
           ]);
 
-          print('  ✓ Inserted successfully');
+          debugPrint('  ✓ Inserted successfully');
 
           // IMMEDIATE VERIFICATION
           final verify = await db.rawQuery(
@@ -172,63 +172,63 @@ class DatabaseRepairTool {
 
           if (verify.isNotEmpty) {
             final row = verify.first;
-            print('  ✓ Verified in DB:');
-            print('    facilitator_id: ${row['facilitator_id']}');
-            print('    firstName: "${row['firstName']}"');
-            print('    lastName: "${row['lastName']}"');
-            print('    email: "${row['email']}"');
+            debugPrint('  ✓ Verified in DB:');
+            debugPrint('    facilitator_id: ${row['facilitator_id']}');
+            debugPrint('    firstName: "${row['firstName']}"');
+            debugPrint('    lastName: "${row['lastName']}"');
+            debugPrint('    email: "${row['email']}"');
 
             // Check for data integrity
             if (row['firstName'] == facilitator['firstName'] &&
                 row['lastName'] == facilitator['lastName']) {
-              print('  ✓ DATA INTEGRITY: Perfect match!');
+              debugPrint('  ✓ DATA INTEGRITY: Perfect match!');
               successCount++;
             } else {
-              print('  ✗ DATA INTEGRITY FAILED!');
-              print(
+              debugPrint('  ✗ DATA INTEGRITY FAILED!');
+              debugPrint(
                   '    Expected: ${facilitator['firstName']} ${facilitator['lastName']}');
-              print('    Got: ${row['firstName']} ${row['lastName']}');
+              debugPrint('    Got: ${row['firstName']} ${row['lastName']}');
               errorCount++;
             }
           } else {
-            print('  ✗ VERIFICATION FAILED: Not found in DB');
+            debugPrint('  ✗ VERIFICATION FAILED: Not found in DB');
             errorCount++;
           }
         } catch (e) {
-          print('  ✗ Insert error: $e');
+          debugPrint('  ✗ Insert error: $e');
           errorCount++;
         }
       }
 
       // Step 6: Final verification
-      print('\n┌─────────────────────────────────────────────────────────┐');
-      print('│ STEP 6: Final Database Verification                    │');
-      print('└─────────────────────────────────────────────────────────┘');
+      debugPrint('\n┌─────────────────────────────────────────────────────────┐');
+      debugPrint('│ STEP 6: Final Database Verification                    │');
+      debugPrint('└─────────────────────────────────────────────────────────┘');
 
       final finalCount =
           await db.rawQuery('SELECT COUNT(*) as count FROM facilitator');
       final allRecords = await db.rawQuery(
           'SELECT facilitator_id, firstName, lastName, email FROM facilitator');
 
-      print('✓ Total records in database: ${finalCount.first['count']}');
-      print('\nAll facilitators:');
+      debugPrint('✓ Total records in database: ${finalCount.first['count']}');
+      debugPrint('\nAll facilitators:');
       for (var record in allRecords) {
-        print(
+        debugPrint(
             '  - ID ${record['facilitator_id']}: ${record['firstName']} ${record['lastName']} (${record['email']})');
       }
 
       // Summary
-      print('\n╔═══════════════════════════════════════════════════════════╗');
-      print('║                    REPAIR SUMMARY                         ║');
-      print('╠═══════════════════════════════════════════════════════════╣');
-      print(
+      debugPrint('\n╔═══════════════════════════════════════════════════════════╗');
+      debugPrint('║                    REPAIR SUMMARY                         ║');
+      debugPrint('╠═══════════════════════════════════════════════════════════╣');
+      debugPrint(
           '║ ✓ Successful inserts: ${successCount.toString().padLeft(3)}                             ║');
-      print(
+      debugPrint(
           '║ ✗ Failed inserts: ${errorCount.toString().padLeft(3)}                                 ║');
-      print(
+      debugPrint(
           '║ 📊 Total in database: ${(finalCount.first['count'] as int).toString().padLeft(3)}                             ║');
-      print('╚═══════════════════════════════════════════════════════════╝');
-      print('\n');
+      debugPrint('╚═══════════════════════════════════════════════════════════╝');
+      debugPrint('\n');
 
       return {
         'success': errorCount == 0 && successCount > 0,
@@ -240,12 +240,12 @@ class DatabaseRepairTool {
         'total_in_db': finalCount.first['count'],
       };
     } catch (e, stackTrace) {
-      print('\n╔═══════════════════════════════════════════════════════════╗');
-      print('║                    REPAIR FAILED                          ║');
-      print('╚═══════════════════════════════════════════════════════════╝');
-      print('Error: $e');
-      print('Stack trace: $stackTrace');
-      print('\n');
+      debugPrint('\n╔═══════════════════════════════════════════════════════════╗');
+      debugPrint('║                    REPAIR FAILED                          ║');
+      debugPrint('╚═══════════════════════════════════════════════════════════╝');
+      debugPrint('Error: $e');
+      debugPrint('Stack trace: $stackTrace');
+      debugPrint('\n');
 
       return {
         'success': false,
@@ -257,7 +257,7 @@ class DatabaseRepairTool {
 
   /// Quick diagnostic check
   Future<Map<String, dynamic>> diagnose() async {
-    print('\n🔍 Running diagnostics...\n');
+    debugPrint('\n🔍 Running diagnostics...\n');
 
     try {
       final db = await _dbHelper.database;

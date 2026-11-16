@@ -25,7 +25,7 @@ class ManualClockingEvidenceSyncService {
   /// Execute sync operation with concurrency limits
   Future<T> _executeConcurrencyControlled<T>(Future<T> Function() operation) async {
     if (_activeSyncs >= MAX_CONCURRENT_SYNCS) {
-      print('[EVIDENCE_SYNC] Concurrency limit reached ($_activeSyncs/$MAX_CONCURRENT_SYNCS), queuing operation');
+      debugPrint('[EVIDENCE_SYNC] Concurrency limit reached ($_activeSyncs/$MAX_CONCURRENT_SYNCS), queuing operation');
       
       // Create completer for queued operation
       final completer = Completer<T>();
@@ -43,14 +43,14 @@ class ManualClockingEvidenceSyncService {
     }
     
     _activeSyncs++;
-    print('[EVIDENCE_SYNC] Starting operation (active: $_activeSyncs/$MAX_CONCURRENT_SYNCS)');
+    debugPrint('[EVIDENCE_SYNC] Starting operation (active: $_activeSyncs/$MAX_CONCURRENT_SYNCS)');
     
     try {
       final result = await operation();
       return result;
     } finally {
       _activeSyncs--;
-      print('[EVIDENCE_SYNC] Completed operation (active: $_activeSyncs/$MAX_CONCURRENT_SYNCS)');
+      debugPrint('[EVIDENCE_SYNC] Completed operation (active: $_activeSyncs/$MAX_CONCURRENT_SYNCS)');
       
       // Process next queued operation if any
       if (_syncQueue.isNotEmpty && _activeSyncs < MAX_CONCURRENT_SYNCS) {
@@ -104,11 +104,11 @@ class ManualClockingEvidenceSyncService {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-      print(
+      debugPrint(
           '[EVIDENCE_SYNC] Saved evidence offline for Learner $learnerID on $clockDate');
       return true;
     } catch (e) {
-      print('[EVIDENCE_SYNC] Error saving evidence offline: $e');
+      debugPrint('[EVIDENCE_SYNC] Error saving evidence offline: $e');
       return false;
     }
   }
@@ -142,11 +142,11 @@ class ManualClockingEvidenceSyncService {
         whereArgs: [learnerID, clockDate],
       );
 
-      print(
+      debugPrint(
           '[EVIDENCE_SYNC] Updated evidence offline for Learner $learnerID on $clockDate ($count rows)');
       return count > 0;
     } catch (e) {
-      print('[EVIDENCE_SYNC] Error updating evidence offline: $e');
+      debugPrint('[EVIDENCE_SYNC] Error updating evidence offline: $e');
       return false;
     }
   }
@@ -156,35 +156,35 @@ class ManualClockingEvidenceSyncService {
     try {
       final db = await DatabaseHelper().database;
 
-      print('[DEBUG] =====================================');
-      print('[DEBUG] === MANUAL CLOCKING EVIDENCE INSPECTION ===');
-      print('[DEBUG] =====================================');
+      debugPrint('[DEBUG] =====================================');
+      debugPrint('[DEBUG] === MANUAL CLOCKING EVIDENCE INSPECTION ===');
+      debugPrint('[DEBUG] =====================================');
 
       // Check if table exists
       final tableCheck = await db.rawQuery(
           "SELECT name FROM sqlite_master WHERE type='table' AND name='manual_clocking_evidence'");
 
       if (tableCheck.isEmpty) {
-        print('[DEBUG] ❌ manual_clocking_evidence table does NOT exist!');
+        debugPrint('[DEBUG] ❌ manual_clocking_evidence table does NOT exist!');
 
         // Show all tables that do exist
         final allTables = await db.rawQuery(
             "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name");
-        print('[DEBUG] Available tables:');
+        debugPrint('[DEBUG] Available tables:');
         for (final table in allTables) {
-          print('[DEBUG]   - ${table['name']}');
+          debugPrint('[DEBUG]   - ${table['name']}');
         }
         return;
       } else {
-        print('[DEBUG] ✅ manual_clocking_evidence table exists');
+        debugPrint('[DEBUG] ✅ manual_clocking_evidence table exists');
       }
 
       // Get table schema
       final schema =
           await db.rawQuery("PRAGMA table_info(manual_clocking_evidence)");
-      print('[DEBUG] Table Schema:');
+      debugPrint('[DEBUG] Table Schema:');
       for (final column in schema) {
-        print(
+        debugPrint(
             '[DEBUG]   ${column['name']}: ${column['type']} (nullable: ${column['notnull'] == 0})');
       }
 
@@ -192,50 +192,50 @@ class ManualClockingEvidenceSyncService {
       final countResult = await db
           .rawQuery('SELECT COUNT(*) as count FROM manual_clocking_evidence');
       final totalCount = countResult.first['count'] as int;
-      print('[DEBUG] Total records in table: $totalCount');
+      debugPrint('[DEBUG] Total records in table: $totalCount');
 
       if (totalCount == 0) {
-        print('[DEBUG] ⚠️  No data in manual_clocking_evidence table');
-        print('[DEBUG] This could mean:');
-        print('[DEBUG]   1. No manual clocking has been performed yet');
-        print('[DEBUG]   2. Data was not saved properly');
-        print('[DEBUG]   3. Table was recently cleared');
+        debugPrint('[DEBUG] ⚠️  No data in manual_clocking_evidence table');
+        debugPrint('[DEBUG] This could mean:');
+        debugPrint('[DEBUG]   1. No manual clocking has been performed yet');
+        debugPrint('[DEBUG]   2. Data was not saved properly');
+        debugPrint('[DEBUG]   3. Table was recently cleared');
       } else {
         // Get all records
         final allRecords = await db.query('manual_clocking_evidence',
             orderBy: 'evidence_id DESC');
-        print('[DEBUG] All $totalCount records (newest first):');
+        debugPrint('[DEBUG] All $totalCount records (newest first):');
 
         for (int i = 0; i < allRecords.length; i++) {
           final record = allRecords[i];
-          print('[DEBUG] ========== Record ${i + 1}/${totalCount} ==========');
-          print('[DEBUG]   Evidence ID: ${record['evidence_id']}');
-          print('[DEBUG]   Learner ID: ${record['LearnerID']}');
-          print('[DEBUG]   Clock Date: ${record['clock_date']}');
-          print(
+          debugPrint('[DEBUG] ========== Record ${i + 1}/$totalCount ==========');
+          debugPrint('[DEBUG]   Evidence ID: ${record['evidence_id']}');
+          debugPrint('[DEBUG]   Learner ID: ${record['LearnerID']}');
+          debugPrint('[DEBUG]   Clock Date: ${record['clock_date']}');
+          debugPrint(
               '[DEBUG]   Signature In: ${record['signature_in'] != null ? 'YES (${record['signature_in'].toString().length} chars)' : 'NO'}');
-          print(
+          debugPrint(
               '[DEBUG]   Signature Out: ${record['signature_out'] != null ? 'YES (${record['signature_out'].toString().length} chars)' : 'NO'}');
-          print(
+          debugPrint(
               '[DEBUG]   Face In: ${record['face_in'] != null ? 'YES (${record['face_in'].toString().length} chars)' : 'NO'}');
-          print(
+          debugPrint(
               '[DEBUG]   Face Out: ${record['face_out'] != null ? 'YES (${record['face_out'].toString().length} chars)' : 'NO'}');
-          print('[DEBUG]   Synced: ${record['synced']}');
-          print('[DEBUG]   Created: ${record['created_at']}');
-          print('[DEBUG]   Updated: ${record['updated_at']}');
+          debugPrint('[DEBUG]   Synced: ${record['synced']}');
+          debugPrint('[DEBUG]   Created: ${record['created_at']}');
+          debugPrint('[DEBUG]   Updated: ${record['updated_at']}');
 
           // Sample base64 data (first 100 chars) - for debugging
           if (record['signature_in'] != null) {
             final sig = record['signature_in'].toString();
             final sample =
-                sig.length > 100 ? sig.substring(0, 100) + "..." : sig;
-            print('[DEBUG]   Signature In Sample: $sample');
+                sig.length > 100 ? "${sig.substring(0, 100)}..." : sig;
+            debugPrint('[DEBUG]   Signature In Sample: $sample');
           }
           if (record['face_in'] != null) {
             final face = record['face_in'].toString();
             final sample =
-                face.length > 100 ? face.substring(0, 100) + "..." : face;
-            print('[DEBUG]   Face In Sample: $sample');
+                face.length > 100 ? "${face.substring(0, 100)}..." : face;
+            debugPrint('[DEBUG]   Face In Sample: $sample');
           }
 
           // Also check related learner data
@@ -248,30 +248,30 @@ class ManualClockingEvidenceSyncService {
 
           if (learnerQuery.isNotEmpty) {
             final learner = learnerQuery.first;
-            print(
+            debugPrint(
                 '[DEBUG]   Learner Name: ${learner['name']} ${learner['surname']}');
-            print('[DEBUG]   Learner ID Number: ${learner['idNumber']}');
+            debugPrint('[DEBUG]   Learner ID Number: ${learner['idNumber']}');
           } else {
-            print(
+            debugPrint(
                 '[DEBUG]   ⚠️  Learner data not found for ID ${record['LearnerID']}');
           }
 
-          print('[DEBUG]   ================================');
+          debugPrint('[DEBUG]   ================================');
 
           // Only show first 10 records to avoid overwhelming output
           if (i >= 9) {
-            print('[DEBUG] ... (showing only first 10 records)');
+            debugPrint('[DEBUG] ... (showing only first 10 records)');
             break;
           }
         }
       }
 
-      print('[DEBUG] =====================================');
-      print('[DEBUG] === INSPECTION COMPLETE ===');
-      print('[DEBUG] =====================================');
+      debugPrint('[DEBUG] =====================================');
+      debugPrint('[DEBUG] === INSPECTION COMPLETE ===');
+      debugPrint('[DEBUG] =====================================');
     } catch (e, stackTrace) {
-      print('[DEBUG] ❌ Error during database inspection: $e');
-      print('[DEBUG] Stack trace: $stackTrace');
+      debugPrint('[DEBUG] ❌ Error during database inspection: $e');
+      debugPrint('[DEBUG] Stack trace: $stackTrace');
     }
   }
 
@@ -281,33 +281,33 @@ class ManualClockingEvidenceSyncService {
 
       // DEBUG: First check what's in the table
       final allRecords = await db.query('manual_clocking_evidence');
-      print('[EVIDENCE_SYNC] === DATABASE INSPECTION ===');
-      print(
+      debugPrint('[EVIDENCE_SYNC] === DATABASE INSPECTION ===');
+      debugPrint(
           '[EVIDENCE_SYNC] Total records in manual_clocking_evidence: ${allRecords.length}');
 
       if (allRecords.isNotEmpty) {
-        print('[EVIDENCE_SYNC] Sample records:');
+        debugPrint('[EVIDENCE_SYNC] Sample records:');
         for (int i = 0; i < allRecords.length && i < 5; i++) {
           final record = allRecords[i];
-          print('[EVIDENCE_SYNC] Record ${i + 1}:');
-          print('  Evidence ID: ${record['evidence_id']}');
-          print('  Learner ID: ${record['LearnerID']}');
-          print('  Clock Date: ${record['clock_date']}');
-          print(
+          debugPrint('[EVIDENCE_SYNC] Record ${i + 1}:');
+          debugPrint('  Evidence ID: ${record['evidence_id']}');
+          debugPrint('  Learner ID: ${record['LearnerID']}');
+          debugPrint('  Clock Date: ${record['clock_date']}');
+          debugPrint(
               '  Signature In: ${record['signature_in'] != null ? 'YES (${record['signature_in'].toString().length} chars)' : 'NO'}');
-          print(
+          debugPrint(
               '  Signature Out: ${record['signature_out'] != null ? 'YES (${record['signature_out'].toString().length} chars)' : 'NO'}');
-          print(
+          debugPrint(
               '  Face In: ${record['face_in'] != null ? 'YES (${record['face_in'].toString().length} chars)' : 'NO'}');
-          print(
+          debugPrint(
               '  Face Out: ${record['face_out'] != null ? 'YES (${record['face_out'].toString().length} chars)' : 'NO'}');
-          print('  Synced: ${record['synced']}');
-          print('  Created: ${record['created_at']}');
-          print('  Updated: ${record['updated_at']}');
-          print('  ---');
+          debugPrint('  Synced: ${record['synced']}');
+          debugPrint('  Created: ${record['created_at']}');
+          debugPrint('  Updated: ${record['updated_at']}');
+          debugPrint('  ---');
         }
       }
-      print('[EVIDENCE_SYNC] === END DATABASE INSPECTION ===');
+      debugPrint('[EVIDENCE_SYNC] === END DATABASE INSPECTION ===');
 
       final records = await db.query(
         'manual_clocking_evidence',
@@ -316,11 +316,11 @@ class ManualClockingEvidenceSyncService {
         orderBy: 'created_at ASC',
       );
 
-      print(
+      debugPrint(
           '[EVIDENCE_SYNC] Found ${records.length} unsynced evidence records');
       return records;
     } catch (e) {
-      print('[EVIDENCE_SYNC] Error getting unsynced evidence: $e');
+      debugPrint('[EVIDENCE_SYNC] Error getting unsynced evidence: $e');
       return [];
     }
   }
@@ -342,7 +342,7 @@ class ManualClockingEvidenceSyncService {
           };
         }
 
-        print(
+        debugPrint(
             '[EVIDENCE_SYNC] Starting sync of ${unsyncedRecords.length} records to server');
 
         // Prepare records for sync with secure idempotency tokens
@@ -375,7 +375,7 @@ class ManualClockingEvidenceSyncService {
             // Mark successfully synced records
             await _markRecordsAsSynced(result['results']);
 
-            print(
+            debugPrint(
                 '[EVIDENCE_SYNC] ✅ Sync complete: ${result['success_count']} succeeded, ${result['fail_count']} failed');
 
             return {
@@ -392,7 +392,7 @@ class ManualClockingEvidenceSyncService {
           throw Exception('Server returned status ${response.statusCode}');
         }
       } catch (e) {
-        print('[EVIDENCE_SYNC] ❌ Sync failed: $e');
+        debugPrint('[EVIDENCE_SYNC] ❌ Sync failed: $e');
         return {
           'success': false,
           'error': e.toString(),
@@ -419,12 +419,12 @@ class ManualClockingEvidenceSyncService {
             whereArgs: [learnerID, clockDate],
           );
 
-          print(
+          debugPrint(
               '[EVIDENCE_SYNC] Marked as synced: Learner $learnerID on $clockDate');
         }
       }
     } catch (e) {
-      print('[EVIDENCE_SYNC] Error marking records as synced: $e');
+      debugPrint('[EVIDENCE_SYNC] Error marking records as synced: $e');
     }
   }
 
@@ -448,7 +448,7 @@ class ManualClockingEvidenceSyncService {
       }
       return null;
     } catch (e) {
-      print('[EVIDENCE_SYNC] Error getting evidence: $e');
+      debugPrint('[EVIDENCE_SYNC] Error getting evidence: $e');
       return null;
     }
   }
@@ -469,7 +469,7 @@ class ManualClockingEvidenceSyncService {
       }
       return 0;
     } catch (e) {
-      print('[EVIDENCE_SYNC] Error getting unsynced count: $e');
+      debugPrint('[EVIDENCE_SYNC] Error getting unsynced count: $e');
       return 0;
     }
   }
@@ -498,7 +498,7 @@ class ManualClockingEvidenceSyncService {
       }
       return null;
     } catch (e) {
-      print('[EVIDENCE_SYNC] Error downloading from server: $e');
+      debugPrint('[EVIDENCE_SYNC] Error downloading from server: $e');
       return null;
     }
   }
@@ -510,20 +510,20 @@ class ManualClockingEvidenceSyncService {
       final unsyncedCount = await getUnsyncedCount();
 
       if (unsyncedCount > 0) {
-        print(
+        debugPrint(
             '[EVIDENCE_SYNC] Auto-sync triggered: $unsyncedCount unsynced records');
 
         final result = await syncToServer();
 
         if (result['success'] == true) {
-          print(
+          debugPrint(
               '[EVIDENCE_SYNC] ✅ Auto-sync complete: ${result['synced_count']} records synced');
         } else {
-          print('[EVIDENCE_SYNC] ⚠️ Auto-sync failed: ${result['error']}');
+          debugPrint('[EVIDENCE_SYNC] ⚠️ Auto-sync failed: ${result['error']}');
         }
       }
     } catch (e) {
-      print('[EVIDENCE_SYNC] Auto-sync error: $e');
+      debugPrint('[EVIDENCE_SYNC] Auto-sync error: $e');
     }
   }
 }

@@ -5,6 +5,8 @@ import 'config.dart';
 
 /// Debug page for testing Province/District/Municipality selection
 class DebugLocationSelectionPage extends StatefulWidget {
+  const DebugLocationSelectionPage({super.key});
+
   @override
   _DebugLocationSelectionPageState createState() => _DebugLocationSelectionPageState();
 }
@@ -31,7 +33,7 @@ class _DebugLocationSelectionPageState extends State<DebugLocationSelectionPage>
     setState(() {
       _debugLog += '[${DateTime.now().toLocal()}] $message\n';
     });
-    print(message);
+    debugPrint(message);
   }
 
   Future<void> _fetchProvinces() async {
@@ -189,7 +191,7 @@ class _DebugLocationSelectionPageState extends State<DebugLocationSelectionPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Debug Location Selection'),
+        title: const Text('Debug Location Selection'),
         backgroundColor: Colors.blue,
       ),
       body: Padding(
@@ -199,14 +201,14 @@ class _DebugLocationSelectionPageState extends State<DebugLocationSelectionPage>
           children: [
             // Loading indicator
             if (_isLoading) 
-              LinearProgressIndicator(),
+              const LinearProgressIndicator(),
               
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Province dropdown
             DropdownButtonFormField<String>(
               value: _selectedProvince,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Province',
                 border: OutlineInputBorder(),
               ),
@@ -228,14 +230,14 @@ class _DebugLocationSelectionPageState extends State<DebugLocationSelectionPage>
               },
             ),
             
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // District dropdown
             DropdownButtonFormField<String>(
               value: _selectedDistrict,
               decoration: InputDecoration(
                 labelText: 'District (${_districts.length} available)',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
               ),
               items: _districts.map((district) {
                 return DropdownMenuItem<String>(
@@ -254,14 +256,14 @@ class _DebugLocationSelectionPageState extends State<DebugLocationSelectionPage>
               },
             ),
             
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Municipality dropdown
             DropdownButtonFormField<String>(
               value: _selectedMunicipality,
               decoration: InputDecoration(
                 labelText: 'Municipality (${_municipalities.length} available)',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
               ),
               items: _municipalities.map((municipality) {
                 return DropdownMenuItem<String>(
@@ -276,11 +278,11 @@ class _DebugLocationSelectionPageState extends State<DebugLocationSelectionPage>
               },
             ),
             
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Current selection display
             Container(
-              padding: EdgeInsets.all(12),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.grey[100],
                 border: Border.all(color: Colors.grey),
@@ -289,7 +291,7 @@ class _DebugLocationSelectionPageState extends State<DebugLocationSelectionPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Current Selection:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text('Current Selection:', style: TextStyle(fontWeight: FontWeight.bold)),
                   Text('Province: ${_selectedProvince ?? "Not selected"}'),
                   Text('District: ${_selectedDistrict ?? "Not selected"}'),
                   Text('Municipality: ${_selectedMunicipality ?? "Not selected"}'),
@@ -297,12 +299,12 @@ class _DebugLocationSelectionPageState extends State<DebugLocationSelectionPage>
               ),
             ),
             
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Debug log
             Expanded(
               child: Container(
-                padding: EdgeInsets.all(12),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.black87,
                   borderRadius: BorderRadius.circular(8),
@@ -310,19 +312,19 @@ class _DebugLocationSelectionPageState extends State<DebugLocationSelectionPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Debug Log:',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Expanded(
                       child: SingleChildScrollView(
                         child: Text(
                           _debugLog.isEmpty ? 'No debug information yet...' : _debugLog,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.green,
                             fontSize: 12,
                             fontFamily: 'monospace',
@@ -335,7 +337,7 @@ class _DebugLocationSelectionPageState extends State<DebugLocationSelectionPage>
               ),
             ),
             
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             
             // Clear log button
             ElevatedButton(
@@ -344,7 +346,7 @@ class _DebugLocationSelectionPageState extends State<DebugLocationSelectionPage>
                   _debugLog = '';
                 });
               },
-              child: Text('Clear Log'),
+              child: const Text('Clear Log'),
             ),
           ],
         ),

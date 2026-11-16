@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'http_client_service.dart';
 
@@ -22,7 +21,7 @@ class RequestMonitoringService {
     );
     
     if (kDebugMode) {
-      print('RequestMonitoringService: Started monitoring');
+      debugPrint('RequestMonitoringService: Started monitoring');
     }
   }
   
@@ -32,7 +31,7 @@ class RequestMonitoringService {
     _monitoringTimer = null;
     
     if (kDebugMode) {
-      print('RequestMonitoringService: Stopped monitoring');
+      debugPrint('RequestMonitoringService: Stopped monitoring');
     }
   }
   
@@ -55,7 +54,7 @@ class RequestMonitoringService {
     
     // Keep only events within monitoring window
     final cutoff = DateTime.now().subtract(
-      Duration(minutes: _monitoringWindowMinutes),
+      const Duration(minutes: _monitoringWindowMinutes),
     );
     _eventHistory.removeWhere((event) => event.timestamp.isBefore(cutoff));
   }
@@ -63,7 +62,7 @@ class RequestMonitoringService {
   /// Check for request pattern anomalies
   static void _checkForAnomalies() {
     final now = DateTime.now();
-    final windowStart = now.subtract(Duration(minutes: _monitoringWindowMinutes));
+    final windowStart = now.subtract(const Duration(minutes: _monitoringWindowMinutes));
     
     // Get events in monitoring window
     final windowEvents = _eventHistory
@@ -112,7 +111,7 @@ class RequestMonitoringService {
       _triggerAlert(
         endpoint,
         AlertType.highFailureRate,
-        'High failure rate: ${(failureRate * 100).toStringAsFixed(1)}% (${failures}/${events.length})',
+        'High failure rate: ${(failureRate * 100).toStringAsFixed(1)}% ($failures/${events.length})',
       );
     }
     
@@ -127,7 +126,7 @@ class RequestMonitoringService {
     
     // Log metrics in debug mode
     if (kDebugMode && events.isNotEmpty) {
-      print('RequestMonitoring [$endpoint]: '
+      debugPrint('RequestMonitoring [$endpoint]: '
             'Requests/min: ${requestsPerMinute.toStringAsFixed(1)}, '
             'Failure rate: ${(failureRate * 100).toStringAsFixed(1)}%, '
             'Avg attempts: ${avgAttempts.toStringAsFixed(1)}');
@@ -151,7 +150,7 @@ class RequestMonitoringService {
     
     // Log the alert
     if (kDebugMode) {
-      print('🚨 ALERT [$endpoint] ${type.toString().split('.').last}: $message');
+      debugPrint('🚨 ALERT [$endpoint] ${type.toString().split('.').last}: $message');
     }
     
     // In production, you might want to send this to a monitoring service
@@ -161,7 +160,7 @@ class RequestMonitoringService {
   /// Get monitoring statistics
   static Map<String, dynamic> getStats() {
     final now = DateTime.now();
-    final windowStart = now.subtract(Duration(minutes: _monitoringWindowMinutes));
+    final windowStart = now.subtract(const Duration(minutes: _monitoringWindowMinutes));
     
     final windowEvents = _eventHistory
         .where((event) => event.timestamp.isAfter(windowStart))

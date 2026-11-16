@@ -15,11 +15,11 @@ class FacilitatorFaceEnrollPage extends StatefulWidget {
   final bool isFirstTimeSetup;
 
   const FacilitatorFaceEnrollPage({
-    Key? key,
+    super.key,
     required this.facilitatorId,
     required this.facilitatorName,
     this.isFirstTimeSetup = false,
-  }) : super(key: key);
+  });
 
   @override
   State<FacilitatorFaceEnrollPage> createState() =>

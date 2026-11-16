@@ -27,7 +27,7 @@ class ClockingLogger {
       await _writeToFile('📱 App Version: ${DateTime.now().millisecondsSinceEpoch}');
       await _writeToFile('${'='*80}\n');
     } catch (e) {
-      print('Failed to initialize ClockingLogger: $e');
+      debugPrint('Failed to initialize ClockingLogger: $e');
     }
   }
 
@@ -44,7 +44,7 @@ class ClockingLogger {
       final file = File(_logFilePath);
       await file.writeAsString('$message\n', mode: FileMode.append);
     } catch (e) {
-      print('Failed to write to log file: $e');
+      debugPrint('Failed to write to log file: $e');
     }
   }
 
@@ -60,7 +60,7 @@ class ClockingLogger {
 ${'─' * 60}''';
     
     await _writeToFile(message);
-    print('🟢 [CLOCK-IN] $learnerID via $source at $timestamp');
+    debugPrint('🟢 [CLOCK-IN] $learnerID via $source at $timestamp');
   }
 
   // Log clock-out attempt
@@ -75,7 +75,7 @@ ${'─' * 60}''';
 ${'─' * 60}''';
     
     await _writeToFile(message);
-    print('🔴 [CLOCK-OUT] $learnerID via $source at $timestamp');
+    debugPrint('🔴 [CLOCK-OUT] $learnerID via $source at $timestamp');
   }
 
   // Log data changes from server fetch
@@ -92,7 +92,7 @@ ${'─' * 60}''';
 ${'─' * 60}''';
     
     await _writeToFile(message);
-    print('🔄 [SERVER-CHANGE] $learnerID $changeType: "$oldValue" → "$newValue"');
+    debugPrint('🔄 [SERVER-CHANGE] $learnerID $changeType: "$oldValue" → "$newValue"');
   }
 
   // Log sync operations
@@ -107,7 +107,7 @@ ${'─' * 60}''';
 ${'─' * 60}''';
     
     await _writeToFile(message);
-    print('🔄 [SYNC] $operation: $status');
+    debugPrint('🔄 [SYNC] $operation: $status');
   }
 
   // Log database operations
@@ -123,7 +123,7 @@ ${'─' * 60}''';
 ${'─' * 60}''';
     
     await _writeToFile(message);
-    print('💾 [DB] $operation on $table for $learnerID');
+    debugPrint('💾 [DB] $operation on $table for $learnerID');
   }
 
   // Log fingerprint verification
@@ -140,7 +140,7 @@ ${error != null ? '❌ Error: $error' : ''}
 ${'─' * 60}''';
     
     await _writeToFile(message);
-    print('👆 [FINGERPRINT] $learnerID $status via $scanner');
+    debugPrint('👆 [FINGERPRINT] $learnerID $status via $scanner');
   }
 
   // Log HTTP requests
@@ -157,7 +157,7 @@ ${'─' * 60}''';
 ${'─' * 60}''';
     
     await _writeToFile(message);
-    print('🌐 [HTTP] $method $url → $statusCode');
+    debugPrint('🌐 [HTTP] $method $url → $statusCode');
   }
 
   // Log periodic refresh cycles
@@ -173,7 +173,7 @@ ${'─' * 60}''';
     
     await _writeToFile(message);
     if (changedLearners.isNotEmpty) {
-      print('🔄 [REFRESH] Changes detected for: ${changedLearners.join(', ')}');
+      debugPrint('🔄 [REFRESH] Changes detected for: ${changedLearners.join(', ')}');
     }
   }
 
@@ -188,7 +188,7 @@ ${'─' * 60}''';
 ${'─' * 60}''';
     
     await _writeToFile(message);
-    print('📱 [LIFECYCLE] $event');
+    debugPrint('📱 [LIFECYCLE] $event');
   }
 
   // Log errors and exceptions
@@ -203,7 +203,7 @@ ${'─' * 60}''';
 ${'─' * 60}''';
     
     await _writeToFile(message);
-    print('❌ [ERROR] $context: $error');
+    debugPrint('❌ [ERROR] $context: $error');
   }
 
   // Get log file path for sharing/debugging
@@ -220,7 +220,7 @@ ${'─' * 60}''';
         await _writeToFile('🧹 LOG FILE CLEARED: ${_getTimestamp()}');
       }
     } catch (e) {
-      print('Failed to clear log file: $e');
+      debugPrint('Failed to clear log file: $e');
     }
   }
 
@@ -239,7 +239,7 @@ ${'─' * 60}''';
         return recentLines.join('\n');
       }
     } catch (e) {
-      print('Failed to read log file: $e');
+      debugPrint('Failed to read log file: $e');
     }
     return 'No logs available';
   }
@@ -271,6 +271,6 @@ ${'='*80}
 ''';
     
     await _writeToFile(message);
-    print('📊 Summary report generated in log file');
+    debugPrint('📊 Summary report generated in log file');
   }
 }

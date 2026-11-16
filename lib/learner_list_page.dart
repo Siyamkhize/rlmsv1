@@ -135,7 +135,7 @@ class Learner {
           validDateOfBirth = null;
         }
       } catch (e) {
-        print('Error parsing date in fromJson: $rawDateOfBirth, error: $e');
+        debugPrint('Error parsing date in fromJson: $rawDateOfBirth, error: $e');
         validDateOfBirth = null;
       }
     } else {
@@ -297,7 +297,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
         });
       }
     } catch (e) {
-      print('Error checking for unsynced data: $e');
+      debugPrint('Error checking for unsynced data: $e');
     }
   }
 
@@ -309,7 +309,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
 
   Future<List<Learner>> fetchLearnersFromServer() async {
     try {
-      print('Fetching learners from server for classID: ${widget.classID}');
+      debugPrint('Fetching learners from server for classID: ${widget.classID}');
       final response = await http
           .get(
         Uri.parse(AppConfig.buildUrl('get_learners.php',
@@ -318,45 +318,45 @@ class _LearnerListPageState extends State<LearnerListPage> {
           .timeout(
         const Duration(seconds: 10),
         onTimeout: () {
-          print('Server request timed out after 10 seconds');
+          debugPrint('Server request timed out after 10 seconds');
           throw TimeoutException('Server request timed out');
         },
       );
 
-      print('Server response status: ${response.statusCode}');
-      print('Server response body: ${response.body}');
+      debugPrint('Server response status: ${response.statusCode}');
+      debugPrint('Server response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final List<dynamic> learnersJson = jsonDecode(response.body);
-        print('Parsed server response: $learnersJson'); // Debug log
-        print(
+        debugPrint('Parsed server response: $learnersJson'); // Debug log
+        debugPrint(
             'Number of learners received from server: ${learnersJson.length}'); // Debug log
 
         if (learnersJson.isNotEmpty) {
-          print(
+          debugPrint(
               'First learner data from server: ${learnersJson.first}'); // Debug log
-          print(
+          debugPrint(
               'Available fields in first learner: ${learnersJson.first.keys.toList()}'); // Debug log
-          print('Sample field values:');
+          debugPrint('Sample field values:');
           learnersJson.first.forEach((key, value) {
-            print('  $key: $value');
+            debugPrint('  $key: $value');
           });
         } else {
-          print('No learners found on server for classID: ${widget.classID}');
+          debugPrint('No learners found on server for classID: ${widget.classID}');
         }
 
         // No need to filter since the server now returns only learners for the specific classID
         final learners =
             learnersJson.map((json) => Learner.fromJson(json)).toList();
-        print('Converted ${learners.length} learners from JSON');
+        debugPrint('Converted ${learners.length} learners from JSON');
         return learners;
       } else {
-        print('Server returned status code: ${response.statusCode}');
+        debugPrint('Server returned status code: ${response.statusCode}');
         throw Exception(
             'Failed to load learners from server: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching server data: $e');
+      debugPrint('Error fetching server data: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -373,37 +373,37 @@ class _LearnerListPageState extends State<LearnerListPage> {
   Future<void> saveLearnersToLocalDatabase(List<Learner> serverLearners) async {
     try {
       final dbHelper = DatabaseHelper();
-      print(
+      debugPrint(
           'Saving ${serverLearners.length} server learners to local database');
 
       for (var learner in serverLearners) {
         final learnerIdStr = learner.learnerID ?? 'N/A';
-        print(
+        debugPrint(
             'Processing learner: ${learner.name} ${learner.surname} with ID: $learnerIdStr');
-        print('=== LEARNER DATA ANALYSIS ===');
-        print('Title: ${learner.title}');
-        print('DateOfBirth: ${learner.dateOfBirth}');
-        print('PhoneNumber: ${learner.phoneNumber}');
-        print('Email: ${learner.email}');
-        print('Race: ${learner.race}');
-        print('Language: ${learner.language}');
-        print('Disability: ${learner.disability}');
-        print('AddressLine1: ${learner.addressLine1}');
-        print('AddressLine2: ${learner.addressLine2}');
-        print('AddressLine3: ${learner.addressLine3}');
-        print('PostalCode: ${learner.postalCode}');
-        print('KinName: ${learner.kinName}');
-        print('KinRelation: ${learner.kinRelation}');
-        print('KinContact: ${learner.kinContact}');
-        print('SchoolName: ${learner.schoolName}');
-        print('SchoolCompletion: ${learner.schoolCompletion}');
-        print('SchoolLocation: ${learner.schoolLocation}');
-        print('SchoolGrade: ${learner.schoolGrade}');
-        print('BankName: ${learner.bankName}');
-        print('bankType: ${learner.bankType}');
-        print('BankAccount: ${learner.bankAccount}');
-        print('BankCode: ${learner.bankCode}');
-        print('=== END LEARNER DATA ANALYSIS ===');
+        debugPrint('=== LEARNER DATA ANALYSIS ===');
+        debugPrint('Title: ${learner.title}');
+        debugPrint('DateOfBirth: ${learner.dateOfBirth}');
+        debugPrint('PhoneNumber: ${learner.phoneNumber}');
+        debugPrint('Email: ${learner.email}');
+        debugPrint('Race: ${learner.race}');
+        debugPrint('Language: ${learner.language}');
+        debugPrint('Disability: ${learner.disability}');
+        debugPrint('AddressLine1: ${learner.addressLine1}');
+        debugPrint('AddressLine2: ${learner.addressLine2}');
+        debugPrint('AddressLine3: ${learner.addressLine3}');
+        debugPrint('PostalCode: ${learner.postalCode}');
+        debugPrint('KinName: ${learner.kinName}');
+        debugPrint('KinRelation: ${learner.kinRelation}');
+        debugPrint('KinContact: ${learner.kinContact}');
+        debugPrint('SchoolName: ${learner.schoolName}');
+        debugPrint('SchoolCompletion: ${learner.schoolCompletion}');
+        debugPrint('SchoolLocation: ${learner.schoolLocation}');
+        debugPrint('SchoolGrade: ${learner.schoolGrade}');
+        debugPrint('BankName: ${learner.bankName}');
+        debugPrint('bankType: ${learner.bankType}');
+        debugPrint('BankAccount: ${learner.bankAccount}');
+        debugPrint('BankCode: ${learner.bankCode}');
+        debugPrint('=== END LEARNER DATA ANALYSIS ===');
 
         // First, get existing fingerprint templates for this learner (if any)
         Map<String, String?> existingTemplates = {};
@@ -412,12 +412,12 @@ class _LearnerListPageState extends State<LearnerListPage> {
             final learnerId = int.tryParse(learnerIdStr);
             if (learnerId != null) {
               existingTemplates = await dbHelper.getAllTemplates(learnerId);
-              print(
+              debugPrint(
                   '[SYNC] Preserving templates for learner $learnerId: ${existingTemplates.keys.where((k) => existingTemplates[k]?.isNotEmpty == true).toList()}');
             }
           }
         } catch (e) {
-          print('[SYNC] Error getting existing templates: $e');
+          debugPrint('[SYNC] Error getting existing templates: $e');
           // Continue with empty templates if there's an error
         }
 
@@ -477,8 +477,8 @@ class _LearnerListPageState extends State<LearnerListPage> {
           'witness_signature': _cleanFilePath(learner.witnessSignature),
         };
 
-        print('Prepared learner data with ${learnerData.keys.length} fields');
-        print('All learner data fields: ${learnerData.keys.toList()}');
+        debugPrint('Prepared learner data with ${learnerData.keys.length} fields');
+        debugPrint('All learner data fields: ${learnerData.keys.toList()}');
 
         // Prepare bank data separately since local database has separate bankdetails table
         Map<String, dynamic>? bankData;
@@ -492,19 +492,19 @@ class _LearnerListPageState extends State<LearnerListPage> {
             'BankAccount': learner.bankAccount ?? '',
             'BankCode': learner.bankCode ?? '',
           };
-          print('Bank data prepared: $bankData');
+          debugPrint('Bank data prepared: $bankData');
         } else {
-          print('No bank data to save for this learner');
+          debugPrint('No bank data to save for this learner');
         }
 
-        print(
+        debugPrint(
             'Saving learner data: ${learnerData['Name']} ${learnerData['Surname']} with LearnerID: ${learnerData['LearnerID']}');
 
         try {
           // Use insertOrUpdate instead of insert to handle existing learners
           final result =
               await dbHelper.insertOrUpdateLearner(learnerData, bankData);
-          print('Insert/Update result for ${learnerData['Name']}: $result');
+          debugPrint('Insert/Update result for ${learnerData['Name']}: $result');
 
           // Verify the insertion by checking if learner exists in the class
           final classLearners = await dbHelper.fetchLearners(widget.classID);
@@ -515,8 +515,8 @@ class _LearnerListPageState extends State<LearnerListPage> {
               .firstOrNull;
 
           if (savedLearner != null) {
-            print('Verification successful - learner found in database');
-            print('Stored fields: ${savedLearner.keys.toList()}');
+            debugPrint('Verification successful - learner found in database');
+            debugPrint('Stored fields: ${savedLearner.keys.toList()}');
 
             // Check specific fields that were problematic
             final fieldsToCheck = [
@@ -541,10 +541,10 @@ class _LearnerListPageState extends State<LearnerListPage> {
               final storedValue = savedLearner[field];
               final originalValue = learnerData[field];
               if (storedValue != originalValue) {
-                print(
+                debugPrint(
                     'FIELD MISMATCH - $field: stored="$storedValue", original="$originalValue"');
               } else {
-                print('Field OK - $field: "$storedValue"');
+                debugPrint('Field OK - $field: "$storedValue"');
               }
             }
 
@@ -554,43 +554,43 @@ class _LearnerListPageState extends State<LearnerListPage> {
                 final savedBankDetails = await dbHelper
                     .fetchLearnerBankDetails(savedLearner['LearnerID']);
                 if (savedBankDetails != null) {
-                  print('Bank details verified: $savedBankDetails');
+                  debugPrint('Bank details verified: $savedBankDetails');
                 } else {
-                  print('WARNING: Bank details were not saved properly');
+                  debugPrint('WARNING: Bank details were not saved properly');
                 }
               } catch (bankError) {
-                print('Error checking bank details: $bankError');
+                debugPrint('Error checking bank details: $bankError');
               }
             }
           } else {
-            print(
+            debugPrint(
                 'ERROR: Learner not found after insertion - this indicates a database problem');
-            print(
+            debugPrint(
                 'Looking for LearnerID: ${learnerData['LearnerID']} or IDNumber: ${learnerData['IDNumber']}');
-            print(
+            debugPrint(
                 'Available learners in class: ${classLearners.map((l) => '${l['LearnerID']}-${l['IDNumber']}').toList()}');
           }
         } catch (insertError) {
-          print(
+          debugPrint(
               'Error inserting/updating learner ${learnerData['Name']}: $insertError');
           // Continue with next learner instead of failing completely
           continue;
         }
       }
 
-      print(
+      debugPrint(
           'Successfully processed ${serverLearners.length} learners to local database');
 
       // Summary of sync results
-      print('=== SYNC SUMMARY ===');
-      print('Total learners processed: ${serverLearners.length}');
-      print(
+      debugPrint('=== SYNC SUMMARY ===');
+      debugPrint('Total learners processed: ${serverLearners.length}');
+      debugPrint(
           'Using sync_onlinedetails.php endpoint which returns all learner fields');
-      print('All fields should now be populated correctly from server data');
-      print('Bank details are stored in separate bankdetails table');
-      print(
+      debugPrint('All fields should now be populated correctly from server data');
+      debugPrint('Bank details are stored in separate bankdetails table');
+      debugPrint(
           'Fingerprint templates are preserved from local database if they exist');
-      print('=== END SYNC SUMMARY ===');
+      debugPrint('=== END SYNC SUMMARY ===');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -598,8 +598,8 @@ class _LearnerListPageState extends State<LearnerListPage> {
                 'Loaded ${serverLearners.length} learners from server with complete data')),
       );
     } catch (e) {
-      print('Error saving learners to local database: $e');
-      print('Stack trace: ${StackTrace.current}');
+      debugPrint('Error saving learners to local database: $e');
+      debugPrint('Stack trace: ${StackTrace.current}');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving to local database: $e')),
       );
@@ -608,30 +608,30 @@ class _LearnerListPageState extends State<LearnerListPage> {
 
   Future<void> loadLearnersFromLocalDatabase() async {
     try {
-      print(
+      debugPrint(
           '[LEARNER_LIST] Loading learners from local database for classID: ${widget.classID}');
       final dbHelper = DatabaseHelper();
 
       // Debug: Check total learners in database
       final db = await dbHelper.database;
       final allLearners = await db.query('learnerdetails');
-      print(
+      debugPrint(
           '[LEARNER_LIST] Total learners in entire database: ${allLearners.length}');
 
       if (allLearners.isNotEmpty) {
         // Show sample of classIDs in database
         final classIds = allLearners.map((l) => l['classID']).toSet().toList();
-        print('[LEARNER_LIST] Available classIDs in database: $classIds');
+        debugPrint('[LEARNER_LIST] Available classIDs in database: $classIds');
       }
 
       final localLearners = await dbHelper.fetchLearners(widget.classID);
-      print(
+      debugPrint(
           '[LEARNER_LIST] Found ${localLearners.length} learners for classID: ${widget.classID}');
 
       if (localLearners.isEmpty && allLearners.isNotEmpty) {
-        print(
+        debugPrint(
             '[LEARNER_LIST] ⚠️ WARNING: Database has learners but none for classID ${widget.classID}');
-        print(
+        debugPrint(
             '[LEARNER_LIST] This class might not have been synced yet, or classID mismatch');
       }
 
@@ -660,7 +660,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
         );
       }
     } catch (e) {
-      print('[LEARNER_LIST] Error loading local data: $e');
+      debugPrint('[LEARNER_LIST] Error loading local data: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading local data: $e')),
@@ -674,7 +674,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
       final isConnected = await _checkConnectivity();
 
       if (isConnected) {
-        print(
+        debugPrint(
             '[LEARNER_LIST] Online - attempting to sync and fetch from server');
         // First, sync any local unsynced learners to server
         await _syncLocalLearnersToServer();
@@ -682,17 +682,17 @@ class _LearnerListPageState extends State<LearnerListPage> {
         // Then fetch from server and merge with local data
         final serverLearners = await fetchLearnersFromServer();
         if (serverLearners.isNotEmpty) {
-          print(
+          debugPrint(
               '[LEARNER_LIST] Server returned ${serverLearners.length} learners, merging with local data');
           await _mergeServerAndLocalData(serverLearners);
         } else {
           // Server returned empty (could be error or no data)
-          print(
+          debugPrint(
               '[LEARNER_LIST] Server returned empty, loading from local database');
           await loadLearnersFromLocalDatabase();
         }
       } else {
-        print('[LEARNER_LIST] Offline - loading from local database');
+        debugPrint('[LEARNER_LIST] Offline - loading from local database');
         await loadLearnersFromLocalDatabase();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -705,10 +705,10 @@ class _LearnerListPageState extends State<LearnerListPage> {
         }
       }
     } catch (e) {
-      print('Error in fetchLearnersData: $e');
+      debugPrint('Error in fetchLearnersData: $e');
       // Fallback to local data if server fails
       try {
-        print('[LEARNER_LIST] Error occurred, falling back to local database');
+        debugPrint('[LEARNER_LIST] Error occurred, falling back to local database');
         await loadLearnersFromLocalDatabase();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -720,7 +720,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
           );
         }
       } catch (localError) {
-        print('Error loading local data: $localError');
+        debugPrint('Error loading local data: $localError');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error loading data: $e')),
@@ -746,7 +746,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
           await dbHelper.fetchUnsyncedLearners(widget.classID);
 
       if (unsyncedLearners.isNotEmpty) {
-        print('Found ${unsyncedLearners.length} unsynced learners to sync');
+        debugPrint('Found ${unsyncedLearners.length} unsynced learners to sync');
 
         for (var learner in unsyncedLearners) {
           try {
@@ -758,23 +758,23 @@ class _LearnerListPageState extends State<LearnerListPage> {
                   await dbHelper.fetchLearnerByIDNumber(learner['IDNumber']);
               if (currentLearner != null) {
                 await dbHelper.markLearnerAsSynced(currentLearner['LearnerID']);
-                print(
+                debugPrint(
                     'Successfully synced learner ${learner['Name']} ${learner['Surname']}');
               } else {
-                print('Could not find learner after sync to mark as synced');
+                debugPrint('Could not find learner after sync to mark as synced');
               }
             } else {
-              print(
+              debugPrint(
                   'Failed to sync learner ${learner['Name']} ${learner['Surname']}');
             }
           } catch (e) {
-            print(
+            debugPrint(
                 'Error syncing learner ${learner['Name']} ${learner['Surname']}: $e');
           }
         }
       }
     } catch (e) {
-      print('Error syncing local learners: $e');
+      debugPrint('Error syncing local learners: $e');
     }
   }
 
@@ -796,7 +796,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
       syncData['witness_signature'] =
           _cleanFilePath(syncData['witness_signature']);
 
-      print(
+      debugPrint(
           'Preparing sync data without local LearnerID: ${syncData.keys.toList()}');
 
       final response = await http
@@ -807,9 +807,9 @@ class _LearnerListPageState extends State<LearnerListPage> {
           )
           .timeout(const Duration(seconds: 10));
 
-      print('Sync request body: ${json.encode(syncData)}');
-      print('Sync response status: ${response.statusCode}');
-      print('Sync response body: ${response.body}');
+      debugPrint('Sync request body: ${json.encode(syncData)}');
+      debugPrint('Sync response status: ${response.statusCode}');
+      debugPrint('Sync response body: ${response.body}');
 
       if (response.statusCode == 200) {
         try {
@@ -823,25 +823,25 @@ class _LearnerListPageState extends State<LearnerListPage> {
 
               // Update the local LearnerID with the server's LearnerID
               await dbHelper.updateLearnerID(localLearnerID, serverLearnerID);
-              print(
+              debugPrint(
                   'Updated local LearnerID $localLearnerID to server LearnerID $serverLearnerID');
             }
             return true;
           } else {
-            print(
+            debugPrint(
                 'Server returned success: false - ${responseData['message']}');
             return false;
           }
         } catch (e) {
-          print('JSON parse error: $e');
+          debugPrint('JSON parse error: $e');
           return false;
         }
       } else {
-        print('Server error: ${response.statusCode}');
+        debugPrint('Server error: ${response.statusCode}');
         return false;
       }
     } catch (e) {
-      print('Network error: $e');
+      debugPrint('Network error: $e');
       return false;
     }
   }
@@ -894,7 +894,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
             });
             final learner = Learner.fromJson(mapData);
             mergedLearners.add(learner);
-            print(
+            debugPrint(
                 'Added local learner to merged data: ${learner.name} ${learner.surname}');
           }
         }
@@ -907,10 +907,10 @@ class _LearnerListPageState extends State<LearnerListPage> {
       // Apply current search filter after updating learners
       _filterLearners();
 
-      print(
+      debugPrint(
           'Merged ${serverLearners.length} server learners with ${localLearners.length} local learners = ${mergedLearners.length} total');
     } catch (e) {
-      print('Error merging server and local data: $e');
+      debugPrint('Error merging server and local data: $e');
       // Fallback to server data only
       setState(() {
         learners = serverLearners;
@@ -940,10 +940,10 @@ class _LearnerListPageState extends State<LearnerListPage> {
         }
       }
 
-      print('Existing documents for $learnerId: $existingDocs');
+      debugPrint('Existing documents for $learnerId: $existingDocs');
       return requiredDocuments.every((doc) => existingDocs.contains(doc));
     } catch (e) {
-      print('Error checking documents: $e');
+      debugPrint('Error checking documents: $e');
       return false;
     }
   }
@@ -966,7 +966,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
 
       return false;
     } catch (e) {
-      print('Error checking documents: $e');
+      debugPrint('Error checking documents: $e');
       return false;
     }
   }
@@ -980,25 +980,25 @@ class _LearnerListPageState extends State<LearnerListPage> {
       final localDocs = await dbHelper.fetchLearnerDocuments(learnerId);
       existingDocs =
           localDocs.map((doc) => doc['documentName'] as String).toList();
-      print('Local documents for $learnerId: $existingDocs');
+      debugPrint('Local documents for $learnerId: $existingDocs');
 
       // Check server if online
       if (await _checkConnectivity()) {
         final serverDocs = await _fetchServerDocuments(learnerId);
-        print('Server documents for $learnerId: $serverDocs');
+        debugPrint('Server documents for $learnerId: $serverDocs');
         for (var doc in serverDocs) {
           if (!existingDocs.contains(doc)) {
             existingDocs.add(doc);
           }
         }
       } else {
-        print('No internet connection, skipping server check for $learnerId');
+        debugPrint('No internet connection, skipping server check for $learnerId');
       }
 
-      print('Combined existing documents for $learnerId: $existingDocs');
+      debugPrint('Combined existing documents for $learnerId: $existingDocs');
       return existingDocs;
     } catch (e) {
-      print('Error getting existing documents: $e');
+      debugPrint('Error getting existing documents: $e');
       return [];
     }
   }
@@ -1009,69 +1009,69 @@ class _LearnerListPageState extends State<LearnerListPage> {
       // Check if there are any documents that can still be uploaded
       return requiredDocuments.any((doc) => !existingDocs.contains(doc));
     } catch (e) {
-      print('Error checking if documents can be uploaded: $e');
+      debugPrint('Error checking if documents can be uploaded: $e');
       return false;
     }
   }
 
   Future<void> testServerConnectivity(String learnerId) async {
     try {
-      print('Testing server connectivity for learner: $learnerId');
+      debugPrint('Testing server connectivity for learner: $learnerId');
       final isConnected = await _checkConnectivity();
-      print('Internet connectivity: $isConnected');
+      debugPrint('Internet connectivity: $isConnected');
 
       if (isConnected) {
         final serverDocs = await _fetchServerDocuments(learnerId);
-        print('Test completed. Server documents found: $serverDocs');
+        debugPrint('Test completed. Server documents found: $serverDocs');
 
         // Test with a known learner ID if available
         if (learners.isNotEmpty) {
           final testLearnerId = learners.first.learnerID ?? 'N/A';
           if (testLearnerId != learnerId) {
-            print('Testing with first learner ID: $testLearnerId');
+            debugPrint('Testing with first learner ID: $testLearnerId');
             final testDocs = await _fetchServerDocuments(testLearnerId);
-            print(
+            debugPrint(
                 'Test with first learner completed. Documents found: $testDocs');
           }
         }
       } else {
-        print('No internet connection available for testing');
+        debugPrint('No internet connection available for testing');
       }
     } catch (e) {
-      print('Error testing server connectivity: $e');
+      debugPrint('Error testing server connectivity: $e');
     }
   }
 
   Future<void> testAllLearnerDocuments() async {
     try {
-      print('Testing document checking for all learners...');
+      debugPrint('Testing document checking for all learners...');
       final isConnected = await _checkConnectivity();
       if (!isConnected) {
-        print('No internet connection available');
+        debugPrint('No internet connection available');
         return;
       }
 
       for (var learner in learners.take(3)) {
         // Test first 3 learners
         final learnerId = learner.learnerID ?? 'N/A';
-        print(
+        debugPrint(
             'Testing learner: $learnerId (${learner.name} ${learner.surname})');
 
         final existingDocs = await getExistingDocuments(learnerId);
         final canUpload = await canUploadDocuments(learnerId);
 
-        print('  - Existing documents: $existingDocs');
-        print('  - Can upload documents: $canUpload');
-        print('  - Required documents: $requiredDocuments');
+        debugPrint('  - Existing documents: $existingDocs');
+        debugPrint('  - Can upload documents: $canUpload');
+        debugPrint('  - Required documents: $requiredDocuments');
       }
     } catch (e) {
-      print('Error testing all learner documents: $e');
+      debugPrint('Error testing all learner documents: $e');
     }
   }
 
   Future<void> testBankDataInsertion() async {
     try {
-      print('Testing bank data insertion...');
+      debugPrint('Testing bank data insertion...');
       final dbHelper = DatabaseHelper();
 
       // Test data
@@ -1121,71 +1121,71 @@ class _LearnerListPageState extends State<LearnerListPage> {
         'BankCode': '632005',
       };
 
-      print('Test learner data: $testLearnerData');
-      print('Test bank data: $testBankData');
+      debugPrint('Test learner data: $testLearnerData');
+      debugPrint('Test bank data: $testBankData');
 
       final learnerId =
           await dbHelper.insertOrUpdateLearner(testLearnerData, testBankData);
-      print('Test learner inserted with ID: $learnerId');
+      debugPrint('Test learner inserted with ID: $learnerId');
 
       // Verify the insertion
       final insertedLearner = await dbHelper.fetchLearners(widget.classID);
       final lastLearner = insertedLearner.last;
-      print('Last inserted learner: $lastLearner');
+      debugPrint('Last inserted learner: $lastLearner');
 
       if (lastLearner['LearnerID'] != null) {
         final bankDetails =
             await dbHelper.fetchLearnerBankDetails(lastLearner['LearnerID']);
-        print('Bank details for test learner: $bankDetails');
+        debugPrint('Bank details for test learner: $bankDetails');
       }
 
       // Show all bank details
       final allBankDetails = await dbHelper.fetchAllBankDetails();
-      print('All bank details in database: $allBankDetails');
+      debugPrint('All bank details in database: $allBankDetails');
     } catch (e) {
-      print('Error testing bank data insertion: $e');
+      debugPrint('Error testing bank data insertion: $e');
     }
   }
 
   Future<List<String>> _fetchServerDocuments(String learnerId) async {
     try {
-      print('Fetching server documents for learner: $learnerId');
-      print('Request URL: $_checkDocsUrl');
-      print('Request body: {"learner_id": "$learnerId"}');
+      debugPrint('Fetching server documents for learner: $learnerId');
+      debugPrint('Request URL: $_checkDocsUrl');
+      debugPrint('Request body: {"learner_id": "$learnerId"}');
 
       final response = await http.post(
         Uri.parse(_checkDocsUrl),
         body: {'learner_id': learnerId},
       ).timeout(const Duration(seconds: 10));
 
-      print('Server response status: ${response.statusCode}');
-      print('Server response headers: ${response.headers}');
-      print('Server response body: ${response.body}');
+      debugPrint('Server response status: ${response.statusCode}');
+      debugPrint('Server response headers: ${response.headers}');
+      debugPrint('Server response body: ${response.body}');
 
       if (response.statusCode == 200) {
         try {
           final jsonResponse = jsonDecode(response.body);
-          print('Parsed JSON response: $jsonResponse');
+          debugPrint('Parsed JSON response: $jsonResponse');
 
           if (jsonResponse['success'] == true) {
             final documents = List<String>.from(jsonResponse['documents']);
-            print('Successfully fetched server documents: $documents');
+            debugPrint('Successfully fetched server documents: $documents');
             return documents;
           } else {
-            print('Server returned error: ${jsonResponse['message']}');
+            debugPrint('Server returned error: ${jsonResponse['message']}');
             throw Exception(jsonResponse['message']);
           }
         } catch (e) {
-          print('Error parsing JSON response: $e');
-          print('Raw response: ${response.body}');
+          debugPrint('Error parsing JSON response: $e');
+          debugPrint('Raw response: ${response.body}');
           return [];
         }
       } else {
-        print('Server error: ${response.statusCode}');
+        debugPrint('Server error: ${response.statusCode}');
         throw Exception('Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching server documents: $e');
+      debugPrint('Error fetching server documents: $e');
       return [];
     }
   }
@@ -1216,8 +1216,8 @@ class _LearnerListPageState extends State<LearnerListPage> {
 
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
-      print('Sync response status: ${response.statusCode}');
-      print('Sync response body: $responseBody');
+      debugPrint('Sync response status: ${response.statusCode}');
+      debugPrint('Sync response body: $responseBody');
 
       if (response.statusCode == 200) {
         try {
@@ -1226,7 +1226,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
             final dbHelper = DatabaseHelper();
             await dbHelper.updateLearnerDocumentSynced(
                 document['document_id'], 1);
-            print(
+            debugPrint(
                 'Document synced: ${document['documentName']} for learner ${document['learner_id']}');
           } else {
             throw Exception(
@@ -1239,7 +1239,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
         throw Exception('Server error: ${response.statusCode} - $responseBody');
       }
     } catch (e) {
-      print('Error syncing document: $e');
+      debugPrint('Error syncing document: $e');
       rethrow;
     }
   }
@@ -1255,7 +1255,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
     try {
       final dbHelper = DatabaseHelper();
       final unsyncedDocs = await dbHelper.fetchUnsyncedLearnerDocuments();
-      print('Found ${unsyncedDocs.length} unsynced documents');
+      debugPrint('Found ${unsyncedDocs.length} unsynced documents');
 
       for (var doc in unsyncedDocs) {
         await _syncDocument(doc);
@@ -2292,17 +2292,17 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
                         value: 'Bidvest Bank', child: Text('Bidvest Bank')),
                   ],
                   onChanged: (value) {
-                    print('🏦 DEBUG: Bank selected: $value');
+                    debugPrint('🏦 DEBUG: Bank selected: $value');
                     setState(() {
                       _selectedBank = value;
                       // Auto-populate bank code when bank is selected
                       if (value != null && _bankCodes.containsKey(value)) {
                         _bankBranchCodeController.text = _bankCodes[value]!;
-                        print(
+                        debugPrint(
                             '🏦 DEBUG: Bank code set to: ${_bankCodes[value]}');
                       } else {
                         _bankBranchCodeController.text = '';
-                        print('🏦 DEBUG: Bank code cleared');
+                        debugPrint('🏦 DEBUG: Bank code cleared');
                       }
                     });
                   },
@@ -2458,14 +2458,14 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
                           ..remove('BankCode');
                       }
 
-                      print('💾 DEBUG: Learner data prepared for submission:');
-                      print('💾 DEBUG: BankName: ${learnerData['BankName']}');
-                      print('💾 DEBUG: bankType: ${learnerData['bankType']}');
-                      print(
+                      debugPrint('💾 DEBUG: Learner data prepared for submission:');
+                      debugPrint('💾 DEBUG: BankName: ${learnerData['BankName']}');
+                      debugPrint('💾 DEBUG: bankType: ${learnerData['bankType']}');
+                      debugPrint(
                           '💾 DEBUG: BankAccount: ${learnerData['BankAccount']}');
-                      print('💾 DEBUG: BankCode: ${learnerData['BankCode']}');
-                      print('💾 DEBUG: Gender: ${learnerData['Gender']}');
-                      print('Request body: ${json.encode(learnerData)}');
+                      debugPrint('💾 DEBUG: BankCode: ${learnerData['BankCode']}');
+                      debugPrint('💾 DEBUG: Gender: ${learnerData['Gender']}');
+                      debugPrint('Request body: ${json.encode(learnerData)}');
 
                       final success =
                           await _submitLearnerData(context, learnerData);
@@ -2554,17 +2554,17 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
   }
 
   void _extractDateAndAgeFromId(String idNumber) async {
-    print('🔥 DEBUG: _extractDateAndAgeFromId called with ID: $idNumber');
+    debugPrint('🔥 DEBUG: _extractDateAndAgeFromId called with ID: $idNumber');
 
     if (idNumber.length == 13 && RegExp(r'^\d{13}$').hasMatch(idNumber)) {
-      print('🔥 DEBUG: ID validation passed!');
+      debugPrint('🔥 DEBUG: ID validation passed!');
 
       int year = int.parse(idNumber.substring(0, 2));
       int month = int.parse(idNumber.substring(2, 4));
       int day = int.parse(idNumber.substring(4, 6));
       int genderCode = int.parse(idNumber.substring(6, 10));
 
-      print(
+      debugPrint(
           '🔥 DEBUG: Extracted - Year: $year, Month: $month, Day: $day, GenderCode: $genderCode');
 
       // Determine full year (assuming cutoff at 21 for 2000s)
@@ -2572,7 +2572,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
 
       // Determine gender (0000-4999 = Female, 5000-9999 = Male)
       String gender = genderCode < 5000 ? 'Female' : 'Male';
-      print('🎯 DEBUG: Gender extracted from ID: $gender');
+      debugPrint('🎯 DEBUG: Gender extracted from ID: $gender');
 
       // Validate date before setting
       if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
@@ -2592,23 +2592,23 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
                 '${fullYear.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
             _ageController.text = age.toString();
             _selectedGender = gender; // Auto-populate gender
-            print('🎯 DEBUG: _selectedGender set to: $_selectedGender');
-            print(
+            debugPrint('🎯 DEBUG: _selectedGender set to: $_selectedGender');
+            debugPrint(
                 '🎯 DEBUG: DOB: ${_dobController.text}, Age: ${_ageController.text}');
           });
 
           // Check for duplicate learner in same project
-          print('🔍 DEBUG: Checking for duplicate learner...');
+          debugPrint('🔍 DEBUG: Checking for duplicate learner...');
           final dbHelper = DatabaseHelper();
           final existingLearner = await dbHelper.checkLearnerExistsInProject(
             idNumber,
             widget.classID,
           );
-          print(
+          debugPrint(
               '🔍 DEBUG: Duplicate check result: ${existingLearner != null ? "FOUND" : "NOT FOUND"}');
 
           if (existingLearner != null && mounted) {
-            print('🔍 DEBUG: Showing duplicate dialog...');
+            debugPrint('🔍 DEBUG: Showing duplicate dialog...');
             // Learner exists in same project - show confirmation dialog
             final shouldUpdate = await showDialog<bool>(
               context: context,
@@ -2712,7 +2712,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           }
         } catch (e) {
           // Invalid date, don't populate
-          print('Invalid date extracted from ID: $e');
+          debugPrint('Invalid date extracted from ID: $e');
         }
       }
     }
@@ -2804,14 +2804,14 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           try {
             final localId =
                 await dbHelper.insertOrUpdateLearner(learnerOnlyData, bankData);
-            print(
+            debugPrint(
                 'Saved locally with server LearnerID: $serverLearnerID, local ID: $localId');
 
             if (bankData != null) {
               await dbHelper.syncBankDetails();
             }
           } catch (localError) {
-            print('Error saving locally: $localError');
+            debugPrint('Error saving locally: $localError');
             // Don't fail the whole operation if local save fails, since server succeeded
           }
 
@@ -2821,20 +2821,20 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           try {
             final localId =
                 await dbHelper.insertOrUpdateLearner(learnerOnlyData, bankData);
-            print('Server failed, saved locally with temporary ID: $localId');
+            debugPrint('Server failed, saved locally with temporary ID: $localId');
 
             if (bankData != null) {
               await dbHelper.syncBankDetails();
             }
           } catch (localError) {
-            print('Error saving locally after server failure: $localError');
+            debugPrint('Error saving locally after server failure: $localError');
           }
 
           return false;
         }
       }
     } catch (e) {
-      print('Submission error: $e');
+      debugPrint('Submission error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error saving data: $e')),
@@ -2856,9 +2856,9 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           )
           .timeout(const Duration(seconds: 10));
 
-      print('Request body: ${json.encode(learnerData)}');
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      debugPrint('Request body: ${json.encode(learnerData)}');
+      debugPrint('Response status: ${response.statusCode}');
+      debugPrint('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         try {
@@ -2868,7 +2868,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           );
           return responseData['success'] == true;
         } catch (e) {
-          print('JSON parse error: $e');
+          debugPrint('JSON parse error: $e');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('Invalid server response: ${response.body}')),
@@ -2884,7 +2884,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
         return false;
       }
     } catch (e) {
-      print('Network error: $e');
+      debugPrint('Network error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Network error: $e')),
       );
@@ -2904,9 +2904,9 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           )
           .timeout(const Duration(seconds: 10));
 
-      print('Request body: ${json.encode(learnerData)}');
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      debugPrint('Request body: ${json.encode(learnerData)}');
+      debugPrint('Response status: ${response.statusCode}');
+      debugPrint('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         try {
@@ -2935,7 +2935,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
             };
           }
         } catch (e) {
-          print('JSON parse error: $e');
+          debugPrint('JSON parse error: $e');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('Invalid server response: ${response.body}')),
@@ -2954,7 +2954,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
         };
       }
     } catch (e) {
-      print('Network error: $e');
+      debugPrint('Network error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Network error: $e')),
       );

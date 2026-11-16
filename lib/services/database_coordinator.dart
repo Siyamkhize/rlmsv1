@@ -22,14 +22,14 @@ class DatabaseCoordinator {
   }) async {
     return await _syncLock.synchronized(() async {
       if (_isSyncing) {
-        print(
+        debugPrint(
             '[DB_COORDINATOR] Sync operation "$operationName" skipped - another sync in progress');
         throw Exception('Another sync operation is already in progress');
       }
 
       try {
         _isSyncing = true;
-        print('[DB_COORDINATOR] Starting sync operation: $operationName');
+        debugPrint('[DB_COORDINATOR] Starting sync operation: $operationName');
 
         final result = await operation().timeout(
           timeout ?? const Duration(seconds: 30),
@@ -39,7 +39,7 @@ class DatabaseCoordinator {
         );
 
         _lastSyncTime = DateTime.now();
-        print('[DB_COORDINATOR] Completed sync operation: $operationName');
+        debugPrint('[DB_COORDINATOR] Completed sync operation: $operationName');
         return result;
       } finally {
         _isSyncing = false;
@@ -54,7 +54,7 @@ class DatabaseCoordinator {
     Duration? timeout,
   }) async {
     return await _transactionLock.synchronized(() async {
-      print('[DB_COORDINATOR] Starting transaction: $operationName');
+      debugPrint('[DB_COORDINATOR] Starting transaction: $operationName');
 
       try {
         final result = await transaction().timeout(
@@ -64,10 +64,10 @@ class DatabaseCoordinator {
           },
         );
 
-        print('[DB_COORDINATOR] Completed transaction: $operationName');
+        debugPrint('[DB_COORDINATOR] Completed transaction: $operationName');
         return result;
       } catch (e) {
-        print('[DB_COORDINATOR] Transaction "$operationName" failed: $e');
+        debugPrint('[DB_COORDINATOR] Transaction "$operationName" failed: $e');
         rethrow;
       }
     });

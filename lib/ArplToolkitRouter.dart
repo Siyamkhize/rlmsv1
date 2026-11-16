@@ -15,11 +15,11 @@ class ArplToolkitRouter extends StatelessWidget {
   final String ofoNumber;
 
   const ArplToolkitRouter({
-    Key? key,
+    super.key,
     required this.learnerID,
     required this.classID,
     required this.ofoNumber,
-  }) : super(key: key);
+  });
 
   /// Get trade name from OFO number
   String _getTradeName(String ofoNumber) {

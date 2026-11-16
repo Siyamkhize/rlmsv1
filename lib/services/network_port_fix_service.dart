@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import '../config.dart';
@@ -24,7 +23,7 @@ class NetworkPortFixService {
     if (_httpClient == null) {
       _httpClient = http.Client();
       if (kDebugMode) {
-        print('NetworkPortFix: Created HTTP client enforcing HTTPS:443');
+        debugPrint('NetworkPortFix: Created HTTP client enforcing HTTPS:443');
       }
     }
     return _httpClient!;
@@ -40,7 +39,7 @@ class NetworkPortFixService {
     final uri = _enforceProperPort(endpoint);
     
     if (kDebugMode) {
-      print('NetworkPortFix: POST to ${uri.toString()} (enforcing port ${uri.port})');
+      debugPrint('NetworkPortFix: POST to ${uri.toString()} (enforcing port ${uri.port})');
     }
     
     final request = http.Request('POST', uri);
@@ -75,7 +74,7 @@ class NetworkPortFixService {
     final uri = _enforceProperPort(endpoint);
     
     if (kDebugMode) {
-      print('NetworkPortFix: GET to ${uri.toString()} (enforcing port ${uri.port})');
+      debugPrint('NetworkPortFix: GET to ${uri.toString()} (enforcing port ${uri.port})');
     }
     
     return await httpClient.get(uri, headers: headers);
@@ -107,7 +106,7 @@ class NetworkPortFixService {
       );
       
       if (kDebugMode) {
-        print('NetworkPortFix: Enforced HTTPS:443 for ${uri.toString()}');
+        debugPrint('NetworkPortFix: Enforced HTTPS:443 for ${uri.toString()}');
       }
     }
     
@@ -120,11 +119,11 @@ class NetworkPortFixService {
   /// Validate URI configuration
   static void _validateUri(Uri uri) {
     if (kDebugMode) {
-      print('NetworkPortFix: Validating URI - ${uri.toString()}');
-      print('  - Scheme: ${uri.scheme}');
-      print('  - Host: ${uri.host}');
-      print('  - Port: ${uri.port}');
-      print('  - Path: ${uri.path}');
+      debugPrint('NetworkPortFix: Validating URI - ${uri.toString()}');
+      debugPrint('  - Scheme: ${uri.scheme}');
+      debugPrint('  - Host: ${uri.host}');
+      debugPrint('  - Port: ${uri.port}');
+      debugPrint('  - Path: ${uri.path}');
     }
     
     // Critical checks
@@ -159,7 +158,7 @@ class NetworkPortFixService {
     _httpClient?.close();
     _httpClient = null;
     if (kDebugMode) {
-      print('NetworkPortFix: HTTP client disposed');
+      debugPrint('NetworkPortFix: HTTP client disposed');
     }
   }
   
@@ -173,14 +172,14 @@ class NetworkPortFixService {
       final success = response.statusCode == 200;
       
       if (kDebugMode) {
-        print('NetworkPortFix: Connection test ${success ? 'PASSED' : 'FAILED'} '
+        debugPrint('NetworkPortFix: Connection test ${success ? 'PASSED' : 'FAILED'} '
               '(status: ${response.statusCode})');
       }
       
       return success;
     } catch (e) {
       if (kDebugMode) {
-        print('NetworkPortFix: Connection test FAILED - $e');
+        debugPrint('NetworkPortFix: Connection test FAILED - $e');
       }
       return false;
     }

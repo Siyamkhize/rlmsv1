@@ -133,7 +133,7 @@ class _GuardianDetailsPageState extends State<GuardianDetailsPage> {
       try {
         final url =
             '${AppConfig.baseUrl}/get_guardian.php?learner_id=${widget.learnerID}';
-        print('[GUARDIAN] Fetching from server: $url');
+        debugPrint('[GUARDIAN] Fetching from server: $url');
 
         final response =
         await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
@@ -143,14 +143,14 @@ class _GuardianDetailsPageState extends State<GuardianDetailsPage> {
           if (result['success'] == true && result['data'] != null) {
             guardianData = Map<String, dynamic>.from(result['data']);
             fetchedFromServer = true;
-            print('[GUARDIAN] Data fetched from server');
+            debugPrint('[GUARDIAN] Data fetched from server');
 
             // Save to local database for offline access
             await _saveToLocalDatabase(guardianData);
           }
         }
       } catch (e) {
-        print('[GUARDIAN] Server fetch failed: $e, trying local database');
+        debugPrint('[GUARDIAN] Server fetch failed: $e, trying local database');
       }
 
       // Fallback to local database if server fetch failed
@@ -158,7 +158,7 @@ class _GuardianDetailsPageState extends State<GuardianDetailsPage> {
         guardianData = await DatabaseHelper()
             .fetchGuardianDetails(int.parse(widget.learnerID));
         if (guardianData != null) {
-          print('[GUARDIAN] Data loaded from local database');
+          debugPrint('[GUARDIAN] Data loaded from local database');
         }
       }
 
@@ -182,7 +182,7 @@ class _GuardianDetailsPageState extends State<GuardianDetailsPage> {
         // Load signature images if available
         await _loadSignatureImages(guardianData);
 
-        print(
+        debugPrint(
             '[GUARDIAN] Guardian data loaded for learner ${widget.learnerID}');
       } else {
         setState(() {
@@ -190,7 +190,7 @@ class _GuardianDetailsPageState extends State<GuardianDetailsPage> {
         });
       }
     } catch (e) {
-      print('[GUARDIAN] Error loading guardian data: $e');
+      debugPrint('[GUARDIAN] Error loading guardian data: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -230,7 +230,7 @@ class _GuardianDetailsPageState extends State<GuardianDetailsPage> {
           where: 'learner_id = ?',
           whereArgs: [int.parse(widget.learnerID)],
         );
-        print('[GUARDIAN] Updated local database with server data');
+        debugPrint('[GUARDIAN] Updated local database with server data');
       } else {
         // Insert new record
         await db.insert(
@@ -251,10 +251,10 @@ class _GuardianDetailsPageState extends State<GuardianDetailsPage> {
             'updated_at': DateTime.now().toIso8601String(),
           },
         );
-        print('[GUARDIAN] Inserted server data into local database');
+        debugPrint('[GUARDIAN] Inserted server data into local database');
       }
     } catch (e) {
-      print('[GUARDIAN] Error saving to local database: $e');
+      debugPrint('[GUARDIAN] Error saving to local database: $e');
     }
   }
 
@@ -266,9 +266,9 @@ class _GuardianDetailsPageState extends State<GuardianDetailsPage> {
             guardianData['witness_signature_url']?.toString();
       });
 
-      print('[GUARDIAN] Signature URLs loaded');
-      print('[GUARDIAN] Guardian signature URL: $_savedGuardianSignatureUrl');
-      print('[GUARDIAN] Witness signature URL: $_savedWitnessSignatureUrl');
+      debugPrint('[GUARDIAN] Signature URLs loaded');
+      debugPrint('[GUARDIAN] Guardian signature URL: $_savedGuardianSignatureUrl');
+      debugPrint('[GUARDIAN] Witness signature URL: $_savedWitnessSignatureUrl');
     }
   }
 
@@ -359,17 +359,17 @@ class _GuardianDetailsPageState extends State<GuardianDetailsPage> {
         'witness_signature': guardianWitnessSignatureBase64,
       };
 
-      print('[GUARDIAN] Saving guardian data: ${guardianData.keys}');
+      debugPrint('[GUARDIAN] Saving guardian data: ${guardianData.keys}');
 
       // Save to local database first
       await DatabaseHelper().saveGuardianDetails(guardianData);
-      print('[GUARDIAN] Saved to local database');
+      debugPrint('[GUARDIAN] Saved to local database');
 
       // Try to sync to server
       bool syncedOnline = false;
       try {
         final url = '${AppConfig.baseUrl}/save_guardian.php';
-        print('[GUARDIAN] Syncing to server: $url');
+        debugPrint('[GUARDIAN] Syncing to server: $url');
 
         final response = await http
             .post(
@@ -379,23 +379,23 @@ class _GuardianDetailsPageState extends State<GuardianDetailsPage> {
         )
             .timeout(const Duration(seconds: 10));
 
-        print('[GUARDIAN] Server response status: ${response.statusCode}');
-        print('[GUARDIAN] Server response body: ${response.body}');
+        debugPrint('[GUARDIAN] Server response status: ${response.statusCode}');
+        debugPrint('[GUARDIAN] Server response body: ${response.body}');
 
         if (response.statusCode == 200) {
           final result = jsonDecode(response.body);
           if (result['success'] == true) {
             syncedOnline = true;
-            print('[GUARDIAN] Successfully synced to server');
+            debugPrint('[GUARDIAN] Successfully synced to server');
           } else {
-            print('[GUARDIAN] Server returned error: ${result['message']}');
+            debugPrint('[GUARDIAN] Server returned error: ${result['message']}');
           }
         } else {
-          print(
+          debugPrint(
               '[GUARDIAN] Server returned status code: ${response.statusCode}');
         }
       } catch (e) {
-        print('[GUARDIAN] Failed to sync to server: $e');
+        debugPrint('[GUARDIAN] Failed to sync to server: $e');
       }
 
       if (mounted) {
@@ -414,7 +414,7 @@ class _GuardianDetailsPageState extends State<GuardianDetailsPage> {
         Navigator.pop(context, true);
       }
     } catch (e) {
-      print('[GUARDIAN] Error saving guardian data: $e');
+      debugPrint('[GUARDIAN] Error saving guardian data: $e');
       if (mounted) {
         setState(() {
           _isSaving = false;

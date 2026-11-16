@@ -41,7 +41,7 @@ class DatabaseInitializationManager {
         .add('${DateTime.now().toIso8601String().substring(11, 19)}: $status');
 
     if (kDebugMode) {
-      print('[DB_INIT] $status');
+      debugPrint('[DB_INIT] $status');
     }
 
     // Only send simple status updates to UI, not detailed technical messages
@@ -138,7 +138,7 @@ class DatabaseInitializationManager {
         _updateStatus('✗ Database initialization failed: $e');
         _isInitialized = false;
         if (kDebugMode) {
-          print('[DB_INIT] Initialization error: $e');
+          debugPrint('[DB_INIT] Initialization error: $e');
         }
         return false;
       } finally {
@@ -182,7 +182,7 @@ class DatabaseInitializationManager {
       _updateStatus('⚠ Database maintenance warning: $e');
       // Don't fail initialization for maintenance issues
       if (kDebugMode) {
-        print('[DB_INIT] Maintenance warning: $e');
+        debugPrint('[DB_INIT] Maintenance warning: $e');
       }
     }
   }
@@ -191,7 +191,7 @@ class DatabaseInitializationManager {
   void schedulePostLoginOperations() {
     if (!_isInitialized) {
       if (kDebugMode) {
-        print(
+        debugPrint(
             '[DB_INIT] Cannot schedule post-login operations - database not initialized');
       }
       return;
@@ -218,7 +218,7 @@ class DatabaseInitializationManager {
       } catch (e) {
         _updateStatus('⚠ Post-login operations warning: $e');
         if (kDebugMode) {
-          print('[DB_INIT] Post-login operations error: $e');
+          debugPrint('[DB_INIT] Post-login operations error: $e');
         }
       }
     });
@@ -228,7 +228,7 @@ class DatabaseInitializationManager {
   void scheduleBackgroundSync() {
     if (!_isInitialized) {
       if (kDebugMode) {
-        print(
+        debugPrint(
             '[DB_INIT] Cannot schedule background sync - database not initialized');
       }
       return;
@@ -239,7 +239,7 @@ class DatabaseInitializationManager {
     // Don't start background sync during login - wait until after navigation
     // The sync will be started by the dashboard pages when they are ready
     if (kDebugMode) {
-      print('[DB_INIT] Background sync scheduled for later activation');
+      debugPrint('[DB_INIT] Background sync scheduled for later activation');
     }
   }
 
@@ -247,7 +247,7 @@ class DatabaseInitializationManager {
   void startBackgroundSync() {
     if (!_isInitialized) {
       if (kDebugMode) {
-        print(
+        debugPrint(
             '[DB_INIT] Cannot start background sync - database not initialized');
       }
       return;
@@ -262,12 +262,12 @@ class DatabaseInitializationManager {
         await syncService.initSync();
         _updateStatus('✓ Background sync started');
         if (kDebugMode) {
-          print('[DB_INIT] Background sync started successfully');
+          debugPrint('[DB_INIT] Background sync started successfully');
         }
       } catch (e) {
         _updateStatus('⚠ Background sync warning: $e');
         if (kDebugMode) {
-          print('[DB_INIT] Background sync error: $e');
+          debugPrint('[DB_INIT] Background sync error: $e');
         }
       }
     });

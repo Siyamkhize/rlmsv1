@@ -69,7 +69,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
   // Load existing regular material quantities from SERVER (not local database)
   Future<void> _loadExistingRegularMaterialQuantities() async {
     try {
-      print(
+      debugPrint(
           '🌐 Loading learner material quantities from SERVER for classID: ${widget.classID}');
 
       // Query server for all material data (including regular materials) using learner checkbox status
@@ -78,8 +78,8 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
             'get_learner_checkbox_status.php?classID=${widget.classID}')),
       );
 
-      print('📡 Server Response Status: ${response.statusCode}');
-      print('📡 Server Response Body: ${response.body}');
+      debugPrint('📡 Server Response Status: ${response.statusCode}');
+      debugPrint('📡 Server Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -88,7 +88,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
           final Map<String, dynamic> regularMaterials =
               data['regularMaterials'] ?? {};
 
-          print(
+          debugPrint(
               '✅ Server returned ${regularMaterials.length} regular material types');
 
           // List of regular material types to check
@@ -115,7 +115,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
               });
 
               if (quantity > 0) {
-                print(
+                debugPrint(
                     '✅ Regular Material $materialType: Qty=$quantity, Rep=$representative');
               }
             } else {
@@ -127,18 +127,18 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
             }
           }
 
-          print(
+          debugPrint(
               '🎯 Regular material loading from server completed successfully!');
         } else {
-          print('❌ Server returned error: ${data['error']}');
+          debugPrint('❌ Server returned error: ${data['error']}');
           _setNoRegularMaterialSubmissionsFound();
         }
       } else {
-        print('❌ Server request failed with status: ${response.statusCode}');
+        debugPrint('❌ Server request failed with status: ${response.statusCode}');
         _setNoRegularMaterialSubmissionsFound();
       }
     } catch (e) {
-      print('💥 Error loading regular material quantities from server: $e');
+      debugPrint('💥 Error loading regular material quantities from server: $e');
       _setNoRegularMaterialSubmissionsFound();
     }
   }
@@ -159,7 +159,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
         existingRegularMaterialRepresentatives[materialType] = '';
       }
     });
-    print(
+    debugPrint(
         'ℹ️ Set all regular materials to no previous submissions (no server data available)');
   }
 
@@ -169,26 +169,26 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
       final dbHelper = DatabaseHelper();
       final db = await dbHelper.database;
 
-      print('\\n=== DEBUG DATABASE INFO FOR CLASS ${widget.classID} ===');
+      debugPrint('\\n=== DEBUG DATABASE INFO FOR CLASS ${widget.classID} ===');
 
       // 1. Check class table
       final classInfo = await db
           .query('class', where: 'classID = ?', whereArgs: [widget.classID]);
-      print('1. Class table data: $classInfo');
+      debugPrint('1. Class table data: $classInfo');
 
       if (classInfo.isNotEmpty) {
         String? siteID = classInfo.first['siteID']?.toString();
-        print('   Found siteID: $siteID');
+        debugPrint('   Found siteID: $siteID');
 
         // 2. Check sites table
         if (siteID != null) {
           final siteInfo =
               await db.query('sites', where: 'siteID = ?', whereArgs: [siteID]);
-          print('2. Sites table data: $siteInfo');
+          debugPrint('2. Sites table data: $siteInfo');
 
           if (siteInfo.isNotEmpty) {
             String? projectId = siteInfo.first['project_id']?.toString();
-            print('   Found project_id: $projectId');
+            debugPrint('   Found project_id: $projectId');
 
             // 3. Check project table and extract unit standards JSON
             if (projectId != null) {
@@ -202,12 +202,12 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
               ''';
 
               final projectInfo = await db.rawQuery(projectQuery, [projectId]);
-              print('3. Project JSON extraction: $projectInfo');
+              debugPrint('3. Project JSON extraction: $projectInfo');
 
               if (projectInfo.isNotEmpty) {
                 String? projectPathway =
                     projectInfo.first['Project_pathway'] as String?;
-                print('4. Project pathway JSON: $projectPathway');
+                debugPrint('4. Project pathway JSON: $projectPathway');
 
                 if (projectPathway != null && projectPathway.isNotEmpty) {
                   try {
@@ -222,19 +222,19 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
                             qualification['unitStandards'] != null) {
                           List<dynamic> unitStandardsList =
                               qualification['unitStandards'];
-                          print(
+                          debugPrint(
                               '5. Parsed unit standards count: ${unitStandardsList.length}');
-                          print('6. Sample unit standards:');
+                          debugPrint('6. Sample unit standards:');
                           for (int i = 0;
                               i < unitStandardsList.length && i < 3;
                               i++) {
-                            print('   - ${unitStandardsList[i]}');
+                            debugPrint('   - ${unitStandardsList[i]}');
                           }
                         }
                       }
                     }
                   } catch (e) {
-                    print('5. Error parsing JSON: $e');
+                    debugPrint('5. Error parsing JSON: $e');
                   }
                 }
               }
@@ -243,9 +243,9 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
         }
       }
 
-      print('=== END DEBUG INFO ===\\n');
+      debugPrint('=== END DEBUG INFO ===\\n');
     } catch (e) {
-      print('Debug error: $e');
+      debugPrint('Debug error: $e');
     }
   }
 
@@ -255,8 +255,8 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
       final dbHelper = DatabaseHelper();
       final db = await dbHelper.database;
 
-      print('\\n=== FETCHING UNIT STANDARDS DEBUG ===');
-      print('ClassID: ${widget.classID}');
+      debugPrint('\\n=== FETCHING UNIT STANDARDS DEBUG ===');
+      debugPrint('ClassID: ${widget.classID}');
 
       // First, let's check what project data we have
       final projectQuery = '''
@@ -273,35 +273,35 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
       ''';
 
       final projectResult = await db.rawQuery(projectQuery, [widget.classID]);
-      print('Project query result: $projectResult');
+      debugPrint('Project query result: $projectResult');
 
       if (projectResult.isNotEmpty) {
         final projectPathway =
             projectResult.first['Project_pathway'] as String?;
-        print('Raw Project_pathway: $projectPathway');
+        debugPrint('Raw Project_pathway: $projectPathway');
 
         if (projectPathway != null && projectPathway.isNotEmpty) {
           try {
             // Parse the JSON to extract unit standards
             final pathwayJson = jsonDecode(projectPathway);
-            print('Parsed pathway JSON: $pathwayJson');
+            debugPrint('Parsed pathway JSON: $pathwayJson');
 
             // Navigate through the JSON structure
             if (pathwayJson is List && pathwayJson.isNotEmpty) {
               final firstPathway = pathwayJson[0];
-              print('First pathway: $firstPathway');
+              debugPrint('First pathway: $firstPathway');
 
               if (firstPathway['qual_types'] != null &&
                   firstPathway['qual_types'] is List &&
                   firstPathway['qual_types'].isNotEmpty) {
                 final qualification =
                     firstPathway['qual_types'][0]['qualification'];
-                print('Qualification: $qualification');
+                debugPrint('Qualification: $qualification');
 
                 if (qualification != null &&
                     qualification['unitStandards'] != null) {
                   final unitStandardsList = qualification['unitStandards'];
-                  print('Unit standards list: $unitStandardsList');
+                  debugPrint('Unit standards list: $unitStandardsList');
 
                   if (unitStandardsList is List) {
                     setState(() {
@@ -354,31 +354,31 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
                     // Load existing quantities from previous submissions
                     await _loadExistingUnitStandardQuantities();
 
-                    print('Unit standards loaded successfully:');
+                    debugPrint('Unit standards loaded successfully:');
                     for (var us in unitStandards) {
-                      print(
+                      debugPrint(
                           '  - ID: ${us['unitstandard_id']}, Name: ${us['unit_standard_name']}');
                     }
-                    print('=== UNIT STANDARDS FETCH COMPLETE ===\\n');
+                    debugPrint('=== UNIT STANDARDS FETCH COMPLETE ===\\n');
                     return;
                   }
                 }
               }
             }
           } catch (e) {
-            print('Error parsing project pathway JSON: $e');
+            debugPrint('Error parsing project pathway JSON: $e');
           }
         }
       }
 
       // If we get here, no unit standards were found
-      print('No unit standards found for classID: ${widget.classID}');
+      debugPrint('No unit standards found for classID: ${widget.classID}');
       setState(() {
         unitStandards = [];
       });
-      print('=== UNIT STANDARDS FETCH COMPLETE (EMPTY) ===\\n');
+      debugPrint('=== UNIT STANDARDS FETCH COMPLETE (EMPTY) ===\\n');
     } catch (e) {
-      print('Error fetching unit standards: $e');
+      debugPrint('Error fetching unit standards: $e');
       setState(() {
         unitStandards = [];
       });
@@ -388,7 +388,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
   // Load existing unit standard quantities from SERVER (not local database)
   Future<void> _loadExistingUnitStandardQuantities() async {
     try {
-      print(
+      debugPrint(
           '🌐 Loading learner material status from SERVER for classID: ${widget.classID}');
 
       // Query server for learner checkbox status (same as learner guide approach)
@@ -397,8 +397,8 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
             'get_learner_checkbox_status.php?classID=${widget.classID}')),
       );
 
-      print('📡 Server Response Status: ${response.statusCode}');
-      print('📡 Server Response Body: ${response.body}');
+      debugPrint('📡 Server Response Status: ${response.statusCode}');
+      debugPrint('📡 Server Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -410,7 +410,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
           final Map<String, dynamic> representatives =
               data['representatives'] ?? {};
 
-          print('✅ Server returned ${checkboxStatus.length} checkbox statuses');
+          debugPrint('✅ Server returned ${checkboxStatus.length} checkbox statuses');
 
           // Apply server data to unit standards
           for (var us in unitStandards) {
@@ -470,34 +470,34 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
             });
 
             if (quantityUS > 0) {
-              print(
+              debugPrint(
                   '✅ Unit Standard $usId: Qty=$quantityUS, Rep=$repUS, Selected=${selectedUnitStandards[usId]}');
             }
             if (quantityLG > 0) {
-              print(
+              debugPrint(
                   '✅ Learner Guide $lgId: Qty=$quantityLG, Rep=$repLG, Selected=${selectedUnitStandards[lgId]}');
             }
             if (quantityFORM > 0) {
-              print(
+              debugPrint(
                   '✅ Formative $formId: Qty=$quantityFORM, Rep=$repFORM, Selected=${selectedUnitStandards[formId]}');
             }
             if (quantitySUM > 0) {
-              print(
+              debugPrint(
                   '✅ Summative $sumId: Qty=$quantitySUM, Rep=$repSUM, Selected=${selectedUnitStandards[sumId]}');
             }
           }
 
-          print(
+          debugPrint(
               '🎯 Learner material status loading from server completed successfully!');
         } else {
-          print('❌ Server returned error: ${data['error']}');
+          debugPrint('❌ Server returned error: ${data['error']}');
         }
       } else {
-        print('❌ Server request failed with status: ${response.statusCode}');
+        debugPrint('❌ Server request failed with status: ${response.statusCode}');
         _setNoSubmissionsFound();
       }
     } catch (e) {
-      print('💥 Error loading learner material status from server: $e');
+      debugPrint('💥 Error loading learner material status from server: $e');
       _setNoSubmissionsFound();
     }
   }
@@ -528,7 +528,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
         selectedUnitStandards[sumId] = false;
       }
     });
-    print('ℹ️ Set all checkboxes to unchecked (no server data available)');
+    debugPrint('ℹ️ Set all checkboxes to unchecked (no server data available)');
   }
 
   // Function to check the connectivity state by pinging Google
@@ -537,14 +537,14 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
       final response = await http.get(Uri.parse('https://www.google.com'));
 
       if (response.statusCode == 200) {
-        print('Internet is available');
+        debugPrint('Internet is available');
         _updateConnectionStatus(ConnectivityResult.wifi);
       } else {
-        print('No internet connection');
+        debugPrint('No internet connection');
         _updateConnectionStatus(ConnectivityResult.none);
       }
     } catch (e) {
-      print('Error checking connectivity: $e');
+      debugPrint('Error checking connectivity: $e');
       _updateConnectionStatus(ConnectivityResult.none);
     }
   }
@@ -553,10 +553,10 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
     bool isOnline = result != ConnectivityResult.none;
 
     if (isOnline) {
-      print('Internet available - syncing data...');
+      debugPrint('Internet available - syncing data...');
       fetchDataOnline();
     } else {
-      print('No internet connection.');
+      debugPrint('No internet connection.');
       fetchDataOffline();
     }
   }
@@ -564,15 +564,15 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
   // Fetch data online
   Future<void> fetchDataOnline() async {
     try {
-      print('[FETCH_ONLINE] Starting fetch for classID: ${widget.classID}');
+      debugPrint('[FETCH_ONLINE] Starting fetch for classID: ${widget.classID}');
       final url =
           AppConfig.buildUrl('get_learners.php?classID=${widget.classID}');
-      print('[FETCH_ONLINE] URL: $url');
+      debugPrint('[FETCH_ONLINE] URL: $url');
 
       final response = await http.get(Uri.parse(url));
 
-      print('[FETCH_ONLINE] API Response Status: ${response.statusCode}');
-      print('[FETCH_ONLINE] API Response Body: ${response.body}');
+      debugPrint('[FETCH_ONLINE] API Response Status: ${response.statusCode}');
+      debugPrint('[FETCH_ONLINE] API Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final dynamic responseData = json.decode(response.body);
@@ -580,7 +580,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
         // Check if response is an array or error object
         if (responseData is List) {
           final List<dynamic> data = responseData;
-          print('[FETCH_ONLINE] Received ${data.length} learners from API');
+          debugPrint('[FETCH_ONLINE] Received ${data.length} learners from API');
 
           setState(() {
             learners = data.map((learner) {
@@ -594,14 +594,14 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
             }).toList();
 
             if (learners.isNotEmpty) {
-              print(
+              debugPrint(
                   '[FETCH_ONLINE] Successfully loaded ${learners.length} learners');
             } else {
-              print('[FETCH_ONLINE] ⚠️ API returned empty array');
+              debugPrint('[FETCH_ONLINE] ⚠️ API returned empty array');
             }
           });
         } else {
-          print(
+          debugPrint(
               '[FETCH_ONLINE] ❌ API returned non-array response: $responseData');
           throw Exception('API returned invalid response format');
         }
@@ -610,12 +610,12 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
             'Failed to load learners from API - Status: ${response.statusCode}');
       }
     } catch (e) {
-      print('[FETCH_ONLINE] ❌ Error fetching online data: $e');
+      debugPrint('[FETCH_ONLINE] ❌ Error fetching online data: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading data from API: $e')),
       );
       // Fallback to offline
-      print('[FETCH_ONLINE] Falling back to offline data...');
+      debugPrint('[FETCH_ONLINE] Falling back to offline data...');
       fetchDataOffline();
     }
   }
@@ -625,7 +625,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
     try {
       final offlineData =
           await DatabaseHelper().getLearnerDetailsByClassID(widget.classID);
-      print('Offline Data: $offlineData');
+      debugPrint('Offline Data: $offlineData');
 
       if (offlineData.isNotEmpty) {
         setState(() {
@@ -640,16 +640,16 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
           }).toList();
 
           if (learners.isNotEmpty) {
-            print(
+            debugPrint(
                 '[FETCH_OFFLINE] Successfully loaded ${learners.length} learners from local database');
           }
         });
       } else {
-        print('No offline data available for classID: ${widget.classID}');
+        debugPrint('No offline data available for classID: ${widget.classID}');
         throw 'No data available offline';
       }
     } catch (e) {
-      print('Error fetching offline data: $e');
+      debugPrint('Error fetching offline data: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading offline data: $e')),
       );
@@ -1981,7 +1981,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
         return false;
       }
     } catch (e) {
-      print('Error checking internet connection: $e');
+      debugPrint('Error checking internet connection: $e');
       return false;
     }
   }
@@ -2064,14 +2064,14 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
           int quantityUS = unitStandardQuantities[usId] ?? 0;
           // ⚠️ VALIDATION: Skip if quantity is 0
           if ((isSelectedUS || existingUS > 0) && quantityUS > 0) {
-            print('🔄 [LEARNER SUBMISSION] Starting Unit Standard submission:');
-            print('   - ID: $usId');
-            print('   - Name: $usName');
-            print('   - Quantity: $quantityUS');
-            print('   - ClassID: ${widget.classID}');
-            print('   - Learner: $learnerFullName');
-            print('   - LearnerID: $selectedLearnerID');
-            print('   - Representative: $representativeName');
+            debugPrint('🔄 [LEARNER SUBMISSION] Starting Unit Standard submission:');
+            debugPrint('   - ID: $usId');
+            debugPrint('   - Name: $usName');
+            debugPrint('   - Quantity: $quantityUS');
+            debugPrint('   - ClassID: ${widget.classID}');
+            debugPrint('   - Learner: $learnerFullName');
+            debugPrint('   - LearnerID: $selectedLearnerID');
+            debugPrint('   - Representative: $representativeName');
 
             // Create form data for this unit standard
             final formData = {
@@ -2087,7 +2087,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
               'representativeSignature': base64Encode(representativeSignature!),
             };
 
-            print(
+            debugPrint(
                 '📤 [LEARNER SUBMISSION] Sending data: ${json.encode(formData)}');
 
             try {
@@ -2101,23 +2101,23 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
                   )
                   .timeout(const Duration(seconds: 30));
 
-              print(
+              debugPrint(
                   '📥 [LEARNER SUBMISSION] Response Status: ${response.statusCode}');
-              print('📥 [LEARNER SUBMISSION] Response Body: ${response.body}');
+              debugPrint('📥 [LEARNER SUBMISSION] Response Body: ${response.body}');
 
               final responseBody = json.decode(response.body);
               if (!responseBody['success']) {
                 allSuccessful = false;
                 failedSubmissions.add(usName);
-                print(
+                debugPrint(
                     '❌ [LEARNER SUBMISSION] FAILED for $usName: ${responseBody['message']}');
               } else {
-                print('✅ [LEARNER SUBMISSION] SUCCESS for $usName');
+                debugPrint('✅ [LEARNER SUBMISSION] SUCCESS for $usName');
               }
             } catch (e) {
               allSuccessful = false;
               failedSubmissions.add(usName);
-              print('💥 [LEARNER SUBMISSION] EXCEPTION for $usName: $e');
+              debugPrint('💥 [LEARNER SUBMISSION] EXCEPTION for $usName: $e');
             }
           }
 
@@ -2311,7 +2311,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
         'representativeSignature': base64Encode(representativeSignature!),
       };
 
-      print('Form data: ${json.encode(formData)}');
+      debugPrint('Form data: ${json.encode(formData)}');
 
       final response = await http
           .post(
@@ -2321,8 +2321,8 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
           )
           .timeout(const Duration(seconds: 30));
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      debugPrint('Response status: ${response.statusCode}');
+      debugPrint('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseBody = json.decode(response.body);
@@ -2356,7 +2356,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
         );
       }
     } catch (e) {
-      print('Error submitting form: $e');
+      debugPrint('Error submitting form: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error submitting form: $e')),
       );

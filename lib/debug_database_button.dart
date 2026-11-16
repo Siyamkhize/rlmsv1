@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'services/manual_clocking_evidence_sync_service.dart';
 
 class DebugDatabaseButton extends StatefulWidget {
+  const DebugDatabaseButton({super.key});
+
   @override
   _DebugDatabaseButtonState createState() => _DebugDatabaseButtonState();
 }
@@ -41,10 +43,10 @@ class _DebugDatabaseButtonState extends State<DebugDatabaseButton> {
           onPressed: _isLoading ? null : _inspectDatabase,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.orange,
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           ),
           child: _isLoading 
-            ? Row(
+            ? const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   SizedBox(
@@ -59,12 +61,12 @@ class _DebugDatabaseButtonState extends State<DebugDatabaseButton> {
                   Text('Inspecting...')
                 ],
               )
-            : Text('🔍 Debug Database'),
+            : const Text('🔍 Debug Database'),
         ),
         if (_debugOutput.isNotEmpty)
           Container(
-            margin: EdgeInsets.only(top: 16),
-            padding: EdgeInsets.all(12),
+            margin: const EdgeInsets.only(top: 16),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: Colors.grey[100],
               borderRadius: BorderRadius.circular(8),
@@ -72,7 +74,7 @@ class _DebugDatabaseButtonState extends State<DebugDatabaseButton> {
             ),
             child: Text(
               _debugOutput,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
                 fontFamily: 'monospace',
               ),

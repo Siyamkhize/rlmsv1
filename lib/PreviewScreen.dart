@@ -53,7 +53,7 @@ class _CroppingPageState extends State<CroppingPage> {
         croppedImage = outputFile;
       });
     } catch (e) {
-      print("Error cropping image: $e");
+      debugPrint("Error cropping image: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error cropping image: $e')),
       );
@@ -63,7 +63,7 @@ class _CroppingPageState extends State<CroppingPage> {
   void _submitCroppedImage() {
     if (croppedImage != null) {
       // Handle image submission logic
-      print("Cropped image path: ${croppedImage!.path}");
+      debugPrint("Cropped image path: ${croppedImage!.path}");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Cropped image submitted successfully!')),
       );

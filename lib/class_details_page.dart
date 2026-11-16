@@ -107,7 +107,7 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
 
                 enrichedClassData.add(enrichedClass);
               } catch (e) {
-                print('Error processing class ${classItem['classID']}: $e');
+                debugPrint('Error processing class ${classItem['classID']}: $e');
                 // Add the original class data without attendance calculations
                 enrichedClassData.add(classItem);
               }
@@ -168,10 +168,10 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
           conflictAlgorithm: ConflictAlgorithm.replace, // Replace if exists
         );
       }
-      print('Class data saved locally successfully');
+      debugPrint('Class data saved locally successfully');
     } catch (e) {
       // Only log the error to console, don't show snackbar
-      print('Error saving class data locally: $e');
+      debugPrint('Error saving class data locally: $e');
       // Don't rethrow the exception to prevent it from showing as a snackbar
     }
   }
@@ -237,7 +237,7 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
 
           enrichedClassData.add(enrichedClass);
         } catch (e) {
-          print('Error processing class ${classItem['classID']}: $e');
+          debugPrint('Error processing class ${classItem['classID']}: $e');
           // Add the original class data without attendance calculations
           enrichedClassData.add(classItem);
         }
@@ -249,7 +249,7 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
       });
     } catch (e) {
       // Only log the error to console, don't show snackbar
-      print('Error loading class data locally: $e');
+      debugPrint('Error loading class data locally: $e');
       setState(() {
         classData = [];
         isLoading = false;

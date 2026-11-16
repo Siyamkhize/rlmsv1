@@ -17,11 +17,11 @@ class FacilitatorSimpleCameraCapture extends StatefulWidget {
   final Function(File imageFile, Uint8List imageBytes) onCapture;
 
   const FacilitatorSimpleCameraCapture({
-    Key? key,
+    super.key,
     required this.facilitatorID,
     required this.facilitatorName,
     required this.onCapture,
-  }) : super(key: key);
+  });
 
   @override
   State<FacilitatorSimpleCameraCapture> createState() =>
@@ -65,7 +65,7 @@ class _FacilitatorSimpleCameraCaptureState
         });
       }
     } catch (e) {
-      print('[FACILITATOR_CAMERA] Error initializing camera: $e');
+      debugPrint('[FACILITATOR_CAMERA] Error initializing camera: $e');
       _showError('Camera initialization failed: $e');
     }
   }
@@ -114,7 +114,7 @@ class _FacilitatorSimpleCameraCaptureState
         Navigator.of(context).pop();
       }
     } catch (e) {
-      print('[FACILITATOR_CAMERA] Capture error: $e');
+      debugPrint('[FACILITATOR_CAMERA] Capture error: $e');
       _showError('Photo capture failed: $e');
     } finally {
       if (mounted) {
@@ -371,11 +371,11 @@ class _FacilitatorSimpleCameraCaptureState
           ),
 
           // Helper text
-          Positioned(
+          const Positioned(
             bottom: 120,
             left: 0,
             right: 0,
-            child: const Text(
+            child: Text(
               'Tap to capture',
               style: TextStyle(
                 color: Colors.white,

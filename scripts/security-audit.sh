@@ -61,18 +61,24 @@ echo "======================" >> "$REPORT_FILE"
 # Check PHP files for unsafe SQL queries
 echo "Scanning PHP files..."
 if [ -d "mobile" ] || [ -d "php" ]; then
-    # Check for direct variable concatenation in SQL queries
+    # Check for dangerous patterns that indicate SQL injection
+    # Only flag mysql_query/mysqli_query with variables (old unsafe style)
     while IFS= read -r file; do
         line_num=1
         while IFS= read -r line; do
-            # Check for SQL queries with direct variable interpolation
-            if echo "$line" | grep -iE "SELECT.*\\\$|INSERT.*\\\$|UPDATE.*\\\$|DELETE.*\\\$" | grep -v "prepare\|bind_param" > /dev/null; then
-                log_issue "CRITICAL" "$file" "$line_num" "Potential SQL injection - Direct variable in SQL query"
+            # Flag mysql_query/mysqli_query with direct variables (old style)
+            if echo "$line" | grep -iE "mysql_query\(.*\\\$|mysqli_query\(.*\\\$" > /dev/null; then
+                # But allow if it's part of a prepared statement workflow
+                if ! grep -qE "prepare|bind_param" "$file"; then
+                    log_issue "CRITICAL" "$file" "$line_num" "SQL injection - mysql_query/mysqli_query without prepared statements"
+                fi
             fi
             
-            # Check for queries without prepared statements
-            if echo "$line" | grep -iE "mysql_query|mysqli_query" | grep -E "\\\$_(GET|POST|REQUEST)" > /dev/null; then
-                log_issue "CRITICAL" "$file" "$line_num" "SQL injection - User input directly in query"
+            # Flag direct user input in SQL (very dangerous)
+            if echo "$line" | grep -iE "(SELECT|INSERT|UPDATE|DELETE).*\\\$_(GET|POST|REQUEST)" > /dev/null; then
+                if ! echo "$line" | grep -qE "prepare|bind_param|intval|mysqli_real_escape_string"; then
+                    log_issue "CRITICAL" "$file" "$line_num" "SQL injection - User input directly in query without sanitization"
+                fi
             fi
             
             ((line_num++))

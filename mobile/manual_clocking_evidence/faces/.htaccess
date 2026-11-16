@@ -1,0 +1,18 @@
+# Block ALL PHP execution - Face photos directory
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+
+<FilesMatch "\.php$">
+    Require all denied
+</FilesMatch>
+
+# Only allow JPEG images
+<FilesMatch "(?i)\.jpe?g$">
+    Require all granted
+</FilesMatch>
+
+Require all denied

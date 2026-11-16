@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../config.dart';
 
@@ -137,7 +136,7 @@ class ConsolidatedClockingService {
         _lastCacheUpdate != null &&
         DateTime.now().difference(_lastCacheUpdate!).inMinutes < _cacheValidDuration.inMinutes) {
       
-      print('[CONSOLIDATED_CLOCKING] Using cached status data');
+      debugPrint('[CONSOLIDATED_CLOCKING] Using cached status data');
       return _statusCache[currentDate]!;
     }
 
@@ -157,7 +156,7 @@ class ConsolidatedClockingService {
           _statusCache[currentDate] = result;
           _lastCacheUpdate = DateTime.now();
           
-          print('[CONSOLIDATED_CLOCKING] Loaded and cached status from server');
+          debugPrint('[CONSOLIDATED_CLOCKING] Loaded and cached status from server');
           return result;
         }
       }
@@ -166,7 +165,7 @@ class ConsolidatedClockingService {
     } catch (e) {
       // Return cached data if available, even if expired
       if (_statusCache.containsKey(currentDate)) {
-        print('[CONSOLIDATED_CLOCKING] Using expired cache due to network error');
+        debugPrint('[CONSOLIDATED_CLOCKING] Using expired cache due to network error');
         return _statusCache[currentDate]!;
       }
       throw Exception('Network error loading status: $e');

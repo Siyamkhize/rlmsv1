@@ -1,9 +1,6 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../services/offline_sync_queue_service.dart';
-import '../services/secure_location_service.dart';
-import '../services/camera_resource_manager.dart';
 
 /// Demonstration of proper offline-first clocking with tap-time queue
 class OfflineSyncClockButton extends StatefulWidget {
@@ -12,11 +9,11 @@ class OfflineSyncClockButton extends StatefulWidget {
   final VoidCallback? onSuccess;
   
   const OfflineSyncClockButton({
-    Key? key,
+    super.key,
     required this.learnerId,
     required this.action,
     this.onSuccess,
-  }) : super(key: key);
+  });
 
   @override
   State<OfflineSyncClockButton> createState() => _OfflineSyncClockButtonState();

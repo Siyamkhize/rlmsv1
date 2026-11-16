@@ -14,11 +14,11 @@ class ArplToolkitUnifiedPage extends StatefulWidget {
   final String ofoNumber;
 
   const ArplToolkitUnifiedPage({
-    Key? key,
+    super.key,
     required this.learnerID,
     required this.classID,
     required this.ofoNumber,
-  }) : super(key: key);
+  });
 
   @override
   _ArplToolkitUnifiedPageState createState() => _ArplToolkitUnifiedPageState();
@@ -30,8 +30,8 @@ class _ArplToolkitUnifiedPageState extends State<ArplToolkitUnifiedPage>
   bool _isLoading = true;
   String? _errorMessage;
   TabController? _tabController;
-  bool _isEditing = false;
-  bool _isSaving = false;
+  final bool _isEditing = false;
+  final bool _isSaving = false;
 
   // Form controllers for editable fields
   final TextEditingController _tradeSpecializationController =
@@ -95,12 +95,24 @@ class _ArplToolkitUnifiedPageState extends State<ArplToolkitUnifiedPage>
     _tradeSpecializationController.dispose();
     _appendixBComments.forEach((key, controller) => controller.dispose());
     _appendixEComments.forEach((key, controller) => controller.dispose());
-    _practicalTasks.forEach((c) => c.dispose());
-    _practicalScores.forEach((c) => c.dispose());
-    _practicalPercentages.forEach((c) => c.dispose());
-    _workplaceObservationTechKnowledge.forEach((c) => c.dispose());
-    _workplaceObservationInterpretation.forEach((c) => c.dispose());
-    _workplaceObservationTeamWork.forEach((c) => c.dispose());
+    for (var c in _practicalTasks) {
+      c.dispose();
+    }
+    for (var c in _practicalScores) {
+      c.dispose();
+    }
+    for (var c in _practicalPercentages) {
+      c.dispose();
+    }
+    for (var c in _workplaceObservationTechKnowledge) {
+      c.dispose();
+    }
+    for (var c in _workplaceObservationInterpretation) {
+      c.dispose();
+    }
+    for (var c in _workplaceObservationTeamWork) {
+      c.dispose();
+    }
     _assessorSignatureDate.dispose();
     _candidateSignatureDate.dispose();
     _witnessSignatureDate.dispose();
@@ -130,8 +142,8 @@ class _ArplToolkitUnifiedPageState extends State<ArplToolkitUnifiedPage>
           endpointUrl = AppConfig.getArplToolkitDataUrl;
       }
 
-      print('[TOOLKIT_DEBUG] Loading data from: $endpointUrl');
-      print(
+      debugPrint('[TOOLKIT_DEBUG] Loading data from: $endpointUrl');
+      debugPrint(
           '[TOOLKIT_DEBUG] Trade: ${_getTradeName()}, OFO: ${widget.ofoNumber}');
 
       final response = await http.post(
@@ -146,7 +158,7 @@ class _ArplToolkitUnifiedPageState extends State<ArplToolkitUnifiedPage>
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('[TOOLKIT_DEBUG] API Response status: ${data['status']}');
+        debugPrint('[TOOLKIT_DEBUG] API Response status: ${data['status']}');
 
         if (data['status'] == 'success') {
           try {
@@ -155,9 +167,9 @@ class _ArplToolkitUnifiedPageState extends State<ArplToolkitUnifiedPage>
               _isLoading = false;
               _populateControllers();
             });
-            print('[TOOLKIT_DEBUG] Data loaded successfully');
+            debugPrint('[TOOLKIT_DEBUG] Data loaded successfully');
           } catch (parseError) {
-            print('[TOOLKIT_ERROR] Parse error: $parseError');
+            debugPrint('[TOOLKIT_ERROR] Parse error: $parseError');
             setState(() {
               _errorMessage = 'Error parsing data: $parseError';
               _isLoading = false;

@@ -130,9 +130,9 @@ class _ArplCompetencyScalePageState extends State<ArplCompetencyScalePage>
             appxbRatings[activityId] = rating;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Rating saved successfully'),
-              duration: const Duration(seconds: 2),
+            const SnackBar(
+              content: Text('Rating saved successfully'),
+              duration: Duration(seconds: 2),
               backgroundColor: Colors.green,
             ),
           );

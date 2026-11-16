@@ -23,7 +23,7 @@ class AppConfig {
     final url = includePort
         ? '$serverProtocol://$serverHost:$serverPort$basePath'
         : '$serverProtocol://$serverHost$basePath';
-    print('[CONFIG] Base URL: $url');
+    debugPrint('[CONFIG] Base URL: $url');
     return url;
   }
 

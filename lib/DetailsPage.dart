@@ -21,7 +21,7 @@ class DetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('DetailsPage initialized with learnerID: $learnerID');
+    debugPrint('DetailsPage initialized with learnerID: $learnerID');
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -78,10 +78,10 @@ class _POETabContentState extends State<POETabContent> {
       return;
     }
     fetchLearnerData().then((_) {
-      print(
+      debugPrint(
           'fetchLearnerData completed. pathwaysData: $pathwaysData, exerciseSequence: $exerciseSequence');
     }).catchError((e) {
-      print('Error in fetchLearnerData: $e');
+      debugPrint('Error in fetchLearnerData: $e');
     });
   }
 
@@ -120,7 +120,7 @@ class _POETabContentState extends State<POETabContent> {
         });
       });
     } catch (e) {
-      print('Error refreshing upload status: $e');
+      debugPrint('Error refreshing upload status: $e');
     }
   }
 
@@ -133,7 +133,7 @@ class _POETabContentState extends State<POETabContent> {
         unsyncedCount = unsynced.length;
       });
     } catch (e) {
-      print('Error updating unsynced count: $e');
+      debugPrint('Error updating unsynced count: $e');
     }
   }
 
@@ -150,7 +150,7 @@ class _POETabContentState extends State<POETabContent> {
           await dbHelper.getUnsyncedPOE(widget.learnerID);
 
       if (unsyncedPOE.isEmpty) {
-        print('[POE_SYNC] No unsynced POE data to upload');
+        debugPrint('[POE_SYNC] No unsynced POE data to upload');
         setState(() {
           isSyncing = false;
           unsyncedCount = 0;
@@ -158,7 +158,7 @@ class _POETabContentState extends State<POETabContent> {
         return;
       }
 
-      print('[POE_SYNC] Found ${unsyncedPOE.length} unsynced POE records');
+      debugPrint('[POE_SYNC] Found ${unsyncedPOE.length} unsynced POE records');
       int successCount = 0;
       int failCount = 0;
 
@@ -173,7 +173,7 @@ class _POETabContentState extends State<POETabContent> {
         // Check if file exists
         final file = File(filePath);
         if (!await file.exists()) {
-          print('[POE_SYNC] File not found, skipping: $filePath');
+          debugPrint('[POE_SYNC] File not found, skipping: $filePath');
           failCount++;
           continue;
         }
@@ -204,14 +204,14 @@ class _POETabContentState extends State<POETabContent> {
             // Mark as synced in database
             await dbHelper.markPOEAsSynced(id);
             successCount++;
-            print('[POE_SYNC] ✅ Synced: $type - $exercise');
+            debugPrint('[POE_SYNC] ✅ Synced: $type - $exercise');
           } else {
             failCount++;
-            print('[POE_SYNC] ❌ Server error: ${decoded['message']}');
+            debugPrint('[POE_SYNC] ❌ Server error: ${decoded['message']}');
           }
         } catch (e) {
           failCount++;
-          print('[POE_SYNC] ❌ Upload failed: $e');
+          debugPrint('[POE_SYNC] ❌ Upload failed: $e');
         }
       }
 
@@ -237,9 +237,9 @@ class _POETabContentState extends State<POETabContent> {
         );
       }
 
-      print('[POE_SYNC] Complete: $successCount synced, $failCount failed');
+      debugPrint('[POE_SYNC] Complete: $successCount synced, $failCount failed');
     } catch (e) {
-      print('[POE_SYNC] Error during sync: $e');
+      debugPrint('[POE_SYNC] Error during sync: $e');
     } finally {
       setState(() {
         isSyncing = false;
@@ -314,10 +314,10 @@ class _POETabContentState extends State<POETabContent> {
           ),
         );
 
-        print(
+        debugPrint(
             'Manual mark as uploaded: ${_uploadKey(type, exercise, unitStandard)}');
       } catch (e) {
-        print('Error manually marking as uploaded: $e');
+        debugPrint('Error manually marking as uploaded: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to mark as uploaded: $e'),
@@ -331,8 +331,8 @@ class _POETabContentState extends State<POETabContent> {
   // Manual mark all formative questions
   Future<void> _manualMarkAllFormative(BuildContext context,
       List<dynamic> formativeQuestions, String unitStandard) async {
-    print('DEBUG: _manualMarkAllFormative called');
-    print('DEBUG: formativeQuestions count: ${formativeQuestions.length}');
+    debugPrint('DEBUG: _manualMarkAllFormative called');
+    debugPrint('DEBUG: formativeQuestions count: ${formativeQuestions.length}');
 
     // Check how many questions are not yet completed
     List<String> pendingQuestions = [];
@@ -386,7 +386,7 @@ class _POETabContentState extends State<POETabContent> {
       final dbHelper = DatabaseHelper();
       int markedCount = 0;
 
-      print(
+      debugPrint(
           'Starting manual mark all for ${pendingQuestions.length} formative questions');
 
       // First, try to find an existing document from a completed formative question
@@ -405,7 +405,7 @@ class _POETabContentState extends State<POETabContent> {
         return;
       }
 
-      print('Using existing document: $existingDocumentPath');
+      debugPrint('Using existing document: $existingDocumentPath');
 
       // Apply the existing document to all pending questions
       for (var item in formativeQuestions) {
@@ -429,7 +429,7 @@ class _POETabContentState extends State<POETabContent> {
           });
 
           markedCount++;
-          print(
+          debugPrint(
               '✅ Linked formative exercise to existing document: $exercise ($markedCount/${pendingQuestions.length})');
         }
       }
@@ -445,10 +445,10 @@ class _POETabContentState extends State<POETabContent> {
         ),
       );
 
-      print(
+      debugPrint(
           'Manual mark all formative complete: $markedCount questions linked to document: $existingDocumentPath');
     } catch (e, stackTrace) {
-      print('Error in _manualMarkAllFormative: $e\nStackTrace: $stackTrace');
+      debugPrint('Error in _manualMarkAllFormative: $e\nStackTrace: $stackTrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -458,8 +458,8 @@ class _POETabContentState extends State<POETabContent> {
   // Manual mark all logbook items
   Future<void> _manualMarkAllLogBook(BuildContext context,
       List<dynamic> logBookItems, String unitStandard) async {
-    print('DEBUG: _manualMarkAllLogBook called');
-    print('DEBUG: logBookItems count: ${logBookItems.length}');
+    debugPrint('DEBUG: _manualMarkAllLogBook called');
+    debugPrint('DEBUG: logBookItems count: ${logBookItems.length}');
 
     // Check how many logbook items are not yet completed
     List<String> pendingItems = [];
@@ -513,7 +513,7 @@ class _POETabContentState extends State<POETabContent> {
       final dbHelper = DatabaseHelper();
       int markedCount = 0;
 
-      print(
+      debugPrint(
           'Starting manual mark all for ${pendingItems.length} logbook items');
 
       // First, try to find an existing document from a completed logbook item
@@ -532,7 +532,7 @@ class _POETabContentState extends State<POETabContent> {
         return;
       }
 
-      print('Using existing document: $existingDocumentPath');
+      debugPrint('Using existing document: $existingDocumentPath');
 
       // Apply the existing document to all pending logbook items
       for (var item in logBookItems) {
@@ -560,7 +560,7 @@ class _POETabContentState extends State<POETabContent> {
           });
 
           markedCount++;
-          print(
+          debugPrint(
               '✅ Linked logbook item to existing document: $exercise ($markedCount/${pendingItems.length})');
         }
       }
@@ -576,10 +576,10 @@ class _POETabContentState extends State<POETabContent> {
         ),
       );
 
-      print(
+      debugPrint(
           'Manual mark all logbook complete: $markedCount items linked to document: $existingDocumentPath');
     } catch (e, stackTrace) {
-      print('Error in _manualMarkAllLogBook: $e\nStackTrace: $stackTrace');
+      debugPrint('Error in _manualMarkAllLogBook: $e\nStackTrace: $stackTrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -589,8 +589,8 @@ class _POETabContentState extends State<POETabContent> {
   // Manual mark all summative questions
   Future<void> _manualMarkAllSummative(BuildContext context,
       List<dynamic> summativeQuestions, String unitStandard) async {
-    print('DEBUG: _manualMarkAllSummative called');
-    print('DEBUG: summativeQuestions count: ${summativeQuestions.length}');
+    debugPrint('DEBUG: _manualMarkAllSummative called');
+    debugPrint('DEBUG: summativeQuestions count: ${summativeQuestions.length}');
 
     // Check how many questions are not yet completed
     List<String> pendingQuestions = [];
@@ -644,7 +644,7 @@ class _POETabContentState extends State<POETabContent> {
       final dbHelper = DatabaseHelper();
       int markedCount = 0;
 
-      print(
+      debugPrint(
           'Starting manual mark all for ${pendingQuestions.length} summative questions');
 
       // First, try to find an existing document from a completed summative question
@@ -663,7 +663,7 @@ class _POETabContentState extends State<POETabContent> {
         return;
       }
 
-      print('Using existing document: $existingDocumentPath');
+      debugPrint('Using existing document: $existingDocumentPath');
 
       // Apply the existing document to all pending questions
       for (var item in summativeQuestions) {
@@ -687,7 +687,7 @@ class _POETabContentState extends State<POETabContent> {
           });
 
           markedCount++;
-          print(
+          debugPrint(
               '✅ Linked summative exercise to existing document: $exercise ($markedCount/${pendingQuestions.length})');
         }
       }
@@ -703,10 +703,10 @@ class _POETabContentState extends State<POETabContent> {
         ),
       );
 
-      print(
+      debugPrint(
           'Manual mark all summative complete: $markedCount questions linked to document: $existingDocumentPath');
     } catch (e, stackTrace) {
-      print('Error in _manualMarkAllSummative: $e\nStackTrace: $stackTrace');
+      debugPrint('Error in _manualMarkAllSummative: $e\nStackTrace: $stackTrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -714,10 +714,10 @@ class _POETabContentState extends State<POETabContent> {
   }
 
   Future<File?> _compressImage(File file) async {
-    print(
+    debugPrint(
         'Starting compression for: ${file.path}, original size: ${await file.length()} bytes');
     if (!await file.exists()) {
-      print('Error: Input file does not exist at ${file.path}');
+      debugPrint('Error: Input file does not exist at ${file.path}');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Image file not found. Please try again.')),
@@ -726,7 +726,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (file.path.toLowerCase().endsWith('.pdf')) {
-      print('Skipping compression for PDF file: ${file.path}');
+      debugPrint('Skipping compression for PDF file: ${file.path}');
       return file;
     }
 
@@ -751,7 +751,7 @@ class _POETabContentState extends State<POETabContent> {
           minHeight: minHeight,
         );
         if (result == null) {
-          print('Compression failed at quality: $quality');
+          debugPrint('Compression failed at quality: $quality');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text(
@@ -761,12 +761,12 @@ class _POETabContentState extends State<POETabContent> {
         }
         currentFile = File(result.path);
         currentSize = await currentFile.length();
-        print('Compressed size at quality $quality: $currentSize bytes');
+        debugPrint('Compressed size at quality $quality: $currentSize bytes');
         quality -= 5;
         targetPath =
             '${dir.path}/compressed_${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
       } catch (e) {
-        print('Compression error: $e');
+        debugPrint('Compression error: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Failed to compress image. Please try again.')),
@@ -776,7 +776,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (currentFile == null) {
-      print('Error: No valid file after compression');
+      debugPrint('Error: No valid file after compression');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Image compression failed. Please try again.')),
@@ -785,7 +785,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (currentSize > maxSizeBytes) {
-      print('Image too large after compression: $currentSize bytes');
+      debugPrint('Image too large after compression: $currentSize bytes');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
@@ -794,7 +794,7 @@ class _POETabContentState extends State<POETabContent> {
       return null;
     }
 
-    print(
+    debugPrint(
         'Compression successful: ${currentFile.path}, size: $currentSize bytes');
     return currentFile;
   }
@@ -802,9 +802,9 @@ class _POETabContentState extends State<POETabContent> {
   Future<File?> _createPdfFromImage(File image, String heading,
       {String? logbookText}) async {
     try {
-      print('Starting PDF creation for image: ${image.path}');
+      debugPrint('Starting PDF creation for image: ${image.path}');
       if (!await image.exists()) {
-        print('Error: Image file does not exist at ${image.path}');
+        debugPrint('Error: Image file does not exist at ${image.path}');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Image file not found. Please try again.')),
@@ -813,9 +813,9 @@ class _POETabContentState extends State<POETabContent> {
       }
 
       final imageSize = await image.length();
-      print('Image size: $imageSize bytes');
+      debugPrint('Image size: $imageSize bytes');
       if (imageSize == 0) {
-        print('Error: Image file is empty');
+        debugPrint('Error: Image file is empty');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -826,7 +826,7 @@ class _POETabContentState extends State<POETabContent> {
 
       final extension = image.path.toLowerCase().split('.').last;
       if (!['jpg', 'jpeg', 'png'].contains(extension)) {
-        print('Error: Unsupported image format: $extension');
+        debugPrint('Error: Unsupported image format: $extension');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Unsupported image format. Use JPG or PNG.')),
@@ -838,16 +838,16 @@ class _POETabContentState extends State<POETabContent> {
       try {
         imageBytes = await image.readAsBytes();
       } catch (e) {
-        print('Error reading image bytes: $e');
+        debugPrint('Error reading image bytes: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Failed to read image data. Please try again.')),
         );
         return null;
       }
-      print('Image bytes length: ${imageBytes.length}');
+      debugPrint('Image bytes length: ${imageBytes.length}');
       if (imageBytes.isEmpty) {
-        print('Error: Empty image bytes');
+        debugPrint('Error: Empty image bytes');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -891,16 +891,16 @@ class _POETabContentState extends State<POETabContent> {
       );
 
       final dir = await getTemporaryDirectory();
-      print('Saving PDF to: ${dir.path}');
+      debugPrint('Saving PDF to: ${dir.path}');
       final pdfPath =
           '${dir.path}/document_${DateTime.now().millisecondsSinceEpoch}.pdf';
       final pdfFile = File(pdfPath);
       final pdfBytes = await pdf.save();
-      print('PDF bytes length: ${pdfBytes.length}');
+      debugPrint('PDF bytes length: ${pdfBytes.length}');
       try {
         await pdfFile.writeAsBytes(pdfBytes);
       } catch (e) {
-        print('Error writing PDF: $e');
+        debugPrint('Error writing PDF: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Failed to save PDF file. Please try again.')),
@@ -909,9 +909,9 @@ class _POETabContentState extends State<POETabContent> {
       }
 
       final pdfSize = await pdfFile.length();
-      print('Generated PDF size: $pdfSize bytes');
+      debugPrint('Generated PDF size: $pdfSize bytes');
       if (pdfSize > 2 * 1024 * 1024) {
-        print('PDF exceeds 2MB: $pdfSize bytes');
+        debugPrint('PDF exceeds 2MB: $pdfSize bytes');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -920,10 +920,10 @@ class _POETabContentState extends State<POETabContent> {
         return null;
       }
 
-      print('PDF created successfully: ${pdfFile.path}');
+      debugPrint('PDF created successfully: ${pdfFile.path}');
       return pdfFile;
     } catch (e, stackTrace) {
-      print('PDF generation error: $e\nStackTrace: $stackTrace');
+      debugPrint('PDF generation error: $e\nStackTrace: $stackTrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to generate PDF: $e')),
       );
@@ -932,23 +932,23 @@ class _POETabContentState extends State<POETabContent> {
   }
 
   Future<void> fetchLearnerData() async {
-    print(
+    debugPrint(
         '[FETCH] Starting fetchLearnerData for learnerID=${widget.learnerID}');
     bool isConnected = await _checkConnectivity();
-    print('[FETCH] Connectivity check: ${isConnected ? "ONLINE" : "OFFLINE"}');
+    debugPrint('[FETCH] Connectivity check: ${isConnected ? "ONLINE" : "OFFLINE"}');
 
     if (isConnected) {
-      print('[FETCH] Attempting online fetch...');
+      debugPrint('[FETCH] Attempting online fetch...');
       bool onlineSuccess = await fetchOnlineLearnerData();
       if (onlineSuccess) {
-        print('[FETCH] ✅ Online fetch successful, checking upload status...');
+        debugPrint('[FETCH] ✅ Online fetch successful, checking upload status...');
         await checkUploadedStatus();
       } else {
         // If online fetch failed with a specific error (like "No data found"),
         // don't immediately overwrite it with the generic offline message.
         // We only want to fallback to offline if the server is unreachable or
         // if we actually have offline data to show.
-        print(
+        debugPrint(
             '[FETCH] ❌ Online fetch failed, checking if we have offline data...');
 
         final DatabaseHelper dbHelper = DatabaseHelper();
@@ -966,17 +966,17 @@ class _POETabContentState extends State<POETabContent> {
           setState(() {
             isLoading = false;
           });
-          print(
+          debugPrint(
               '[FETCH] No online data AND no offline data for learnerID: ${widget.learnerID}');
         }
       }
     } else {
-      print('[FETCH] Device is offline, loading from cache...');
+      debugPrint('[FETCH] Device is offline, loading from cache...');
       await fetchOfflineLearnerData();
       await checkLocalUploadedStatus();
     }
     _buildExerciseSequence();
-    print('[FETCH] fetchLearnerData complete');
+    debugPrint('[FETCH] fetchLearnerData complete');
   }
 
   Future<bool> fetchOnlineLearnerData() async {
@@ -989,12 +989,12 @@ class _POETabContentState extends State<POETabContent> {
       ).timeout(const Duration(seconds: 60), onTimeout: () {
         throw Exception('Request timed out');
       });
-      print(
+      debugPrint(
           'API Request: learnerID=${widget.learnerID}, statusCode=${response.statusCode}, url=$url');
-      print('Response body: ${response.body}');
+      debugPrint('Response body: ${response.body}');
       if (response.statusCode == 200) {
         final decodedResponse = json.decode(response.body);
-        print('Decoded Response: $decodedResponse');
+        debugPrint('Decoded Response: $decodedResponse');
         if (decodedResponse.containsKey('error')) {
           setState(() {
             errorMessage = decodedResponse['error'] ?? 'Unknown API error';
@@ -1005,7 +1005,7 @@ class _POETabContentState extends State<POETabContent> {
             isLoading = false;
             pathwaysData = null;
           });
-          print('API Error: ${decodedResponse['error']}');
+          debugPrint('API Error: ${decodedResponse['error']}');
           return false;
         }
         if (decodedResponse['pathways'] != null &&
@@ -1019,7 +1019,7 @@ class _POETabContentState extends State<POETabContent> {
           setState(() {
             pathwaysData = pathways;
             isLoading = false;
-            print('Assigned pathwaysData: $pathwaysData');
+            debugPrint('Assigned pathwaysData: $pathwaysData');
           });
           return true;
         } else {
@@ -1028,7 +1028,7 @@ class _POETabContentState extends State<POETabContent> {
             isLoading = false;
             pathwaysData = null;
           });
-          print('No valid pathways data in response');
+          debugPrint('No valid pathways data in response');
           return false;
         }
       } else {
@@ -1036,7 +1036,7 @@ class _POETabContentState extends State<POETabContent> {
           errorMessage = 'Server error: ${response.statusCode}';
           isLoading = false;
         });
-        print('Server error: ${response.statusCode}');
+        debugPrint('Server error: ${response.statusCode}');
         return false;
       }
     } catch (e) {
@@ -1044,7 +1044,7 @@ class _POETabContentState extends State<POETabContent> {
         errorMessage = 'Error retrieving data: $e';
         isLoading = false;
       });
-      print('Error: $e');
+      debugPrint('Error: $e');
       return false;
     }
     return false; // Default return for any unhandled cases
@@ -1052,27 +1052,27 @@ class _POETabContentState extends State<POETabContent> {
 
   Future<void> _saveLearnerDataLocally(Map<String, dynamic> pathways) async {
     try {
-      print(
+      debugPrint(
           '[OFFLINE_CACHE] Starting to save learner data for learnerID=${widget.learnerID}');
-      print('[OFFLINE_CACHE] Pathways data keys: ${pathways.keys}');
+      debugPrint('[OFFLINE_CACHE] Pathways data keys: ${pathways.keys}');
 
       final DatabaseHelper dbHelper = DatabaseHelper();
       // Save the pathways JSON as a cached response for offline use
       await dbHelper.saveLearnerPathwaysCache(widget.learnerID, pathways);
 
-      print(
+      debugPrint(
           '[OFFLINE_CACHE] ✅ Successfully saved learner pathway data for offline access');
-      print(
+      debugPrint(
           '[OFFLINE_CACHE] Data size: ${pathways.toString().length} characters');
     } catch (e, stackTrace) {
-      print('[OFFLINE_CACHE] ❌ Error saving learner data locally: $e');
-      print('[OFFLINE_CACHE] Stack trace: $stackTrace');
+      debugPrint('[OFFLINE_CACHE] ❌ Error saving learner data locally: $e');
+      debugPrint('[OFFLINE_CACHE] Stack trace: $stackTrace');
     }
   }
 
   Future<void> fetchOfflineLearnerData() async {
     try {
-      print(
+      debugPrint(
           '[OFFLINE_CACHE] Attempting to load cached data for learnerID=${widget.learnerID}');
       final DatabaseHelper dbHelper = DatabaseHelper();
 
@@ -1081,8 +1081,8 @@ class _POETabContentState extends State<POETabContent> {
           await dbHelper.getLearnerPathwaysCache(widget.learnerID);
 
       if (cachedPathways != null) {
-        print('[OFFLINE_CACHE] ✅ Found cached pathway data!');
-        print(
+        debugPrint('[OFFLINE_CACHE] ✅ Found cached pathway data!');
+        debugPrint(
             '[OFFLINE_CACHE] Cache has ${cachedPathways.keys.length} pathway(s)');
         setState(() {
           pathwaysData = cachedPathways;
@@ -1111,9 +1111,9 @@ class _POETabContentState extends State<POETabContent> {
       }
 
       // Fallback to complex database query if no cache exists
-      print('[OFFLINE_CACHE] No cached data, trying database query...');
+      debugPrint('[OFFLINE_CACHE] No cached data, trying database query...');
       final localData = await dbHelper.getLearnerData(widget.learnerID);
-      print('Local data retrieved: ${localData.length} records');
+      debugPrint('Local data retrieved: ${localData.length} records');
 
       if (localData.isNotEmpty) {
         Map<String, dynamic> structuredData = {};
@@ -1152,10 +1152,10 @@ class _POETabContentState extends State<POETabContent> {
               typedRow['assessments'] != null) {
             final assessments = typedRow['assessments'] as Map<String, dynamic>;
 
-            print('Processing assessments for $unitStandardName:');
-            print('  Formative: ${assessments['formative']?.length ?? 0}');
-            print('  Summative: ${assessments['summative']?.length ?? 0}');
-            print('  Logbook: ${assessments['logbook']?.length ?? 0}');
+            debugPrint('Processing assessments for $unitStandardName:');
+            debugPrint('  Formative: ${assessments['formative']?.length ?? 0}');
+            debugPrint('  Summative: ${assessments['summative']?.length ?? 0}');
+            debugPrint('  Logbook: ${assessments['logbook']?.length ?? 0}');
 
             if (assessments['formative'] != null) {
               final formativeList = unitStandards[unitStandardName]['formative']
@@ -1214,7 +1214,7 @@ class _POETabContentState extends State<POETabContent> {
                 );
                 if (!isDuplicate) {
                   logbookList.add(entry);
-                  print(
+                  debugPrint(
                       'Added logbook entry: ${entry['exercise']}, ${entry['question_number']}');
                 }
               });
@@ -1227,7 +1227,7 @@ class _POETabContentState extends State<POETabContent> {
                 typedRow['question_number']?.toString() ?? 'N/A';
             String exercise = typedRow['exercise']?.toString() ?? 'N/A';
 
-            print(
+            debugPrint(
                 'Fallback processing: $assessmentType assessment for $unitStandardName');
 
             if (assessmentType == 'formative' ||
@@ -1250,25 +1250,25 @@ class _POETabContentState extends State<POETabContent> {
                 }
                 assessmentList.add(entry);
               } else {
-                print(
+                debugPrint(
                     'Duplicate assessment skipped: unit_standard_name=$unitStandardName, question_number=$questionNumber, exercise=$exercise');
               }
             }
           }
         }
 
-        print('\nFinal structured data:');
+        debugPrint('\nFinal structured data:');
         structuredData.forEach((pathwayName, pathwayData) {
-          print('Pathway: $pathwayName');
+          debugPrint('Pathway: $pathwayName');
           (pathwayData['qualifications'] as Map)
               .forEach((qualificationName, qualData) {
-            print('  Qualification: $qualificationName');
+            debugPrint('  Qualification: $qualificationName');
             (qualData['unitstandards'] as Map)
                 .forEach((unitStandardName, unitData) {
-              print('    Unit Standard: $unitStandardName');
-              print('      Formative: ${unitData['formative']?.length ?? 0}');
-              print('      Summative: ${unitData['summative']?.length ?? 0}');
-              print('      Logbook: ${unitData['logbook']?.length ?? 0}');
+              debugPrint('    Unit Standard: $unitStandardName');
+              debugPrint('      Formative: ${unitData['formative']?.length ?? 0}');
+              debugPrint('      Summative: ${unitData['summative']?.length ?? 0}');
+              debugPrint('      Logbook: ${unitData['logbook']?.length ?? 0}');
             });
           });
         });
@@ -1283,14 +1283,14 @@ class _POETabContentState extends State<POETabContent> {
               (qualData['unitstandards'] as Map)
                   .forEach((unitStandardName, unitData) {
                 final logbook = unitData['logbook'] ?? [];
-                print(
+                debugPrint(
                     'Setting up controllers for $unitStandardName logbook entries: ${logbook.length}');
                 for (var item in logbook) {
                   final exercise = item['exercise']?.toString() ?? 'N/A';
                   final key = _uploadKey('LogBook', exercise, unitStandardName);
                   logBookControllers[key] =
                       TextEditingController(text: item['logbook_text'] ?? '');
-                  print(
+                  debugPrint(
                       'Created controller for key: $key with text: "${item['logbook_text'] ?? ''}"');
                 }
               });
@@ -1304,13 +1304,13 @@ class _POETabContentState extends State<POETabContent> {
           isLoading = false;
           pathwaysData = null;
         });
-        print(
+        debugPrint(
             '[OFFLINE_CACHE] No cached or local data for learnerID: ${widget.learnerID}');
-        print(
+        debugPrint(
             '[OFFLINE_CACHE] User must load data online first to enable offline access');
       }
     } catch (e) {
-      print('Error in fetchOfflineLearnerData: $e');
+      debugPrint('Error in fetchOfflineLearnerData: $e');
       setState(() {
         errorMessage = 'Error fetching offline data: $e';
         isLoading = false;
@@ -1338,9 +1338,9 @@ class _POETabContentState extends State<POETabContent> {
         throw Exception('Request timed out');
       });
 
-      print(
+      debugPrint(
           'checkUploadedStatus Request: learnerID=${widget.learnerID}, statusCode=${response.statusCode}, url=$url');
-      print('Raw response: ${response.body}');
+      debugPrint('Raw response: ${response.body}');
 
       if (response.statusCode == 200) {
         final decodedResponse = json.decode(response.body);
@@ -1349,7 +1349,7 @@ class _POETabContentState extends State<POETabContent> {
             setState(() {
               errorMessage = decodedResponse['error'];
             });
-            print('checkUploadedStatus Error: ${decodedResponse['error']}');
+            debugPrint('checkUploadedStatus Error: ${decodedResponse['error']}');
           } else {
             // Get local status first to preserve locally-saved records
             final dbHelper = DatabaseHelper();
@@ -1368,11 +1368,11 @@ class _POETabContentState extends State<POETabContent> {
               uploadedExercises.addAll(localStatus);
             });
 
-            print(
+            debugPrint(
                 'Merged uploadedExercises: ${uploadedExercises.length} total (${serverStatus.length} from server, ${localStatus.length} from local)');
-            print('Server status keys: ${serverStatus.keys.toList()}');
-            print('Local status keys: ${localStatus.keys.toList()}');
-            print('Final merged keys: ${uploadedExercises.keys.toList()}');
+            debugPrint('Server status keys: ${serverStatus.keys.toList()}');
+            debugPrint('Local status keys: ${localStatus.keys.toList()}');
+            debugPrint('Final merged keys: ${uploadedExercises.keys.toList()}');
           }
         } else if (decodedResponse is List && decodedResponse.isEmpty) {
           // Server has no records, but check local database
@@ -1383,25 +1383,25 @@ class _POETabContentState extends State<POETabContent> {
           setState(() {
             uploadedExercises = localStatus;
           });
-          print(
+          debugPrint(
               'Server empty, using local status: ${uploadedExercises.length} exercises');
         } else {
           setState(() {
             errorMessage = 'Unexpected response format from  .php';
           });
-          print('Unexpected response format: $decodedResponse');
+          debugPrint('Unexpected response format: $decodedResponse');
         }
       } else {
         setState(() {
           errorMessage = 'Server error: ${response.statusCode}';
         });
-        print('Server error: ${response.statusCode}');
+        debugPrint('Server error: ${response.statusCode}');
       }
     } catch (e) {
       setState(() {
         errorMessage = 'Error checking upload status: $e';
       });
-      print('Error checking upload status: $e');
+      debugPrint('Error checking upload status: $e');
     }
   }
 
@@ -1413,12 +1413,12 @@ class _POETabContentState extends State<POETabContent> {
       setState(() {
         uploadedExercises = localUploads;
       });
-      print('Local uploadedExercises: $uploadedExercises');
+      debugPrint('Local uploadedExercises: $uploadedExercises');
     } catch (e) {
       setState(() {
         errorMessage = 'Error checking local upload status: $e';
       });
-      print('Error checking local upload status: $e');
+      debugPrint('Error checking local upload status: $e');
     }
   }
 
@@ -1467,9 +1467,9 @@ class _POETabContentState extends State<POETabContent> {
           });
         }
       });
-      print('Exercise Sequence: $exerciseSequence');
+      debugPrint('Exercise Sequence: $exerciseSequence');
     } else {
-      print('pathwaysData is null in _buildExerciseSequence');
+      debugPrint('pathwaysData is null in _buildExerciseSequence');
     }
   }
 
@@ -1479,10 +1479,12 @@ class _POETabContentState extends State<POETabContent> {
     if (type.toLowerCase() == 'formative') normalizedType = 'Formative';
     if (type.toLowerCase() == 'summative') normalizedType = 'Summative';
     if (type.toLowerCase() == 'logbook') normalizedType = 'LogBook';
-    if (type.toLowerCase() == 'formativeremedial')
+    if (type.toLowerCase() == 'formativeremedial') {
       normalizedType = 'FormativeRemedial';
-    if (type.toLowerCase() == 'summativeremedial')
+    }
+    if (type.toLowerCase() == 'summativeremedial') {
       normalizedType = 'SummativeRemedial';
+    }
 
     // Extract unit standard ID if available
     String unitId = '';
@@ -1509,10 +1511,12 @@ class _POETabContentState extends State<POETabContent> {
     if (type.toLowerCase() == 'formative') normalizedType = 'Formative';
     if (type.toLowerCase() == 'summative') normalizedType = 'Summative';
     if (type.toLowerCase() == 'logbook') normalizedType = 'LogBook';
-    if (type.toLowerCase() == 'formativeremedial')
+    if (type.toLowerCase() == 'formativeremedial') {
       normalizedType = 'FormativeRemedial';
-    if (type.toLowerCase() == 'summativeremedial')
+    }
+    if (type.toLowerCase() == 'summativeremedial') {
       normalizedType = 'SummativeRemedial';
+    }
 
     // Normalize exercise: remove ALL whitespace and newlines for robust matching
     final normalizedExercise =
@@ -1535,10 +1539,12 @@ class _POETabContentState extends State<POETabContent> {
     if (type.toLowerCase() == 'formative') normalizedType = 'Formative';
     if (type.toLowerCase() == 'summative') normalizedType = 'Summative';
     if (type.toLowerCase() == 'logbook') normalizedType = 'LogBook';
-    if (type.toLowerCase() == 'formativeremedial')
+    if (type.toLowerCase() == 'formativeremedial') {
       normalizedType = 'FormativeRemedial';
-    if (type.toLowerCase() == 'summativeremedial')
+    }
+    if (type.toLowerCase() == 'summativeremedial') {
       normalizedType = 'SummativeRemedial';
+    }
 
     // FIRST: Check key with unit standard ID (strict isolation!)
     if (unitStandard != null && unitStandard.isNotEmpty) {
@@ -1624,10 +1630,12 @@ class _POETabContentState extends State<POETabContent> {
     if (type.toLowerCase() == 'formative') normalizedType = 'Formative';
     if (type.toLowerCase() == 'summative') normalizedType = 'Summative';
     if (type.toLowerCase() == 'logbook') normalizedType = 'LogBook';
-    if (type.toLowerCase() == 'formativeremedial')
+    if (type.toLowerCase() == 'formativeremedial') {
       normalizedType = 'FormativeRemedial';
-    if (type.toLowerCase() == 'summativeremedial')
+    }
+    if (type.toLowerCase() == 'summativeremedial') {
       normalizedType = 'SummativeRemedial';
+    }
 
     // Look for any key that indicates a bulk completion for this unit and type
     for (var key in uploadedExercises.keys) {
@@ -1681,15 +1689,15 @@ class _POETabContentState extends State<POETabContent> {
 
   bool _isExerciseAllowed(String type, String exercise, String? unitStandard) {
     final currentKey = _uploadKey(type, exercise, unitStandard);
-    print(
+    debugPrint(
         'DEBUG: _isExerciseAllowed called for type: $type, exercise: $exercise');
-    print('DEBUG: currentKey: $currentKey');
-    print('DEBUG: exerciseSequence length: ${exerciseSequence.length}');
-    print('DEBUG: uploadedExercises: $uploadedExercises');
+    debugPrint('DEBUG: currentKey: $currentKey');
+    debugPrint('DEBUG: exerciseSequence length: ${exerciseSequence.length}');
+    debugPrint('DEBUG: uploadedExercises: $uploadedExercises');
 
     // If this exercise is already completed, don't allow re-upload
     if (uploadedExercises[currentKey] == true) {
-      print('DEBUG: Exercise already completed: $currentKey');
+      debugPrint('DEBUG: Exercise already completed: $currentKey');
       return false;
     }
 
@@ -1704,7 +1712,7 @@ class _POETabContentState extends State<POETabContent> {
 
     // Special handling for Summative exercises: check if all formative in this unit are completed
     if (type == 'Summative') {
-      print(
+      debugPrint(
           'DEBUG: This is a Summative exercise, checking formative completion for unit: $currentUnitStandard');
       if (currentUnitStandard != null) {
         bool allFormativeCompleted = true;
@@ -1714,13 +1722,13 @@ class _POETabContentState extends State<POETabContent> {
             String formativeKey = seq['key']!.toString();
             if (!(uploadedExercises[formativeKey] ?? false)) {
               allFormativeCompleted = false;
-              print('DEBUG: Formative exercise not completed: $formativeKey');
+              debugPrint('DEBUG: Formative exercise not completed: $formativeKey');
               break;
             }
           }
         }
         bool currentNotCompleted = !(uploadedExercises[currentKey] ?? false);
-        print(
+        debugPrint(
             'DEBUG: allFormativeCompleted: $allFormativeCompleted, currentNotCompleted: $currentNotCompleted');
         return allFormativeCompleted && currentNotCompleted;
       }
@@ -1741,13 +1749,13 @@ class _POETabContentState extends State<POETabContent> {
       }
 
       if (anyInUnitCompleted) {
-        print(
+        debugPrint(
             'DEBUG: Some exercises in unit $currentUnitStandard already completed, allowing $type-$exercise');
         return true;
       }
 
       // If no exercises in this unit are completed yet, allow this one
-      print(
+      debugPrint(
           'DEBUG: No exercises in unit $currentUnitStandard completed yet, allowing this exercise');
       return true;
     }
@@ -1923,7 +1931,7 @@ class _POETabContentState extends State<POETabContent> {
           );
         }
       } catch (e) {
-        print('Fingerprint verification error: $e');
+        debugPrint('Fingerprint verification error: $e');
         _hideProgressDialog();
 
         // Provide specific error messages for common issues
@@ -1971,7 +1979,7 @@ class _POETabContentState extends State<POETabContent> {
         return false;
       }
     } catch (e) {
-      print('Fingerprint verification error: $e');
+      debugPrint('Fingerprint verification error: $e');
       _hideProgressDialog();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -2000,12 +2008,12 @@ class _POETabContentState extends State<POETabContent> {
 
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        print('[DETECT] Futronic attempt $attempt/$maxAttempts...');
+        debugPrint('[DETECT] Futronic attempt $attempt/$maxAttempts...');
         final isFutronicConnected =
             await _futronicService.isFutronicConnected();
 
         if (isFutronicConnected) {
-          print('[DETECT] ✅ Futronic detected on attempt $attempt!');
+          debugPrint('[DETECT] ✅ Futronic detected on attempt $attempt!');
           return 'futronic';
         }
 
@@ -2014,14 +2022,14 @@ class _POETabContentState extends State<POETabContent> {
           await Future.delayed(Duration(milliseconds: delays[attempt - 1]));
         }
       } catch (e) {
-        print('[DETECT] Futronic attempt $attempt failed: $e');
+        debugPrint('[DETECT] Futronic attempt $attempt failed: $e');
         if (attempt < maxAttempts) {
           await Future.delayed(const Duration(milliseconds: 1000));
         }
       }
     }
 
-    print('[DETECT] ❌ No Futronic scanner detected after all attempts');
+    debugPrint('[DETECT] ❌ No Futronic scanner detected after all attempts');
     return 'none';
   }
 
@@ -2110,7 +2118,7 @@ class _POETabContentState extends State<POETabContent> {
     );
 
     if (imageSource == null) {
-      print('User cancelled image selection');
+      debugPrint('User cancelled image selection');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Document selection cancelled')),
       );
@@ -2152,7 +2160,7 @@ class _POETabContentState extends State<POETabContent> {
         );
 
         if (result == null || result is! Map) {
-          print('Error: No result returned from CameraScanPage');
+          debugPrint('Error: No result returned from CameraScanPage');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Camera operation was cancelled or failed')),
@@ -2164,7 +2172,7 @@ class _POETabContentState extends State<POETabContent> {
         updatedLogbookText = result['logbookText'] as String?;
 
         if (file == null || !await file.exists()) {
-          print('Error: No valid file returned from CameraScanPage');
+          debugPrint('Error: No valid file returned from CameraScanPage');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No valid document captured')),
           );
@@ -2174,7 +2182,7 @@ class _POETabContentState extends State<POETabContent> {
         if (assessmentType == 'LogBook') {
           final compressedImage = await _compressImage(file);
           if (compressedImage == null) {
-            print('Error: Image compression failed');
+            debugPrint('Error: Image compression failed');
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Failed to process captured image')),
             );
@@ -2188,7 +2196,7 @@ class _POETabContentState extends State<POETabContent> {
           );
         } else {
           if (!file.path.toLowerCase().endsWith('.pdf')) {
-            print(
+            debugPrint(
                 'Error: Expected PDF file for $assessmentType, got ${file.path}');
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -2201,7 +2209,7 @@ class _POETabContentState extends State<POETabContent> {
         }
       } else {
         if (assessmentType != 'LogBook') {
-          print('Error: Gallery selection not supported for $assessmentType');
+          debugPrint('Error: Gallery selection not supported for $assessmentType');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text(
@@ -2213,7 +2221,7 @@ class _POETabContentState extends State<POETabContent> {
         final picker = ImagePicker();
         final pickedImage = await picker.pickImage(source: ImageSource.gallery);
         if (pickedImage == null) {
-          print('Error: No image selected from gallery');
+          debugPrint('Error: No image selected from gallery');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No image selected')),
           );
@@ -2222,7 +2230,7 @@ class _POETabContentState extends State<POETabContent> {
 
         final imageFile = File(pickedImage.path);
         if (!await imageFile.exists()) {
-          print(
+          debugPrint(
               'Error: Selected image file does not exist at ${imageFile.path}');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Selected image file is invalid')),
@@ -2232,7 +2240,7 @@ class _POETabContentState extends State<POETabContent> {
 
         final compressedImage = await _compressImage(imageFile);
         if (compressedImage == null) {
-          print('Error: Image compression failed');
+          debugPrint('Error: Image compression failed');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Failed to process selected image')),
           );
@@ -2247,7 +2255,7 @@ class _POETabContentState extends State<POETabContent> {
       }
 
       if (document == null) {
-        print('Error: Document creation failed');
+        debugPrint('Error: Document creation failed');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Failed to generate or process document')),
@@ -2268,7 +2276,7 @@ class _POETabContentState extends State<POETabContent> {
             request.fields['logbook_text'] = updatedLogbookText;
           }
 
-          print(
+          debugPrint(
               'Uploading file: ${document.path}, Size: ${await document.length()} bytes');
 
           // Show processing dialog
@@ -2339,7 +2347,7 @@ class _POETabContentState extends State<POETabContent> {
             // Close processing dialog if open
             if (mounted) Navigator.of(context).pop();
 
-            print('❌ Upload error: $e');
+            debugPrint('❌ Upload error: $e');
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Upload failed: $e. Saving locally.')),
             );
@@ -2362,7 +2370,7 @@ class _POETabContentState extends State<POETabContent> {
         final controller = logBookControllers[controllerKey];
         if (controller != null) {
           controller.text = updatedLogbookText;
-          print('Updated LogBook Controller Text: $updatedLogbookText');
+          debugPrint('Updated LogBook Controller Text: $updatedLogbookText');
           final dbHelper = DatabaseHelper();
           await dbHelper.saveLogBookText(
             widget.learnerID.toString(),
@@ -2373,7 +2381,7 @@ class _POETabContentState extends State<POETabContent> {
         }
       }
     } catch (e, stackTrace) {
-      print('Error in openCamera: $e\nStackTrace: $stackTrace');
+      debugPrint('Error in openCamera: $e\nStackTrace: $stackTrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -2385,8 +2393,8 @@ class _POETabContentState extends State<POETabContent> {
   // New method for handling formative camera - scans all formative questions
   Future<void> _openFormativeCamera(BuildContext context,
       List<dynamic> formativeQuestions, String unitStandard) async {
-    print('DEBUG: _openFormativeCamera called for unitStandard: $unitStandard');
-    print('DEBUG: formativeQuestions count: ${formativeQuestions.length}');
+    debugPrint('DEBUG: _openFormativeCamera called for unitStandard: $unitStandard');
+    debugPrint('DEBUG: formativeQuestions count: ${formativeQuestions.length}');
 
     // Check if all formative questions are already completed
     bool allCompleted = true;
@@ -2409,35 +2417,35 @@ class _POETabContentState extends State<POETabContent> {
     // Check if this is the first unit standard by checking if any exercises are completed
     bool anyExercisesCompleted =
         uploadedExercises.values.any((completed) => completed);
-    print('DEBUG: anyExercisesCompleted: $anyExercisesCompleted');
+    debugPrint('DEBUG: anyExercisesCompleted: $anyExercisesCompleted');
 
     // If no exercises are completed yet, this is effectively the first unit standard
     bool isFirstUnitStandard = !anyExercisesCompleted;
-    print('DEBUG: isFirstUnitStandard: $isFirstUnitStandard');
+    debugPrint('DEBUG: isFirstUnitStandard: $isFirstUnitStandard');
 
     // Check if all formative questions are allowed
     bool allAllowed = true;
     for (var item in formativeQuestions) {
       final exercise = item['exercise']?.toString() ?? 'N/A';
-      print('DEBUG: Checking exercise: $exercise');
+      debugPrint('DEBUG: Checking exercise: $exercise');
 
       if (isFirstUnitStandard) {
         // This is the first unit standard, allow all formative questions
-        print('DEBUG: First unit standard detected, allowing formative');
+        debugPrint('DEBUG: First unit standard detected, allowing formative');
         allAllowed = true;
         break;
       } else {
         // Check if previous unit standard is completed
-        print('DEBUG: Not first unit standard, checking _isExerciseAllowed');
+        debugPrint('DEBUG: Not first unit standard, checking _isExerciseAllowed');
         if (!_isExerciseAllowed('Formative', exercise, unitStandard)) {
-          print('DEBUG: Exercise not allowed: $exercise');
+          debugPrint('DEBUG: Exercise not allowed: $exercise');
           allAllowed = false;
           break;
         }
       }
     }
 
-    print('DEBUG: allAllowed result: $allAllowed');
+    debugPrint('DEBUG: allAllowed result: $allAllowed');
 
     if (!allAllowed) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2482,7 +2490,7 @@ class _POETabContentState extends State<POETabContent> {
     );
 
     if (imageSource == null) {
-      print('User cancelled image selection');
+      debugPrint('User cancelled image selection');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Document selection cancelled')),
       );
@@ -2522,7 +2530,7 @@ class _POETabContentState extends State<POETabContent> {
         );
 
         if (result == null || result is! Map) {
-          print('Error: No result returned from CameraScanPage');
+          debugPrint('Error: No result returned from CameraScanPage');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Camera operation was cancelled or failed')),
@@ -2533,7 +2541,7 @@ class _POETabContentState extends State<POETabContent> {
         final file = result['image'] as File?;
 
         if (file == null || !await file.exists()) {
-          print('Error: No valid file returned from CameraScanPage');
+          debugPrint('Error: No valid file returned from CameraScanPage');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No valid document captured')),
           );
@@ -2541,7 +2549,7 @@ class _POETabContentState extends State<POETabContent> {
         }
 
         if (!file.path.toLowerCase().endsWith('.pdf')) {
-          print('Error: Expected PDF file for Formative, got ${file.path}');
+          debugPrint('Error: Expected PDF file for Formative, got ${file.path}');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text(
@@ -2581,12 +2589,12 @@ class _POETabContentState extends State<POETabContent> {
           'All_Questions_${unitStandardId}_Formative_$timestamp.pdf';
       final targetFilePath = '${poeDir.path}/$targetFileName';
 
-      print('📊 FORMATIVE UPLOAD DEBUG:');
-      print('   Total questions to process: ${formativeQuestions.length}');
-      print(
+      debugPrint('📊 FORMATIVE UPLOAD DEBUG:');
+      debugPrint('   Total questions to process: ${formativeQuestions.length}');
+      debugPrint(
           '   Questions list: ${formativeQuestions.map((q) => q['exercise']).toList()}');
-      print('   Is connected: $isConnected');
-      print('   Target file path: $targetFilePath');
+      debugPrint('   Is connected: $isConnected');
+      debugPrint('   Target file path: $targetFilePath');
 
       if (isConnected) {
         final url = Uri.parse(AppConfig.buildUrl('save_metadata.php'));
@@ -2595,7 +2603,7 @@ class _POETabContentState extends State<POETabContent> {
         int successfulUploads = 0;
         int failedUploads = 0;
 
-        print('Starting formative upload for $totalQuestions questions');
+        debugPrint('Starting formative upload for $totalQuestions questions');
 
         // Send a single bulk request for all formative questions
         var request = http.MultipartRequest('POST', url)
@@ -2606,7 +2614,7 @@ class _POETabContentState extends State<POETabContent> {
               .toList())
           ..fields['unit_standard_upload'] = 'true';
 
-        print(
+        debugPrint(
             'Uploading single formative document for ${formativeQuestions.length} questions: ${document.path}, Size: ${await document.length()} bytes');
 
         final standardizedName = targetFileName;
@@ -2617,7 +2625,7 @@ class _POETabContentState extends State<POETabContent> {
           filename: standardizedName,
         ));
 
-        print('Assigned filename for formative: $standardizedName');
+        debugPrint('Assigned filename for formative: $standardizedName');
 
         // Show processing dialog
         showDialog(
@@ -2674,7 +2682,7 @@ class _POETabContentState extends State<POETabContent> {
               ),
             );
           } else {
-            print('❌ Server error for formative upload: ${decoded['message']}');
+            debugPrint('❌ Server error for formative upload: ${decoded['message']}');
             // Save locally for all exercises
             for (var item in formativeQuestions) {
               final exercise = item['exercise']?.toString() ?? 'N/A';
@@ -2693,7 +2701,7 @@ class _POETabContentState extends State<POETabContent> {
           // Close processing dialog if open
           if (mounted) Navigator.of(context).pop();
 
-          print('❌ Upload error for formative: $e');
+          debugPrint('❌ Upload error for formative: $e');
           // Save locally for all exercises
           for (var item in formativeQuestions) {
             final exercise = item['exercise']?.toString() ?? 'N/A';
@@ -2720,7 +2728,7 @@ class _POETabContentState extends State<POETabContent> {
           });
         }
 
-        print(
+        debugPrint(
             'Formative upload complete: $successfulUploads successful, $failedUploads failed/saved locally');
 
         // Force UI update by ensuring all formative questions are marked as completed
@@ -2737,9 +2745,9 @@ class _POETabContentState extends State<POETabContent> {
         // Refresh upload status to ensure UI is updated
         await _refreshUploadStatus();
 
-        print(
+        debugPrint(
             '📊 AFTER REFRESH - uploadedExercises count: ${uploadedExercises.length}');
-        print(
+        debugPrint(
             '   Formative exercises marked: ${uploadedExercises.keys.where((k) => k.startsWith('Formative-')).toList()}');
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2749,13 +2757,13 @@ class _POETabContentState extends State<POETabContent> {
         );
       } else {
         // Save locally for all formative questions
-        print(
+        debugPrint(
             '[OFFLINE_SCAN] No internet connection, saving all ${formativeQuestions.length} formative questions locally');
         int localSaveCount = 0;
 
         for (var item in formativeQuestions) {
           final exercise = item['exercise']?.toString() ?? 'N/A';
-          print(
+          debugPrint(
               '[OFFLINE_SCAN] Processing question $localSaveCount/${formativeQuestions.length}: $exercise');
 
           await _saveLocally(document, 'Formative', exercise, null,
@@ -2764,11 +2772,11 @@ class _POETabContentState extends State<POETabContent> {
 
           // Verify it was marked
           final uploadKey = _uploadKey('Formative', exercise, unitStandard);
-          print(
+          debugPrint(
               '[OFFLINE_SCAN] Question $exercise marked as: ${uploadedExercises[uploadKey]}');
         }
 
-        print(
+        debugPrint(
             '[OFFLINE_SCAN] All $localSaveCount questions saved, forcing UI update...');
 
         // Force UI update by ensuring all formative questions are marked as completed
@@ -2785,7 +2793,7 @@ class _POETabContentState extends State<POETabContent> {
         // Refresh upload status to update UI from database
         await _refreshUploadStatus();
 
-        print('[OFFLINE_SCAN] UI refresh complete');
+        debugPrint('[OFFLINE_SCAN] UI refresh complete');
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -2794,7 +2802,7 @@ class _POETabContentState extends State<POETabContent> {
         );
       }
     } catch (e, stackTrace) {
-      print('Error in _openFormativeCamera: $e\nStackTrace: $stackTrace');
+      debugPrint('Error in _openFormativeCamera: $e\nStackTrace: $stackTrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -2853,7 +2861,7 @@ class _POETabContentState extends State<POETabContent> {
                       if (!_isExerciseUploaded(
                           'Formative', formativeExercise, unitStandard)) {
                         allFormativeCompleted = false;
-                        print(
+                        debugPrint(
                             'DEBUG: Formative exercise not completed: $formativeExercise');
                         return;
                       }
@@ -2915,7 +2923,7 @@ class _POETabContentState extends State<POETabContent> {
     );
 
     if (imageSource == null) {
-      print('User cancelled image selection');
+      debugPrint('User cancelled image selection');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Document selection cancelled')),
       );
@@ -2955,7 +2963,7 @@ class _POETabContentState extends State<POETabContent> {
         );
 
         if (result == null || result is! Map) {
-          print('Error: No result returned from CameraScanPage');
+          debugPrint('Error: No result returned from CameraScanPage');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Camera operation was cancelled or failed')),
@@ -2966,7 +2974,7 @@ class _POETabContentState extends State<POETabContent> {
         final file = result['image'] as File?;
 
         if (file == null || !await file.exists()) {
-          print('Error: No valid file returned from CameraScanPage');
+          debugPrint('Error: No valid file returned from CameraScanPage');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No valid document captured')),
           );
@@ -2974,7 +2982,7 @@ class _POETabContentState extends State<POETabContent> {
         }
 
         if (!file.path.toLowerCase().endsWith('.pdf')) {
-          print('Error: Expected PDF file for Summative, got ${file.path}');
+          debugPrint('Error: Expected PDF file for Summative, got ${file.path}');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text(
@@ -3014,12 +3022,12 @@ class _POETabContentState extends State<POETabContent> {
           'All_Questions_${unitStandardId}_Summative_$timestamp.pdf';
       final targetFilePath = '${poeDir.path}/$targetFileName';
 
-      print('📊 SUMMATIVE UPLOAD DEBUG:');
-      print('   Total questions to process: ${summativeQuestions.length}');
-      print(
+      debugPrint('📊 SUMMATIVE UPLOAD DEBUG:');
+      debugPrint('   Total questions to process: ${summativeQuestions.length}');
+      debugPrint(
           '   Questions list: ${summativeQuestions.map((q) => q['exercise']).toList()}');
-      print('   Is connected: $isConnected');
-      print('   Target file path: $targetFilePath');
+      debugPrint('   Is connected: $isConnected');
+      debugPrint('   Target file path: $targetFilePath');
 
       if (isConnected) {
         final url = Uri.parse(AppConfig.buildUrl('save_metadata.php'));
@@ -3028,7 +3036,7 @@ class _POETabContentState extends State<POETabContent> {
         int successfulUploads = 0;
         int failedUploads = 0;
 
-        print('Starting summative upload for $totalQuestions questions');
+        debugPrint('Starting summative upload for $totalQuestions questions');
 
         // Send a single bulk request for all summative questions
         var request = http.MultipartRequest('POST', url)
@@ -3039,7 +3047,7 @@ class _POETabContentState extends State<POETabContent> {
               .toList())
           ..fields['unit_standard_upload'] = 'true';
 
-        print(
+        debugPrint(
             'Uploading single summative document for ${summativeQuestions.length} questions: ${document.path}, Size: ${await document.length()} bytes');
 
         final standardizedName = targetFileName;
@@ -3050,7 +3058,7 @@ class _POETabContentState extends State<POETabContent> {
           filename: standardizedName,
         ));
 
-        print('Assigned filename for summative: $standardizedName');
+        debugPrint('Assigned filename for summative: $standardizedName');
 
         // Show processing dialog
         showDialog(
@@ -3107,7 +3115,7 @@ class _POETabContentState extends State<POETabContent> {
               ),
             );
           } else {
-            print('❌ Server error for summative upload: ${decoded['message']}');
+            debugPrint('❌ Server error for summative upload: ${decoded['message']}');
             // Save locally for all exercises
             for (var item in summativeQuestions) {
               final exercise = item['exercise']?.toString() ?? 'N/A';
@@ -3126,7 +3134,7 @@ class _POETabContentState extends State<POETabContent> {
           // Close processing dialog if open
           if (mounted) Navigator.of(context).pop();
 
-          print('❌ Upload error for summative: $e');
+          debugPrint('❌ Upload error for summative: $e');
           // Save locally for all exercises
           for (var item in summativeQuestions) {
             final exercise = item['exercise']?.toString() ?? 'N/A';
@@ -3153,7 +3161,7 @@ class _POETabContentState extends State<POETabContent> {
           });
         }
 
-        print(
+        debugPrint(
             'Summative upload complete: $successfulUploads successful, $failedUploads failed/saved locally');
 
         // Force UI update by ensuring all summative questions are marked as completed
@@ -3170,9 +3178,9 @@ class _POETabContentState extends State<POETabContent> {
         // Refresh upload status to ensure UI is updated
         await _refreshUploadStatus();
 
-        print(
+        debugPrint(
             '📊 AFTER REFRESH - uploadedExercises count: ${uploadedExercises.length}');
-        print(
+        debugPrint(
             '   Summative exercises marked: ${uploadedExercises.keys.where((k) => k.startsWith('Summative-')).toList()}');
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -3182,13 +3190,13 @@ class _POETabContentState extends State<POETabContent> {
         );
       } else {
         // Save locally for all summative questions
-        print(
+        debugPrint(
             '[OFFLINE_SCAN] No internet connection, saving all ${summativeQuestions.length} summative questions locally');
         int localSaveCount = 0;
 
         for (var item in summativeQuestions) {
           final exercise = item['exercise']?.toString() ?? 'N/A';
-          print(
+          debugPrint(
               '[OFFLINE_SCAN] Processing question $localSaveCount/${summativeQuestions.length}: $exercise');
 
           await _saveLocally(document, 'Summative', exercise, null,
@@ -3197,11 +3205,11 @@ class _POETabContentState extends State<POETabContent> {
 
           // Verify it was marked
           final uploadKey = _uploadKey('Summative', exercise, unitStandard);
-          print(
+          debugPrint(
               '[OFFLINE_SCAN] Question $exercise marked as: ${uploadedExercises[uploadKey]}');
         }
 
-        print(
+        debugPrint(
             '[OFFLINE_SCAN] All $localSaveCount questions saved, forcing UI update...');
 
         // Force UI update by ensuring all summative questions are marked as completed
@@ -3218,7 +3226,7 @@ class _POETabContentState extends State<POETabContent> {
         // Refresh upload status to update UI from database
         await _refreshUploadStatus();
 
-        print('[OFFLINE_SCAN] UI refresh complete');
+        debugPrint('[OFFLINE_SCAN] UI refresh complete');
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -3227,7 +3235,7 @@ class _POETabContentState extends State<POETabContent> {
         );
       }
     } catch (e, stackTrace) {
-      print('Error in _openSummativeCamera: $e\nStackTrace: $stackTrace');
+      debugPrint('Error in _openSummativeCamera: $e\nStackTrace: $stackTrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -3239,7 +3247,7 @@ class _POETabContentState extends State<POETabContent> {
   // Remedial camera - optional, doesn't block anything
   Future<void> _openRemedialCamera(
       BuildContext context, String unitStandard, String remedialType) async {
-    print(
+    debugPrint(
         '[REMEDIAL] Opening $remedialType camera for unit standard: $unitStandard');
 
     // Remedial is always allowed - it's optional and doesn't block anything
@@ -3277,7 +3285,7 @@ class _POETabContentState extends State<POETabContent> {
     );
 
     if (imageSource == null) {
-      print('[REMEDIAL] User cancelled');
+      debugPrint('[REMEDIAL] User cancelled');
       return;
     }
 
@@ -3314,7 +3322,7 @@ class _POETabContentState extends State<POETabContent> {
         );
 
         if (result == null || result is! Map) {
-          print('[REMEDIAL] No result from camera');
+          debugPrint('[REMEDIAL] No result from camera');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Camera operation cancelled')),
           );
@@ -3323,7 +3331,7 @@ class _POETabContentState extends State<POETabContent> {
 
         final file = result['image'] as File?;
         if (file == null || !await file.exists()) {
-          print('[REMEDIAL] No valid file');
+          debugPrint('[REMEDIAL] No valid file');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No valid document captured')),
           );
@@ -3372,14 +3380,14 @@ class _POETabContentState extends State<POETabContent> {
                 backgroundColor: Colors.green,
               ),
             );
-            print('[REMEDIAL] $remedialType uploaded to server successfully');
+            debugPrint('[REMEDIAL] $remedialType uploaded to server successfully');
           } else {
-            print('[REMEDIAL] Server error: ${decoded['message']}');
+            debugPrint('[REMEDIAL] Server error: ${decoded['message']}');
             await _saveLocally(document, remedialType, exercise, null,
                 unitStandard: unitStandard);
           }
         } catch (e) {
-          print('[REMEDIAL] Upload error: $e');
+          debugPrint('[REMEDIAL] Upload error: $e');
           await _saveLocally(document, remedialType, exercise, null,
               unitStandard: unitStandard);
         }
@@ -3389,9 +3397,9 @@ class _POETabContentState extends State<POETabContent> {
             unitStandard: unitStandard);
       }
 
-      print('[REMEDIAL] $remedialType document saved for $unitStandard');
+      debugPrint('[REMEDIAL] $remedialType document saved for $unitStandard');
     } catch (e, stackTrace) {
-      print('[REMEDIAL] Error: $e\nStackTrace: $stackTrace');
+      debugPrint('[REMEDIAL] Error: $e\nStackTrace: $stackTrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -3402,8 +3410,8 @@ class _POETabContentState extends State<POETabContent> {
 
   Future<void> _openLogBookCamera(BuildContext context,
       List<dynamic> logBookItems, String unitStandard) async {
-    print('DEBUG: _openLogBookCamera called for unitStandard: $unitStandard');
-    print('DEBUG: logBookItems count: ${logBookItems.length}');
+    debugPrint('DEBUG: _openLogBookCamera called for unitStandard: $unitStandard');
+    debugPrint('DEBUG: logBookItems count: ${logBookItems.length}');
 
     // Check if all logbook items are already completed
     bool allCompleted = true;
@@ -3476,7 +3484,7 @@ class _POETabContentState extends State<POETabContent> {
     );
 
     if (confirmed != true) {
-      print('User cancelled scanner');
+      debugPrint('User cancelled scanner');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Scan cancelled')),
       );
@@ -3519,7 +3527,7 @@ class _POETabContentState extends State<POETabContent> {
         // Close processing dialog
         if (mounted) Navigator.of(context).pop();
 
-        print('Error: No result returned from CameraScanPage');
+        debugPrint('Error: No result returned from CameraScanPage');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Scanner operation was cancelled or failed')),
@@ -3533,7 +3541,7 @@ class _POETabContentState extends State<POETabContent> {
         // Close processing dialog
         if (mounted) Navigator.of(context).pop();
 
-        print('Error: No valid file returned from CameraScanPage');
+        debugPrint('Error: No valid file returned from CameraScanPage');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No valid document captured')),
         );
@@ -3545,7 +3553,7 @@ class _POETabContentState extends State<POETabContent> {
         // Close processing dialog
         if (mounted) Navigator.of(context).pop();
 
-        print('Error: Expected PDF file for LogBook, got ${file.path}');
+        debugPrint('Error: Expected PDF file for LogBook, got ${file.path}');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -3567,7 +3575,7 @@ class _POETabContentState extends State<POETabContent> {
         int successfulUploads = 0;
         int failedUploads = 0;
 
-        print('Starting logbook upload for $totalItems items');
+        debugPrint('Starting logbook upload for $totalItems items');
 
         // Send a single bulk request for all logbook items
         var request = http.MultipartRequest('POST', url)
@@ -3580,7 +3588,7 @@ class _POETabContentState extends State<POETabContent> {
           ..fields['unit_standard_name'] = unitStandard
           ..fields['logbook_text'] = 'Logbook entries for $unitStandard';
 
-        print(
+        debugPrint(
             'Uploading single logbook document for ${logBookItems.length} items: ${document.path}, Size: ${await document.length()} bytes');
 
         // Generate standardized filename for server
@@ -3602,7 +3610,7 @@ class _POETabContentState extends State<POETabContent> {
           filename: standardizedName,
         ));
 
-        print('Assigned filename for logbook: $standardizedName');
+        debugPrint('Assigned filename for logbook: $standardizedName');
 
         // Show upload progress dialog
         showDialog(
@@ -3659,7 +3667,7 @@ class _POETabContentState extends State<POETabContent> {
               ),
             );
           } else {
-            print('❌ Server error for logbook upload: ${decoded['message']}');
+            debugPrint('❌ Server error for logbook upload: ${decoded['message']}');
             // Save locally for all exercises
             for (var item in logBookItems) {
               final exercise = item['exercise']?.toString() ?? 'N/A';
@@ -3679,7 +3687,7 @@ class _POETabContentState extends State<POETabContent> {
           // Close upload dialog if open
           if (mounted) Navigator.of(context).pop();
 
-          print('❌ Upload error for logbook: $e');
+          debugPrint('❌ Upload error for logbook: $e');
           // Save locally for all exercises
           for (var item in logBookItems) {
             final exercise = item['exercise']?.toString() ?? 'N/A';
@@ -3700,7 +3708,7 @@ class _POETabContentState extends State<POETabContent> {
           });
         }
 
-        print(
+        debugPrint(
             'Logbook upload complete: $successfulUploads successful, $failedUploads failed/saved locally');
 
         // Force UI update by ensuring all logbook items are marked as completed
@@ -3724,13 +3732,13 @@ class _POETabContentState extends State<POETabContent> {
         );
       } else {
         // Save locally for all logbook items
-        print(
+        debugPrint(
             '[OFFLINE_SCAN] No internet connection, saving all ${logBookItems.length} logbook items locally');
         int localSaveCount = 0;
 
         for (var item in logBookItems) {
           final exercise = item['exercise']?.toString() ?? 'N/A';
-          print(
+          debugPrint(
               '[OFFLINE_SCAN] Processing logbook item $localSaveCount/${logBookItems.length}: $exercise');
 
           await _saveLocally(
@@ -3739,11 +3747,11 @@ class _POETabContentState extends State<POETabContent> {
 
           // Verify it was marked
           final uploadKey = _uploadKey('LogBook', exercise, unitStandard);
-          print(
+          debugPrint(
               '[OFFLINE_SCAN] Logbook item $exercise marked as: ${uploadedExercises[uploadKey]}');
         }
 
-        print(
+        debugPrint(
             '[OFFLINE_SCAN] All $localSaveCount logbook items saved, forcing UI update...');
 
         // Force UI update by ensuring all logbook items are marked as completed
@@ -3760,7 +3768,7 @@ class _POETabContentState extends State<POETabContent> {
         // Refresh upload status to update UI from database
         await _refreshUploadStatus();
 
-        print('[OFFLINE_SCAN] UI refresh complete');
+        debugPrint('[OFFLINE_SCAN] UI refresh complete');
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -3769,7 +3777,7 @@ class _POETabContentState extends State<POETabContent> {
         );
       }
     } catch (e, stackTrace) {
-      print('Error in _openLogBookCamera: $e\nStackTrace: $stackTrace');
+      debugPrint('Error in _openLogBookCamera: $e\nStackTrace: $stackTrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -3896,7 +3904,7 @@ class _POETabContentState extends State<POETabContent> {
           await _saveLocally(pdfFile, assessmentType, exercise, null);
         }
       } catch (e) {
-        print('Upload error: $e');
+        debugPrint('Upload error: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to upload to server')),
         );
@@ -3934,7 +3942,7 @@ class _POETabContentState extends State<POETabContent> {
           await document.copy(targetFilePath);
         }
         filePath = targetFilePath;
-        print('[POE_OFFLINE] Using target file path: $filePath');
+        debugPrint('[POE_OFFLINE] Using target file path: $filePath');
       } else {
         final extension = filePath.split('.').last;
         final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -3948,15 +3956,15 @@ class _POETabContentState extends State<POETabContent> {
         if (!document.path.startsWith(poeDir.path)) {
           await document.copy(newFilePath);
           filePath = newFilePath;
-          print('[POE_OFFLINE] Document copied to: $filePath');
+          debugPrint('[POE_OFFLINE] Document copied to: $filePath');
         } else {
-          print(
+          debugPrint(
               '[POE_OFFLINE] Document already in POE directory: ${document.path}');
           filePath = document.path;
         }
       }
     } catch (e) {
-      print('[POE_OFFLINE] Error copying file: $e');
+      debugPrint('[POE_OFFLINE] Error copying file: $e');
       filePath = document.path;
     }
 
@@ -3990,7 +3998,7 @@ class _POETabContentState extends State<POETabContent> {
 
   @override
   Widget build(BuildContext context) {
-    print(
+    debugPrint(
         'Building with pathwaysData: $pathwaysData, isLoading: $isLoading, errorMessage: $errorMessage');
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -4148,10 +4156,10 @@ class _POETabContentState extends State<POETabContent> {
                     final summative = unitEntry.value['summative'] ?? [];
                     final logbook = unitEntry.value['logbook'] ?? [];
 
-                    print('[DEBUG] Unit Standard: ${unitEntry.key}');
-                    print('[DEBUG]   Formative count: ${formative.length}');
-                    print('[DEBUG]   Summative count: ${summative.length}');
-                    print('[DEBUG]   LogBook count: ${logbook.length}');
+                    debugPrint('[DEBUG] Unit Standard: ${unitEntry.key}');
+                    debugPrint('[DEBUG]   Formative count: ${formative.length}');
+                    debugPrint('[DEBUG]   Summative count: ${summative.length}');
+                    debugPrint('[DEBUG]   LogBook count: ${logbook.length}');
 
                     return ExpansionTile(
                       title: Text(unitEntry.key),

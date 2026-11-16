@@ -4,7 +4,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'config.dart';
 import 'services/camera_resource_manager.dart';
@@ -68,7 +67,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
 
   @override
   void dispose() {
-    print('🔄 POE Document Scanner disposing...');
+    debugPrint('🔄 POE Document Scanner disposing...');
 
     // Remove lifecycle observer
     WidgetsBinding.instance.removeObserver(this);
@@ -85,50 +84,50 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
     // Enhanced cleanup to prevent crashes
     try {
       _cameraManager.markMLKitScannerInactive();
-      print('✅ Camera manager cleaned up');
+      debugPrint('✅ Camera manager cleaned up');
     } catch (e) {
-      print('❌ Error cleaning up camera manager: $e');
+      debugPrint('❌ Error cleaning up camera manager: $e');
     }
 
     // Cancel any ongoing operations
     try {
       if (_isScanning || _isUploading) {
-        print(
+        debugPrint(
             '⚠️ Disposing while operations are active - this may cause crashes');
         _crashRecovery.forceReset();
       }
     } catch (e) {
-      print('❌ Error checking operation state: $e');
+      debugPrint('❌ Error checking operation state: $e');
     }
 
     super.dispose();
-    print('✅ POE Document Scanner disposed');
+    debugPrint('✅ POE Document Scanner disposed');
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    print('[DOC_SCAN] App lifecycle state changed to: $state');
+    debugPrint('[DOC_SCAN] App lifecycle state changed to: $state');
 
     switch (state) {
       case AppLifecycleState.resumed:
-        print('[DOC_SCAN] App resumed - checking scanner state');
+        debugPrint('[DOC_SCAN] App resumed - checking scanner state');
         _handleAppResumed();
         break;
       case AppLifecycleState.inactive:
-        print('[DOC_SCAN] App inactive - scanner may be launching');
+        debugPrint('[DOC_SCAN] App inactive - scanner may be launching');
         _handleAppInactive();
         break;
       case AppLifecycleState.paused:
-        print('[DOC_SCAN] App paused - scanner likely active');
+        debugPrint('[DOC_SCAN] App paused - scanner likely active');
         _handleAppPaused();
         break;
       case AppLifecycleState.detached:
-        print('[DOC_SCAN] App detached');
+        debugPrint('[DOC_SCAN] App detached');
         _handleAppDetached();
         break;
       case AppLifecycleState.hidden:
-        print('[DOC_SCAN] App hidden - scanner in foreground');
+        debugPrint('[DOC_SCAN] App hidden - scanner in foreground');
         break;
     }
   }
@@ -176,7 +175,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
 
     // Check if crash recovery detected a problem
     if (_crashRecovery.isScannerCrashed()) {
-      print('[DOC_SCAN] Crash recovery detected scanner crash');
+      debugPrint('[DOC_SCAN] Crash recovery detected scanner crash');
       if (mounted) {
         _showErrorDialog(
           'Scanner Crash Detected',
@@ -192,7 +191,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
   void _handleAppInactive() {
     // App is becoming inactive - scanner may be launching
     if (_isScanning) {
-      print(
+      debugPrint(
           '[DOC_SCAN] App inactive while scanning - normal for scanner launch');
     }
   }
@@ -200,14 +199,14 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
   void _handleAppPaused() {
     // App is paused - scanner is likely in foreground
     if (_isScanning) {
-      print('[DOC_SCAN] App paused while scanning - scanner should be active');
+      debugPrint('[DOC_SCAN] App paused while scanning - scanner should be active');
     }
   }
 
   void _handleAppDetached() {
     // App is being detached - cleanup
     if (_isScanning) {
-      print('[DOC_SCAN] App detached while scanning - force cleanup');
+      debugPrint('[DOC_SCAN] App detached while scanning - force cleanup');
       _isScanning = false;
       final scannerManager = DocumentScannerManager();
       scannerManager.forceReset(); // Fire and forget
@@ -925,7 +924,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
         ),
       );
     } catch (e) {
-      print('Error showing dialog: $e');
+      debugPrint('Error showing dialog: $e');
       // Fallback: show snackbar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -954,8 +953,8 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
       return;
     }
 
-    print('=== Starting POE Document Upload ===');
-    print('File path: ${_pdfFile!.path}');
+    debugPrint('=== Starting POE Document Upload ===');
+    debugPrint('File path: ${_pdfFile!.path}');
 
     setState(() {
       _isUploading = true;
@@ -965,15 +964,15 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
 
     try {
       final fileSize = await _pdfFile!.length();
-      print(
+      debugPrint(
           'File size: $fileSize bytes (${(fileSize / 1024 / 1024).toStringAsFixed(2)} MB)');
 
       // ALWAYS use chunked upload since server requires it
       // Server is configured to only accept chunked uploads
-      print('Using chunked upload (server requirement)...');
+      debugPrint('Using chunked upload (server requirement)...');
       await _uploadChunked();
 
-      print('Upload completed successfully!');
+      debugPrint('Upload completed successfully!');
 
       if (mounted) {
         // Show success message
@@ -998,7 +997,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
           try {
             Navigator.pop(context, true);
           } catch (e) {
-            print('Navigation error after upload: $e');
+            debugPrint('Navigation error after upload: $e');
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -1014,8 +1013,8 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
         }
       }
     } catch (e, stackTrace) {
-      print('Upload error: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('Upload error: $e');
+      debugPrint('Stack trace: $stackTrace');
 
       // ENHANCED ERROR HANDLING: Prevent crashes during error handling
       if (mounted) {
@@ -1025,7 +1024,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
             _statusMessage = 'Upload failed: $e';
           });
         } catch (setStateError) {
-          print('SetState error during upload failure: $setStateError');
+          debugPrint('SetState error during upload failure: $setStateError');
         }
       }
 
@@ -1048,7 +1047,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
                         Navigator.pop(context);
                       }
                     } catch (navError) {
-                      print('Error closing error dialog: $navError');
+                      debugPrint('Error closing error dialog: $navError');
                     }
                   },
                   child: const Text('OK'),
@@ -1057,7 +1056,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
             ),
           );
         } catch (dialogError) {
-          print('Error showing upload error dialog: $dialogError');
+          debugPrint('Error showing upload error dialog: $dialogError');
           // Fallback: show snackbar instead
           try {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -1068,9 +1067,9 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
               ),
             );
           } catch (snackBarError) {
-            print('Error showing snackbar: $snackBarError');
+            debugPrint('Error showing snackbar: $snackBarError');
             // Ultimate fallback: just print the error
-            print('FINAL FALLBACK: Upload failed with error: $e');
+            debugPrint('FINAL FALLBACK: Upload failed with error: $e');
           }
         }
       }
@@ -1078,13 +1077,13 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
   }
 
   Future<void> _uploadDirect() async {
-    print('Starting direct upload...');
+    debugPrint('Starting direct upload...');
 
     // Use AppConfig to get the correct base URL
     // TEMPORARY: Using strict-mode-fixed endpoint to resolve 500 error
     final uri =
         Uri.parse('${AppConfig.baseUrl}/upload_poe_document_strict_fixed.php');
-    print('Upload URL: $uri');
+    debugPrint('Upload URL: $uri');
 
     var request = http.MultipartRequest('POST', uri);
 
@@ -1108,8 +1107,8 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
           'Part ${widget.partNumber}${widget.totalParts != null ? ' of ${widget.totalParts}' : ''}';
     }
 
-    print('Request fields: ${request.fields}');
-    print('Adding file: ${_pdfFile!.path}');
+    debugPrint('Request fields: ${request.fields}');
+    debugPrint('Adding file: ${_pdfFile!.path}');
 
     request.files.add(
       await http.MultipartFile.fromPath('poe_document', _pdfFile!.path),
@@ -1119,26 +1118,26 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
       _statusMessage = 'Uploading...';
     });
 
-    print('Sending request...');
+    debugPrint('Sending request...');
     final response = await request.send();
     final responseBody = await response.stream.bytesToString();
 
-    print('Response status: ${response.statusCode}');
-    print('Response body: $responseBody');
+    debugPrint('Response status: ${response.statusCode}');
+    debugPrint('Response body: $responseBody');
 
     if (response.statusCode == 200) {
       try {
         final jsonResponse = json.decode(responseBody);
-        print('Parsed JSON response: $jsonResponse');
+        debugPrint('Parsed JSON response: $jsonResponse');
 
         if (jsonResponse['success'] != true) {
           throw Exception(jsonResponse['message'] ?? 'Upload failed');
         }
 
-        print('Direct upload successful!');
+        debugPrint('Direct upload successful!');
       } catch (e) {
-        print('Error parsing response: $e');
-        print('Raw response: $responseBody');
+        debugPrint('Error parsing response: $e');
+        debugPrint('Raw response: $responseBody');
         throw Exception('Invalid server response: $e');
       }
     } else {
@@ -1147,7 +1146,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
   }
 
   Future<void> _uploadChunked() async {
-    print('Starting chunked upload...');
+    debugPrint('Starting chunked upload...');
     const chunkSize = 2 * 1024 * 1024; // 2MB chunks
 
     try {
@@ -1155,20 +1154,20 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
       // For large documents (80+ pages), this causes out-of-memory crash
       // during PDF creation. Batch scanning (50-80 pages) is required.
       final fileSize = await _pdfFile!.length();
-      print(
+      debugPrint(
           'File size: $fileSize bytes (${(fileSize / 1024 / 1024).toStringAsFixed(2)} MB)');
 
       final totalChunks = (fileSize / chunkSize).ceil();
       final fileId = DateTime.now().millisecondsSinceEpoch.toString();
 
-      print('Total chunks: $totalChunks, File ID: $fileId');
+      debugPrint('Total chunks: $totalChunks, File ID: $fileId');
 
       // Open file for reading
       final randomAccessFile = await _pdfFile!.open(mode: FileMode.read);
 
       try {
         for (int i = 0; i < totalChunks; i++) {
-          print('Uploading chunk ${i + 1} of $totalChunks...');
+          debugPrint('Uploading chunk ${i + 1} of $totalChunks...');
 
           final start = i * chunkSize;
           final end = min(start + chunkSize, fileSize);
@@ -1178,13 +1177,13 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
           await randomAccessFile.setPosition(start);
           final chunk = await randomAccessFile.read(chunkLength);
 
-          print('Chunk $i: ${chunk.length} bytes (from $start to $end)');
+          debugPrint('Chunk $i: ${chunk.length} bytes (from $start to $end)');
 
           // TEMPORARY: Using strict-mode-fixed endpoint to resolve 500 error
           final uri = Uri.parse(
               '${AppConfig.baseUrl}/upload_poe_document_strict_fixed.php');
-          print('[CONFIG] Base URL: ${AppConfig.baseUrl}');
-          print('Upload URL: $uri');
+          debugPrint('[CONFIG] Base URL: ${AppConfig.baseUrl}');
+          debugPrint('Upload URL: $uri');
 
           var request = http.MultipartRequest('POST', uri);
 
@@ -1224,12 +1223,12 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
             ),
           );
 
-          print('Sending chunk ${i + 1}...');
+          debugPrint('Sending chunk ${i + 1}...');
           final response = await request.send();
           final responseBody = await response.stream.bytesToString();
 
-          print('Chunk ${i + 1} response status: ${response.statusCode}');
-          print('Chunk ${i + 1} response body: $responseBody');
+          debugPrint('Chunk ${i + 1} response status: ${response.statusCode}');
+          debugPrint('Chunk ${i + 1} response body: $responseBody');
 
           if (response.statusCode != 200) {
             throw Exception(
@@ -1243,16 +1242,16 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
                   'Chunk $i failed: ${jsonResponse['message'] ?? 'Unknown error'}');
             }
 
-            print('Chunk ${i + 1} uploaded successfully');
+            debugPrint('Chunk ${i + 1} uploaded successfully');
 
             // Optional: Log the chunk size verification from server response
             if (jsonResponse.containsKey('chunk_size')) {
-              print(
+              debugPrint(
                   'Server confirmed chunk size: ${jsonResponse['chunk_size']} bytes');
             }
           } catch (e) {
-            print('Error parsing response for chunk $i: $e');
-            print('Raw response: $responseBody');
+            debugPrint('Error parsing response for chunk $i: $e');
+            debugPrint('Raw response: $responseBody');
             throw Exception('Invalid response for chunk $i: $e');
           }
 
@@ -1267,13 +1266,13 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
       } finally {
         // Always close the file handle
         await randomAccessFile.close();
-        print('File handle closed');
+        debugPrint('File handle closed');
       }
 
-      print('All chunks uploaded successfully!');
+      debugPrint('All chunks uploaded successfully!');
     } catch (e, stackTrace) {
-      print('Chunked upload error: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('Chunked upload error: $e');
+      debugPrint('Stack trace: $stackTrace');
       rethrow;
     }
   }

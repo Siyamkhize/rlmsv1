@@ -1,0 +1,23 @@
+# Block ALL PHP execution in this directory
+# This prevents uploaded malicious PHP files from running
+
+# Disable PHP engine completely
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+
+# Block direct access to PHP files
+<FilesMatch "\.php$">
+    Require all denied
+</FilesMatch>
+
+# Only allow image files
+<FilesMatch "(?i)\.(jpe?g|png|gif)$">
+    Require all granted
+</FilesMatch>
+
+# Deny everything else
+Require all denied

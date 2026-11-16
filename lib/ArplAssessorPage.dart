@@ -18,7 +18,6 @@ import 'database_helper.dart';
 import 'config.dart';
 import 'utils/scanner_pdf_resolver.dart';
 import 'ArplClassDetailsPage.dart';
-import 'ArplAssessorMarkingPage.dart';
 import 'ArplHierarchicalNavigatorPage.dart';
 import 'ArplToolkitRouter.dart';
 import 'arpl_assessor_clocking_page.dart';
@@ -41,9 +40,9 @@ class _ArplAssessorPageState extends State<ArplAssessorPage> {
   @override
   void initState() {
     super.initState();
-    print('[ArplAssessorPage] ===== INITIALIZATION =====');
-    print('[ArplAssessorPage] Facilitator ID: ${widget.facilitator_id}');
-    print('[ArplAssessorPage] Starting fetchClasses...');
+    debugPrint('[ArplAssessorPage] ===== INITIALIZATION =====');
+    debugPrint('[ArplAssessorPage] Facilitator ID: ${widget.facilitator_id}');
+    debugPrint('[ArplAssessorPage] Starting fetchClasses...');
     _classes = fetchClasses(widget.facilitator_id);
   }
 
@@ -64,7 +63,7 @@ class _ArplAssessorPageState extends State<ArplAssessorPage> {
       }
       return 'Assessor';
     } catch (e) {
-      print('[ArplAssessorPage] Error fetching facilitator name: $e');
+      debugPrint('[ArplAssessorPage] Error fetching facilitator name: $e');
       return 'Assessor';
     }
   }
@@ -75,7 +74,7 @@ class _ArplAssessorPageState extends State<ArplAssessorPage> {
         'facilitator_id': facilitatorId,
       });
 
-      print('[ArplAssessorPage] Fetching classes from: $url');
+      debugPrint('[ArplAssessorPage] Fetching classes from: $url');
 
       final response = await http.get(Uri.parse(url));
 
@@ -98,9 +97,9 @@ class _ArplAssessorPageState extends State<ArplAssessorPage> {
                           .toUpperCase() ??
                       '';
 
-              print(
+              debugPrint(
                   '[ArplAssessorPage] DEBUG: Raw pathway from data: "${data[0]['Project_pathway']}"');
-              print('[ArplAssessorPage] DEBUG: Uppercased pathway: "$pathway"');
+              debugPrint('[ArplAssessorPage] DEBUG: Uppercased pathway: "$pathway"');
 
               // Try to parse OFO code from Project_pathway JSON
               try {
@@ -112,11 +111,11 @@ class _ArplAssessorPageState extends State<ArplAssessorPage> {
                   if (pathwayList.isNotEmpty &&
                       pathwayList[0]['ofo_code'] != null) {
                     _ofoNumber = pathwayList[0]['ofo_code'].toString();
-                    print('[ArplAssessorPage] Extracted OFO Code: $_ofoNumber');
+                    debugPrint('[ArplAssessorPage] Extracted OFO Code: $_ofoNumber');
                   }
                 }
               } catch (e) {
-                print('[ArplAssessorPage] Could not parse OFO code: $e');
+                debugPrint('[ArplAssessorPage] Could not parse OFO code: $e');
               }
 
               // Check for ARPL detection in multiple formats:
@@ -131,10 +130,10 @@ class _ArplAssessorPageState extends State<ArplAssessorPage> {
                   pathway.contains('PLUMBER') ||
                   pathway.contains('ELECTRICITY');
 
-              print('[ArplAssessorPage] DEBUG: isARPL check result: $isARPL');
-              print(
+              debugPrint('[ArplAssessorPage] DEBUG: isARPL check result: $isARPL');
+              debugPrint(
                   '[ArplAssessorPage] DEBUG: Contains ARPL? ${pathway.contains('ARPL')}');
-              print(
+              debugPrint(
                   '[ArplAssessorPage] DEBUG: Contains BRICKLAYER? ${pathway.contains('BRICKLAYER')}');
 
               if (isARPL) {
@@ -143,7 +142,7 @@ class _ArplAssessorPageState extends State<ArplAssessorPage> {
                 _pathwayType = pathway;
               }
 
-              print(
+              debugPrint(
                   '[ArplAssessorPage] Detected Pathway: $_pathwayType (from data: $pathway, isARPL: $isARPL)');
             });
           }
@@ -156,7 +155,7 @@ class _ArplAssessorPageState extends State<ArplAssessorPage> {
             'Failed to load classes. Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('[AssessorPage] Error fetching classes: $e');
+      debugPrint('[AssessorPage] Error fetching classes: $e');
       throw Exception('Failed to load classes. Error: $e');
     }
   }
@@ -412,13 +411,13 @@ class _ArplAssessorPageState extends State<ArplAssessorPage> {
 
   @override
   Widget build(BuildContext context) {
-    print('[ArplAssessorPage] ===== BUILD METHOD =====');
-    print('[ArplAssessorPage] _pathwayType: "$_pathwayType"');
-    print(
+    debugPrint('[ArplAssessorPage] ===== BUILD METHOD =====');
+    debugPrint('[ArplAssessorPage] _pathwayType: "$_pathwayType"');
+    debugPrint(
         '[ArplAssessorPage] Will show ${_pathwayType == 'ARPL' ? 'ARPL' : 'DEFAULT'} dashboard');
-    print(
+    debugPrint(
         '[ArplAssessorPage] Will use ${_pathwayType == 'ARPL' ? '_buildARPLDrawerItems' : '_buildDefaultDrawerItems'}');
-    print('[ArplAssessorPage] ===========================');
+    debugPrint('[ArplAssessorPage] ===========================');
 
     return Scaffold(
       appBar: AppBar(
@@ -705,7 +704,7 @@ class _AssessmentPreparationPageState extends State<AssessmentPreparationPage> {
         setState(() => _isLoadingLearners = false);
       }
     } catch (e) {
-      print('Error fetching learners: $e');
+      debugPrint('Error fetching learners: $e');
       setState(() => _isLoadingLearners = false);
     }
   }
@@ -1012,7 +1011,7 @@ class _UnitStandardDetailPageState extends State<UnitStandardDetailPage> {
           'prep_table': prepTable,
         };
 
-        print("Sending payload: ${jsonEncode(payload)}");
+        debugPrint("Sending payload: ${jsonEncode(payload)}");
         final response = await http.post(
           Uri.parse(
               'https://rlms.rlms.co.za/mobile/save_assessment_preparation.php'),
@@ -1020,7 +1019,7 @@ class _UnitStandardDetailPageState extends State<UnitStandardDetailPage> {
           body: jsonEncode(payload),
         );
 
-        print("Raw response: ${response.statusCode} - ${response.body}");
+        debugPrint("Raw response: ${response.statusCode} - ${response.body}");
         if (response.statusCode == 200) {
           var data = jsonDecode(response.body);
           setState(() {
@@ -1059,7 +1058,7 @@ class _UnitStandardDetailPageState extends State<UnitStandardDetailPage> {
           _responseMessage = 'Error saving form: $e';
           _isSubmitting = false;
         });
-        print("Exception: $e");
+        debugPrint("Exception: $e");
         if (!mounted) return;
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1428,14 +1427,14 @@ class _AssessmentPlanDetailPageState extends State<AssessmentPlanDetailPage> {
           'assessment_method': _assessmentMethod,
         };
 
-        print("Sending payload: ${jsonEncode(payload)}");
+        debugPrint("Sending payload: ${jsonEncode(payload)}");
         final response = await http.post(
           Uri.parse('https://rlms.rlms.co.za/mobile/save_assessment_plan.php'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(payload),
         );
 
-        print("Raw response: ${response.statusCode} - ${response.body}");
+        debugPrint("Raw response: ${response.statusCode} - ${response.body}");
         if (response.statusCode == 200) {
           var data = jsonDecode(response.body);
           setState(() {
@@ -1475,7 +1474,7 @@ class _AssessmentPlanDetailPageState extends State<AssessmentPlanDetailPage> {
           _responseMessage = 'Error saving form: $e';
           _isSubmitting = false;
         });
-        print("Exception: $e");
+        debugPrint("Exception: $e");
         if (!mounted) return;
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1762,7 +1761,7 @@ class _AssessorReportPageState extends State<AssessorReportPage> {
         setState(() => _isLoadingLearners = false);
       }
     } catch (e) {
-      print('Error fetching learners: $e');
+      debugPrint('Error fetching learners: $e');
       setState(() => _isLoadingLearners = false);
     }
   }
@@ -1955,13 +1954,13 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
         '_': DateTime.now().millisecondsSinceEpoch.toString(),
       });
 
-      print('[ClassDetailsPage] Fetching learners from: $url');
+      debugPrint('[ClassDetailsPage] Fetching learners from: $url');
       final response = await http.get(Uri.parse(url));
 
-      print('[ClassDetailsPage] Response Status: ${response.statusCode}');
-      print('[ClassDetailsPage] Response Headers: ${response.headers}');
-      print('[ClassDetailsPage] Response Body Length: ${response.body.length}');
-      print(
+      debugPrint('[ClassDetailsPage] Response Status: ${response.statusCode}');
+      debugPrint('[ClassDetailsPage] Response Headers: ${response.headers}');
+      debugPrint('[ClassDetailsPage] Response Body Length: ${response.body.length}');
+      debugPrint(
           '[ClassDetailsPage] Response Body (get_learners): ${response.body}');
 
       if (response.statusCode == 200) {
@@ -1983,31 +1982,31 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
             'learnerId': learnerId,
           });
 
-          print('[ClassDetailsPage] Fetching POE from: $poeUrl');
+          debugPrint('[ClassDetailsPage] Fetching POE from: $poeUrl');
           final poeResponse = await http.get(Uri.parse(poeUrl));
 
-          print(
+          debugPrint(
               'POE Response Status for learner $learnerId: ${poeResponse.statusCode}');
-          print(
+          debugPrint(
               'POE Response Body for learner $learnerId: ${poeResponse.body}');
 
           if (poeResponse.statusCode == 200) {
             if (poeResponse.body.isEmpty) {
               learner['poeData'] = {'pathways': {}};
-              print('Empty POE response for learner $learnerId');
+              debugPrint('Empty POE response for learner $learnerId');
             } else {
               try {
                 Map<String, dynamic> poeData = jsonDecode(poeResponse.body);
                 learner['poeData'] = poeData;
-                print('POE Data for learner $learnerId: $poeData');
+                debugPrint('POE Data for learner $learnerId: $poeData');
               } catch (e) {
                 learner['poeData'] = {'pathways': {}};
-                print('Failed to parse POE JSON for learner $learnerId: $e');
+                debugPrint('Failed to parse POE JSON for learner $learnerId: $e');
               }
             }
           } else {
             learner['poeData'] = {'pathways': {}};
-            print(
+            debugPrint(
                 'Failed to fetch POE for learner $learnerId, status: ${poeResponse.statusCode}');
           }
         }
@@ -2018,7 +2017,7 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
             'Failed to load learners. Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching learners: $e');
+      debugPrint('Error fetching learners: $e');
       throw Exception('Failed to load learners. Error: $e');
     }
   }
@@ -2028,7 +2027,7 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
     String learnerId = learner['LearnerID'].toString();
 
     if (poeData.isEmpty) {
-      print('No POE data for learner $learnerId, color: white');
+      debugPrint('No POE data for learner $learnerId, color: white');
       return Colors.white;
     }
 
@@ -2045,20 +2044,20 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
 
           // Check summative assessments
           for (var assessment in assessments['summative'] ?? []) {
-            print(
+            debugPrint(
                 'Checking summative assessment for learner $learnerId, exercise: ${assessment['exercise']}, '
                 'filePath: ${assessment['filePath']}, marks_scored: ${assessment['marks_scored']}');
             if (assessment['filePath'] != null &&
                 assessment['filePath'].isNotEmpty) {
               hasFile = true;
-              print(
+              debugPrint(
                   'Found file for learner $learnerId in summative, setting hasFile to true');
             }
             var marksScored = assessment['marks_scored'];
             if (marksScored == null ||
                 (marksScored is num && marksScored <= 0)) {
               allMarksScored = false;
-              print(
+              debugPrint(
                   'Missing or zero marks for summative exercise ${assessment['exercise']} in learner $learnerId, '
                   'setting allMarksScored to false');
             }
@@ -2066,20 +2065,20 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
 
           // Check formative assessments
           for (var assessment in assessments['formative'] ?? []) {
-            print(
+            debugPrint(
                 'Checking formative assessment for learner $learnerId, exercise: ${assessment['exercise']}, '
                 'filePath: ${assessment['filePath']}, marks_scored: ${assessment['marks_scored']}');
             if (assessment['filePath'] != null &&
                 assessment['filePath'].isNotEmpty) {
               hasFile = true;
-              print(
+              debugPrint(
                   'Found file for learner $learnerId in formative, setting hasFile to true');
             }
             var marksScored = assessment['marks_scored'];
             if (marksScored == null ||
                 (marksScored is num && marksScored <= 0)) {
               allMarksScored = false;
-              print(
+              debugPrint(
                   'Missing or zero marks for formative exercise ${assessment['exercise']} in learner $learnerId, '
                   'setting allMarksScored to false');
             }
@@ -2089,15 +2088,15 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
     }
 
     if (allMarksScored && hasFile) {
-      print(
+      debugPrint(
           'All exercises for learner $learnerId have marks and at least one file, color: green');
       return Colors.green;
     }
     if (hasFile) {
-      print('Learner $learnerId has file but not all marks, color: amber');
+      debugPrint('Learner $learnerId has file but not all marks, color: amber');
       return Colors.amber;
     }
-    print('Learner $learnerId has no file or all marks, color: white');
+    debugPrint('Learner $learnerId has no file or all marks, color: white');
     return Colors.white;
   }
 
@@ -2668,11 +2667,11 @@ class _POETabState extends State<POETab> {
         'learnerId': learnerId,
       });
 
-      print('[POETab] Fetching POE from: $url');
+      debugPrint('[POETab] Fetching POE from: $url');
       final response = await http.get(Uri.parse(url));
 
-      print('[POETab] POE Response Status: ${response.statusCode}');
-      print('[POETab] POE Response Body: ${response.body}');
+      debugPrint('[POETab] POE Response Status: ${response.statusCode}');
+      debugPrint('[POETab] POE Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -2681,7 +2680,7 @@ class _POETabState extends State<POETab> {
             'Failed to load POE data. Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('[POETab] Error fetching POE: $e');
+      debugPrint('[POETab] Error fetching POE: $e');
       throw Exception('Failed to load POE data. Error: $e');
     }
   }
@@ -2822,7 +2821,7 @@ class _POETabState extends State<POETab> {
     // Defensive: some backends place remedial items inside the main buckets
     // (e.g. type == SummativeRemedial but stored under 'summative').
     // Split them out here so the UI always shows Remedial sections when present.
-    bool _isRemedial(dynamic ex, String kind) {
+    bool isRemedial(dynamic ex, String kind) {
       final t = (ex is Map ? (ex['type'] ?? ex['assessment_type']) : null)
           ?.toString()
           .toLowerCase()
@@ -2838,19 +2837,19 @@ class _POETabState extends State<POETab> {
 
     if (formative.isNotEmpty) {
       final moved =
-          formative.where((ex) => _isRemedial(ex, 'formative')).toList();
+          formative.where((ex) => isRemedial(ex, 'formative')).toList();
       if (moved.isNotEmpty) {
         formative =
-            formative.where((ex) => !_isRemedial(ex, 'formative')).toList();
+            formative.where((ex) => !isRemedial(ex, 'formative')).toList();
         formativeRemedial = [...formativeRemedial, ...moved];
       }
     }
     if (summative.isNotEmpty) {
       final moved =
-          summative.where((ex) => _isRemedial(ex, 'summative')).toList();
+          summative.where((ex) => isRemedial(ex, 'summative')).toList();
       if (moved.isNotEmpty) {
         summative =
-            summative.where((ex) => !_isRemedial(ex, 'summative')).toList();
+            summative.where((ex) => !isRemedial(ex, 'summative')).toList();
         summativeRemedial = [...summativeRemedial, ...moved];
       }
     }
@@ -3401,44 +3400,44 @@ class _POETabState extends State<POETab> {
     try {
       final assessmentDate = DateTime.now().toIso8601String().split('T').first;
 
-      print(
+      debugPrint(
           'DEBUG Pothole: Checking for learner ${widget.learnerId}, date $assessmentDate');
 
       // PRIORITY 1: Check server first using unified endpoint (checks both scanned and system)
       try {
         final url =
             '${AppConfig.baseUrl}/view_pothole_checklists.php?learner_id=${widget.learnerId}';
-        print('DEBUG Pothole: Checking server at $url');
+        debugPrint('DEBUG Pothole: Checking server at $url');
 
         final response =
             await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
 
-        print('DEBUG Pothole: Response status ${response.statusCode}');
-        print('DEBUG Pothole: Response body ${response.body}');
+        debugPrint('DEBUG Pothole: Response status ${response.statusCode}');
+        debugPrint('DEBUG Pothole: Response body ${response.body}');
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           if (data['status'] == 'success' && data['data'] != null) {
             final type = data['data']['type'] ?? 'system';
-            print('DEBUG Pothole: Found checklist on server, type=$type');
+            debugPrint('DEBUG Pothole: Found checklist on server, type=$type');
             return {
               'exists': true,
               'type': type,
               'data': data['data'],
             };
           } else {
-            print(
+            debugPrint(
                 'DEBUG Pothole: No checklist on server - ${data['message'] ?? 'Unknown error'}');
           }
         } else {
-          print('DEBUG Pothole: Server returned status ${response.statusCode}');
+          debugPrint('DEBUG Pothole: Server returned status ${response.statusCode}');
         }
       } catch (e) {
-        print('DEBUG Pothole: Error checking server: $e');
+        debugPrint('DEBUG Pothole: Error checking server: $e');
       }
 
       // PRIORITY 2: Fallback to local database for scanned document
-      print('DEBUG Pothole: Checking local database as fallback');
+      debugPrint('DEBUG Pothole: Checking local database as fallback');
       final scannedDoc = await DatabaseHelper().getScannedPotholeChecklist(
         learnerId: widget.learnerId,
         assessorId: '', // Empty to check any assessor
@@ -3446,7 +3445,7 @@ class _POETabState extends State<POETab> {
       );
 
       if (scannedDoc != null) {
-        print(
+        debugPrint(
             'DEBUG Pothole: Found scanned document in local DB at ${scannedDoc['document_path']}');
         return {
           'exists': true,
@@ -3455,14 +3454,14 @@ class _POETabState extends State<POETab> {
         };
       }
 
-      print('DEBUG Pothole: No checklist found anywhere');
+      debugPrint('DEBUG Pothole: No checklist found anywhere');
       return {
         'exists': false,
         'type': 'none',
         'data': null,
       };
     } catch (e) {
-      print('DEBUG Pothole: Error in _checkPotholeChecklistStatus: $e');
+      debugPrint('DEBUG Pothole: Error in _checkPotholeChecklistStatus: $e');
       return {
         'exists': false,
         'type': 'none',
@@ -3472,14 +3471,14 @@ class _POETabState extends State<POETab> {
   }
 
   void _viewPotholeChecklist(String type, Map<String, dynamic>? data) {
-    print('DEBUG: _viewPotholeChecklist called with type=$type');
-    print('DEBUG: data keys: ${data?.keys}');
-    print('DEBUG: Full data: $data');
+    debugPrint('DEBUG: _viewPotholeChecklist called with type=$type');
+    debugPrint('DEBUG: data keys: ${data?.keys}');
+    debugPrint('DEBUG: Full data: $data');
 
     // The data is already the inner data object from the server response
     if (type == 'scanned' && data?['document_path'] != null) {
-      print('DEBUG: Navigating to scanned PDF view page');
-      print('DEBUG: document_path=${data!['document_path']}');
+      debugPrint('DEBUG: Navigating to scanned PDF view page');
+      debugPrint('DEBUG: document_path=${data!['document_path']}');
 
       // Navigate to scanned document view page with marking
       Navigator.push(
@@ -3495,8 +3494,8 @@ class _POETabState extends State<POETab> {
         ),
       );
     } else if (type == 'system' && data != null) {
-      print('DEBUG: Navigating to system checklist view page');
-      print(
+      debugPrint('DEBUG: Navigating to system checklist view page');
+      debugPrint(
           'DEBUG: checklist_items count: ${(data['checklist_items'] as Map?)?.length ?? 0}');
 
       // Navigate to full page view for system-generated checklist
@@ -3510,8 +3509,8 @@ class _POETabState extends State<POETab> {
         ),
       );
     } else {
-      print('DEBUG: No action taken - type=$type, has data=${data != null}');
-      print(
+      debugPrint('DEBUG: No action taken - type=$type, has data=${data != null}');
+      debugPrint(
           'DEBUG: Expected document_path or checklist_items but got: ${data?.keys}');
     }
   }
@@ -3672,8 +3671,8 @@ class _POETabState extends State<POETab> {
     try {
       final url = AppConfig.buildUrl('save_comment.php');
 
-      print('[POETab] Saving comment to: $url');
-      print('[POETab] Assessment type: $assessmentType, isUpdate: $isUpdate');
+      debugPrint('[POETab] Saving comment to: $url');
+      debugPrint('[POETab] Assessment type: $assessmentType, isUpdate: $isUpdate');
 
       final response = await http.post(
         Uri.parse(url),
@@ -3686,8 +3685,8 @@ class _POETabState extends State<POETab> {
         }),
       );
 
-      print('[POETab] Response status: ${response.statusCode}');
-      print('[POETab] Response body: ${response.body}');
+      debugPrint('[POETab] Response status: ${response.statusCode}');
+      debugPrint('[POETab] Response body: ${response.body}');
 
       if (!mounted) return;
       if (!context.mounted) return;
@@ -3787,7 +3786,7 @@ class _POETabState extends State<POETab> {
         );
       }
     } catch (e) {
-      print('[POETab] Error saving comment: $e');
+      debugPrint('[POETab] Error saving comment: $e');
       setState(() {
         _responseMessage = 'Error saving comment: $e';
       });
@@ -3811,7 +3810,7 @@ class _POETabState extends State<POETab> {
       try {
         specificOutcomeArray = jsonDecode(specificOutcome);
       } catch (e) {
-        print('Error parsing specificOutcome: $e');
+        debugPrint('Error parsing specificOutcome: $e');
       }
 
       // Check if this exercise already has marks (for update vs insert)
@@ -3862,12 +3861,12 @@ class _POETabState extends State<POETab> {
       if (exerciseForPayload['exercise'] != null) {
         String name = exerciseForPayload['exercise'].toString();
         if (name.length > 255) {
-          exerciseForPayload['exercise'] = name.substring(0, 252) + '...';
+          exerciseForPayload['exercise'] = '${name.substring(0, 252)}...';
         }
       } else if (exerciseForPayload['exercise_name'] != null) {
         String name = exerciseForPayload['exercise_name'].toString();
         if (name.length > 255) {
-          exerciseForPayload['exercise_name'] = name.substring(0, 252) + '...';
+          exerciseForPayload['exercise_name'] = '${name.substring(0, 252)}...';
         }
       }
 
@@ -3879,11 +3878,11 @@ class _POETabState extends State<POETab> {
         'specific_outcome': specificOutcomeArray,
         'isUpdate': hasExistingMarks, // Tell backend this is an update
       };
-      print(
+      debugPrint(
           "Submitting payload (isUpdate: $hasExistingMarks): ${jsonEncode(payload)}");
 
       final saveMarksUrl = AppConfig.buildUrl('save_marks.php');
-      print('[POETab] Saving marks to: $saveMarksUrl');
+      debugPrint('[POETab] Saving marks to: $saveMarksUrl');
 
       final response = await http
           .post(
@@ -3892,8 +3891,8 @@ class _POETabState extends State<POETab> {
             body: jsonEncode(payload),
           )
           .timeout(const Duration(seconds: 15));
-      print('[POETab] save_marks.php status: ${response.statusCode}');
-      print('[POETab] save_marks.php body: ${response.body}');
+      debugPrint('[POETab] save_marks.php status: ${response.statusCode}');
+      debugPrint('[POETab] save_marks.php body: ${response.body}');
 
       if (!mounted) return;
       if (!context.mounted) return;
@@ -3964,9 +3963,9 @@ class _POETabState extends State<POETab> {
                             body: jsonEncode(updatePayload),
                           )
                           .timeout(const Duration(seconds: 15));
-                      print(
+                      debugPrint(
                           '[POETab] save_marks.php(update) status: ${updateResponse.statusCode}');
-                      print(
+                      debugPrint(
                           '[POETab] save_marks.php(update) body: ${updateResponse.body}');
 
                       if (updateResponse.statusCode == 200) {
@@ -4283,7 +4282,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
 
       // Check if file already exists locally
       if (await file.exists()) {
-        print('[PDF] Loading existing file found locally: ${file.path}');
+        debugPrint('[PDF] Loading existing file found locally: ${file.path}');
         setState(() {
           _localPath = file.path;
           _isLoading = false;
@@ -4292,13 +4291,13 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
       }
 
       // If file doesn't exist, try to download it
-      print('[PDF] Downloading PDF from: ${widget.pdfUrl}');
+      debugPrint('[PDF] Downloading PDF from: ${widget.pdfUrl}');
       final response = await http.get(Uri.parse(widget.pdfUrl));
-      print('[PDF] Response status code: ${response.statusCode}');
-      print('[PDF] Response headers: ${response.headers}');
+      debugPrint('[PDF] Response status code: ${response.statusCode}');
+      debugPrint('[PDF] Response headers: ${response.headers}');
       if (response.statusCode == 200) {
         await file.writeAsBytes(response.bodyBytes);
-        print(
+        debugPrint(
             '[PDF] PDF saved to: ${file.path}, size: ${response.bodyBytes.length} bytes');
         setState(() {
           _localPath = file.path;
@@ -4312,7 +4311,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
         });
       }
     } catch (e) {
-      print('[PDF ERROR] Exception: $e');
+      debugPrint('[PDF ERROR] Exception: $e');
       setState(() {
         _error = 'Error loading PDF: $e';
         _isLoading = false;
@@ -4356,12 +4355,12 @@ Widget _buildAssessorFeedback({required String facilitatorId}) {
         'facilitator_id': facilitatorId,
       });
 
-      print('[AssessorFeedback] Fetching classes from: $url');
+      debugPrint('[AssessorFeedback] Fetching classes from: $url');
 
       final response = await http.get(Uri.parse(url));
 
-      print('[AssessorFeedback] Response Status: ${response.statusCode}');
-      print('[AssessorFeedback] Response Body: ${response.body}');
+      debugPrint('[AssessorFeedback] Response Status: ${response.statusCode}');
+      debugPrint('[AssessorFeedback] Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -4382,7 +4381,7 @@ Widget _buildAssessorFeedback({required String facilitatorId}) {
             'Failed to load classes. Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('[AssessorFeedback] Error fetching classes: $e');
+      debugPrint('[AssessorFeedback] Error fetching classes: $e');
       throw Exception('Failed to load classes. Error: $e');
     }
   }
@@ -4480,7 +4479,7 @@ class ClassInfoPage extends StatelessWidget {
             'https://rlms.rlms.co.za/mobile/get_f_learners.php?classID=$classId'),
       );
 
-      print('Response Body: ${response.body}');
+      debugPrint('Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -4506,12 +4505,12 @@ class ClassInfoPage extends StatelessWidget {
     final url = Uri.parse(
         'https://rlms.rlms.co.za/mobile/assessor_feedback.php?learner_id=$learnerId');
     try {
-      print('Attempting to launch URL: $url');
+      debugPrint('Attempting to launch URL: $url');
       bool launched = await launchUrl(
         url,
         mode: LaunchMode.externalApplication,
       );
-      print('launchUrl result: $launched');
+      debugPrint('launchUrl result: $launched');
       if (!context.mounted) return;
       if (!launched) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -4519,7 +4518,7 @@ class ClassInfoPage extends StatelessWidget {
         );
       }
     } catch (e) {
-      print('Error launching URL: $e');
+      debugPrint('Error launching URL: $e');
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error launching URL: $e')),
@@ -4670,7 +4669,7 @@ class _AssessmentReviewPageState extends State<AssessmentReviewPage> {
         setState(() => _isLoadingLearners = false);
       }
     } catch (e) {
-      print('Error fetching learners: $e');
+      debugPrint('Error fetching learners: $e');
       setState(() => _isLoadingLearners = false);
     }
   }
@@ -5156,7 +5155,7 @@ class _AssessmentReviewDetailPageState
               .toList(),
         };
 
-        print("Sending payload: ${jsonEncode(payload)}");
+        debugPrint("Sending payload: ${jsonEncode(payload)}");
         final response = await http.post(
           Uri.parse(
               'https://rlms.rlms.co.za/mobile/save_assessment_review.php'),
@@ -5164,7 +5163,7 @@ class _AssessmentReviewDetailPageState
           body: jsonEncode(payload),
         );
 
-        print("Raw response: ${response.statusCode} - ${response.body}");
+        debugPrint("Raw response: ${response.statusCode} - ${response.body}");
         if (!mounted) return;
         if (!context.mounted) return;
         if (response.statusCode == 200) {
@@ -5201,7 +5200,7 @@ class _AssessmentReviewDetailPageState
           _responseMessage = 'Error saving review: $e';
           _isSubmitting = false;
         });
-        print("Exception: $e");
+        debugPrint("Exception: $e");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
@@ -5929,7 +5928,7 @@ class _AppealFormDetailPageState extends State<AppealFormDetailPage> {
           body: jsonEncode(payload),
         );
 
-        print('Raw server response: ${response.body}'); // Debug raw response
+        debugPrint('Raw server response: ${response.body}'); // Debug raw response
 
         if (!mounted) return;
         if (!context.mounted) return;
@@ -6337,7 +6336,7 @@ class _NonComplianceAndFeedbackPageState
             : '',
       };
 
-      print("Sending payload: ${jsonEncode(payload)}");
+      debugPrint("Sending payload: ${jsonEncode(payload)}");
       final response = await http.post(
         Uri.parse(
             'https://rlms.rlms.co.za/mobile/save_non_compliance_feedback.php'),
@@ -6345,8 +6344,8 @@ class _NonComplianceAndFeedbackPageState
         body: jsonEncode(payload),
       );
 
-      print("Raw response body: ${response.body}");
-      print("Response status code: ${response.statusCode}");
+      debugPrint("Raw response body: ${response.body}");
+      debugPrint("Response status code: ${response.statusCode}");
 
       if (response.statusCode == 200) {
         try {
@@ -6646,16 +6645,16 @@ class _PotholeChecklistClassListPageState
       'facilitator_id': facilitatorId,
     });
 
-    print('[PotholeChecklistClassList] Fetching classes from: $url');
+    debugPrint('[PotholeChecklistClassList] Fetching classes from: $url');
 
     final response = await http.get(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
     );
 
-    print(
+    debugPrint(
         '[PotholeChecklistClassList] Response Status: ${response.statusCode}');
-    print('[PotholeChecklistClassList] Response Body: ${response.body}');
+    debugPrint('[PotholeChecklistClassList] Response Body: ${response.body}');
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -6761,16 +6760,16 @@ class _PotholeChecklistLearnerListPageState
       'classID': classId,
     });
 
-    print('[PotholeChecklistLearnerList] Fetching learners from: $url');
+    debugPrint('[PotholeChecklistLearnerList] Fetching learners from: $url');
 
     final response = await http.get(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
     );
 
-    print(
+    debugPrint(
         '[PotholeChecklistLearnerList] Response Status: ${response.statusCode}');
-    print('[PotholeChecklistLearnerList] Response Body: ${response.body}');
+    debugPrint('[PotholeChecklistLearnerList] Response Body: ${response.body}');
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -7035,20 +7034,20 @@ class _PotholeChecklistLearnerListPageState
   Future<void> _syncScannedDocument(
       String documentPath, String learnerId, String assessmentDate) async {
     try {
-      print('[SYNC] Starting sync for learner: $learnerId');
-      print('[SYNC] Document path: $documentPath');
-      print('[SYNC] Assessment date: $assessmentDate');
+      debugPrint('[SYNC] Starting sync for learner: $learnerId');
+      debugPrint('[SYNC] Document path: $documentPath');
+      debugPrint('[SYNC] Assessment date: $assessmentDate');
 
       final file = File(documentPath);
       if (!await file.exists()) {
-        print('[SYNC] ERROR: File does not exist at path');
+        debugPrint('[SYNC] ERROR: File does not exist at path');
         return;
       }
 
-      print('[SYNC] File exists, size: ${await file.length()} bytes');
+      debugPrint('[SYNC] File exists, size: ${await file.length()} bytes');
 
       final url = '${AppConfig.baseUrl}/upload_scanned_pothole_checklist.php';
-      print('[SYNC] Uploading to: $url');
+      debugPrint('[SYNC] Uploading to: $url');
 
       final request = http.MultipartRequest('POST', Uri.parse(url));
 
@@ -7056,29 +7055,29 @@ class _PotholeChecklistLearnerListPageState
       request.fields['assessor_id'] = widget.facilitatorId ?? '';
       request.fields['assessment_date'] = assessmentDate;
 
-      print('[SYNC] Adding file to request...');
+      debugPrint('[SYNC] Adding file to request...');
       request.files.add(await http.MultipartFile.fromPath(
         'document',
         documentPath,
       ));
 
-      print('[SYNC] Sending request...');
+      debugPrint('[SYNC] Sending request...');
       final response =
           await request.send().timeout(const Duration(seconds: 30));
 
-      print('[SYNC] Response status: ${response.statusCode}');
+      debugPrint('[SYNC] Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
-        print('[SYNC] Response body: $responseBody');
-        print('[SYNC] ✅ Document synced successfully');
+        debugPrint('[SYNC] Response body: $responseBody');
+        debugPrint('[SYNC] ✅ Document synced successfully');
       } else {
         final responseBody = await response.stream.bytesToString();
-        print('[SYNC] ❌ Upload failed with status ${response.statusCode}');
-        print('[SYNC] Response: $responseBody');
+        debugPrint('[SYNC] ❌ Upload failed with status ${response.statusCode}');
+        debugPrint('[SYNC] Response: $responseBody');
       }
     } catch (e) {
-      print('[SYNC] ❌ Error syncing document: $e');
+      debugPrint('[SYNC] ❌ Error syncing document: $e');
     }
   }
 
@@ -7157,7 +7156,7 @@ class _PotholeChecklistLearnerListPageState
         }
       } catch (e) {
         // Offline or server error - just return no checklist
-        print('Server check failed: $e');
+        debugPrint('Server check failed: $e');
       }
 
       return {
@@ -7166,7 +7165,7 @@ class _PotholeChecklistLearnerListPageState
         'data': null,
       };
     } catch (e) {
-      print('Error checking checklist status: $e');
+      debugPrint('Error checking checklist status: $e');
       return {
         'exists': false,
         'type': 'none',
@@ -7223,19 +7222,19 @@ class _PotholeChecklistLearnerListPageState
           filename: images[i].name,
         );
         request.files.add(file);
-        print('Added file ${i + 1}: ${images[i].name}');
+        debugPrint('Added file ${i + 1}: ${images[i].name}');
       }
 
       // Send request
-      print('Sending ${images.length} images for learner $learnerId');
-      print('Request fields: ${request.fields}');
-      print('Request files count: ${request.files.length}');
+      debugPrint('Sending ${images.length} images for learner $learnerId');
+      debugPrint('Request fields: ${request.fields}');
+      debugPrint('Request files count: ${request.files.length}');
 
       var response = await request.send();
       var responseData = await response.stream.bytesToString();
 
-      print('Response status: ${response.statusCode}');
-      print('Response data: $responseData');
+      debugPrint('Response status: ${response.statusCode}');
+      debugPrint('Response data: $responseData');
 
       // Check for non-200 status
       if (response.statusCode != 200) {
@@ -7248,7 +7247,7 @@ class _PotholeChecklistLearnerListPageState
       try {
         jsonResponse = jsonDecode(responseData);
       } catch (e) {
-        print('Failed to parse JSON response: $e');
+        debugPrint('Failed to parse JSON response: $e');
         throw Exception('Invalid server response: $responseData');
       }
 
@@ -7263,11 +7262,11 @@ class _PotholeChecklistLearnerListPageState
 
         // Add debug info if available
         if (jsonResponse['uploaded_files'] != null) {
-          print('Uploaded files: ${jsonResponse['uploaded_files']}');
+          debugPrint('Uploaded files: ${jsonResponse['uploaded_files']}');
         }
         if (jsonResponse['errors'] != null &&
             (jsonResponse['errors'] as List).isNotEmpty) {
-          print('Partial errors: ${jsonResponse['errors']}');
+          debugPrint('Partial errors: ${jsonResponse['errors']}');
           successMsg += '\n(Some files had errors - check console)';
         }
 
@@ -7286,7 +7285,7 @@ class _PotholeChecklistLearnerListPageState
           errorMsg += '\n${(jsonResponse['errors'] as List).join('\n')}';
         }
         if (jsonResponse['debug'] != null) {
-          print('Debug info: ${jsonResponse['debug']}');
+          debugPrint('Debug info: ${jsonResponse['debug']}');
         }
         throw Exception(errorMsg);
       }
@@ -7297,7 +7296,7 @@ class _PotholeChecklistLearnerListPageState
         Navigator.of(context).pop();
       }
 
-      print('Upload error: $e');
+      debugPrint('Upload error: $e');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -7500,12 +7499,12 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
     try {
       final url =
           '${AppConfig.baseUrl}/get_pothole_images.php?learner_id=${widget.learnerId}';
-      print('DEBUG Images: Loading from $url');
+      debugPrint('DEBUG Images: Loading from $url');
 
       final response = await http.get(Uri.parse(url));
 
-      print('DEBUG Images: Response status ${response.statusCode}');
-      print('DEBUG Images: Response body ${response.body}');
+      debugPrint('DEBUG Images: Response status ${response.statusCode}');
+      debugPrint('DEBUG Images: Response body ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -7514,13 +7513,13 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
             _potholeImages =
                 List<Map<String, dynamic>>.from(data['data'] ?? []);
           });
-          print('DEBUG Images: Loaded ${_potholeImages.length} images');
+          debugPrint('DEBUG Images: Loaded ${_potholeImages.length} images');
         } else {
-          print('DEBUG Images: API returned error - ${data['message']}');
+          debugPrint('DEBUG Images: API returned error - ${data['message']}');
         }
       }
     } catch (e) {
-      print('Error loading pothole images: $e');
+      debugPrint('Error loading pothole images: $e');
     } finally {
       setState(() => _isLoadingImages = false);
     }
@@ -7547,7 +7546,7 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
         }
       }
     } catch (e) {
-      print('Error loading marks: $e');
+      debugPrint('Error loading marks: $e');
     } finally {
       setState(() => _isLoading = false);
     }
@@ -7560,8 +7559,8 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
       final response = await http.get(Uri.parse(
           '${AppConfig.baseUrl}/get_logbook_unit_standards.php?learner_id=${widget.learnerId}'));
 
-      print('DEBUG LogBook: Response status ${response.statusCode}');
-      print('DEBUG LogBook: Response body ${response.body}');
+      debugPrint('DEBUG LogBook: Response status ${response.statusCode}');
+      debugPrint('DEBUG LogBook: Response body ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -7577,13 +7576,13 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
             }
           });
 
-          print(
+          debugPrint(
               'DEBUG LogBook: Loaded ${_logbookUnitStandards.length} unit standards');
           await _loadLogbookMarks();
         }
       }
     } catch (e) {
-      print('Error loading logbook unit standards: $e');
+      debugPrint('Error loading logbook unit standards: $e');
     } finally {
       setState(() => _isLoadingLogbook = false);
     }
@@ -7614,7 +7613,7 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
         }
       }
     } catch (e) {
-      print('Error loading logbook marks: $e');
+      debugPrint('Error loading logbook marks: $e');
     }
   }
 
@@ -7769,17 +7768,17 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
 
   @override
   Widget build(BuildContext context) {
-    print('DEBUG ViewPage: checklistData keys: ${widget.checklistData.keys}');
-    print(
+    debugPrint('DEBUG ViewPage: checklistData keys: ${widget.checklistData.keys}');
+    debugPrint(
         'DEBUG ViewPage: learner_name: ${widget.checklistData['learner_name']}');
-    print(
+    debugPrint(
         'DEBUG ViewPage: checklist_items type: ${widget.checklistData['checklist_items'].runtimeType}');
-    print(
+    debugPrint(
         'DEBUG ViewPage: checklist_items: ${widget.checklistData['checklist_items']}');
 
     final items =
         widget.checklistData['checklist_items'] as Map<String, dynamic>? ?? {};
-    print('DEBUG ViewPage: items count: ${items.length}');
+    debugPrint('DEBUG ViewPage: items count: ${items.length}');
 
     return Scaffold(
       appBar: AppBar(
@@ -8481,12 +8480,12 @@ class _PotholeChecklistScannedViewPageState
             _potholeImages =
                 List<Map<String, dynamic>>.from(data['data'] ?? []);
           });
-          print(
+          debugPrint(
               'DEBUG Images: Loaded ${_potholeImages.length} images for scanned view');
         }
       }
     } catch (e) {
-      print('Error loading pothole images: $e');
+      debugPrint('Error loading pothole images: $e');
     } finally {
       setState(() => _isLoadingImages = false);
     }
@@ -8518,7 +8517,7 @@ class _PotholeChecklistScannedViewPageState
         }
       }
     } catch (e) {
-      print('Error loading logbook unit standards: $e');
+      debugPrint('Error loading logbook unit standards: $e');
     } finally {
       setState(() => _isLoadingLogbook = false);
     }
@@ -8544,7 +8543,7 @@ class _PotholeChecklistScannedViewPageState
         }
       }
     } catch (e) {
-      print('Error loading logbook marks: $e');
+      debugPrint('Error loading logbook marks: $e');
     }
   }
 
@@ -8642,7 +8641,7 @@ class _PotholeChecklistScannedViewPageState
         documentUrl = '${AppConfig.baseUrl}/$documentUrl';
       }
 
-      print('DEBUG: Opening document from URL: $documentUrl');
+      debugPrint('DEBUG: Opening document from URL: $documentUrl');
 
       // Download the PDF to local storage
       final response = await http.get(Uri.parse(documentUrl));
@@ -8656,11 +8655,11 @@ class _PotholeChecklistScannedViewPageState
         // Write PDF to local file
         await file.writeAsBytes(response.bodyBytes);
 
-        print('DEBUG: PDF downloaded to: ${file.path}');
+        debugPrint('DEBUG: PDF downloaded to: ${file.path}');
 
         // Open the local file
         final result = await OpenFile.open(file.path);
-        print('DEBUG: OpenFile result: ${result.message}');
+        debugPrint('DEBUG: OpenFile result: ${result.message}');
 
         if (result.type != ResultType.done) {
           throw Exception(result.message);
@@ -8669,7 +8668,7 @@ class _PotholeChecklistScannedViewPageState
         throw Exception('Failed to download PDF: ${response.statusCode}');
       }
     } catch (e) {
-      print('DEBUG: Error opening document: $e');
+      debugPrint('DEBUG: Error opening document: $e');
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -9278,7 +9277,7 @@ class _ARPLEvidenceChecklistPageState extends State<ARPLEvidenceChecklistPage> {
         setState(() => _isLoading = false);
       }
     } catch (e) {
-      print('Error fetching learners: $e');
+      debugPrint('Error fetching learners: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -9292,7 +9291,7 @@ class _ARPLEvidenceChecklistPageState extends State<ARPLEvidenceChecklistPage> {
         _projectId = trace['project_id'];
       });
     } catch (e) {
-      print('[ARPL] Error fetching traceability data: $e');
+      debugPrint('[ARPL] Error fetching traceability data: $e');
     }
   }
 
@@ -9559,7 +9558,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
 
   // Loaded Activities from API
   List<dynamic> _appendixBActivities = [];
-  Map<int, dynamic> _activityRatings = {};
+  final Map<int, dynamic> _activityRatings = {};
   String? _ofoNumber;
 
   // Appendix D State
@@ -9575,12 +9574,12 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
     'Install and Maintain Rainwater Harvesting',
     'Install and Maintain Solar Water Heating',
   ];
-  Map<int, String> _appendixDValues = {}; // 'Yes' or 'No'
+  final Map<int, String> _appendixDValues = {}; // 'Yes' or 'No'
 
   // Appendix E State - Electrician Activities with 1-5 Rating
   List<dynamic> _appendixEActivities = [];
-  Map<int, int> _appendixERatings = {}; // 1-5 ratings by index
-  Map<int, String> _appendixEComments = {}; // Comments by index
+  final Map<int, int> _appendixERatings = {}; // 1-5 ratings by index
+  final Map<int, String> _appendixEComments = {}; // Comments by index
   bool _appendixELoaded = false;
 
   // Evaluation Criteria State
@@ -9592,15 +9591,15 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
     'Compliance with Health and Safety regulations on site.',
     'Ability to perform maintenance and repairs on existing systems.',
   ];
-  Map<int, bool> _evaluationChecks = {};
+  final Map<int, bool> _evaluationChecks = {};
   bool _assessorConfirmed = false;
 
   // Appendix H State - Access Recommendation
   List<dynamic> _appendixHItems = []; // 4 assessment items from API
-  Map<int, String?> _appendixHStatuses = {}; // Status for each ACRID
-  Map<int, String> _appendixHRemarks = {}; // Remarks for each ACRID
+  final Map<int, String?> _appendixHStatuses = {}; // Status for each ACRID
+  final Map<int, String> _appendixHRemarks = {}; // Remarks for each ACRID
   List<dynamic> _unitStandards = []; // Unit standards for qualification 91761
-  Set<int> _selectedUnitStandards = {}; // Selected unit standard IDs
+  final Set<int> _selectedUnitStandards = {}; // Selected unit standard IDs
   bool _appendixHLoaded = false;
   bool _showUnitStandardsSelection = false;
   // Appendix F State
@@ -9691,9 +9690,9 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
       // FIX: Fetch OFO for this class
       String? ofoNumber;
       if (classId != null && classId.isNotEmpty) {
-        print('[ARPL] Fetching OFO for classID: $classId');
+        debugPrint('[ARPL] Fetching OFO for classID: $classId');
         ofoNumber = await _fetchOfoFromClassData(classId);
-        print('[ARPL] Fetched OFO: $ofoNumber');
+        debugPrint('[ARPL] Fetched OFO: $ofoNumber');
       }
 
       setState(() {
@@ -9702,7 +9701,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         _projectId = projectId;
         _ofoNumber = ofoNumber; // Set OFO number
       });
-      print(
+      debugPrint(
           '[ARPL] Traceability data: Class=$_classId, Site=$_siteId, Project=$_projectId, OFO=$_ofoNumber');
 
       _loadExistingARPLData(learnerId);
@@ -9712,25 +9711,25 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         _loadActivitiesFromAPI(learnerId);
       }
     } catch (e) {
-      print('[ARPL] Error fetching traceability data: $e');
+      debugPrint('[ARPL] Error fetching traceability data: $e');
     }
   }
 
   Future<void> _loadExistingARPLData(String learnerId) async {
     try {
       final url = '${AppConfig.getArplDataUrl}?learner_id=$learnerId';
-      print('[ARPL] Loading existing data from: $url');
+      debugPrint('[ARPL] Loading existing data from: $url');
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         try {
           // Check if response body is empty
           if (response.body.isEmpty) {
-            print('[ARPL] Empty response body from API');
+            debugPrint('[ARPL] Empty response body from API');
             return;
           }
 
-          print(
+          debugPrint(
               '[ARPL] API Response: ${response.body.substring(0, min(200, response.body.length))}...');
           final res = jsonDecode(response.body);
 
@@ -9763,7 +9762,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                   _assessorCommentsController.text =
                       d['assessor_comments'] ?? '';
                 } catch (e) {
-                  print('[ARPL] Error loading Appendix D: $e');
+                  debugPrint('[ARPL] Error loading Appendix D: $e');
                 }
               }
 
@@ -9777,7 +9776,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                   _improvementsController.text = f['improvements'] ?? '';
                   _actionPlanController.text = f['action_plan'] ?? '';
                 } catch (e) {
-                  print('[ARPL] Error loading Appendix F: $e');
+                  debugPrint('[ARPL] Error loading Appendix F: $e');
                 }
               }
 
@@ -9792,24 +9791,24 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                   });
                   _assessorConfirmed = (c['assessor_confirmation'] == 1);
                 } catch (e) {
-                  print('[ARPL] Error loading Criteria: $e');
+                  debugPrint('[ARPL] Error loading Criteria: $e');
                 }
               }
             });
           } else {
-            print('[ARPL] API returned success=false or no data');
+            debugPrint('[ARPL] API returned success=false or no data');
           }
         } catch (e) {
-          print('[ARPL] Error parsing response JSON: $e');
-          print(
+          debugPrint('[ARPL] Error parsing response JSON: $e');
+          debugPrint(
               '[ARPL] Response body: ${response.body.substring(0, min(500, response.body.length))}');
         }
       } else {
-        print('[ARPL] HTTP Error: ${response.statusCode}');
-        print('[ARPL] Response: ${response.body}');
+        debugPrint('[ARPL] HTTP Error: ${response.statusCode}');
+        debugPrint('[ARPL] Response: ${response.body}');
       }
     } catch (e) {
-      print('[ARPL] Error loading existing data: $e');
+      debugPrint('[ARPL] Error loading existing data: $e');
     }
   }
 
@@ -10150,7 +10149,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         setState(() => _isLoading = false);
       }
     } catch (e) {
-      print('Error fetching learners: $e');
+      debugPrint('Error fetching learners: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -10160,18 +10159,18 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
     try {
       final url = AppConfig.buildUrl('get_arpl_competency_data.php',
           queryParams: {'learnerID': learnerId});
-      print('[ARPL] Loading activities from: $url');
+      debugPrint('[ARPL] Loading activities from: $url');
 
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('[ARPL DEBUG] Full response: $data');
+        debugPrint('[ARPL DEBUG] Full response: $data');
 
         if (data['status'] == 'success') {
           // First try to get OFO from API
           var ofoValue = data['ofo_number'];
-          print(
+          debugPrint(
               '[ARPL DEBUG] Raw OFO value from API: $ofoValue (type: ${ofoValue.runtimeType})');
 
           String? finalOfoNumber;
@@ -10179,13 +10178,13 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
             finalOfoNumber = ofoValue.toString();
           } else if (_classId != null && _classId!.isNotEmpty) {
             // If API didn't return OFO, fetch from class data
-            print('[ARPL] API missing OFO, fetching from class $_classId');
+            debugPrint('[ARPL] API missing OFO, fetching from class $_classId');
             finalOfoNumber = await _fetchOfoFromClassData(_classId!);
           }
 
           // Final fallback - if still no OFO, throw error instead of defaulting
           if (finalOfoNumber == null || finalOfoNumber.isEmpty) {
-            print(
+            debugPrint(
                 '[ARPL] ERROR: No OFO found for learner. Cannot determine trade.');
             throw Exception(
                 'Could not determine trade for learner. ClassID: $_classId');
@@ -10194,7 +10193,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
           setState(() {
             _appendixBActivities = data['appxb_activities'] ?? [];
             _ofoNumber = finalOfoNumber;
-            print('[ARPL DEBUG] Final _ofoNumber: $_ofoNumber');
+            debugPrint('[ARPL DEBUG] Final _ofoNumber: $_ofoNumber');
 
             // Map ratings by activity_id for quick lookup
             if (data['appxb_ratings'] != null) {
@@ -10204,29 +10203,29 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
               }
             }
 
-            print(
+            debugPrint(
                 '[ARPL] Loaded ${_appendixBActivities.length} activities for OFO $_ofoNumber');
 
             // Also load Appendix E data
             _loadAppendixEData();
           });
         } else {
-          print('[ARPL] API Error: ${data['message']}');
+          debugPrint('[ARPL] API Error: ${data['message']}');
         }
       } else {
-        print('[ARPL] HTTP Error: ${response.statusCode}');
-        print('[ARPL] Response body: ${response.body}');
+        debugPrint('[ARPL] HTTP Error: ${response.statusCode}');
+        debugPrint('[ARPL] Response body: ${response.body}');
       }
     } catch (e) {
-      print('[ARPL] Error loading activities: $e');
-      print('[ARPL] Stack trace: ${e.toString()}');
+      debugPrint('[ARPL] Error loading activities: $e');
+      debugPrint('[ARPL] Stack trace: ${e.toString()}');
     }
   }
 
   /// Fetch OFO for a given class
   Future<String?> _fetchOfoFromClassData(String classId) async {
     try {
-      print('[ARPL] Fetching OFO for classID: $classId');
+      debugPrint('[ARPL] Fetching OFO for classID: $classId');
 
       final response = await http.post(
         Uri.parse(
@@ -10244,22 +10243,22 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
           if (data['status'] == 'success' && data['ofo_number'] != null) {
             final ofo = data['ofo_number'].toString();
             final tradeName = data['trade_name'] ?? 'Unknown';
-            print('[ARPL] Class OFO retrieved: $ofo for trade: $tradeName');
+            debugPrint('[ARPL] Class OFO retrieved: $ofo for trade: $tradeName');
             return ofo;
           } else {
-            print('[ARPL] API returned no OFO: ${data['message']}');
+            debugPrint('[ARPL] API returned no OFO: ${data['message']}');
             return null;
           }
         } catch (e) {
-          print('[ARPL] Error parsing OFO response: $e');
+          debugPrint('[ARPL] Error parsing OFO response: $e');
           return null;
         }
       } else {
-        print('[ARPL] Failed to fetch OFO: ${response.statusCode}');
+        debugPrint('[ARPL] Failed to fetch OFO: ${response.statusCode}');
         return null;
       }
     } catch (e) {
-      print('[ARPL] Exception fetching OFO: $e');
+      debugPrint('[ARPL] Exception fetching OFO: $e');
       return null;
     }
   }
@@ -10268,11 +10267,11 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
   Future<void> _loadAppendixEData() async {
     try {
       if (_selectedLearnerId == null || _ofoNumber == null) {
-        print('[ARPL-E] Cannot load: missing learnerID or OFO');
+        debugPrint('[ARPL-E] Cannot load: missing learnerID or OFO');
         return;
       }
 
-      print(
+      debugPrint(
           '[ARPL-E] Loading data for learner: $_selectedLearnerId, OFO: $_ofoNumber');
 
       final response = await http.post(
@@ -10286,7 +10285,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('[ARPL-E] Response: $data');
+        debugPrint('[ARPL-E] Response: $data');
 
         if (data['status'] == 'success') {
           setState(() {
@@ -10320,18 +10319,18 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
               }
             }
 
-            print(
+            debugPrint(
                 '[ARPL-E] Loaded ${_appendixEActivities.length} activities from database');
-            print('[ARPL-E] Found ${existingRatings.length} existing ratings');
+            debugPrint('[ARPL-E] Found ${existingRatings.length} existing ratings');
           });
         } else {
-          print('[ARPL-E] Error: ${data['message']}');
+          debugPrint('[ARPL-E] Error: ${data['message']}');
         }
       } else {
-        print('[ARPL-E] HTTP Error: ${response.statusCode}');
+        debugPrint('[ARPL-E] HTTP Error: ${response.statusCode}');
       }
     } catch (e) {
-      print('[ARPL-E] Error loading data: $e');
+      debugPrint('[ARPL-E] Error loading data: $e');
     }
   }
 
@@ -10376,7 +10375,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         'ratings': ratingsArray,
       };
 
-      print('[ARPL-E] Saving with payload: $payload');
+      debugPrint('[ARPL-E] Saving with payload: $payload');
 
       final response = await http.post(
         Uri.parse(AppConfig.saveArplAppendixEUrl),
@@ -10384,15 +10383,15 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         body: jsonEncode(payload),
       );
 
-      print('[ARPL-E] Response status: ${response.statusCode}');
-      print('[ARPL-E] Response body: ${response.body}');
+      debugPrint('[ARPL-E] Response status: ${response.statusCode}');
+      debugPrint('[ARPL-E] Response body: ${response.body}');
 
       if (!mounted) return;
       if (!context.mounted) return;
 
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
-        print('[ARPL-E] Save response: $result');
+        debugPrint('[ARPL-E] Save response: $result');
 
         if (result['status'] == 'success') {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -10401,7 +10400,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
               backgroundColor: Colors.green,
             ),
           );
-          print('[ARPL-E] Saved ${result['saved_count']} ratings successfully');
+          debugPrint('[ARPL-E] Saved ${result['saved_count']} ratings successfully');
 
           // Reload to show updated data
           _loadAppendixEData();
@@ -10412,7 +10411,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         throw Exception('HTTP ${response.statusCode}');
       }
     } catch (e) {
-      print('[ARPL-E] Error saving: $e');
+      debugPrint('[ARPL-E] Error saving: $e');
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -10558,8 +10557,8 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
               ),
       );
     } catch (e, stackTrace) {
-      print('[ARPL BUILD ERROR] Error building ARPL page: $e');
-      print('[ARPL BUILD STACK] $stackTrace');
+      debugPrint('[ARPL BUILD ERROR] Error building ARPL page: $e');
+      debugPrint('[ARPL BUILD STACK] $stackTrace');
 
       return Scaffold(
         appBar: AppBar(
@@ -10664,7 +10663,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                 dense: true,
               ),
             );
-          }).toList(),
+          }),
           const SizedBox(height: 20),
           const Divider(),
           const SizedBox(height: 12),
@@ -10800,7 +10799,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                   activityNumber = index + 1;
                 }
               } catch (e) {
-                print('[ARPL] Error parsing activity_number in appendixB: $e');
+                debugPrint('[ARPL] Error parsing activity_number in appendixB: $e');
                 activityNumber = index + 1;
               }
 
@@ -10900,7 +10899,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                   ],
                 ),
               );
-            }).toList(),
+            }),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -10998,7 +10997,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                   activityNumber = index + 1;
                 }
               } catch (e) {
-                print('[ARPL] Error parsing activity_number in appendixD: $e');
+                debugPrint('[ARPL] Error parsing activity_number in appendixD: $e');
                 activityNumber = index + 1;
               }
 
@@ -11107,7 +11106,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                   ],
                 ),
               );
-            }).toList(),
+            }),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -11184,29 +11183,29 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
   }
 
   Widget _buildAppendixE() {
-    print('[ARPL-E BUILD] _buildAppendixE() called');
-    print(
+    debugPrint('[ARPL-E BUILD] _buildAppendixE() called');
+    debugPrint(
         '[ARPL-E BUILD] _appendixEActivities.isEmpty: ${_appendixEActivities.isEmpty}');
-    print(
+    debugPrint(
         '[ARPL-E BUILD] _appendixEActivities.length: ${_appendixEActivities.length}');
-    print('[ARPL-E BUILD] _selectedLearnerId: $_selectedLearnerId');
-    print('[ARPL-E BUILD] _ofoNumber: $_ofoNumber');
-    print('[ARPL-E BUILD] _appendixELoaded: $_appendixELoaded');
+    debugPrint('[ARPL-E BUILD] _selectedLearnerId: $_selectedLearnerId');
+    debugPrint('[ARPL-E BUILD] _ofoNumber: $_ofoNumber');
+    debugPrint('[ARPL-E BUILD] _appendixELoaded: $_appendixELoaded');
 
     // Load activities if not loaded yet and we have required data
     if (_appendixEActivities.isEmpty &&
         _selectedLearnerId != null &&
         _ofoNumber != null &&
         !_appendixELoaded) {
-      print('[ARPL-E BUILD] Triggering _loadAppendixEData() from tab build');
+      debugPrint('[ARPL-E BUILD] Triggering _loadAppendixEData() from tab build');
       // Load data when tab is displayed
       Future.microtask(() => _loadAppendixEData());
     } else if (_appendixEActivities.isEmpty) {
-      print('[ARPL-E BUILD] NOT loading because:');
-      print('[ARPL-E BUILD]   - isEmpty: ${_appendixEActivities.isEmpty}');
-      print('[ARPL-E BUILD]   - learnerId null: ${_selectedLearnerId == null}');
-      print('[ARPL-E BUILD]   - ofo null: ${_ofoNumber == null}');
-      print('[ARPL-E BUILD]   - already loaded: $_appendixELoaded');
+      debugPrint('[ARPL-E BUILD] NOT loading because:');
+      debugPrint('[ARPL-E BUILD]   - isEmpty: ${_appendixEActivities.isEmpty}');
+      debugPrint('[ARPL-E BUILD]   - learnerId null: ${_selectedLearnerId == null}');
+      debugPrint('[ARPL-E BUILD]   - ofo null: ${_ofoNumber == null}');
+      debugPrint('[ARPL-E BUILD]   - already loaded: $_appendixELoaded');
     }
 
     // Show loading or no data
@@ -11385,7 +11384,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                   ],
                 ),
               );
-            }).toList(),
+            }),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -11623,7 +11622,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              '${acrid}',
+                              '$acrid',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.indigo,
@@ -11692,7 +11691,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                   ),
                 ),
               );
-            }).toList(),
+            }),
 
             // Unit Standards Selection (shown only for gap closure)
             if (_showUnitStandardsSelection) ...[
@@ -11750,7 +11749,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                         },
                         controlAffinity: ListTileControlAffinity.leading,
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               ),
@@ -11787,20 +11786,20 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
   // Load Appendix H items from API
   Future<void> _loadAppendixHItems() async {
     if (_selectedLearnerId == null) {
-      print('[APPX H] No learner selected, cannot load items');
+      debugPrint('[APPX H] No learner selected, cannot load items');
       return;
     }
 
-    print('[APPX H] Starting to load items for learner: $_selectedLearnerId');
+    debugPrint('[APPX H] Starting to load items for learner: $_selectedLearnerId');
 
     try {
       final url =
           '${AppConfig.baseUrl}/get_appxh_acr_items.php?learner_id=$_selectedLearnerId';
-      print('[APPX H] Loading items from: $url');
+      debugPrint('[APPX H] Loading items from: $url');
 
       final response = await http.get(Uri.parse(url));
-      print('[APPX H] Response status: ${response.statusCode}');
-      print('[APPX H] Response body: ${response.body}');
+      debugPrint('[APPX H] Response status: ${response.statusCode}');
+      debugPrint('[APPX H] Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -11820,22 +11819,22 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
               }
             }
           });
-          print('[APPX H] Loaded ${_appendixHItems.length} items successfully');
+          debugPrint('[APPX H] Loaded ${_appendixHItems.length} items successfully');
         } else {
-          print('[APPX H] API returned success=false: ${data['message']}');
+          debugPrint('[APPX H] API returned success=false: ${data['message']}');
           setState(() {
             _appendixHLoaded = true; // Mark as loaded even on API error
           });
         }
       } else {
-        print('[APPX H] HTTP error: ${response.statusCode}');
+        debugPrint('[APPX H] HTTP error: ${response.statusCode}');
         setState(() {
           _appendixHLoaded = true; // Mark as loaded even on HTTP error
         });
       }
     } catch (e, stackTrace) {
-      print('[APPX H] Error loading items: $e');
-      print('[APPX H] Stack trace: $stackTrace');
+      debugPrint('[APPX H] Error loading items: $e');
+      debugPrint('[APPX H] Stack trace: $stackTrace');
       setState(() {
         _appendixHLoaded = true; // Mark as loaded even on exception
       });
@@ -11847,7 +11846,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
     try {
       final url =
           '${AppConfig.baseUrl}/get_unit_standards_for_qualification.php?qualification_id=91761';
-      print('[APPX H] Loading unit standards from: $url');
+      debugPrint('[APPX H] Loading unit standards from: $url');
 
       final response = await http.get(Uri.parse(url));
 
@@ -11857,11 +11856,11 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
           setState(() {
             _unitStandards = data['unit_standards'];
           });
-          print('[APPX H] Loaded ${_unitStandards.length} unit standards');
+          debugPrint('[APPX H] Loaded ${_unitStandards.length} unit standards');
         }
       }
     } catch (e) {
-      print('[APPX H] Error loading unit standards: $e');
+      debugPrint('[APPX H] Error loading unit standards: $e');
     }
   }
 
@@ -11913,7 +11912,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         'recommendations': recommendations,
       };
 
-      print('[APPX H] Saving recommendations: ${json.encode(requestBody)}');
+      debugPrint('[APPX H] Saving recommendations: ${json.encode(requestBody)}');
 
       final url = '${AppConfig.baseUrl}/save_appxh_recommendation.php';
       final response = await http.post(
@@ -11922,7 +11921,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         body: json.encode(requestBody),
       );
 
-      print('[APPX H] Save response: ${response.body}');
+      debugPrint('[APPX H] Save response: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -11971,16 +11970,16 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                       label: const Text('View Complete Toolkit'),
                       onPressed: () {
                         // Debug logging
-                        print('[APPX H] View Toolkit button tapped');
-                        print(
+                        debugPrint('[APPX H] View Toolkit button tapped');
+                        debugPrint(
                             '[APPX H] _selectedLearnerId: $_selectedLearnerId');
-                        print('[APPX H] _classId: $_classId');
+                        debugPrint('[APPX H] _classId: $_classId');
 
                         Navigator.pop(context); // Close dialog
 
                         // Validate required data
                         if (_selectedLearnerId == null || _classId == null) {
-                          print('[APPX H] ERROR: Missing data');
+                          debugPrint('[APPX H] ERROR: Missing data');
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(
@@ -11997,12 +11996,12 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                           final int learnerId = int.parse(_selectedLearnerId!);
                           final int classId = int.parse(_classId!);
 
-                          print(
+                          debugPrint(
                               '[APPX H] Navigating with learnerID: $learnerId, classID: $classId');
 
                           if (_ofoNumber == null || _ofoNumber!.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
+                              const SnackBar(
                                   content: Text(
                                       'Error: OFO number not set. Cannot proceed.')),
                             );
@@ -12020,13 +12019,13 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                             );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
+                              const SnackBar(
                                   content: Text(
                                       'Error: OFO code not loaded. Please try again.')),
                             );
                           }
                         } catch (e) {
-                          print('[APPX H] ERROR: $e');
+                          debugPrint('[APPX H] ERROR: $e');
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('Error opening toolkit: $e'),
@@ -12058,8 +12057,8 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         }
       }
     } catch (e, stackTrace) {
-      print('[APPX H] Error saving: $e');
-      print('[APPX H] Stack trace: $stackTrace');
+      debugPrint('[APPX H] Error saving: $e');
+      debugPrint('[APPX H] Stack trace: $stackTrace');
       if (mounted) {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -12088,7 +12087,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         'unit_standards': selectedUS,
       };
 
-      print('[APPX H] Saving gap analysis: ${json.encode(requestBody)}');
+      debugPrint('[APPX H] Saving gap analysis: ${json.encode(requestBody)}');
 
       final url = '${AppConfig.baseUrl}/save_gap_analysis_unit_standards.php';
       final response = await http.post(
@@ -12097,9 +12096,9 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         body: json.encode(requestBody),
       );
 
-      print('[APPX H] Gap analysis response: ${response.body}');
+      debugPrint('[APPX H] Gap analysis response: ${response.body}');
     } catch (e) {
-      print('[APPX H] Error saving gap analysis: $e');
+      debugPrint('[APPX H] Error saving gap analysis: $e');
     }
   }
 }
@@ -12170,7 +12169,7 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
         setState(() => _isLoading = false);
       }
     } catch (e) {
-      print('Error fetching learners: $e');
+      debugPrint('Error fetching learners: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -12212,7 +12211,7 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
         _projectId = projectId;
       });
     } catch (e) {
-      print('[ARPL] Error fetching traceability data: $e');
+      debugPrint('[ARPL] Error fetching traceability data: $e');
     }
   }
 
@@ -12271,8 +12270,8 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Row(
-              children: const [
+            title: const Row(
+              children: [
                 Icon(Icons.check_circle, color: Colors.green, size: 32),
                 SizedBox(width: 12),
                 Text('Recommendation Saved'),
@@ -12303,15 +12302,15 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
                 label: const Text('View Complete Toolkit'),
                 onPressed: () {
                   // Debug logging
-                  print('[APPX H] View Toolkit button tapped');
-                  print('[APPX H] _selectedLearnerId: $_selectedLearnerId');
-                  print('[APPX H] _classId: $_classId');
+                  debugPrint('[APPX H] View Toolkit button tapped');
+                  debugPrint('[APPX H] _selectedLearnerId: $_selectedLearnerId');
+                  debugPrint('[APPX H] _classId: $_classId');
 
                   Navigator.pop(context); // Close dialog
 
                   // Validate required data
                   if (_selectedLearnerId == null || _classId == null) {
-                    print('[APPX H] ERROR: Missing data');
+                    debugPrint('[APPX H] ERROR: Missing data');
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
@@ -12328,12 +12327,12 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
                     final int learnerId = int.parse(_selectedLearnerId!);
                     final int classId = int.parse(_classId!);
 
-                    print(
+                    debugPrint(
                         '[APPX H] Navigating with learnerID: $learnerId, classID: $classId, OFO: $_ofoNumber');
 
                     if (_ofoNumber == null || _ofoNumber!.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
+                        const SnackBar(
                           content: Text(
                               'Error: OFO code not loaded. Please try again.'),
                           backgroundColor: Colors.orange,
@@ -12353,7 +12352,7 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
                       ),
                     );
                   } catch (e) {
-                    print('[APPX H] ERROR: $e');
+                    debugPrint('[APPX H] ERROR: $e');
                     if (!mounted) return;
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -12781,14 +12780,14 @@ class _ViewCompleteToolkitPageState extends State<ViewCompleteToolkitPage> {
         setState(() => _isLoadingLearners = false);
       }
     } catch (e) {
-      print('Error fetching learners: $e');
+      debugPrint('Error fetching learners: $e');
       setState(() => _isLoadingLearners = false);
     }
   }
 
   Future<String?> _fetchOfoForClass(String classId) async {
     try {
-      print('[TOOLKIT_DEBUG] Fetching OFO for classID: $classId');
+      debugPrint('[TOOLKIT_DEBUG] Fetching OFO for classID: $classId');
 
       // Call dedicated API endpoint for class trade info
       final response = await http.post(
@@ -12799,8 +12798,8 @@ class _ViewCompleteToolkitPageState extends State<ViewCompleteToolkitPage> {
         body: jsonEncode({'classID': int.parse(classId)}),
       );
 
-      print('[TOOLKIT_DEBUG] API Response Code: ${response.statusCode}');
-      print('[TOOLKIT_DEBUG] API Response Body: ${response.body}');
+      debugPrint('[TOOLKIT_DEBUG] API Response Code: ${response.statusCode}');
+      debugPrint('[TOOLKIT_DEBUG] API Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         try {
@@ -12808,39 +12807,39 @@ class _ViewCompleteToolkitPageState extends State<ViewCompleteToolkitPage> {
           if (data['status'] == 'success' && data['ofo_number'] != null) {
             final ofo = data['ofo_number'].toString();
             final tradeName = data['trade_name'] ?? 'Unknown';
-            print(
+            debugPrint(
                 '[TOOLKIT_DEBUG] API returned OFO: $ofo for trade: $tradeName');
             return ofo;
           } else {
-            print(
+            debugPrint(
                 '[TOOLKIT_DEBUG] API error response: ${data['message'] ?? 'Unknown error'}, throwing exception');
             throw Exception('Failed to get OFO number from API');
           }
         } catch (e) {
-          print('[TOOLKIT_DEBUG] JSON decode error: $e, returning null');
+          debugPrint('[TOOLKIT_DEBUG] JSON decode error: $e, returning null');
           return null;
         }
       } else {
-        print(
+        debugPrint(
             '[TOOLKIT_DEBUG] API error: ${response.statusCode}, body: ${response.body}, returning null');
         return null;
       }
     } catch (e) {
-      print('[TOOLKIT_DEBUG] Exception fetching OFO: $e, returning null');
+      debugPrint('[TOOLKIT_DEBUG] Exception fetching OFO: $e, returning null');
       return null;
     }
   }
 
   void _openToolkit() {
-    print('[TOOLKIT_DEBUG] === _openToolkit called ===');
-    print('[TOOLKIT_DEBUG] _selectedLearnerId: $_selectedLearnerId');
-    print('[TOOLKIT_DEBUG] _selectedClassId: $_selectedClassId');
-    print('[TOOLKIT_DEBUG] _selectedOfoNumber: $_selectedOfoNumber');
-    print('[TOOLKIT_DEBUG] _learners.length: ${_learners.length}');
+    debugPrint('[TOOLKIT_DEBUG] === _openToolkit called ===');
+    debugPrint('[TOOLKIT_DEBUG] _selectedLearnerId: $_selectedLearnerId');
+    debugPrint('[TOOLKIT_DEBUG] _selectedClassId: $_selectedClassId');
+    debugPrint('[TOOLKIT_DEBUG] _selectedOfoNumber: $_selectedOfoNumber');
+    debugPrint('[TOOLKIT_DEBUG] _learners.length: ${_learners.length}');
 
     // Ensure all required fields are set
     if (_selectedLearnerId == null || _selectedLearnerId!.isEmpty) {
-      print('[TOOLKIT_DEBUG] ERROR: _selectedLearnerId is null or empty');
+      debugPrint('[TOOLKIT_DEBUG] ERROR: _selectedLearnerId is null or empty');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select a candidate to continue'),
@@ -12851,10 +12850,10 @@ class _ViewCompleteToolkitPageState extends State<ViewCompleteToolkitPage> {
       return;
     }
 
-    print(
+    debugPrint(
         '[TOOLKIT_DEBUG] _selectedClassId check: $_selectedClassId (isEmpty: ${_selectedClassId?.isEmpty ?? 'null'})');
     if (_selectedClassId == null || _selectedClassId!.isEmpty) {
-      print('[TOOLKIT_DEBUG] ERROR: _selectedClassId is null or empty');
+      debugPrint('[TOOLKIT_DEBUG] ERROR: _selectedClassId is null or empty');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Class not found for this candidate'),
@@ -12870,10 +12869,10 @@ class _ViewCompleteToolkitPageState extends State<ViewCompleteToolkitPage> {
         (_selectedOfoNumber == null || _selectedOfoNumber!.isEmpty)
             ? (throw Exception('OFO number not set. Cannot load ARPL toolkit'))
             : _selectedOfoNumber!;
-    print('[TOOLKIT_DEBUG] Using OFO number: $ofoNumber');
+    debugPrint('[TOOLKIT_DEBUG] Using OFO number: $ofoNumber');
 
     // Find the learner by IDNumber to get LearnerID
-    print(
+    debugPrint(
         '[TOOLKIT_DEBUG] Searching for learner with IDNumber: $_selectedLearnerId');
 
     final learner = _learners.firstWhere(
@@ -12884,11 +12883,11 @@ class _ViewCompleteToolkitPageState extends State<ViewCompleteToolkitPage> {
       orElse: () => <String, dynamic>{},
     );
 
-    print(
+    debugPrint(
         '[TOOLKIT_DEBUG] Learner search result: ${learner.isEmpty ? 'NOT FOUND' : 'FOUND'}');
 
     if (learner.isEmpty) {
-      print('[TOOLKIT_DEBUG] ERROR: learner is empty after search');
+      debugPrint('[TOOLKIT_DEBUG] ERROR: learner is empty after search');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Candidate record not found'),
@@ -12899,19 +12898,19 @@ class _ViewCompleteToolkitPageState extends State<ViewCompleteToolkitPage> {
       return;
     }
 
-    print(
+    debugPrint(
         '[TOOLKIT_DEBUG] Found learner: ${learner['Name']} ${learner['Surname']}');
-    print('[TOOLKIT_DEBUG] Learner LearnerID: ${learner['LearnerID']}');
-    print('[TOOLKIT_DEBUG] Learner IDNumber: ${learner['IDNumber']}');
-    print('[TOOLKIT_DEBUG] Learner classID: ${learner['classID']}');
+    debugPrint('[TOOLKIT_DEBUG] Learner LearnerID: ${learner['LearnerID']}');
+    debugPrint('[TOOLKIT_DEBUG] Learner IDNumber: ${learner['IDNumber']}');
+    debugPrint('[TOOLKIT_DEBUG] Learner classID: ${learner['classID']}');
 
     int learnerId = int.tryParse(learner['LearnerID']?.toString() ?? '0') ?? 0;
     int classId = int.tryParse(_selectedClassId ?? '0') ?? 0;
 
-    print('[TOOLKIT_DEBUG] Parsed learnerId: $learnerId, classId: $classId');
+    debugPrint('[TOOLKIT_DEBUG] Parsed learnerId: $learnerId, classId: $classId');
 
     if (learnerId == 0) {
-      print('[TOOLKIT_DEBUG] ERROR: learnerId is 0, cannot proceed');
+      debugPrint('[TOOLKIT_DEBUG] ERROR: learnerId is 0, cannot proceed');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Invalid candidate ID'),
@@ -12923,7 +12922,7 @@ class _ViewCompleteToolkitPageState extends State<ViewCompleteToolkitPage> {
     }
 
     if (classId == 0) {
-      print('[TOOLKIT_DEBUG] ERROR: classId is 0, cannot proceed');
+      debugPrint('[TOOLKIT_DEBUG] ERROR: classId is 0, cannot proceed');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Invalid class ID'),
@@ -12934,8 +12933,8 @@ class _ViewCompleteToolkitPageState extends State<ViewCompleteToolkitPage> {
       return;
     }
 
-    print('[TOOLKIT_DEBUG] All checks passed, navigating to toolkit');
-    print(
+    debugPrint('[TOOLKIT_DEBUG] All checks passed, navigating to toolkit');
+    debugPrint(
         '[TOOLKIT_DEBUG] Final parameters: learnerId=$learnerId, classId=$classId, ofoNumber=$ofoNumber');
 
     Navigator.push(
@@ -13001,7 +13000,7 @@ class _ViewCompleteToolkitPageState extends State<ViewCompleteToolkitPage> {
                       );
                     }).toList(),
                     onChanged: (value) {
-                      print('[TOOLKIT_DEBUG] Dropdown onChanged: value=$value');
+                      debugPrint('[TOOLKIT_DEBUG] Dropdown onChanged: value=$value');
                       if (value != null) {
                         // Find learner BEFORE setState
                         final learner = _learners.firstWhere(
@@ -13009,14 +13008,14 @@ class _ViewCompleteToolkitPageState extends State<ViewCompleteToolkitPage> {
                           orElse: () => <String, dynamic>{},
                         );
 
-                        print(
+                        debugPrint(
                             '[TOOLKIT_DEBUG] Found learner in dropdown: ${learner.isNotEmpty}');
                         if (learner.isNotEmpty) {
-                          print(
+                          debugPrint(
                               '[TOOLKIT_DEBUG] Learner Name: ${learner['Name']} ${learner['Surname']}');
-                          print(
+                          debugPrint(
                               '[TOOLKIT_DEBUG] Learner classID: ${learner['classID']}');
-                          print(
+                          debugPrint(
                               '[TOOLKIT_DEBUG] Learner LearnerID: ${learner['LearnerID']}');
                         }
 
@@ -13027,23 +13026,23 @@ class _ViewCompleteToolkitPageState extends State<ViewCompleteToolkitPage> {
                           _fetchOfoForClass(classId).then((ofo) {
                             setState(() {
                               _selectedLearnerId = value;
-                              print(
+                              debugPrint(
                                   '[TOOLKIT_DEBUG] Set _selectedLearnerId=$value');
                               _selectedClassId = classId;
-                              print(
+                              debugPrint(
                                   '[TOOLKIT_DEBUG] Set _selectedClassId=$classId');
                               _selectedOfoNumber =
                                   ofo; // ← FIX: Actually assign the OFO value
-                              print(
+                              debugPrint(
                                   '[TOOLKIT_DEBUG] Set _selectedOfoNumber=$ofo (actual from class)');
                               if (ofo == null || ofo.isEmpty) {
-                                print(
+                                debugPrint(
                                     '[TOOLKIT_DEBUG] WARNING: OFO is empty for this class!');
                               }
                             });
                           });
                         } else {
-                          print(
+                          debugPrint(
                               '[TOOLKIT_DEBUG] ERROR: Learner not found for value=$value');
                           setState(() {
                             _selectedLearnerId = null;

@@ -15,11 +15,11 @@ class FramedCameraCapture extends StatefulWidget {
   final Function(File imageFile, Uint8List imageBytes) onCapture;
 
   const FramedCameraCapture({
-    Key? key,
+    super.key,
     required this.learnerID,
     required this.learnerName,
     required this.onCapture,
-  }) : super(key: key);
+  });
 
   @override
   State<FramedCameraCapture> createState() => _FramedCameraCaptureState();
@@ -64,7 +64,7 @@ class _FramedCameraCaptureState extends State<FramedCameraCapture> {
         setState(() => _isInitialized = true);
       }
     } catch (e) {
-      print('[FRAMED_CAMERA] Error initializing camera: $e');
+      debugPrint('[FRAMED_CAMERA] Error initializing camera: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Camera error: $e')),
@@ -109,7 +109,7 @@ class _FramedCameraCaptureState extends State<FramedCameraCapture> {
         Navigator.of(context).pop();
       }
     } catch (e) {
-      print('[FRAMED_CAMERA] Capture error: $e');
+      debugPrint('[FRAMED_CAMERA] Capture error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Capture failed: $e')),

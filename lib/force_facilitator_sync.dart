@@ -11,32 +11,32 @@ class ForceFacilitatorSync {
   
   /// Force sync facilitator data with detailed logging and verification
   Future<Map<String, dynamic>> forceSyncNow() async {
-    print('');
-    print('═══════════════════════════════════════════════════════════');
-    print('FORCE FACILITATOR SYNC STARTED');
-    print('═══════════════════════════════════════════════════════════');
-    print('');
+    debugPrint('');
+    debugPrint('═══════════════════════════════════════════════════════════');
+    debugPrint('FORCE FACILITATOR SYNC STARTED');
+    debugPrint('═══════════════════════════════════════════════════════════');
+    debugPrint('');
     
     try {
       // Step 1: Fetch from server
-      print('[STEP 1] Fetching data from server...');
-      print('URL: ${AppConfig.syncFacilitatorUrl}');
+      debugPrint('[STEP 1] Fetching data from server...');
+      debugPrint('URL: ${AppConfig.syncFacilitatorUrl}');
       
       final response = await http.get(Uri.parse(AppConfig.syncFacilitatorUrl))
           .timeout(const Duration(seconds: 30));
       
-      print('[STEP 1] Server response: ${response.statusCode}');
+      debugPrint('[STEP 1] Server response: ${response.statusCode}');
       
       if (response.statusCode != 200) {
         throw Exception('Server returned ${response.statusCode}');
       }
       
-      print('[STEP 1] Response body length: ${response.body.length} chars');
+      debugPrint('[STEP 1] Response body length: ${response.body.length} chars');
       
       // Step 2: Parse JSON
-      print('[STEP 2] Parsing JSON...');
+      debugPrint('[STEP 2] Parsing JSON...');
       final List<dynamic> facilitatorData = json.decode(response.body);
-      print('[STEP 2] Parsed ${facilitatorData.length} facilitator records');
+      debugPrint('[STEP 2] Parsed ${facilitatorData.length} facilitator records');
       
       if (facilitatorData.isEmpty) {
         return {
@@ -47,35 +47,35 @@ class ForceFacilitatorSync {
       }
       
       // Step 3: Show first record
-      print('[STEP 3] First record from server:');
-      print(json.encode(facilitatorData[0], toEncodable: (obj) => obj.toString()));
+      debugPrint('[STEP 3] First record from server:');
+      debugPrint(json.encode(facilitatorData[0], toEncodable: (obj) => obj.toString()));
       
       // Step 4: Get database
-      print('[STEP 4] Opening database...');
+      debugPrint('[STEP 4] Opening database...');
       final db = await _dbHelper.database;
       
       // Step 5: Check current table state
-      print('[STEP 5] Checking current table state...');
+      debugPrint('[STEP 5] Checking current table state...');
       final beforeCount = await db.rawQuery('SELECT COUNT(*) as count FROM facilitator');
-      print('[STEP 5] Records before sync: ${beforeCount.first['count']}');
+      debugPrint('[STEP 5] Records before sync: ${beforeCount.first['count']}');
       
       // Step 6: Clear table
-      print('[STEP 6] Clearing facilitator table...');
+      debugPrint('[STEP 6] Clearing facilitator table...');
       await db.delete('facilitator');
       final afterClearCount = await db.rawQuery('SELECT COUNT(*) as count FROM facilitator');
-      print('[STEP 6] Records after clear: ${afterClearCount.first['count']}');
+      debugPrint('[STEP 6] Records after clear: ${afterClearCount.first['count']}');
       
       // Step 7: Insert each record with EXPLICIT column mapping
-      print('[STEP 7] Inserting facilitator records...');
+      debugPrint('[STEP 7] Inserting facilitator records...');
       int successCount = 0;
       int errorCount = 0;
       
       for (int i = 0; i < facilitatorData.length; i++) {
         final facilitator = facilitatorData[i];
-        print('');
-        print('─────────────────────────────────────────────────────────');
-        print('Inserting record ${i + 1}/${facilitatorData.length}');
-        print('─────────────────────────────────────────────────────────');
+        debugPrint('');
+        debugPrint('─────────────────────────────────────────────────────────');
+        debugPrint('Inserting record ${i + 1}/${facilitatorData.length}');
+        debugPrint('─────────────────────────────────────────────────────────');
         
         try {
           // EXPLICIT mapping - take EXACTLY what server sends
@@ -100,14 +100,14 @@ class ForceFacilitatorSync {
             'futronic_right_template': facilitator['futronic_right_template'],
           };
           
-          print('Data to insert:');
-          print('  facilitator_id: ${recordToInsert['facilitator_id']}');
-          print('  firstName: "${recordToInsert['firstName']}"');
-          print('  lastName: "${recordToInsert['lastName']}"');
-          print('  email: "${recordToInsert['email']}"');
-          print('  role: "${recordToInsert['role']}"');
-          print('  classID: ${recordToInsert['classID']}');
-          print('  password length: ${recordToInsert['password']?.toString().length ?? 0} chars');
+          debugPrint('Data to insert:');
+          debugPrint('  facilitator_id: ${recordToInsert['facilitator_id']}');
+          debugPrint('  firstName: "${recordToInsert['firstName']}"');
+          debugPrint('  lastName: "${recordToInsert['lastName']}"');
+          debugPrint('  email: "${recordToInsert['email']}"');
+          debugPrint('  role: "${recordToInsert['role']}"');
+          debugPrint('  classID: ${recordToInsert['classID']}');
+          debugPrint('  password length: ${recordToInsert['password']?.toString().length ?? 0} chars');
           
           // Insert with REPLACE conflict resolution
           final insertedId = await db.insert(
@@ -116,7 +116,7 @@ class ForceFacilitatorSync {
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
           
-          print('✅ INSERT SUCCESSFUL - Row ID: $insertedId');
+          debugPrint('✅ INSERT SUCCESSFUL - Row ID: $insertedId');
           
           // VERIFY: Read back what was actually inserted
           final verifyResult = await db.query(
@@ -127,67 +127,67 @@ class ForceFacilitatorSync {
           
           if (verifyResult.isNotEmpty) {
             final inserted = verifyResult.first;
-            print('✅ VERIFICATION: Record found in database');
-            print('  DB facilitator_id: ${inserted['facilitator_id']}');
-            print('  DB firstName: "${inserted['firstName']}"');
-            print('  DB lastName: "${inserted['lastName']}"');
-            print('  DB email: "${inserted['email']}"');
+            debugPrint('✅ VERIFICATION: Record found in database');
+            debugPrint('  DB facilitator_id: ${inserted['facilitator_id']}');
+            debugPrint('  DB firstName: "${inserted['firstName']}"');
+            debugPrint('  DB lastName: "${inserted['lastName']}"');
+            debugPrint('  DB email: "${inserted['email']}"');
             
             // Check for mismatches
             bool mismatch = false;
             if (inserted['firstName'] != recordToInsert['firstName']) {
-              print('⚠️ MISMATCH: firstName - Expected "${recordToInsert['firstName']}", Got "${inserted['firstName']}"');
+              debugPrint('⚠️ MISMATCH: firstName - Expected "${recordToInsert['firstName']}", Got "${inserted['firstName']}"');
               mismatch = true;
             }
             if (inserted['lastName'] != recordToInsert['lastName']) {
-              print('⚠️ MISMATCH: lastName - Expected "${recordToInsert['lastName']}", Got "${inserted['lastName']}"');
+              debugPrint('⚠️ MISMATCH: lastName - Expected "${recordToInsert['lastName']}", Got "${inserted['lastName']}"');
               mismatch = true;
             }
             if (inserted['email'] != recordToInsert['email']) {
-              print('⚠️ MISMATCH: email - Expected "${recordToInsert['email']}", Got "${inserted['email']}"');
+              debugPrint('⚠️ MISMATCH: email - Expected "${recordToInsert['email']}", Got "${inserted['email']}"');
               mismatch = true;
             }
             
             if (!mismatch) {
-              print('✅ DATA INTEGRITY: All fields match!');
+              debugPrint('✅ DATA INTEGRITY: All fields match!');
               successCount++;
             } else {
-              print('❌ DATA INTEGRITY: Mismatches detected!');
+              debugPrint('❌ DATA INTEGRITY: Mismatches detected!');
               errorCount++;
             }
           } else {
-            print('❌ VERIFICATION FAILED: Record not found after insert!');
+            debugPrint('❌ VERIFICATION FAILED: Record not found after insert!');
             errorCount++;
           }
           
         } catch (e, stackTrace) {
-          print('❌ INSERT ERROR: $e');
-          print('Stack trace: $stackTrace');
+          debugPrint('❌ INSERT ERROR: $e');
+          debugPrint('Stack trace: $stackTrace');
           errorCount++;
         }
       }
       
       // Step 8: Final verification
-      print('');
-      print('[STEP 8] Final table verification...');
+      debugPrint('');
+      debugPrint('[STEP 8] Final table verification...');
       final finalCount = await db.rawQuery('SELECT COUNT(*) as count FROM facilitator');
       final finalRecords = await db.query('facilitator');
       
-      print('[STEP 8] Final record count: ${finalCount.first['count']}');
-      print('[STEP 8] All records in table:');
+      debugPrint('[STEP 8] Final record count: ${finalCount.first['count']}');
+      debugPrint('[STEP 8] All records in table:');
       for (var record in finalRecords) {
-        print('  - ID: ${record['facilitator_id']}, Name: ${record['firstName']} ${record['lastName']}, Email: ${record['email']}');
+        debugPrint('  - ID: ${record['facilitator_id']}, Name: ${record['firstName']} ${record['lastName']}, Email: ${record['email']}');
       }
       
-      print('');
-      print('═══════════════════════════════════════════════════════════');
-      print('SYNC SUMMARY');
-      print('═══════════════════════════════════════════════════════════');
-      print('✅ Successful: $successCount');
-      print('❌ Errors: $errorCount');
-      print('📊 Total in DB: ${finalCount.first['count']}');
-      print('═══════════════════════════════════════════════════════════');
-      print('');
+      debugPrint('');
+      debugPrint('═══════════════════════════════════════════════════════════');
+      debugPrint('SYNC SUMMARY');
+      debugPrint('═══════════════════════════════════════════════════════════');
+      debugPrint('✅ Successful: $successCount');
+      debugPrint('❌ Errors: $errorCount');
+      debugPrint('📊 Total in DB: ${finalCount.first['count']}');
+      debugPrint('═══════════════════════════════════════════════════════════');
+      debugPrint('');
       
       return {
         'success': errorCount == 0,
@@ -200,14 +200,14 @@ class ForceFacilitatorSync {
       };
       
     } catch (e, stackTrace) {
-      print('');
-      print('═══════════════════════════════════════════════════════════');
-      print('❌ SYNC FAILED');
-      print('═══════════════════════════════════════════════════════════');
-      print('Error: $e');
-      print('Stack trace: $stackTrace');
-      print('═══════════════════════════════════════════════════════════');
-      print('');
+      debugPrint('');
+      debugPrint('═══════════════════════════════════════════════════════════');
+      debugPrint('❌ SYNC FAILED');
+      debugPrint('═══════════════════════════════════════════════════════════');
+      debugPrint('Error: $e');
+      debugPrint('Stack trace: $stackTrace');
+      debugPrint('═══════════════════════════════════════════════════════════');
+      debugPrint('');
       
       return {
         'success': false,

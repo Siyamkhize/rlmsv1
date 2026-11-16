@@ -343,15 +343,15 @@ class OfflineSyncQueueService {
     bool forceBatchEvenOnline = true, // Always batch by default
   }) async {
     // Enforce maximum batch size for rural connectivity
-    const int MAX_BATCH_SIZE = 15; // ~2.9 MB payload, manageable on 2G
-    if (learnerClockings.length > MAX_BATCH_SIZE) {
+    const int maxBatchSize = 15; // ~2.9 MB payload, manageable on 2G
+    if (learnerClockings.length > maxBatchSize) {
       return {
         'success': false,
-        'error': 'Batch size exceeds maximum of $MAX_BATCH_SIZE learners. '
+        'error': 'Batch size exceeds maximum of $maxBatchSize learners. '
                  'Current batch: ${learnerClockings.length} learners. '
                  'Please submit this batch before adding more learners.',
         'batch_size': learnerClockings.length,
-        'max_batch_size': MAX_BATCH_SIZE,
+        'max_batch_size': maxBatchSize,
       };
     }
     

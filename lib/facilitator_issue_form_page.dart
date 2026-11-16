@@ -74,7 +74,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
   // Load existing regular material quantities from SERVER (not local database)
   Future<void> _loadExistingRegularMaterialQuantities() async {
     try {
-      print(
+      debugPrint(
           '🌐 Loading facilitator material quantities from SERVER for classID: ${widget.classID}');
 
       // Query server for all material data (including regular materials) using facilitator checkbox status
@@ -83,8 +83,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             'get_facilitator_checkbox_status.php?classID=${widget.classID}')),
       );
 
-      print('📡 Server Response Status: ${response.statusCode}');
-      print('📡 Server Response Body: ${response.body}');
+      debugPrint('📡 Server Response Status: ${response.statusCode}');
+      debugPrint('📡 Server Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -93,7 +93,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
           final Map<String, dynamic> regularMaterials =
               data['regularMaterials'] ?? {};
 
-          print(
+          debugPrint(
               '✅ Server returned ${regularMaterials.length} regular material types');
 
           // List of regular material types to check
@@ -120,7 +120,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
               });
 
               if (quantity > 0) {
-                print(
+                debugPrint(
                     '✅ Regular Material $materialType: Qty=$quantity, Rep=$representative');
               }
             } else {
@@ -132,18 +132,18 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             }
           }
 
-          print(
+          debugPrint(
               '🎯 Regular material loading from server completed successfully!');
         } else {
-          print('❌ Server returned error: ${data['error']}');
+          debugPrint('❌ Server returned error: ${data['error']}');
           _setNoRegularMaterialSubmissionsFound();
         }
       } else {
-        print('❌ Server request failed with status: ${response.statusCode}');
+        debugPrint('❌ Server request failed with status: ${response.statusCode}');
         _setNoRegularMaterialSubmissionsFound();
       }
     } catch (e) {
-      print('💥 Error loading regular material quantities from server: $e');
+      debugPrint('💥 Error loading regular material quantities from server: $e');
       _setNoRegularMaterialSubmissionsFound();
     }
   }
@@ -164,7 +164,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
         existingRegularMaterialRepresentatives[materialType] = '';
       }
     });
-    print(
+    debugPrint(
         'ℹ️ Set all regular materials to no previous submissions (no server data available)');
   }
 
@@ -174,26 +174,26 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
       final dbHelper = DatabaseHelper();
       final db = await dbHelper.database;
 
-      print('\\n=== DEBUG DATABASE INFO FOR CLASS ${widget.classID} ===');
+      debugPrint('\\n=== DEBUG DATABASE INFO FOR CLASS ${widget.classID} ===');
 
       // 1. Check class table
       final classInfo = await db
           .query('class', where: 'classID = ?', whereArgs: [widget.classID]);
-      print('1. Class table data: $classInfo');
+      debugPrint('1. Class table data: $classInfo');
 
       if (classInfo.isNotEmpty) {
         String? siteID = classInfo.first['siteID']?.toString();
-        print('   Found siteID: $siteID');
+        debugPrint('   Found siteID: $siteID');
 
         // 2. Check sites table
         if (siteID != null) {
           final siteInfo =
               await db.query('sites', where: 'siteID = ?', whereArgs: [siteID]);
-          print('2. Sites table data: $siteInfo');
+          debugPrint('2. Sites table data: $siteInfo');
 
           if (siteInfo.isNotEmpty) {
             String? projectId = siteInfo.first['project_id']?.toString();
-            print('   Found project_id: $projectId');
+            debugPrint('   Found project_id: $projectId');
 
             // 3. Check project table and extract unit standards JSON
             if (projectId != null) {
@@ -207,12 +207,12 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
               ''';
 
               final projectInfo = await db.rawQuery(projectQuery, [projectId]);
-              print('3. Project JSON extraction: $projectInfo');
+              debugPrint('3. Project JSON extraction: $projectInfo');
 
               if (projectInfo.isNotEmpty) {
                 String? projectPathway =
                     projectInfo.first['Project_pathway'] as String?;
-                print('4. Project pathway JSON: $projectPathway');
+                debugPrint('4. Project pathway JSON: $projectPathway');
 
                 if (projectPathway != null && projectPathway.isNotEmpty) {
                   try {
@@ -227,19 +227,19 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
                             qualification['unitStandards'] != null) {
                           List<dynamic> unitStandardsList =
                               qualification['unitStandards'];
-                          print(
+                          debugPrint(
                               '5. Parsed unit standards count: ${unitStandardsList.length}');
-                          print('6. Sample unit standards:');
+                          debugPrint('6. Sample unit standards:');
                           for (int i = 0;
                               i < unitStandardsList.length && i < 3;
                               i++) {
-                            print('   - ${unitStandardsList[i]}');
+                            debugPrint('   - ${unitStandardsList[i]}');
                           }
                         }
                       }
                     }
                   } catch (e) {
-                    print('5. Error parsing JSON: $e');
+                    debugPrint('5. Error parsing JSON: $e');
                   }
                 }
               }
@@ -248,9 +248,9 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
         }
       }
 
-      print('=== END DEBUG INFO ===\\n');
+      debugPrint('=== END DEBUG INFO ===\\n');
     } catch (e) {
-      print('Debug error: $e');
+      debugPrint('Debug error: $e');
     }
   }
 
@@ -260,8 +260,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
       final dbHelper = DatabaseHelper();
       final db = await dbHelper.database;
 
-      print('\\n=== FETCHING UNIT STANDARDS DEBUG ===');
-      print('ClassID: ${widget.classID}');
+      debugPrint('\\n=== FETCHING UNIT STANDARDS DEBUG ===');
+      debugPrint('ClassID: ${widget.classID}');
 
       // First, let's check what project data we have
       final projectQuery = '''
@@ -278,35 +278,35 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
       ''';
 
       final projectResult = await db.rawQuery(projectQuery, [widget.classID]);
-      print('Project query result: $projectResult');
+      debugPrint('Project query result: $projectResult');
 
       if (projectResult.isNotEmpty) {
         final projectPathway =
             projectResult.first['Project_pathway'] as String?;
-        print('Raw Project_pathway: $projectPathway');
+        debugPrint('Raw Project_pathway: $projectPathway');
 
         if (projectPathway != null && projectPathway.isNotEmpty) {
           try {
             // Parse the JSON to extract unit standards
             final pathwayJson = jsonDecode(projectPathway);
-            print('Parsed pathway JSON: $pathwayJson');
+            debugPrint('Parsed pathway JSON: $pathwayJson');
 
             // Navigate through the JSON structure
             if (pathwayJson is List && pathwayJson.isNotEmpty) {
               final firstPathway = pathwayJson[0];
-              print('First pathway: $firstPathway');
+              debugPrint('First pathway: $firstPathway');
 
               if (firstPathway['qual_types'] != null &&
                   firstPathway['qual_types'] is List &&
                   firstPathway['qual_types'].isNotEmpty) {
                 final qualification =
                     firstPathway['qual_types'][0]['qualification'];
-                print('Qualification: $qualification');
+                debugPrint('Qualification: $qualification');
 
                 if (qualification != null &&
                     qualification['unitStandards'] != null) {
                   final unitStandardsList = qualification['unitStandards'];
-                  print('Unit standards list: $unitStandardsList');
+                  debugPrint('Unit standards list: $unitStandardsList');
 
                   if (unitStandardsList is List) {
                     setState(() {
@@ -359,31 +359,31 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
                     // Load existing quantities from previous submissions
                     await _loadExistingUnitStandardQuantities();
 
-                    print('Unit standards loaded successfully:');
+                    debugPrint('Unit standards loaded successfully:');
                     for (var us in unitStandards) {
-                      print(
+                      debugPrint(
                           '  - ID: ${us['unitstandard_id']}, Name: ${us['unit_standard_name']}');
                     }
-                    print('=== UNIT STANDARDS FETCH COMPLETE ===\\n');
+                    debugPrint('=== UNIT STANDARDS FETCH COMPLETE ===\\n');
                     return;
                   }
                 }
               }
             }
           } catch (e) {
-            print('Error parsing project pathway JSON: $e');
+            debugPrint('Error parsing project pathway JSON: $e');
           }
         }
       }
 
       // If we get here, no unit standards were found
-      print('No unit standards found for classID: ${widget.classID}');
+      debugPrint('No unit standards found for classID: ${widget.classID}');
       setState(() {
         unitStandards = [];
       });
-      print('=== UNIT STANDARDS FETCH COMPLETE (EMPTY) ===\\n');
+      debugPrint('=== UNIT STANDARDS FETCH COMPLETE (EMPTY) ===\\n');
     } catch (e) {
-      print('Error fetching unit standards: $e');
+      debugPrint('Error fetching unit standards: $e');
       setState(() {
         unitStandards = [];
       });
@@ -393,7 +393,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
   // Load existing unit standard quantities from SERVER (not local database)
   Future<void> _loadExistingUnitStandardQuantities() async {
     try {
-      print(
+      debugPrint(
           '🌐 Loading facilitator material status from SERVER for classID: ${widget.classID}');
 
       // Query server for facilitator checkbox status (same as learner guide approach)
@@ -402,8 +402,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             'get_facilitator_checkbox_status.php?classID=${widget.classID}')),
       );
 
-      print('📡 Server Response Status: ${response.statusCode}');
-      print('📡 Server Response Body: ${response.body}');
+      debugPrint('📡 Server Response Status: ${response.statusCode}');
+      debugPrint('📡 Server Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -415,13 +415,13 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
           final Map<String, dynamic> representatives =
               data['representatives'] ?? {};
 
-          print('✅ Server returned ${checkboxStatus.length} checkbox statuses');
+          debugPrint('✅ Server returned ${checkboxStatus.length} checkbox statuses');
 
           // DEBUG: Print the raw API data
-          print('🔍 DEBUG - Raw API Response:');
-          print('   checkboxStatus: $checkboxStatus');
-          print('   quantities: $quantities');
-          print('   representatives: $representatives');
+          debugPrint('🔍 DEBUG - Raw API Response:');
+          debugPrint('   checkboxStatus: $checkboxStatus');
+          debugPrint('   quantities: $quantities');
+          debugPrint('   representatives: $representatives');
 
           // Apply server data to unit standards
           for (var us in unitStandards) {
@@ -451,15 +451,15 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             String repSUM = representatives[sumId]?.toString() ?? '';
 
             // DEBUG: Print processing for each unit standard
-            print('🔍 DEBUG - Processing Unit Standard $usId:');
-            print('   API quantities[$usId] = ${quantities[usId]}');
-            print('   API quantities[$lgId] = ${quantities[lgId]}');
-            print('   API quantities[$formId] = ${quantities[formId]}');
-            print('   API quantities[$sumId] = ${quantities[sumId]}');
-            print('   Converted quantityUS = $quantityUS');
-            print('   Converted quantityLG = $quantityLG');
-            print('   Converted quantityFORM = $quantityFORM');
-            print('   Converted quantitySUM = $quantitySUM');
+            debugPrint('🔍 DEBUG - Processing Unit Standard $usId:');
+            debugPrint('   API quantities[$usId] = ${quantities[usId]}');
+            debugPrint('   API quantities[$lgId] = ${quantities[lgId]}');
+            debugPrint('   API quantities[$formId] = ${quantities[formId]}');
+            debugPrint('   API quantities[$sumId] = ${quantities[sumId]}');
+            debugPrint('   Converted quantityUS = $quantityUS');
+            debugPrint('   Converted quantityLG = $quantityLG');
+            debugPrint('   Converted quantityFORM = $quantityFORM');
+            debugPrint('   Converted quantitySUM = $quantitySUM');
 
             setState(() {
               // Set Unit Standard data
@@ -496,53 +496,53 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             });
 
             // DEBUG: Print final stored values
-            print('🔍 DEBUG - Stored values for $usId:');
-            print(
+            debugPrint('🔍 DEBUG - Stored values for $usId:');
+            debugPrint(
                 '   existingUnitStandardQuantities[$usId] = ${existingUnitStandardQuantities[usId]}');
-            print(
+            debugPrint(
                 '   existingUnitStandardQuantities[$lgId] = ${existingUnitStandardQuantities[lgId]}');
-            print(
+            debugPrint(
                 '   existingUnitStandardQuantities[$formId] = ${existingUnitStandardQuantities[formId]}');
-            print(
+            debugPrint(
                 '   existingUnitStandardQuantities[$sumId] = ${existingUnitStandardQuantities[sumId]}');
-            print(
+            debugPrint(
                 '   selectedUnitStandards[$usId] = ${selectedUnitStandards[usId]}');
-            print(
+            debugPrint(
                 '   selectedUnitStandards[$lgId] = ${selectedUnitStandards[lgId]}');
-            print(
+            debugPrint(
                 '   selectedUnitStandards[$formId] = ${selectedUnitStandards[formId]}');
-            print(
+            debugPrint(
                 '   selectedUnitStandards[$sumId] = ${selectedUnitStandards[sumId]}');
 
             if (quantityUS > 0) {
-              print(
+              debugPrint(
                   '✅ Unit Standard $usId: Qty=$quantityUS, Rep=$repUS, Selected=${selectedUnitStandards[usId]}');
             }
             if (quantityLG > 0) {
-              print(
+              debugPrint(
                   '✅ Learner Guide $lgId: Qty=$quantityLG, Rep=$repLG, Selected=${selectedUnitStandards[lgId]}');
             }
             if (quantityFORM > 0) {
-              print(
+              debugPrint(
                   '✅ Formative $formId: Qty=$quantityFORM, Rep=$repFORM, Selected=${selectedUnitStandards[formId]}');
             }
             if (quantitySUM > 0) {
-              print(
+              debugPrint(
                   '✅ Summative $sumId: Qty=$quantitySUM, Rep=$repSUM, Selected=${selectedUnitStandards[sumId]}');
             }
           }
 
-          print(
+          debugPrint(
               '🎯 Facilitator material status loading from server completed successfully!');
         } else {
-          print('❌ Server returned error: ${data['error']}');
+          debugPrint('❌ Server returned error: ${data['error']}');
         }
       } else {
-        print('❌ Server request failed with status: ${response.statusCode}');
+        debugPrint('❌ Server request failed with status: ${response.statusCode}');
         _setNoSubmissionsFound();
       }
     } catch (e) {
-      print('💥 Error loading facilitator material status from server: $e');
+      debugPrint('💥 Error loading facilitator material status from server: $e');
       _setNoSubmissionsFound();
     }
   }
@@ -573,7 +573,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
         selectedUnitStandards[sumId] = false;
       }
     });
-    print('ℹ️ Set all checkboxes to unchecked (no server data available)');
+    debugPrint('ℹ️ Set all checkboxes to unchecked (no server data available)');
   }
 
   // Function to check the connectivity state by pinging Google
@@ -582,14 +582,14 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
       final response = await http.get(Uri.parse('https://www.google.com'));
 
       if (response.statusCode == 200) {
-        print('Internet is available');
+        debugPrint('Internet is available');
         _updateConnectionStatus(ConnectivityResult.wifi);
       } else {
-        print('No internet connection');
+        debugPrint('No internet connection');
         _updateConnectionStatus(ConnectivityResult.none);
       }
     } catch (e) {
-      print('Error checking connectivity: $e');
+      debugPrint('Error checking connectivity: $e');
       _updateConnectionStatus(ConnectivityResult.none);
     }
   }
@@ -598,10 +598,10 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
     bool isOnline = result != ConnectivityResult.none;
 
     if (isOnline) {
-      print('Internet available - syncing data...');
+      debugPrint('Internet available - syncing data...');
       fetchDataOnline();
     } else {
-      print('No internet connection.');
+      debugPrint('No internet connection.');
       fetchDataOffline();
     }
   }
@@ -612,8 +612,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
       final response = await http.get(Uri.parse(AppConfig.buildUrl(
           'getFacilitatorDetailsForMaterials.php?classID=${widget.classID}')));
 
-      print('API Response Status: ${response.statusCode}');
-      print('API Response Body: ${response.body}');
+      debugPrint('API Response Status: ${response.statusCode}');
+      debugPrint('API Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
@@ -639,7 +639,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
         throw Exception('Failed to load learners from API');
       }
     } catch (e) {
-      print('Error fetching online data: $e');
+      debugPrint('Error fetching online data: $e');
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -653,7 +653,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
     try {
       final offlineData =
           await DatabaseHelper().getLearnerDetailsByClassID(widget.classID);
-      print('Offline Data: $offlineData');
+      debugPrint('Offline Data: $offlineData');
 
       if (offlineData.isNotEmpty) {
         setState(() {
@@ -674,11 +674,11 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
           }
         });
       } else {
-        print('No offline data available for classID: ${widget.classID}');
+        debugPrint('No offline data available for classID: ${widget.classID}');
         throw 'No data available offline';
       }
     } catch (e) {
-      print('Error fetching offline data: $e');
+      debugPrint('Error fetching offline data: $e');
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -961,19 +961,19 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
                       existingUnitStandardQuantities['${usId}_SUM'] ?? 0;
 
                   // DEBUG: Print UI values
-                  print('🔍 UI DEBUG - Unit Standard $usId:');
-                  print(
+                  debugPrint('🔍 UI DEBUG - Unit Standard $usId:');
+                  debugPrint(
                       '   existingUnitStandardQuantities[$usId] = ${existingUnitStandardQuantities[usId]}');
-                  print('   existingUS = $existingUS');
-                  print(
+                  debugPrint('   existingUS = $existingUS');
+                  debugPrint(
                       '   existingUnitStandardQuantities[${usId}_LG] = ${existingUnitStandardQuantities['${usId}_LG']}');
-                  print('   existingLG = $existingLG');
-                  print(
+                  debugPrint('   existingLG = $existingLG');
+                  debugPrint(
                       '   existingUnitStandardQuantities[${usId}_FORM] = ${existingUnitStandardQuantities['${usId}_FORM']}');
-                  print('   existingFORM = $existingFORM');
-                  print(
+                  debugPrint('   existingFORM = $existingFORM');
+                  debugPrint(
                       '   existingUnitStandardQuantities[${usId}_SUM] = ${existingUnitStandardQuantities['${usId}_SUM']}');
-                  print('   existingSUM = $existingSUM');
+                  debugPrint('   existingSUM = $existingSUM');
 
                   final isSelectedUS = selectedUnitStandards[usId] ?? false;
                   final isSelectedLG =
@@ -1140,22 +1140,22 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
                   selectedUnitStandards[usId] = value ?? false;
 
                   // Enhanced debug logging for formative and summative
-                  print('🔄 Checkbox changed for $usId: ${value ?? false}');
+                  debugPrint('🔄 Checkbox changed for $usId: ${value ?? false}');
                   if (usId.contains('_FORM')) {
-                    print('   ✅ FORMATIVE checkbox: $usId = ${value ?? false}');
-                    print(
+                    debugPrint('   ✅ FORMATIVE checkbox: $usId = ${value ?? false}');
+                    debugPrint(
                         '   📊 Current formative state: ${selectedUnitStandards[usId]}');
                   } else if (usId.contains('_SUM')) {
-                    print('   ✅ SUMMATIVE checkbox: $usId = ${value ?? false}');
-                    print(
+                    debugPrint('   ✅ SUMMATIVE checkbox: $usId = ${value ?? false}');
+                    debugPrint(
                         '   📊 Current summative state: ${selectedUnitStandards[usId]}');
                   }
 
                   // Print all selected unit standards for debugging
-                  print('📋 All selected unit standards:');
+                  debugPrint('📋 All selected unit standards:');
                   selectedUnitStandards.forEach((key, selected) {
                     if (selected) {
-                      print('   - $key: $selected');
+                      debugPrint('   - $key: $selected');
                     }
                   });
                 });
@@ -1956,7 +1956,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
         return false;
       }
     } catch (e) {
-      print('Error checking internet connection: $e');
+      debugPrint('Error checking internet connection: $e');
       return false;
     }
   }
@@ -1994,10 +1994,10 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
       hasSelectedUnitStandards = hasManuallySelected || hasExistingSubmissions;
 
       // Debug validation
-      print('🔍 VALIDATION CHECK:');
-      print('   hasManuallySelected: $hasManuallySelected');
-      print('   hasExistingSubmissions: $hasExistingSubmissions');
-      print('   hasSelectedUnitStandards: $hasSelectedUnitStandards');
+      debugPrint('🔍 VALIDATION CHECK:');
+      debugPrint('   hasManuallySelected: $hasManuallySelected');
+      debugPrint('   hasExistingSubmissions: $hasExistingSubmissions');
+      debugPrint('   hasSelectedUnitStandards: $hasSelectedUnitStandards');
 
       if (!hasSelectedUnitStandards) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2041,14 +2041,14 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
           String usName = us['unit_standard_name'] ?? 'Unknown Unit Standard';
 
           // DEBUG: Print current state before processing
-          print('🔍 PROCESSING UNIT STANDARD: $usId');
-          print(
+          debugPrint('🔍 PROCESSING UNIT STANDARD: $usId');
+          debugPrint(
               '   selectedUnitStandards[$usId] = ${selectedUnitStandards[usId]}');
-          print(
+          debugPrint(
               '   selectedUnitStandards[${usId}_LG] = ${selectedUnitStandards['${usId}_LG']}');
-          print(
+          debugPrint(
               '   selectedUnitStandards[${usId}_FORM] = ${selectedUnitStandards['${usId}_FORM']}');
-          print(
+          debugPrint(
               '   selectedUnitStandards[${usId}_SUM] = ${selectedUnitStandards['${usId}_SUM']}');
 
           // Handle Unit Standard submission
@@ -2059,15 +2059,15 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
           if (isSelectedUS || existingUS > 0) {
             int quantity = unitStandardQuantities[usId] ?? 1;
 
-            print(
+            debugPrint(
                 '🔄 [FACILITATOR SUBMISSION] Starting Unit Standard submission:');
-            print('   - ID: $usId');
-            print('   - Name: $usName');
-            print('   - Quantity: $quantity');
-            print('   - ClassID: ${widget.classID}');
-            print('   - Facilitator: $practitionerFullName');
-            print('   - Representative: $representativeName');
-            print('   - Qualification: $qualification_name');
+            debugPrint('   - ID: $usId');
+            debugPrint('   - Name: $usName');
+            debugPrint('   - Quantity: $quantity');
+            debugPrint('   - ClassID: ${widget.classID}');
+            debugPrint('   - Facilitator: $practitionerFullName');
+            debugPrint('   - Representative: $representativeName');
+            debugPrint('   - Qualification: $qualification_name');
 
             // Create form data for this unit standard
             final formData = {
@@ -2082,7 +2082,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
               'representativeSignature': base64Encode(representativeSignature!),
             };
 
-            print(
+            debugPrint(
                 '📤 [FACILITATOR SUBMISSION] Sending data: ${json.encode(formData)}');
 
             try {
@@ -2096,24 +2096,24 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
                   )
                   .timeout(const Duration(seconds: 30));
 
-              print(
+              debugPrint(
                   '📥 [FACILITATOR SUBMISSION] Response Status: ${response.statusCode}');
-              print(
+              debugPrint(
                   '📥 [FACILITATOR SUBMISSION] Response Body: ${response.body}');
 
               final responseBody = json.decode(response.body);
               if (!responseBody['success']) {
                 allSuccessful = false;
                 failedSubmissions.add(usName);
-                print(
+                debugPrint(
                     '❌ [FACILITATOR SUBMISSION] FAILED for $usName: ${responseBody['message']}');
               } else {
-                print('✅ [FACILITATOR SUBMISSION] SUCCESS for $usName');
+                debugPrint('✅ [FACILITATOR SUBMISSION] SUCCESS for $usName');
               }
             } catch (e) {
               allSuccessful = false;
               failedSubmissions.add(usName);
-              print('💥 [FACILITATOR SUBMISSION] EXCEPTION for $usName: $e');
+              debugPrint('💥 [FACILITATOR SUBMISSION] EXCEPTION for $usName: $e');
             }
           }
 
@@ -2127,15 +2127,15 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             int quantityLG = unitStandardQuantities[lgId] ?? 1;
             String lgName = '$usId - Learner Guide';
 
-            print(
+            debugPrint(
                 '🔄 [FACILITATOR SUBMISSION] Starting Learner Guide submission:');
-            print('   - ID: $lgId');
-            print('   - Name: $lgName');
-            print('   - Quantity: $quantityLG');
-            print('   - ClassID: ${widget.classID}');
-            print('   - Facilitator: $practitionerFullName');
-            print('   - Representative: $representativeName');
-            print('   - Qualification: $qualification_name');
+            debugPrint('   - ID: $lgId');
+            debugPrint('   - Name: $lgName');
+            debugPrint('   - Quantity: $quantityLG');
+            debugPrint('   - ClassID: ${widget.classID}');
+            debugPrint('   - Facilitator: $practitionerFullName');
+            debugPrint('   - Representative: $representativeName');
+            debugPrint('   - Qualification: $qualification_name');
 
             // Create form data for this learner guide
             final formDataLG = {
@@ -2150,7 +2150,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
               'representativeSignature': base64Encode(representativeSignature!),
             };
 
-            print(
+            debugPrint(
                 '📤 [FACILITATOR SUBMISSION] Sending LG data: ${json.encode(formDataLG)}');
 
             try {
@@ -2164,24 +2164,24 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
                   )
                   .timeout(const Duration(seconds: 30));
 
-              print(
+              debugPrint(
                   '📥 [FACILITATOR SUBMISSION] LG Response Status: ${response.statusCode}');
-              print(
+              debugPrint(
                   '📥 [FACILITATOR SUBMISSION] LG Response Body: ${response.body}');
 
               final responseBody = json.decode(response.body);
               if (!responseBody['success']) {
                 allSuccessful = false;
                 failedSubmissions.add(lgName);
-                print(
+                debugPrint(
                     '❌ [FACILITATOR SUBMISSION] FAILED for $lgName: ${responseBody['message']}');
               } else {
-                print('✅ [FACILITATOR SUBMISSION] SUCCESS for $lgName');
+                debugPrint('✅ [FACILITATOR SUBMISSION] SUCCESS for $lgName');
               }
             } catch (e) {
               allSuccessful = false;
               failedSubmissions.add(lgName);
-              print('💥 [FACILITATOR SUBMISSION] EXCEPTION for $lgName: $e');
+              debugPrint('💥 [FACILITATOR SUBMISSION] EXCEPTION for $lgName: $e');
             }
           }
 
@@ -2191,10 +2191,10 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
           int existingFORM = existingUnitStandardQuantities[formId] ?? 0;
 
           // DEBUG: Print formative state
-          print('🔍 FORMATIVE CHECK for $formId:');
-          print('   isSelectedFORM: $isSelectedFORM');
-          print('   existingFORM: $existingFORM');
-          print('   Will submit: ${isSelectedFORM || existingFORM > 0}');
+          debugPrint('🔍 FORMATIVE CHECK for $formId:');
+          debugPrint('   isSelectedFORM: $isSelectedFORM');
+          debugPrint('   existingFORM: $existingFORM');
+          debugPrint('   Will submit: ${isSelectedFORM || existingFORM > 0}');
 
           // Submit if manually selected OR if it has existing submissions (auto-checked)
           // FIX: Always submit if there are existing submissions, regardless of checkbox state
@@ -2202,14 +2202,14 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             int quantityFORM = unitStandardQuantities[formId] ?? 1;
             String formName = '$usId - Formative';
 
-            print('🔄 [FACILITATOR SUBMISSION] Starting Formative submission:');
-            print('   - ID: $formId');
-            print('   - Name: $formName');
-            print('   - Quantity: $quantityFORM');
-            print('   - ClassID: ${widget.classID}');
-            print('   - Facilitator: $practitionerFullName');
-            print('   - Representative: $representativeName');
-            print('   - Qualification: $qualification_name');
+            debugPrint('🔄 [FACILITATOR SUBMISSION] Starting Formative submission:');
+            debugPrint('   - ID: $formId');
+            debugPrint('   - Name: $formName');
+            debugPrint('   - Quantity: $quantityFORM');
+            debugPrint('   - ClassID: ${widget.classID}');
+            debugPrint('   - Facilitator: $practitionerFullName');
+            debugPrint('   - Representative: $representativeName');
+            debugPrint('   - Qualification: $qualification_name');
 
             // Create form data for this formative
             final formDataFORM = {
@@ -2224,7 +2224,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
               'representativeSignature': base64Encode(representativeSignature!),
             };
 
-            print(
+            debugPrint(
                 '📤 [FACILITATOR SUBMISSION] Sending FORM data: ${json.encode(formDataFORM)}');
 
             try {
@@ -2238,24 +2238,24 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
                   )
                   .timeout(const Duration(seconds: 30));
 
-              print(
+              debugPrint(
                   '📥 [FACILITATOR SUBMISSION] FORM Response Status: ${response.statusCode}');
-              print(
+              debugPrint(
                   '📥 [FACILITATOR SUBMISSION] FORM Response Body: ${response.body}');
 
               final responseBody = json.decode(response.body);
               if (!responseBody['success']) {
                 allSuccessful = false;
                 failedSubmissions.add(formName);
-                print(
+                debugPrint(
                     '❌ [FACILITATOR SUBMISSION] FAILED for $formName: ${responseBody['message']}');
               } else {
-                print('✅ [FACILITATOR SUBMISSION] SUCCESS for $formName');
+                debugPrint('✅ [FACILITATOR SUBMISSION] SUCCESS for $formName');
               }
             } catch (e) {
               allSuccessful = false;
               failedSubmissions.add(formName);
-              print('💥 [FACILITATOR SUBMISSION] EXCEPTION for $formName: $e');
+              debugPrint('💥 [FACILITATOR SUBMISSION] EXCEPTION for $formName: $e');
             }
           }
 
@@ -2265,10 +2265,10 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
           int existingSUM = existingUnitStandardQuantities[sumId] ?? 0;
 
           // DEBUG: Print summative state
-          print('🔍 SUMMATIVE CHECK for $sumId:');
-          print('   isSelectedSUM: $isSelectedSUM');
-          print('   existingSUM: $existingSUM');
-          print('   Will submit: ${isSelectedSUM || existingSUM > 0}');
+          debugPrint('🔍 SUMMATIVE CHECK for $sumId:');
+          debugPrint('   isSelectedSUM: $isSelectedSUM');
+          debugPrint('   existingSUM: $existingSUM');
+          debugPrint('   Will submit: ${isSelectedSUM || existingSUM > 0}');
 
           // Submit if manually selected OR if it has existing submissions (auto-checked)
           // FIX: Always submit if there are existing submissions, regardless of checkbox state
@@ -2276,14 +2276,14 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             int quantitySUM = unitStandardQuantities[sumId] ?? 1;
             String sumName = '$usId - Summative';
 
-            print('🔄 [FACILITATOR SUBMISSION] Starting Summative submission:');
-            print('   - ID: $sumId');
-            print('   - Name: $sumName');
-            print('   - Quantity: $quantitySUM');
-            print('   - ClassID: ${widget.classID}');
-            print('   - Facilitator: $practitionerFullName');
-            print('   - Representative: $representativeName');
-            print('   - Qualification: $qualification_name');
+            debugPrint('🔄 [FACILITATOR SUBMISSION] Starting Summative submission:');
+            debugPrint('   - ID: $sumId');
+            debugPrint('   - Name: $sumName');
+            debugPrint('   - Quantity: $quantitySUM');
+            debugPrint('   - ClassID: ${widget.classID}');
+            debugPrint('   - Facilitator: $practitionerFullName');
+            debugPrint('   - Representative: $representativeName');
+            debugPrint('   - Qualification: $qualification_name');
 
             // Create form data for this summative
             final formDataSUM = {
@@ -2298,7 +2298,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
               'representativeSignature': base64Encode(representativeSignature!),
             };
 
-            print(
+            debugPrint(
                 '📤 [FACILITATOR SUBMISSION] Sending SUM data: ${json.encode(formDataSUM)}');
 
             try {
@@ -2312,32 +2312,32 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
                   )
                   .timeout(const Duration(seconds: 30));
 
-              print(
+              debugPrint(
                   '📥 [FACILITATOR SUBMISSION] SUM Response Status: ${response.statusCode}');
-              print(
+              debugPrint(
                   '📥 [FACILITATOR SUBMISSION] SUM Response Body: ${response.body}');
 
               final responseBody = json.decode(response.body);
               if (!responseBody['success']) {
                 allSuccessful = false;
                 failedSubmissions.add(sumName);
-                print(
+                debugPrint(
                     '❌ [FACILITATOR SUBMISSION] FAILED for $sumName: ${responseBody['message']}');
               } else {
-                print('✅ [FACILITATOR SUBMISSION] SUCCESS for $sumName');
+                debugPrint('✅ [FACILITATOR SUBMISSION] SUCCESS for $sumName');
               }
             } catch (e) {
               allSuccessful = false;
               failedSubmissions.add(sumName);
-              print('💥 [FACILITATOR SUBMISSION] EXCEPTION for $sumName: $e');
+              debugPrint('💥 [FACILITATOR SUBMISSION] EXCEPTION for $sumName: $e');
             }
           }
         }
 
-        print('📊 [FACILITATOR SUBMISSION] Final Results:');
-        print('   - All Successful: $allSuccessful');
-        print('   - Failed Count: ${failedSubmissions.length}');
-        print('   - Failed Items: $failedSubmissions');
+        debugPrint('📊 [FACILITATOR SUBMISSION] Final Results:');
+        debugPrint('   - All Successful: $allSuccessful');
+        debugPrint('   - Failed Count: ${failedSubmissions.length}');
+        debugPrint('   - Failed Items: $failedSubmissions');
 
         if (!mounted) return;
         if (!context.mounted) return;
@@ -2405,7 +2405,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
         'facilitatorSignature': base64Encode(facilitatorSignature!),
         'representativeSignature': base64Encode(representativeSignature!),
       };
-      print('Facilitator Form Data: $formData');
+      debugPrint('Facilitator Form Data: $formData');
 
       // Send HTTP request to facilitator material issue endpoint (TESTING)
       final response = await http
@@ -2416,13 +2416,13 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
           )
           .timeout(const Duration(seconds: 30));
 
-      print('Response Status: ${response.statusCode}');
-      print('Response Body: ${response.body}');
+      debugPrint('Response Status: ${response.statusCode}');
+      debugPrint('Response Body: ${response.body}');
 
       // Parse response
       try {
         final responseBody = json.decode(response.body);
-        print('Decoded Response: $responseBody');
+        debugPrint('Decoded Response: $responseBody');
 
         if (responseBody['success']) {
           if (!mounted) return;
@@ -2462,7 +2462,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
           );
         }
       } catch (e) {
-        print('JSON Decode Error: $e');
+        debugPrint('JSON Decode Error: $e');
         if (!mounted) return;
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2470,8 +2470,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
         );
       }
     } catch (e, stackTrace) {
-      print('Error: $e');
-      print('StackTrace: $stackTrace');
+      debugPrint('Error: $e');
+      debugPrint('StackTrace: $stackTrace');
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'LearnerListPage.dart';
 import 'learning_material_form_page.dart';
 import 'database_helper.dart';
@@ -10,9 +8,7 @@ import 'materialForm.dart';
 import 'clock_in_page.dart';
 import 'backup_clock_in_page.dart';
 import 'signature_geofence_clock_in_page.dart';
-import 'contact_less.dart';
 import 'services/fingerprint_service.dart';
-import 'services/timezone_validator.dart';
 import 'sync_service.dart' show syncSingleClockIn, syncSingleClockOut;
 import 'EnrollmentPage.dart';
 import 'facilitator_fingerprint_page.dart';
@@ -56,10 +52,10 @@ class _DashboardPageState extends State<DashboardPage> {
     // Note: Timezone validation is now blocking at clock-in time
     // No need for non-blocking warning in dashboard anymore
 
-    print(
+    debugPrint(
         "[DASHBOARD] Initializing dashboard with classID: '${widget.classID}'");
-    print("[DASHBOARD] Initial learners count: ${widget.learners.length}");
-    print("[DASHBOARD] Initial learners data: ${widget.learners}");
+    debugPrint("[DASHBOARD] Initial learners count: ${widget.learners.length}");
+    debugPrint("[DASHBOARD] Initial learners data: ${widget.learners}");
 
     // Check if initial learners have any fingerprint data
     int initialLearnersWithFingerprints = 0;
@@ -71,7 +67,7 @@ class _DashboardPageState extends State<DashboardPage> {
               (learner['futronic_right_template']?.isNotEmpty == true);
       if (hasAnyFingerprint) initialLearnersWithFingerprints++;
     }
-    print(
+    debugPrint(
         "[DASHBOARD] ⚠️  Initial learners with fingerprints: $initialLearnersWithFingerprints");
 
     currentLearners = widget.learners;
@@ -81,7 +77,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
     // Start monitoring service for random biometric verification
     MonitoringService().startService(context, widget.classID);
-    print(
+    debugPrint(
         "[DASHBOARD] ✅ Monitoring service started for class: ${widget.classID}");
 
     reloadClassData();
@@ -96,15 +92,15 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   void dispose() {
-    print(
+    debugPrint(
         '[DASHBOARD] ⚠️  DISPOSING DASHBOARD PAGE - This should only happen during intended logout!');
-    print('[DASHBOARD] Stack trace during dispose: ${StackTrace.current}');
-    print('[DASHBOARD] Current mounted state: $mounted');
-    print('[DASHBOARD] Is scanning: $_isScanning');
+    debugPrint('[DASHBOARD] Stack trace during dispose: ${StackTrace.current}');
+    debugPrint('[DASHBOARD] Current mounted state: $mounted');
+    debugPrint('[DASHBOARD] Is scanning: $_isScanning');
 
     // Stop monitoring service
     MonitoringService().stopService();
-    print('[DASHBOARD] ✅ Monitoring service stopped');
+    debugPrint('[DASHBOARD] ✅ Monitoring service stopped');
 
     // Cancel stream subscription BEFORE disposing the service
     _enrollSuccessSubscription?.cancel();
@@ -132,40 +128,40 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> reloadClassData({String? overrideClassID}) async {
     try {
-      print(
+      debugPrint(
           "[DASHBOARD] Starting to reload class data for classID: ${widget.classID}");
-      print("[DASHBOARD] Widget mounted state at start: $mounted");
+      debugPrint("[DASHBOARD] Widget mounted state at start: $mounted");
 
-      print("[DASHBOARD] About to call fetchClassData");
+      debugPrint("[DASHBOARD] About to call fetchClassData");
       final data = await fetchClassData(widget.classID);
-      print("[DASHBOARD] Raw class data fetched: $data");
-      print("[DASHBOARD] Data fetch completed, widget still mounted: $mounted");
+      debugPrint("[DASHBOARD] Raw class data fetched: $data");
+      debugPrint("[DASHBOARD] Data fetch completed, widget still mounted: $mounted");
 
       final effectiveClassID = overrideClassID ?? widget.classID;
-      print(
+      debugPrint(
           "[DASHBOARD] About to call getLearnersWithClockingData for classID: $effectiveClassID");
       final learnersData =
           await DatabaseHelper().getLearnersWithClockingData(effectiveClassID);
-      print("[DASHBOARD] Raw learners data fetched: $learnersData");
-      print("[DASHBOARD] Learners data count: ${learnersData.length}");
-      print("[DASHBOARD] ClassID being used: ${widget.classID}");
+      debugPrint("[DASHBOARD] Raw learners data fetched: $learnersData");
+      debugPrint("[DASHBOARD] Learners data count: ${learnersData.length}");
+      debugPrint("[DASHBOARD] ClassID being used: ${widget.classID}");
 
       // Debug why we might have 0 learners
       if (learnersData.isEmpty) {
-        print("[DASHBOARD] ⚠️  NO LEARNERS FOUND! Debugging...");
+        debugPrint("[DASHBOARD] ⚠️  NO LEARNERS FOUND! Debugging...");
 
         // Check if there are any learners in the database at all
         final db = await DatabaseHelper().database;
         final totalLearners = await db.query('learnerdetails');
-        print(
+        debugPrint(
             "[DASHBOARD] Total learners in database: ${totalLearners.length}");
 
         if (totalLearners.isNotEmpty) {
           // Show first few learners and their classIDs
-          print("[DASHBOARD] First 5 learners in database:");
+          debugPrint("[DASHBOARD] First 5 learners in database:");
           for (int i = 0; i < totalLearners.length && i < 5; i++) {
             final learner = totalLearners[i];
-            print(
+            debugPrint(
                 "[DASHBOARD]   ${learner['LearnerID']} (${learner['Name']} ${learner['Surname']}) - classID: ${learner['classID']}");
           }
 
@@ -175,20 +171,20 @@ class _DashboardPageState extends State<DashboardPage> {
             where: 'classID = ?',
             whereArgs: [widget.classID],
           );
-          print(
+          debugPrint(
               "[DASHBOARD] Learners matching classID ${widget.classID}: ${matchingClassLearners.length}");
 
           if (matchingClassLearners.isEmpty) {
             // Check what classIDs exist
             final distinctClasses = await db.rawQuery(
                 'SELECT DISTINCT classID FROM learnerdetails WHERE classID IS NOT NULL');
-            print(
+            debugPrint(
                 "[DASHBOARD] Available classIDs in database: ${distinctClasses.map((e) => e['classID']).toList()}");
           }
         }
       }
 
-      print(
+      debugPrint(
           "[DASHBOARD] Learners fetch completed, widget still mounted: $mounted");
 
       // Debug fingerprint data for first few learners
@@ -202,22 +198,22 @@ class _DashboardPageState extends State<DashboardPage> {
         final futLeft = learner['futronic_left_template']?.toString() ?? '';
         final futRight = learner['futronic_right_template']?.toString() ?? '';
 
-        print("[DASHBOARD_DEBUG] Learner $learnerId ($name $surname):");
-        print("[DASHBOARD_DEBUG]   ZKTeco Left: ${zkLeft.length} chars");
-        print("[DASHBOARD_DEBUG]   ZKTeco Right: ${zkRight.length} chars");
-        print("[DASHBOARD_DEBUG]   Futronic Left: ${futLeft.length} chars");
-        print("[DASHBOARD_DEBUG]   Futronic Right: ${futRight.length} chars");
+        debugPrint("[DASHBOARD_DEBUG] Learner $learnerId ($name $surname):");
+        debugPrint("[DASHBOARD_DEBUG]   ZKTeco Left: ${zkLeft.length} chars");
+        debugPrint("[DASHBOARD_DEBUG]   ZKTeco Right: ${zkRight.length} chars");
+        debugPrint("[DASHBOARD_DEBUG]   Futronic Left: ${futLeft.length} chars");
+        debugPrint("[DASHBOARD_DEBUG]   Futronic Right: ${futRight.length} chars");
       }
 
       if (data.isEmpty) {
-        print("[DASHBOARD] WARNING: Class data is empty!");
+        debugPrint("[DASHBOARD] WARNING: Class data is empty!");
       }
 
-      print("[DASHBOARD] Checking mounted state before setState: $mounted");
+      debugPrint("[DASHBOARD] Checking mounted state before setState: $mounted");
       if (mounted) {
-        print("[DASHBOARD] About to call setState");
+        debugPrint("[DASHBOARD] About to call setState");
         setState(() {
-          print("[DASHBOARD] Inside setState");
+          debugPrint("[DASHBOARD] Inside setState");
           classData = Future.value(data);
           currentLearners = learnersData.map((learner) {
             return {
@@ -244,8 +240,8 @@ class _DashboardPageState extends State<DashboardPage> {
           }).toList();
         });
 
-        print("[DASHBOARD] Final class data set in state: $data");
-        print("[DASHBOARD] Final learners count: ${currentLearners.length}");
+        debugPrint("[DASHBOARD] Final class data set in state: $data");
+        debugPrint("[DASHBOARD] Final learners count: ${currentLearners.length}");
 
         // Check if reloaded learners have fingerprint data
         int reloadedLearnersWithFingerprints = 0;
@@ -257,12 +253,12 @@ class _DashboardPageState extends State<DashboardPage> {
                   (learner['futronic_right_template']?.isNotEmpty == true);
           if (hasAnyFingerprint) reloadedLearnersWithFingerprints++;
         }
-        print(
+        debugPrint(
             "[DASHBOARD] ✅ Reloaded learners with fingerprints: $reloadedLearnersWithFingerprints");
       }
     } catch (e) {
-      print("[DASHBOARD] ERROR fetching class data or learners: $e");
-      print("[DASHBOARD] Error details: ${e.toString()}");
+      debugPrint("[DASHBOARD] ERROR fetching class data or learners: $e");
+      debugPrint("[DASHBOARD] Error details: ${e.toString()}");
       // Set some default data to prevent "no data found"
       if (mounted) {
         setState(() {
@@ -283,7 +279,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<Map<String, dynamic>> _loadClassDataWithCorrectClassID(
       String correctClassID) async {
     try {
-      print(
+      debugPrint(
           "[DASHBOARD] Loading class data with corrected classID: $correctClassID");
 
       // Fetch the original class data structure but with correct learners
@@ -305,27 +301,27 @@ class _DashboardPageState extends State<DashboardPage> {
         };
       }).toList();
 
-      print(
+      debugPrint(
           "[DASHBOARD] ✅ Corrected class data loaded with ${learnersData.length} learners");
       return correctedData;
     } catch (e) {
-      print("[DASHBOARD] ❌ Error loading corrected class data: $e");
+      debugPrint("[DASHBOARD] ❌ Error loading corrected class data: $e");
       rethrow;
     }
   }
 
   Future<Map<String, dynamic>> fetchClassData(String classID) async {
     try {
-      print(
+      debugPrint(
           "[DASHBOARD] Attempting to fetch class data for classID: '$classID'");
 
       final result =
           await DatabaseHelper().fetchClassDetailsAndAttendance(classID);
-      print("[DASHBOARD] Successfully fetched class data: $result");
+      debugPrint("[DASHBOARD] Successfully fetched class data: $result");
 
       return result;
     } catch (e) {
-      print("[DASHBOARD] Error in fetchClassData: $e");
+      debugPrint("[DASHBOARD] Error in fetchClassData: $e");
 
       // Return default data instead of throwing exception to prevent "no data found"
       return {
@@ -440,11 +436,11 @@ class _DashboardPageState extends State<DashboardPage> {
       String? matchedLearnerId;
       String? matchedLearnerName;
 
-      print(
+      debugPrint(
           '[1:N] Starting OPTIMIZED FUTRONIC verification against ${currentLearners.length} learners');
-      print(
+      debugPrint(
           '[1:N] ⚠️  DEBUG: currentLearners at verification time: ${currentLearners.length}');
-      print(
+      debugPrint(
           '[1:N] ⚠️  DEBUG: First 3 learners: ${currentLearners.take(3).toList()}');
 
       int learnersWithTemplates = 0;
@@ -508,7 +504,7 @@ class _DashboardPageState extends State<DashboardPage> {
         }
       }
 
-      print(
+      debugPrint(
           '[1:N] Pre-filtered to ${candidateLearners.length} learners with Futronic templates');
 
       // OPTIMIZATION 2: Sort by ultra-aggressive priority score (activity + quality)
@@ -544,7 +540,7 @@ class _DashboardPageState extends State<DashboardPage> {
           5; // ULTRA-FAST: Only check top 5 most likely candidates
       final limitedFutronicCandidates =
           candidateLearners.take(maxFutronicCandidates).toList();
-      print(
+      debugPrint(
           '[1:N] ⚡ FUTRONIC ULTRA-FAST: Processing only top ${limitedFutronicCandidates.length}/${candidateLearners.length} candidates');
 
       for (final candidate in limitedFutronicCandidates) {
@@ -554,11 +550,11 @@ class _DashboardPageState extends State<DashboardPage> {
         final leftTemplate = candidate['leftTemplate'];
         final rightTemplate = candidate['rightTemplate'];
 
-        print(
+        debugPrint(
             '[1:N] ⚡ LIGHTNING-FAST checking learner: $learnerId ($learnerName)');
-        print(
+        debugPrint(
             '[1:N]   Left: ${leftTemplate?.isNotEmpty == true ? "YES (${leftTemplate!.length})" : "NO"}');
-        print(
+        debugPrint(
             '[1:N]   Right: ${rightTemplate?.isNotEmpty == true ? "YES (${rightTemplate!.length})" : "NO"}');
 
         try {
@@ -571,7 +567,7 @@ class _DashboardPageState extends State<DashboardPage> {
               rightTemplate.isNotEmpty) {
             // Best case: both templates available
             final hint = 'left'; // Always start with left when both available
-            print(
+            debugPrint(
                 '[1:N] FAST verifyBoth for learner $learnerId with hint: $hint');
 
             match = await FutronicService().verifyBoth(
@@ -579,47 +575,47 @@ class _DashboardPageState extends State<DashboardPage> {
               leftTemplate: leftTemplate,
               rightTemplate: rightTemplate,
             );
-            print(
+            debugPrint(
                 '[1:N] FAST verifyBoth result for learner $learnerId: $match');
           } else if (leftTemplate != null && leftTemplate.isNotEmpty) {
             // Left template only
-            print('[1:N] FAST verify (left only) for learner $learnerId');
+            debugPrint('[1:N] FAST verify (left only) for learner $learnerId');
             match = await FutronicService().verify('left', leftTemplate);
-            print(
+            debugPrint(
                 '[1:N] FAST verify (left) result for learner $learnerId: $match');
           } else if (rightTemplate != null && rightTemplate.isNotEmpty) {
             // Right template only
-            print('[1:N] FAST verify (right only) for learner $learnerId');
+            debugPrint('[1:N] FAST verify (right only) for learner $learnerId');
             match = await FutronicService().verify('right', rightTemplate);
-            print(
+            debugPrint(
                 '[1:N] FAST verify (right) result for learner $learnerId: $match');
           }
 
           if (match) {
-            print('[1:N] ✅ FUTRONIC MATCH FOUND! Learner: $learnerId');
+            debugPrint('[1:N] ✅ FUTRONIC MATCH FOUND! Learner: $learnerId');
             matchedLearnerId = learnerId;
             matchedLearnerName = learnerName;
             break; // OPTIMIZATION 5: Exit immediately on first match
           }
         } catch (e) {
-          print(
+          debugPrint(
               '[1:N] Error in FAST Futronic verification for learner $learnerId: $e');
           continue;
         }
       }
 
-      print('[1:N] Futronic verification summary:');
-      print('[1:N]   Total learners: ${currentLearners.length}');
-      print('[1:N]   Learners with Futronic templates: $learnersWithTemplates');
-      print('[1:N]   Match found: ${matchedLearnerId != null}');
+      debugPrint('[1:N] Futronic verification summary:');
+      debugPrint('[1:N]   Total learners: ${currentLearners.length}');
+      debugPrint('[1:N]   Learners with Futronic templates: $learnersWithTemplates');
+      debugPrint('[1:N]   Match found: ${matchedLearnerId != null}');
 
       // SECURITY CHECK: Ensure we have templates before allowing any match
       if (learnersWithTemplates == 0) {
-        print(
+        debugPrint(
             '[1:N] ⚠️  SECURITY: No learners have Futronic templates in current class');
 
         // AUTO-FIX: Try to load learners from classID with fingerprints
-        print(
+        debugPrint(
             '[1:N] 🔧 Attempting AUTO-FIX: Loading learners from correct classID...');
         final db = await DatabaseHelper().database;
         final classQuery = await db.rawQuery('''
@@ -635,17 +631,17 @@ class _DashboardPageState extends State<DashboardPage> {
         if (classQuery.isNotEmpty) {
           final suggestedClassID = classQuery.first['classID']?.toString();
           if (suggestedClassID != null) {
-            print(
+            debugPrint(
                 '[1:N] 🎯 Found classID $suggestedClassID with ${classQuery.first['learner_count']} Futronic templates');
             final learnersFromCorrectClass = await DatabaseHelper()
                 .getLearnersWithClockingData(suggestedClassID);
 
             if (learnersFromCorrectClass.isNotEmpty) {
-              print(
+              debugPrint(
                   '[1:N] ✅ AUTO-FIX SUCCESS: Loaded ${learnersFromCorrectClass.length} learners from correct classID');
 
               // PERMANENT FIX: Update widget classID and reload all data with correct classID
-              print(
+              debugPrint(
                   '[1:N] 🔧 PERMANENT FIX: Switching dashboard to use classID $suggestedClassID permanently');
 
               // Create a new Future that uses the correct classID
@@ -657,21 +653,21 @@ class _DashboardPageState extends State<DashboardPage> {
               // Reload class data with the correct classID
               await reloadClassData(overrideClassID: suggestedClassID);
 
-              print(
+              debugPrint(
                   '[1:N] ✅ AUTO-FIX COMPLETE: Dashboard now permanently uses correct classID $suggestedClassID');
               return;
             }
           }
         }
 
-        print(
+        debugPrint(
             '[1:N] ❌ AUTO-FIX FAILED: No classID with Futronic templates found');
         _showVerificationFailedDialog(0, 'Futronic - No Templates Available');
         return;
       }
 
       if (matchedLearnerId != null && matchedLearnerName != null) {
-        print(
+        debugPrint(
             '[1:N] ✅ SECURE MATCH: Proceeding with verified learner $matchedLearnerId');
         await _handleMatchedLearner(matchedLearnerId, matchedLearnerName,
             scanningDialogAlreadyClosed: true);
@@ -679,7 +675,7 @@ class _DashboardPageState extends State<DashboardPage> {
         _showVerificationFailedDialog(learnersWithTemplates, 'Futronic');
       }
     } catch (e) {
-      print('[1:N] Futronic verification error: $e');
+      debugPrint('[1:N] Futronic verification error: $e');
       _showErrorDialog(
           'Verification Error', 'Futronic verification failed: $e');
     }
@@ -700,12 +696,12 @@ class _DashboardPageState extends State<DashboardPage> {
       String? matchedLearnerId;
       String? matchedLearnerName;
 
-      print(
+      debugPrint(
           '[1:N] Starting ULTRA-FAST ZKTECO verification against ${currentLearners.length} learners');
-      print('[1:N] Scanned template length: ${scannedTemplate.length}');
-      print(
+      debugPrint('[1:N] Scanned template length: ${scannedTemplate.length}');
+      debugPrint(
           '[1:N] ⚠️  DEBUG: currentLearners at verification time: ${currentLearners.length}');
-      print(
+      debugPrint(
           '[1:N] ⚠️  DEBUG: First 3 learners: ${currentLearners.take(3).toList()}');
 
       int learnersWithTemplates = 0;
@@ -713,7 +709,7 @@ class _DashboardPageState extends State<DashboardPage> {
       // OPTIMIZATION 1: Template pre-loading and caching (SDK Pattern)
       List<Map<String, dynamic>> candidateLearners = [];
       final startTime = DateTime.now();
-      print('[1:N] ⚡ Starting template pre-loading phase...');
+      debugPrint('[1:N] ⚡ Starting template pre-loading phase...');
 
       for (final learner in currentLearners) {
         final learnerId = learner['LearnerID']?.toString();
@@ -771,7 +767,7 @@ class _DashboardPageState extends State<DashboardPage> {
         }
       }
 
-      print(
+      debugPrint(
           '[1:N] Pre-filtered to ${candidateLearners.length} learners with ZKTeco templates');
 
       // OPTIMIZATION 2: Sort by priority score for fastest verification
@@ -815,7 +811,7 @@ class _DashboardPageState extends State<DashboardPage> {
           5; // ULTRA-FAST: Only check top 5 most likely candidates
       final limitedCandidates = candidateLearners.take(maxCandidates).toList();
       final preloadTime = DateTime.now().difference(startTime).inMilliseconds;
-      print(
+      debugPrint(
           '[1:N] ⚡ TEMPLATE PRE-LOAD COMPLETE: ${preloadTime}ms for ${limitedCandidates.length}/${candidateLearners.length} candidates');
 
       // OPTIMIZATION 3: Single-attempt verification with best template selection
@@ -826,7 +822,7 @@ class _DashboardPageState extends State<DashboardPage> {
         final leftTemplate = candidate['leftTemplate'];
         final rightTemplate = candidate['rightTemplate'];
 
-        print('[1:N] FAST checking learner: $learnerId ($learnerName)');
+        debugPrint('[1:N] FAST checking learner: $learnerId ($learnerName)');
 
         // Validate template quality
         bool hasValidLeft = leftTemplate != null &&
@@ -836,11 +832,11 @@ class _DashboardPageState extends State<DashboardPage> {
             rightTemplate.isNotEmpty &&
             rightTemplate.length > 100;
 
-        print(
+        debugPrint(
             '[1:N] Template validation - Left: $hasValidLeft, Right: $hasValidRight');
 
         if (!hasValidLeft && !hasValidRight) {
-          print('[1:N] No valid templates found for learner $learnerId');
+          debugPrint('[1:N] No valid templates found for learner $learnerId');
           continue;
         }
 
@@ -850,72 +846,72 @@ class _DashboardPageState extends State<DashboardPage> {
           // OPTIMIZATION 4: Smart template selection - try best template first
           if (hasValidLeft && hasValidRight) {
             // Try left first (typically better quality)
-            print('[1:N] FAST ZKTeco verify (left) for learner $learnerId');
+            debugPrint('[1:N] FAST ZKTeco verify (left) for learner $learnerId');
             try {
               match = await _fingerprintService.verify('left', leftTemplate!);
-              print('[1:N] FAST ZKTeco left verify result: $match');
+              debugPrint('[1:N] FAST ZKTeco left verify result: $match');
             } catch (e) {
-              print('[1:N] FAST ZKTeco left verify error: $e');
+              debugPrint('[1:N] FAST ZKTeco left verify error: $e');
             }
 
             // If left fails, try right
             if (!match) {
-              print('[1:N] FAST ZKTeco verify (right) for learner $learnerId');
+              debugPrint('[1:N] FAST ZKTeco verify (right) for learner $learnerId');
               try {
                 match =
                     await _fingerprintService.verify('right', rightTemplate!);
-                print('[1:N] FAST ZKTeco right verify result: $match');
+                debugPrint('[1:N] FAST ZKTeco right verify result: $match');
               } catch (e) {
-                print('[1:N] FAST ZKTeco right verify error: $e');
+                debugPrint('[1:N] FAST ZKTeco right verify error: $e');
               }
             }
           } else if (hasValidLeft) {
             // Left template only
-            print(
+            debugPrint(
                 '[1:N] FAST ZKTeco verify (left only) for learner $learnerId');
             try {
               match = await _fingerprintService.verify('left', leftTemplate!);
-              print('[1:N] FAST ZKTeco left verify result: $match');
+              debugPrint('[1:N] FAST ZKTeco left verify result: $match');
             } catch (e) {
-              print('[1:N] FAST ZKTeco left verify error: $e');
+              debugPrint('[1:N] FAST ZKTeco left verify error: $e');
             }
           } else if (hasValidRight) {
             // Right template only
-            print(
+            debugPrint(
                 '[1:N] FAST ZKTeco verify (right only) for learner $learnerId');
             try {
               match = await _fingerprintService.verify('right', rightTemplate!);
-              print('[1:N] FAST ZKTeco right verify result: $match');
+              debugPrint('[1:N] FAST ZKTeco right verify result: $match');
             } catch (e) {
-              print('[1:N] FAST ZKTeco right verify error: $e');
+              debugPrint('[1:N] FAST ZKTeco right verify error: $e');
             }
           }
 
           if (match) {
-            print('[1:N] ✅ ZKTECO MATCH FOUND! Learner: $learnerId');
+            debugPrint('[1:N] ✅ ZKTECO MATCH FOUND! Learner: $learnerId');
             matchedLearnerId = learnerId;
             matchedLearnerName = learnerName;
             break; // OPTIMIZATION 5: Exit immediately on first match
           }
         } catch (e) {
-          print(
+          debugPrint(
               '[1:N] Error in FAST ZKTeco verification for learner $learnerId: $e');
           continue;
         }
       }
 
-      print('[1:N] ZKTeco verification summary:');
-      print('[1:N]   Total learners: ${currentLearners.length}');
-      print('[1:N]   Learners with ZKTeco templates: $learnersWithTemplates');
-      print('[1:N]   Match found: ${matchedLearnerId != null}');
+      debugPrint('[1:N] ZKTeco verification summary:');
+      debugPrint('[1:N]   Total learners: ${currentLearners.length}');
+      debugPrint('[1:N]   Learners with ZKTeco templates: $learnersWithTemplates');
+      debugPrint('[1:N]   Match found: ${matchedLearnerId != null}');
 
       // SECURITY CHECK: Ensure we have templates before allowing any match
       if (learnersWithTemplates == 0) {
-        print(
+        debugPrint(
             '[1:N] ⚠️  SECURITY: No learners have ZKTeco templates in current class');
 
         // AUTO-FIX: Try to load learners from classID with fingerprints
-        print(
+        debugPrint(
             '[1:N] 🔧 Attempting AUTO-FIX: Loading learners from correct classID...');
         final db = await DatabaseHelper().database;
         final classQuery = await db.rawQuery('''
@@ -931,17 +927,17 @@ class _DashboardPageState extends State<DashboardPage> {
         if (classQuery.isNotEmpty) {
           final suggestedClassID = classQuery.first['classID']?.toString();
           if (suggestedClassID != null) {
-            print(
+            debugPrint(
                 '[1:N] 🎯 Found classID $suggestedClassID with ${classQuery.first['learner_count']} ZKTeco templates');
             final learnersFromCorrectClass = await DatabaseHelper()
                 .getLearnersWithClockingData(suggestedClassID);
 
             if (learnersFromCorrectClass.isNotEmpty) {
-              print(
+              debugPrint(
                   '[1:N] ✅ AUTO-FIX SUCCESS: Loaded ${learnersFromCorrectClass.length} learners from correct classID');
 
               // PERMANENT FIX: Update widget classID and reload all data with correct classID
-              print(
+              debugPrint(
                   '[1:N] 🔧 PERMANENT FIX: Switching dashboard to use classID $suggestedClassID permanently');
 
               // Create a new Future that uses the correct classID
@@ -953,21 +949,21 @@ class _DashboardPageState extends State<DashboardPage> {
               // Reload class data with the correct classID
               await reloadClassData(overrideClassID: suggestedClassID);
 
-              print(
+              debugPrint(
                   '[1:N] ✅ AUTO-FIX COMPLETE: Dashboard now permanently uses correct classID $suggestedClassID');
               return;
             }
           }
         }
 
-        print(
+        debugPrint(
             '[1:N] ❌ AUTO-FIX FAILED: No classID with ZKTeco templates found');
         _showVerificationFailedDialog(0, 'ZKTeco - No Templates Available');
         return;
       }
 
       if (matchedLearnerId != null && matchedLearnerName != null) {
-        print(
+        debugPrint(
             '[1:N] ✅ SECURE MATCH: Proceeding with verified learner $matchedLearnerId');
         await _handleMatchedLearner(matchedLearnerId, matchedLearnerName,
             scanningDialogAlreadyClosed: false);
@@ -975,62 +971,62 @@ class _DashboardPageState extends State<DashboardPage> {
         _showVerificationFailedDialog(learnersWithTemplates, 'ZKTeco');
       }
     } catch (e) {
-      print('[1:N] ZKTeco verification error: $e');
+      debugPrint('[1:N] ZKTeco verification error: $e');
       _showErrorDialog('Verification Error', 'ZKTeco verification failed: $e');
     }
   }
 
   Future<void> _handleMatchedLearner(String learnerId, String learnerName,
       {bool scanningDialogAlreadyClosed = false}) async {
-    print(
+    debugPrint(
         '[HANDLE_MATCHED] _handleMatchedLearner called for learner: $learnerId ($learnerName)');
 
     try {
-      print('[HANDLE_MATCHED] Creating DatabaseHelper instance');
+      debugPrint('[HANDLE_MATCHED] Creating DatabaseHelper instance');
       final dbHelper = DatabaseHelper();
 
-      print(
+      debugPrint(
           '[HANDLE_MATCHED] Getting attendance for day: ${_getCurrentDateString()}');
       final existingAttendance = await dbHelper.getAttendanceForDay(
           learnerId, _getCurrentDateString());
 
-      print('[HANDLE_MATCHED] Existing attendance: $existingAttendance');
+      debugPrint('[HANDLE_MATCHED] Existing attendance: $existingAttendance');
 
       if (existingAttendance == null ||
           existingAttendance['clock_in_time'] == null) {
         // Clock In
-        print('[HANDLE_MATCHED] Starting clock-in process');
+        debugPrint('[HANDLE_MATCHED] Starting clock-in process');
         await _performClockIn(learnerId, learnerName);
-        print('[HANDLE_MATCHED] Clock-in process completed');
+        debugPrint('[HANDLE_MATCHED] Clock-in process completed');
       } else if (existingAttendance['clock_out_time'] == null ||
           existingAttendance['clock_out_time'].toString().isEmpty) {
         // Clock Out
-        print('[HANDLE_MATCHED] Starting clock-out process');
+        debugPrint('[HANDLE_MATCHED] Starting clock-out process');
         await _performClockOut(learnerId, learnerName, existingAttendance);
-        print('[HANDLE_MATCHED] Clock-out process completed');
+        debugPrint('[HANDLE_MATCHED] Clock-out process completed');
       } else {
-        print('[HANDLE_MATCHED] Learner already completed clocking for today');
-        print(
+        debugPrint('[HANDLE_MATCHED] Learner already completed clocking for today');
+        debugPrint(
             '[HANDLE_MATCHED] Scanning dialog already closed: $scanningDialogAlreadyClosed');
 
         // Only close scanning dialog if it hasn't been closed already
         if (!scanningDialogAlreadyClosed) {
           try {
-            print('[HANDLE_MATCHED] Checking if can pop dialog...');
+            debugPrint('[HANDLE_MATCHED] Checking if can pop dialog...');
             if (!mounted) return;
             if (!context.mounted) return;
             if (Navigator.of(context).canPop()) {
-              print('[HANDLE_MATCHED] Can pop - closing scanning dialog');
+              debugPrint('[HANDLE_MATCHED] Can pop - closing scanning dialog');
               Navigator.of(context).pop(); // Close scanning dialog
-              print('[HANDLE_MATCHED] Scanning dialog closed successfully');
+              debugPrint('[HANDLE_MATCHED] Scanning dialog closed successfully');
             } else {
-              print('[HANDLE_MATCHED] Cannot pop - no dialog to close');
+              debugPrint('[HANDLE_MATCHED] Cannot pop - no dialog to close');
             }
           } catch (e) {
-            print('[HANDLE_MATCHED] Error closing scanning dialog: $e');
+            debugPrint('[HANDLE_MATCHED] Error closing scanning dialog: $e');
           }
         } else {
-          print(
+          debugPrint(
               '[HANDLE_MATCHED] Scanning dialog already closed - skipping pop');
         }
 
@@ -1038,41 +1034,41 @@ class _DashboardPageState extends State<DashboardPage> {
         Future.delayed(const Duration(milliseconds: 500), () {
           if (!mounted) return;
           if (!context.mounted) return;
-          print(
+          debugPrint(
               '[HANDLE_MATCHED] Showing delayed error dialog - widget still mounted');
           _showErrorDialog('Already Completed',
               '$learnerName has already completed clocking for today.',
               skipPop: true);
-          print(
+          debugPrint(
               '[HANDLE_MATCHED] Error dialog shown - should stay on dashboard');
         });
       }
 
-      print('[HANDLE_MATCHED] _handleMatchedLearner completed successfully');
+      debugPrint('[HANDLE_MATCHED] _handleMatchedLearner completed successfully');
     } catch (e, stackTrace) {
-      print('[HANDLE_MATCHED] ERROR in _handleMatchedLearner: $e');
-      print('[HANDLE_MATCHED] Stack trace: $stackTrace');
-      print('[HANDLE_MATCHED] Widget mounted during error: $mounted');
+      debugPrint('[HANDLE_MATCHED] ERROR in _handleMatchedLearner: $e');
+      debugPrint('[HANDLE_MATCHED] Stack trace: $stackTrace');
+      debugPrint('[HANDLE_MATCHED] Widget mounted during error: $mounted');
 
       // Safely close scanning dialog during error
       try {
         if (!mounted) return;
         if (!context.mounted) return;
         if (Navigator.of(context).canPop()) {
-          print('[HANDLE_MATCHED] Closing scanning dialog due to error');
+          debugPrint('[HANDLE_MATCHED] Closing scanning dialog due to error');
           Navigator.of(context).pop();
-          print(
+          debugPrint(
               '[HANDLE_MATCHED] Scanning dialog closed successfully during error');
         }
       } catch (navError) {
-        print('[HANDLE_MATCHED] Error closing dialog: $navError');
+        debugPrint('[HANDLE_MATCHED] Error closing dialog: $navError');
       }
 
       // Add delay before showing error dialog to prevent navigation conflicts
       Future.delayed(const Duration(milliseconds: 300), () {
         if (!mounted) return;
         if (!context.mounted) return;
-        print('[HANDLE_MATCHED] Showing error dialog after delay');
+        debugPrint('[HANDLE_MATCHED] Showing error dialog after delay');
         _showErrorDialog(
             'Processing Error', 'Error handling matched learner: $e',
             skipPop: true);
@@ -1081,17 +1077,17 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _performClockIn(String learnerId, String learnerName) async {
-    print(
+    debugPrint(
         '[CLOCK_IN] Starting clock-in for learner: $learnerId ($learnerName)');
 
     try {
       final now = _getCurrentTimeString();
       final date = _getCurrentDateString();
 
-      print('[CLOCK_IN] Getting current location');
+      debugPrint('[CLOCK_IN] Getting current location');
       // Get current location
       final locationData = await _getCurrentLocation();
-      print('[CLOCK_IN] Location data: $locationData');
+      debugPrint('[CLOCK_IN] Location data: $locationData');
 
       final attendance = {
         'LearnerID': learnerId,
@@ -1106,21 +1102,21 @@ class _DashboardPageState extends State<DashboardPage> {
         'user_accuracy': locationData['accuracy'],
       };
 
-      print('[CLOCK_IN] Prepared attendance data: $attendance');
+      debugPrint('[CLOCK_IN] Prepared attendance data: $attendance');
 
       try {
         // Try to sync to server immediately
         bool synced = false;
         try {
-          print('[CLOCK_IN] Starting sync to server');
+          debugPrint('[CLOCK_IN] Starting sync to server');
           synced = await syncSingleClockIn(attendance);
-          print('[CLOCK_IN] Sync result: $synced');
+          debugPrint('[CLOCK_IN] Sync result: $synced');
         } catch (e) {
-          print('[CLOCK_IN] Immediate sync failed: $e');
+          debugPrint('[CLOCK_IN] Immediate sync failed: $e');
         }
 
         // Save to local database
-        print('[CLOCK_IN] Saving to local database');
+        debugPrint('[CLOCK_IN] Saving to local database');
         final dbData = {
           'LearnerID': learnerId,
           'clock_in_time': now,
@@ -1133,17 +1129,17 @@ class _DashboardPageState extends State<DashboardPage> {
           'user_accuracy': locationData['accuracy'],
         };
 
-        print('[CLOCK_IN] Database data: $dbData');
+        debugPrint('[CLOCK_IN] Database data: $dbData');
         await DatabaseHelper().insertClocking(dbData);
-        print('[CLOCK_IN] Database insert completed');
+        debugPrint('[CLOCK_IN] Database insert completed');
 
         final syncStatus = synced ? '(synced)' : '(offline)';
-        print('[CLOCK_IN] Showing success dialog');
+        debugPrint('[CLOCK_IN] Showing success dialog');
         _showSuccessDialog(learnerName, 'Clock-In');
-        print('[CLOCK_IN] Clock-in process completed successfully');
+        debugPrint('[CLOCK_IN] Clock-in process completed successfully');
       } catch (e, stackTrace) {
-        print('[CLOCK_IN] ERROR during clock-in operations: $e');
-        print('[CLOCK_IN] Stack trace: $stackTrace');
+        debugPrint('[CLOCK_IN] ERROR during clock-in operations: $e');
+        debugPrint('[CLOCK_IN] Stack trace: $stackTrace');
 
         // Close scanning dialog if still open
         try {
@@ -1151,14 +1147,14 @@ class _DashboardPageState extends State<DashboardPage> {
           if (!context.mounted) return;
           Navigator.of(context).pop();
         } catch (navError) {
-          print('[CLOCK_IN] Error closing dialog: $navError');
+          debugPrint('[CLOCK_IN] Error closing dialog: $navError');
         }
 
         _showErrorDialog('Clock-In Error', 'Error during clock-in: $e');
       }
     } catch (e, stackTrace) {
-      print('[CLOCK_IN] ERROR in _performClockIn setup: $e');
-      print('[CLOCK_IN] Stack trace: $stackTrace');
+      debugPrint('[CLOCK_IN] ERROR in _performClockIn setup: $e');
+      debugPrint('[CLOCK_IN] Stack trace: $stackTrace');
 
       // Close scanning dialog if still open
       try {
@@ -1166,7 +1162,7 @@ class _DashboardPageState extends State<DashboardPage> {
         if (!context.mounted) return;
         Navigator.of(context).pop();
       } catch (navError) {
-        print('[CLOCK_IN] Error closing dialog: $navError');
+        debugPrint('[CLOCK_IN] Error closing dialog: $navError');
       }
 
       _showErrorDialog('Clock-In Error', 'Error during clock-in setup: $e');
@@ -1201,7 +1197,7 @@ class _DashboardPageState extends State<DashboardPage> {
       try {
         synced = await syncSingleClockOut(attendance);
       } catch (e) {
-        print('[CLOCK_OUT] Immediate sync failed: $e');
+        debugPrint('[CLOCK_OUT] Immediate sync failed: $e');
       }
 
       // Update local database
@@ -1232,7 +1228,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<Map<String, String>> _getCurrentLocation() async {
     // Temporarily disabled geolocator functionality
-    print(
+    debugPrint(
         '[DASHBOARD] Geolocator temporarily disabled - using default coordinates');
     return {
       'latitude': '0.0',
@@ -1270,7 +1266,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
       return "${hours}h ${minutes}m ${seconds}s";
     } catch (e) {
-      print('[CONTACT_TIME] Error calculating contact time: $e');
+      debugPrint('[CONTACT_TIME] Error calculating contact time: $e');
       return "0h 0m 0s";
     }
   }
@@ -1569,17 +1565,17 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _showSuccessDialog(String learnerName, String action) {
-    print(
+    debugPrint(
         '[SUCCESS_DIALOG] _showSuccessDialog called for $learnerName, action: $action');
 
     // Don't close any dialogs here - let the calling method handle that
     // The scanning dialog should already be closed by the calling method
 
-    print('[SUCCESS_DIALOG] About to show success dialog immediately');
+    debugPrint('[SUCCESS_DIALOG] About to show success dialog immediately');
 
     // Show dialog immediately without delay - the calling method should handle timing
     if (mounted) {
-      print('[SUCCESS_DIALOG] Showing dialog now');
+      debugPrint('[SUCCESS_DIALOG] Showing dialog now');
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -1644,41 +1640,41 @@ class _DashboardPageState extends State<DashboardPage> {
             actions: [
               TextButton.icon(
                 onPressed: () {
-                  print('[SUCCESS_DIALOG] OK button pressed');
+                  debugPrint('[SUCCESS_DIALOG] OK button pressed');
                   try {
-                    print('[SUCCESS_DIALOG] About to pop dialog');
+                    debugPrint('[SUCCESS_DIALOG] About to pop dialog');
                     Navigator.of(context).pop();
-                    print(
+                    debugPrint(
                         '[SUCCESS_DIALOG] Dialog popped, checking mounted state: $mounted');
 
                     // Reload class data to reflect new attendance, but only if widget is still mounted
                     if (mounted) {
-                      print(
+                      debugPrint(
                           '[SUCCESS_DIALOG] Widget is mounted, scheduling data reload');
                       // Schedule the reload after the dialog is fully dismissed
                       Future.delayed(const Duration(milliseconds: 200), () {
                         if (mounted) {
-                          print(
+                          debugPrint(
                               '[SUCCESS_DIALOG] Starting delayed data reload');
                           setState(() {
-                            print(
+                            debugPrint(
                                 '[SUCCESS_DIALOG] Inside setState, calling reloadClassData');
                             reloadClassData();
                           });
-                          print(
+                          debugPrint(
                               '[SUCCESS_DIALOG] Delayed reload completed successfully');
                         } else {
-                          print(
+                          debugPrint(
                               '[SUCCESS_DIALOG] Widget disposed during delayed reload, skipping');
                         }
                       });
                     } else {
-                      print(
+                      debugPrint(
                           '[SUCCESS_DIALOG] Widget is not mounted, skipping setState');
                     }
                   } catch (e) {
-                    print('[SUCCESS_DIALOG] ERROR in OK button handler: $e');
-                    print(
+                    debugPrint('[SUCCESS_DIALOG] ERROR in OK button handler: $e');
+                    debugPrint(
                         '[SUCCESS_DIALOG] Stack trace: ${StackTrace.current}');
                   }
                 },
@@ -1690,12 +1686,12 @@ class _DashboardPageState extends State<DashboardPage> {
         },
       );
     } else {
-      print('[SUCCESS_DIALOG] Widget not mounted, skipping dialog');
+      debugPrint('[SUCCESS_DIALOG] Widget not mounted, skipping dialog');
     }
   }
 
   void _showErrorDialog(String title, String message, {bool skipPop = false}) {
-    print(
+    debugPrint(
         '[ERROR_DIALOG] _showErrorDialog called: $title - $message, skipPop: $skipPop');
     // Close any existing dialogs first, but only if we're not showing a success dialog
     // and only if skipPop is false (to avoid double-popping)
@@ -1703,7 +1699,7 @@ class _DashboardPageState extends State<DashboardPage> {
       try {
         Navigator.of(context).pop();
       } catch (e) {
-        print('[ERROR_DIALOG] Error popping dialog: $e');
+        debugPrint('[ERROR_DIALOG] Error popping dialog: $e');
       }
     }
 
@@ -1746,19 +1742,19 @@ class _DashboardPageState extends State<DashboardPage> {
           actions: [
             TextButton.icon(
               onPressed: () {
-                print('[ERROR_DIALOG] Close button pressed');
+                debugPrint('[ERROR_DIALOG] Close button pressed');
                 try {
-                  print('[ERROR_DIALOG] About to call Navigator.pop()');
-                  print(
+                  debugPrint('[ERROR_DIALOG] About to call Navigator.pop()');
+                  debugPrint(
                       '[ERROR_DIALOG] Current navigator can pop: ${Navigator.of(dialogContext).canPop()}');
                   Navigator.of(dialogContext).pop();
-                  print(
+                  debugPrint(
                       '[ERROR_DIALOG] Dialog closed successfully - staying on dashboard');
-                  print(
+                  debugPrint(
                       '[ERROR_DIALOG] Dashboard widget still mounted: $mounted');
                 } catch (e) {
-                  print('[ERROR_DIALOG] Error closing dialog: $e');
-                  print('[ERROR_DIALOG] Stack trace: ${StackTrace.current}');
+                  debugPrint('[ERROR_DIALOG] Error closing dialog: $e');
+                  debugPrint('[ERROR_DIALOG] Stack trace: ${StackTrace.current}');
                 }
               },
               icon: const Icon(Icons.close, color: Colors.red),
@@ -1835,7 +1831,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 try {
                   Navigator.of(dialogContext).pop();
                 } catch (e) {
-                  print('[VERIFICATION_DIALOG] Error closing dialog: $e');
+                  debugPrint('[VERIFICATION_DIALOG] Error closing dialog: $e');
                 }
               },
               icon: const Icon(Icons.refresh, color: Colors.blue),
@@ -1847,7 +1843,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 try {
                   Navigator.of(dialogContext).pop();
                 } catch (e) {
-                  print('[VERIFICATION_DIALOG] Error closing dialog: $e');
+                  debugPrint('[VERIFICATION_DIALOG] Error closing dialog: $e');
                 }
               },
               icon: const Icon(Icons.close, color: Colors.grey),
@@ -1912,18 +1908,18 @@ class _DashboardPageState extends State<DashboardPage> {
       body: FutureBuilder<Map<String, dynamic>>(
         future: classData,
         builder: (context, snapshot) {
-          print(
+          debugPrint(
               "[DASHBOARD] FutureBuilder state - Connection: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, data: ${snapshot.data}");
 
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            print("[DASHBOARD] FutureBuilder error: ${snapshot.error}");
+            debugPrint("[DASHBOARD] FutureBuilder error: ${snapshot.error}");
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData ||
               snapshot.data == null ||
               snapshot.data!.isEmpty) {
-            print(
+            debugPrint(
                 "[DASHBOARD] FutureBuilder no data - hasData: ${snapshot.hasData}, data: ${snapshot.data}");
             return Center(
               child: Column(
@@ -1935,7 +1931,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      print("[DASHBOARD] Manual reload triggered");
+                      debugPrint("[DASHBOARD] Manual reload triggered");
                       if (mounted) {
                         reloadClassData();
                       }
@@ -2065,16 +2061,16 @@ class _DashboardPageState extends State<DashboardPage> {
                               ),
                               child: Column(
                                 children: [
-                                  Row(
+                                  const Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      const Icon(
+                                      Icon(
                                         Icons.check_circle,
                                         color: Color(0xFF4CAF50),
                                         size: 20,
                                       ),
-                                      const SizedBox(width: 8),
-                                      const Text(
+                                      SizedBox(width: 8),
+                                      Text(
                                         'Attendance',
                                         style: TextStyle(
                                           fontSize: 12,
@@ -2107,16 +2103,16 @@ class _DashboardPageState extends State<DashboardPage> {
                               ),
                               child: Column(
                                 children: [
-                                  Row(
+                                  const Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      const Icon(
+                                      Icon(
                                         Icons.cancel,
                                         color: Color(0xFFEF5350),
                                         size: 20,
                                       ),
-                                      const SizedBox(width: 8),
-                                      const Text(
+                                      SizedBox(width: 8),
+                                      Text(
                                         'Absent',
                                         style: TextStyle(
                                           fontSize: 12,
@@ -2666,7 +2662,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
                                     // Fallback to person icon if image fails to load
-                                    return Icon(
+                                    return const Icon(
                                       Icons.person,
                                       size: 36,
                                       color: Color(0xFF5B9BD5),
@@ -2686,14 +2682,14 @@ class _DashboardPageState extends State<DashboardPage> {
                                                     .expectedTotalBytes!
                                             : null,
                                         valueColor:
-                                            AlwaysStoppedAnimation<Color>(
+                                            const AlwaysStoppedAnimation<Color>(
                                           Color(0xFF5B9BD5),
                                         ),
                                       ),
                                     );
                                   },
                                 )
-                              : Icon(
+                              : const Icon(
                                   Icons.person,
                                   size: 36,
                                   color: Color(0xFF5B9BD5),

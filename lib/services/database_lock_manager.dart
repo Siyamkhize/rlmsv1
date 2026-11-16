@@ -19,7 +19,7 @@ class DatabaseLockManager {
   void startCriticalPhase() {
     _isCriticalPhase = true;
     if (kDebugMode) {
-      print(
+      debugPrint(
           '[DB_LOCK] Critical phase started - all DB operations will be serialized');
     }
   }
@@ -28,7 +28,7 @@ class DatabaseLockManager {
   void endCriticalPhase() {
     _isCriticalPhase = false;
     if (kDebugMode) {
-      print('[DB_LOCK] Critical phase ended - normal DB operations resumed');
+      debugPrint('[DB_LOCK] Critical phase ended - normal DB operations resumed');
     }
   }
 
@@ -61,20 +61,20 @@ class DatabaseLockManager {
         '${DateTime.now().toIso8601String().substring(11, 19)}: $operationName');
 
     if (kDebugMode) {
-      print('[DB_LOCK] Executing: $operationName');
+      debugPrint('[DB_LOCK] Executing: $operationName');
     }
 
     try {
       final result = await operation().timeout(timeout);
 
       if (kDebugMode) {
-        print('[DB_LOCK] ✓ Completed: $operationName');
+        debugPrint('[DB_LOCK] ✓ Completed: $operationName');
       }
 
       return result;
     } catch (e) {
       if (kDebugMode) {
-        print('[DB_LOCK] ✗ Failed: $operationName - $e');
+        debugPrint('[DB_LOCK] ✗ Failed: $operationName - $e');
       }
       rethrow;
     } finally {

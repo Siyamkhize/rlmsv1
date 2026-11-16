@@ -23,7 +23,7 @@ class TimezoneValidator {
       if (validation['isCorrect'] == true) {
         // Time is correct, allow clock-in
         if (kDebugMode) {
-          print('✓ Device time verified correct');
+          debugPrint('✓ Device time verified correct');
         }
         return true;
       }
@@ -35,20 +35,20 @@ class TimezoneValidator {
         if (result == _DialogAction.cancel) {
           // User cancelled, block clock-in
           if (kDebugMode) {
-            print('✗ User cancelled clock-in due to wrong time');
+            debugPrint('✗ User cancelled clock-in due to wrong time');
           }
           return false;
         } else if (result == _DialogAction.openSettings) {
           // Open device Date & Time settings
           if (kDebugMode) {
-            print('→ Opening device Date & Time settings');
+            debugPrint('→ Opening device Date & Time settings');
           }
           await AppSettings.openAppSettings(type: AppSettingsType.date);
           // Loop continues - will check again
         } else if (result == _DialogAction.checkAgain) {
           // User wants to check again - loop continues
           if (kDebugMode) {
-            print('↻ Checking device time again');
+            debugPrint('↻ Checking device time again');
           }
         }
       } else {
@@ -64,7 +64,7 @@ class TimezoneValidator {
     try {
       final response = await http.get(
         Uri.parse('https://learnersmanagementsys.co.za/mobile/get_server_time.php'),
-      ).timeout(Duration(seconds: 10));
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -79,14 +79,14 @@ class TimezoneValidator {
           final isCorrect = difference.inMinutes <= toleranceMinutes;
 
           if (kDebugMode) {
-            print('=== TIME VERIFICATION (UTC) ===');
-            print('Server Time (UTC): ${serverTimeUtc.toIso8601String()}');
-            print('Device Time (UTC): ${deviceTimeUtc.toIso8601String()}');
-            print('Device Timezone Offset: ${DateTime.now().timeZoneOffset}');
-            print('Difference: ${difference.inMinutes} minutes');
-            print('Tolerance: ±$toleranceMinutes minutes');
-            print('Is Correct: $isCorrect');
-            print('================================');
+            debugPrint('=== TIME VERIFICATION (UTC) ===');
+            debugPrint('Server Time (UTC): ${serverTimeUtc.toIso8601String()}');
+            debugPrint('Device Time (UTC): ${deviceTimeUtc.toIso8601String()}');
+            debugPrint('Device Timezone Offset: ${DateTime.now().timeZoneOffset}');
+            debugPrint('Difference: ${difference.inMinutes} minutes');
+            debugPrint('Tolerance: ±$toleranceMinutes minutes');
+            debugPrint('Is Correct: $isCorrect');
+            debugPrint('================================');
           }
 
           return {
@@ -110,7 +110,7 @@ class TimezoneValidator {
 
     } catch (e) {
       if (kDebugMode) {
-        print('ERROR verifying time with server: $e');
+        debugPrint('ERROR verifying time with server: $e');
       }
       
       // Fallback to local timezone check if server is unreachable
@@ -134,13 +134,13 @@ class TimezoneValidator {
     final isCorrect = isCorrectOffset && isLikelyCorrectTimezone;
 
     if (kDebugMode) {
-      print('=== FALLBACK TIMEZONE CHECK ===');
-      print('Device Time: ${now.toString()}');
-      print('Timezone: $timezoneName');
-      print('UTC Offset: ${offsetHours > 0 ? "+$offsetHours" : offsetHours} hours');
-      print('Expected: $expectedTimezoneAbbr (UTC+$expectedUtcOffsetHours)');
-      print('Is Correct: $isCorrect');
-      print('==============================');
+      debugPrint('=== FALLBACK TIMEZONE CHECK ===');
+      debugPrint('Device Time: ${now.toString()}');
+      debugPrint('Timezone: $timezoneName');
+      debugPrint('UTC Offset: ${offsetHours > 0 ? "+$offsetHours" : offsetHours} hours');
+      debugPrint('Expected: $expectedTimezoneAbbr (UTC+$expectedUtcOffsetHours)');
+      debugPrint('Is Correct: $isCorrect');
+      debugPrint('==============================');
     }
 
     return {
@@ -166,8 +166,8 @@ class TimezoneValidator {
           title: Row(
             children: [
               Icon(Icons.block, color: Colors.red[700], size: 28),
-              SizedBox(width: 12),
-              Expanded(
+              const SizedBox(width: 12),
+              const Expanded(
                 child: Text(
                   'Clock-in Blocked',
                   style: TextStyle(fontSize: 18),
@@ -188,12 +188,12 @@ class TimezoneValidator {
                     color: Colors.red[900],
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 
                 // Show the time difference
                 if (validation['serverTime'] != null) ...[
                   Container(
-                    padding: EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(8),
@@ -206,15 +206,15 @@ class TimezoneValidator {
                           _formatDateTime(validation['serverTime']),
                           Colors.green[700]!,
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         _buildTimeRow(
                           'Your Device Time (UTC):',
                           _formatDateTime(validation['deviceTime']),
                           Colors.red[700]!,
                         ),
-                        SizedBox(height: 8),
-                        Divider(),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
+                        const Divider(),
+                        const SizedBox(height: 8),
                         Text(
                           'Difference: ${validation['differenceMinutes']} minutes',
                           style: TextStyle(
@@ -229,7 +229,7 @@ class TimezoneValidator {
                 ] else if (validation['deviceTimezone'] != null) ...[
                   // Fallback display for local timezone check
                   Container(
-                    padding: EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(8),
@@ -242,7 +242,7 @@ class TimezoneValidator {
                           validation['deviceTimezone'],
                           Colors.red[700]!,
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         _buildTimeRow(
                           'Expected Timezone:',
                           'SAST (UTC+2)',
@@ -253,11 +253,11 @@ class TimezoneValidator {
                   ),
                 ],
                 
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 
                 // Instructions
                 Container(
-                  padding: EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.blue[50],
                     borderRadius: BorderRadius.circular(8),
@@ -269,7 +269,7 @@ class TimezoneValidator {
                       Row(
                         children: [
                           Icon(Icons.info_outline, size: 20, color: Colors.blue[700]),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
                             'How to fix:',
                             style: TextStyle(
@@ -280,7 +280,7 @@ class TimezoneValidator {
                           ),
                         ],
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text(
                         '1. Tap "Open Date & Time Settings" below\n'
                         '2. Enable "Automatic date & time"\n'
@@ -293,9 +293,9 @@ class TimezoneValidator {
                 ),
                 
                 if (validation['error'] != null) ...[
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Container(
-                    padding: EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: Colors.orange[50],
                       borderRadius: BorderRadius.circular(6),
@@ -303,7 +303,7 @@ class TimezoneValidator {
                     child: Row(
                       children: [
                         Icon(Icons.warning_amber, size: 16, color: Colors.orange[700]),
-                        SizedBox(width: 6),
+                        const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             validation['error'],
@@ -330,8 +330,8 @@ class TimezoneValidator {
             // Open Settings button
             ElevatedButton.icon(
               onPressed: () => Navigator.of(context).pop(_DialogAction.openSettings),
-              icon: Icon(Icons.settings, size: 18),
-              label: Text('Open Date & Time Settings'),
+              icon: const Icon(Icons.settings, size: 18),
+              label: const Text('Open Date & Time Settings'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue[700],
                 foregroundColor: Colors.white,
@@ -341,8 +341,8 @@ class TimezoneValidator {
             // Check Again button
             ElevatedButton.icon(
               onPressed: () => Navigator.of(context).pop(_DialogAction.checkAgain),
-              icon: Icon(Icons.refresh, size: 18),
-              label: Text('Check Again'),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Check Again'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green[700],
                 foregroundColor: Colors.white,
@@ -367,7 +367,7 @@ class TimezoneValidator {
             color: Colors.grey[700],
           ),
         ),
-        SizedBox(height: 2),
+        const SizedBox(height: 2),
         Text(
           value,
           style: TextStyle(

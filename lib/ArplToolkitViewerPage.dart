@@ -15,11 +15,11 @@ class ArplToolkitViewerPage extends StatefulWidget {
   final String ofoNumber;
 
   const ArplToolkitViewerPage({
-    Key? key,
+    super.key,
     required this.learnerID,
     required this.classID,
     required this.ofoNumber,
-  }) : super(key: key);
+  });
 
   @override
   _ArplToolkitViewerPageState createState() => _ArplToolkitViewerPageState();
@@ -76,9 +76,9 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
   final Map<int, TextEditingController> _appendixEComments = {};
 
   // Appendix F - NEW Redesigned (3 sections)
-  List<AppendixFKnowledgeQuestion> _knowledgeQuestions = [];
-  List<AppendixFPracticalTask> _practicalTasks = [];
-  List<AppendixFWorkplaceObservation> _workplaceObservations = [];
+  final List<AppendixFKnowledgeQuestion> _knowledgeQuestions = [];
+  final List<AppendixFPracticalTask> _practicalTasks = [];
+  final List<AppendixFWorkplaceObservation> _workplaceObservations = [];
   bool _isLoadingAppendixF = false;
 
   // Fingerprint signature verification
@@ -207,10 +207,10 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('[TOOLKIT_VIEWER_DEBUG] Full API Response: ${jsonEncode(data)}');
-        print(
+        debugPrint('[TOOLKIT_VIEWER_DEBUG] Full API Response: ${jsonEncode(data)}');
+        debugPrint(
             '[TOOLKIT_VIEWER_DEBUG] appendixE type: ${data['appendixE'].runtimeType}');
-        print('[TOOLKIT_VIEWER_DEBUG] appendixE value: ${data['appendixE']}');
+        debugPrint('[TOOLKIT_VIEWER_DEBUG] appendixE value: ${data['appendixE']}');
         if (data['status'] == 'success') {
           try {
             // ✅ Re-derive trade from returned OFO number (system-of-record), not widget or hardcoded
@@ -230,7 +230,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
               // ✨ FIX: Populate Appendix F Workplace Observations from AppendixE
               // AppendixE contains the same 15 workplace activities
               _workplaceObservations.clear();
-              print(
+              debugPrint(
                   '🔵 [APPENDIX_F_FIX] Converting ${_toolkitData!.appendixE.length} AppendixE items to Workplace Observations');
               for (var item in _toolkitData!.appendixE) {
                 _workplaceObservations.add(AppendixFWorkplaceObservation(
@@ -241,11 +241,11 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                   teamWorkAttitude: 1, // Default to Fair (1)
                 ));
               }
-              print(
+              debugPrint(
                   '✅ [APPENDIX_F_FIX] Loaded ${_workplaceObservations.length} workplace observations from appendixE');
             });
           } catch (e) {
-            print('[TOOLKIT_VIEWER_ERROR] Parsing error: $e');
+            debugPrint('[TOOLKIT_VIEWER_ERROR] Parsing error: $e');
             setState(() {
               _errorMessage = 'Error parsing data: $e';
               _isLoading = false;
@@ -289,7 +289,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
           .timeout(
         const Duration(seconds: 10),
         onTimeout: () {
-          print(
+          debugPrint(
               '⚠️ Appendix F load timeout - backend files may not be deployed yet');
           setState(() {
             _isLoadingAppendixF = false;
@@ -348,20 +348,20 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
           });
         } else {
           // API returned error status
-          print('⚠️ Appendix F API error: ${data['message']}');
+          debugPrint('⚠️ Appendix F API error: ${data['message']}');
           setState(() {
             _isLoadingAppendixF = false;
           });
         }
       } else {
         // Non-200 response (404, 500, etc.)
-        print('⚠️ Appendix F load failed: HTTP ${response.statusCode}');
+        debugPrint('⚠️ Appendix F load failed: HTTP ${response.statusCode}');
         setState(() {
           _isLoadingAppendixF = false;
         });
       }
     } catch (e) {
-      print('❌ Error loading Appendix F data: $e');
+      debugPrint('❌ Error loading Appendix F data: $e');
       setState(() {
         _isLoadingAppendixF = false;
       });
@@ -403,14 +403,14 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
     if (_toolkitData == null) return;
 
     // DEBUG: Log what we're about to send
-    print('🔍 [DEBUG] Starting save...');
-    print('🔍 [DEBUG] learnerID: ${widget.learnerID}');
-    print('🔍 [DEBUG] classID: ${widget.classID}');
-    print('🔍 [DEBUG] ofoNumber: ${widget.ofoNumber}');
-    print('🔍 [DEBUG] Appendix B ratings count: ${_appendixBRatings.length}');
-    print(
+    debugPrint('🔍 [DEBUG] Starting save...');
+    debugPrint('🔍 [DEBUG] learnerID: ${widget.learnerID}');
+    debugPrint('🔍 [DEBUG] classID: ${widget.classID}');
+    debugPrint('🔍 [DEBUG] ofoNumber: ${widget.ofoNumber}');
+    debugPrint('🔍 [DEBUG] Appendix B ratings count: ${_appendixBRatings.length}');
+    debugPrint(
         '🔍 [DEBUG] Appendix D responses count: ${_appendixDResponses.length}');
-    print('🔍 [DEBUG] Appendix E ratings count: ${_appendixERatings.length}');
+    debugPrint('🔍 [DEBUG] Appendix E ratings count: ${_appendixERatings.length}');
 
     setState(() {
       _isSaving = true;
@@ -446,7 +446,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
           appendixEData.isNotEmpty;
 
       if (hasBDEData) {
-        print('🔍 [DEBUG] Saving B/D/E data...');
+        debugPrint('🔍 [DEBUG] Saving B/D/E data...');
         final url = AppConfig.saveArplToolkitEditsUrl;
         final payload = {
           'learnerID': widget.learnerID,
@@ -457,9 +457,9 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
           'appendixE': appendixEData,
         };
 
-        print('🔍 [DEBUG] Posting to URL: $url');
+        debugPrint('🔍 [DEBUG] Posting to URL: $url');
         final payloadStr = jsonEncode(payload);
-        print(
+        debugPrint(
             '🔍 [DEBUG] Payload: ${payloadStr.substring(0, min(500, payloadStr.length))}');
 
         final response1 = await http.post(
@@ -468,8 +468,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
           body: jsonEncode(payload),
         );
 
-        print('🔍 [DEBUG] Response status: ${response1.statusCode}');
-        print(
+        debugPrint('🔍 [DEBUG] Response status: ${response1.statusCode}');
+        debugPrint(
             '🔍 [DEBUG] Response body: ${response1.body.substring(0, min(500, response1.body.length))}');
 
         if (response1.statusCode != 200) {
@@ -487,7 +487,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
           throw Exception(errorMsg);
         }
       } else {
-        print('🔍 [DEBUG] No B/D/E data to save, skipping...');
+        debugPrint('🔍 [DEBUG] No B/D/E data to save, skipping...');
       }
 
       // ══════════════════════════════════════════════════════════
@@ -496,11 +496,11 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
       if (_knowledgeQuestions.isNotEmpty ||
           _practicalTasks.isNotEmpty ||
           _workplaceObservations.isNotEmpty) {
-        print('🔍 [DEBUG] Saving Appendix F data...');
-        print('🔍 [DEBUG] AppConfig.baseUrl: ${AppConfig.baseUrl}');
+        debugPrint('🔍 [DEBUG] Saving Appendix F data...');
+        debugPrint('🔍 [DEBUG] AppConfig.baseUrl: ${AppConfig.baseUrl}');
 
         final appendixFUrl = AppConfig.saveAppendixFDataUrl;
-        print('🔍 [DEBUG] Full Appendix F URL: $appendixFUrl');
+        debugPrint('🔍 [DEBUG] Full Appendix F URL: $appendixFUrl');
 
         final appendixFData = {
           'learnerID': widget.learnerID,
@@ -512,14 +512,14 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
               _workplaceObservations.map((o) => o.toJson()).toList(),
         };
 
-        print(
+        debugPrint(
             '🔍 [DEBUG] Workplace observations count: ${_workplaceObservations.length}');
-        print(
+        debugPrint(
             '🔍 [DEBUG] Knowledge questions count: ${_knowledgeQuestions.length}');
-        print('🔍 [DEBUG] Practical tasks count: ${_practicalTasks.length}');
+        debugPrint('🔍 [DEBUG] Practical tasks count: ${_practicalTasks.length}');
 
         final payloadJson = jsonEncode(appendixFData);
-        print(
+        debugPrint(
             '🔍 [DEBUG] Payload: ${payloadJson.substring(0, min(1000, payloadJson.length))}');
 
         final responseF = await http.post(
@@ -528,8 +528,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
           body: payloadJson,
         );
 
-        print('🔍 [DEBUG] Appendix F Response status: ${responseF.statusCode}');
-        print(
+        debugPrint('🔍 [DEBUG] Appendix F Response status: ${responseF.statusCode}');
+        debugPrint(
             '🔍 [DEBUG] Appendix F Response body: ${responseF.body.substring(0, min(500, responseF.body.length))}');
 
         if (responseF.statusCode != 200) {
@@ -541,11 +541,11 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
             if (errorData['message'] != null) {
               errorMsg = '${errorData['message']}';
               if (errorData['debug'] != null) {
-                print('🔍 [DEBUG] Server error details: ${errorData['debug']}');
+                debugPrint('🔍 [DEBUG] Server error details: ${errorData['debug']}');
               }
             }
           } catch (e) {
-            print('🔍 [DEBUG] Could not parse error response: $e');
+            debugPrint('🔍 [DEBUG] Could not parse error response: $e');
           }
           throw Exception(errorMsg);
         }
@@ -2429,14 +2429,14 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
         rec.status.toLowerCase().contains('gap'));
 
     if (allReady && recommendations.length >= 4) {
-      return Card(
-        color: const Color(0xFFE8F5E9),
+      return const Card(
+        color: Color(0xFFE8F5E9),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 children: [
                   Icon(Icons.check_circle, color: Color(0xFF006341), size: 28),
                   SizedBox(width: 12),
@@ -2452,8 +2452,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              const Text(
+              SizedBox(height: 12),
+              Text(
                 'All assessment components have been completed successfully. The candidate is recommended to proceed to trade test.',
                 style: TextStyle(fontSize: 16),
               ),
@@ -2635,22 +2635,22 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                       style: TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   if (_isEditing) ...[
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Postal Address Line 1',
                         border: OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Postal Address Line 2',
                         border: OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Postal Code',
                         border: OutlineInputBorder(),
                       ),
@@ -2684,8 +2684,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                   _InfoRow('Tel no', learner?.phoneNumber ?? 'N/A'),
                   const SizedBox(height: 8),
                   if (_isEditing)
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Fax no',
                         hintText: 'Optional',
                         border: OutlineInputBorder(),
@@ -2693,7 +2693,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                       keyboardType: TextInputType.phone,
                     )
                   else
-                    _InfoRow('Fax no', 'Not provided'),
+                    const _InfoRow('Fax no', 'Not provided'),
                   const SizedBox(height: 8),
                   _InfoRow('Cell no', learner?.phoneNumber ?? 'N/A'),
                   _InfoRow('E-mail address', learner?.email ?? 'N/A'),
@@ -2797,52 +2797,52 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                   ),
                   const Divider(height: 24),
                   if (_isEditing) ...[
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Current/Most recent Employer',
                         hintText: 'Company name',
                         border: OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Position/Job Title',
                         hintText: 'e.g. Plumber / Pipe Fitter',
                         border: OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Employer Address',
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 2,
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Reference (Supervisor/Foreman)',
                         border: OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Row(
+                    const Row(
                       children: [
                         Expanded(
                           child: TextField(
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Tel no',
                               border: OutlineInputBorder(),
                             ),
                             keyboardType: TextInputType.phone,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Expanded(
                           child: TextField(
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Cell no',
                               border: OutlineInputBorder(),
                             ),
@@ -2852,8 +2852,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                       ],
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'E-mail address',
                         border: OutlineInputBorder(),
                       ),
@@ -2895,8 +2895,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                         style: const TextStyle(fontWeight: FontWeight.w500)),
                     const SizedBox(height: 8),
                     if (_isEditing) ...[
-                      TextField(
-                        decoration: const InputDecoration(
+                      const TextField(
+                        decoration: InputDecoration(
                           labelText: 'Company',
                           hintText: 'Company name',
                           border: OutlineInputBorder(),
@@ -2904,22 +2904,22 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Row(
+                      const Row(
                         children: [
                           Expanded(
                             flex: 2,
                             child: TextField(
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: 'Position/Job Title',
                                 border: OutlineInputBorder(),
                                 isDense: true,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Expanded(
                             child: TextField(
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: 'Period',
                                 hintText: '2018-2022',
                                 border: OutlineInputBorder(),
@@ -2930,8 +2930,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                         ],
                       ),
                       const SizedBox(height: 8),
-                      TextField(
-                        decoration: const InputDecoration(
+                      const TextField(
+                        decoration: InputDecoration(
                           labelText: 'Contact (Tel)',
                           border: OutlineInputBorder(),
                           isDense: true,
@@ -2977,11 +2977,11 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                           onPressed: _isVerifyingFingerprint
                               ? null
                               : () {
-                                  print(
+                                  debugPrint(
                                       '[APPENDIX_A] Fingerprint button pressed!');
-                                  print(
+                                  debugPrint(
                                       '[APPENDIX_A] widget.learnerID = ${widget.learnerID}');
-                                  print(
+                                  debugPrint(
                                       '[APPENDIX_A] Calling _verifyFingerprintAndFillSignature()');
                                   _verifyFingerprintAndFillSignature();
                                 },
@@ -3163,7 +3163,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                   const Divider(height: 24),
                   _InfoRow('Qualification', _getTradeName(widget.ofoNumber)),
                   _InfoRow('OFO Code', widget.ofoNumber),
-                  _InfoRow('NQF Level', '4'),
+                  const _InfoRow('NQF Level', '4'),
                 ],
               ),
             ),
@@ -3222,8 +3222,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                   ),
                   const Divider(height: 24),
                   if (_isEditing) ...[
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Curriculum Overview',
                         hintText:
                             'Brief overview of the trade curriculum covered',
@@ -3232,8 +3232,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                       maxLines: 3,
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Module Summary',
                         hintText: 'Summary of modules completed',
                         border: OutlineInputBorder(),
@@ -3241,8 +3241,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                       maxLines: 3,
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Additional Notes',
                         hintText: 'Any additional relevant information',
                         border: OutlineInputBorder(),
@@ -3424,7 +3424,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
         _isLoadingGapStandards = false;
         _availableUnitStandards = [];
       });
-      print(
+      debugPrint(
           '⚠️  No gap closure endpoints configured for trade "$_detectedTrade" (OFO: ${widget.ofoNumber})');
       return;
     }
@@ -3455,14 +3455,14 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                 (data['selected_unit_standards'] ?? [])
                     .map((e) => e.toString()));
           });
-          print(
+          debugPrint(
               '✅ Loaded ${_availableUnitStandards.length} unit standards for $_detectedTrade');
         } else {
-          print('❌ Error loading gap standards: ${data['message']}');
+          debugPrint('❌ Error loading gap standards: ${data['message']}');
         }
       }
     } catch (e) {
-      print('❌ Exception loading gap closure unit standards: $e');
+      debugPrint('❌ Exception loading gap closure unit standards: $e');
     } finally {
       setState(() {
         _isLoadingGapStandards = false;
@@ -3611,7 +3611,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
-                  headingRowColor: MaterialStateProperty.all(
+                  headingRowColor: WidgetStateProperty.all(
                       const Color(0xFF006341).withOpacity(0.1)),
                   border: TableBorder.all(color: Colors.grey.shade300),
                   columns: const [
@@ -3766,7 +3766,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
-                  headingRowColor: MaterialStateProperty.all(
+                  headingRowColor: WidgetStateProperty.all(
                       const Color(0xFF006341).withOpacity(0.1)),
                   border: TableBorder.all(color: Colors.grey.shade300),
                   columns: const [
@@ -3903,7 +3903,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
-                  headingRowColor: MaterialStateProperty.all(
+                  headingRowColor: WidgetStateProperty.all(
                       const Color(0xFF006341).withOpacity(0.1)),
                   border: TableBorder.all(color: Colors.grey.shade300),
                   columnSpacing: 16,
@@ -4041,8 +4041,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
         children: [
           // Header row
           TableRow(
-            decoration: BoxDecoration(
-              color: const Color(0xFF006341),
+            decoration: const BoxDecoration(
+              color: Color(0xFF006341),
             ),
             children: headerRow,
           ),
@@ -4216,15 +4216,15 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                       _toolkitData!.classInfo?.providerName ?? 'N/A'),
                   const SizedBox(height: 12),
                   if (_isEditing) ...[
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Name of Moderator',
                         hintText: 'Full name of moderator handling the appeal',
                         border: OutlineInputBorder(),
                       ),
                     ),
                   ] else
-                    _InfoRow('Moderator', 'Not assigned'),
+                    const _InfoRow('Moderator', 'Not assigned'),
                 ],
               ),
             ),
@@ -4247,8 +4247,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                   ),
                   const Divider(height: 24),
                   if (_isEditing) ...[
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Reason for Appeal',
                         hintText: 'State the reason for the appeal clearly...',
                         border: OutlineInputBorder(),
@@ -4402,9 +4402,9 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Expanded(
+                        const Expanded(
                           child: TextField(
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Signed at',
                               hintText: 'Place',
                               border: OutlineInputBorder(),
@@ -4452,8 +4452,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                   ),
                   const Divider(height: 24),
                   if (_isEditing) ...[
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Assessor Findings',
                         hintText: "Assessor's findings regarding the appeal...",
                         border: OutlineInputBorder(),
@@ -4461,8 +4461,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                       maxLines: 4,
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Assessor Signature',
                         hintText: 'Type full name',
                         border: OutlineInputBorder(),
@@ -4471,9 +4471,9 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Expanded(
+                        const Expanded(
                           child: TextField(
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Signed at',
                               hintText: 'Place',
                               border: OutlineInputBorder(),
@@ -4728,7 +4728,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                   _InfoRow(
                       'Qualification Title', _getTradeName(widget.ofoNumber)),
                   _InfoRow('OFO Code', widget.ofoNumber),
-                  _InfoRow('NQF Level', '4'),
+                  const _InfoRow('NQF Level', '4'),
                 ],
               ),
             ),
@@ -4845,16 +4845,16 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                   ),
                   const Divider(height: 24),
                   if (_isEditing) ...[
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Assessor Name',
                         hintText: 'Full name',
                         border: OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Assessor Registration Number',
                         hintText: 'NAMB registration number',
                         border: OutlineInputBorder(),
@@ -4876,7 +4876,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                         _toolkitData!.facilitator?.fullName ?? 'Not assigned'),
                     _InfoRow('Registration No',
                         _toolkitData!.facilitator?.assessorNo ?? 'N/A'),
-                    _InfoRow('Certification Date', 'Not certified yet'),
+                    const _InfoRow('Certification Date', 'Not certified yet'),
                   ],
                 ],
               ),
@@ -4896,22 +4896,22 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
 
     try {
       // Step 1: Get learner's stored fingerprint templates
-      print('[FINGERPRINT_SIG] ====== VERIFICATION START ======');
-      print('[FINGERPRINT_SIG] widget.learnerID: ${widget.learnerID}');
-      print('[FINGERPRINT_SIG] Getting stored templates...');
+      debugPrint('[FINGERPRINT_SIG] ====== VERIFICATION START ======');
+      debugPrint('[FINGERPRINT_SIG] widget.learnerID: ${widget.learnerID}');
+      debugPrint('[FINGERPRINT_SIG] Getting stored templates...');
 
       final templates =
           await DatabaseHelper().getAllTemplates(widget.learnerID);
 
-      print(
+      debugPrint(
           '[FINGERPRINT_SIG] Templates retrieved: ${templates.keys.length} keys');
-      print(
+      debugPrint(
           '[FINGERPRINT_SIG] ZKTeco Left: ${templates['zkteco_left_template']?.isNotEmpty ?? false}');
-      print(
+      debugPrint(
           '[FINGERPRINT_SIG] ZKTeco Right: ${templates['zkteco_right_template']?.isNotEmpty ?? false}');
-      print(
+      debugPrint(
           '[FINGERPRINT_SIG] Futronic Left: ${templates['futronic_left_template']?.isNotEmpty ?? false}');
-      print(
+      debugPrint(
           '[FINGERPRINT_SIG] Futronic Right: ${templates['futronic_right_template']?.isNotEmpty ?? false}');
 
       // Check both ZKTeco and Futronic templates
@@ -4932,7 +4932,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
 
       // Step 2: Detect which scanner is available
       // PRIORITY: Check Futronic first if learner has Futronic templates
-      print('[FINGERPRINT_SIG] Detecting scanner...');
+      debugPrint('[FINGERPRINT_SIG] Detecting scanner...');
       String scanner = 'none';
 
       // Try Futronic first if learner has Futronic templates
@@ -4942,10 +4942,10 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
           final isFutConnected = await _futronicService.isFutronicConnected();
           if (isFutConnected) {
             scanner = 'futronic';
-            print('[FINGERPRINT_SIG] ✅ Using Futronic scanner (priority)');
+            debugPrint('[FINGERPRINT_SIG] ✅ Using Futronic scanner (priority)');
           }
         } catch (e) {
-          print('[FINGERPRINT_SIG] Futronic check failed: $e');
+          debugPrint('[FINGERPRINT_SIG] Futronic check failed: $e');
         }
       }
 
@@ -4957,10 +4957,10 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
           final isZkConnected = await _fingerprintService.isSensorConnected();
           if (isZkConnected) {
             scanner = 'zkteco';
-            print('[FINGERPRINT_SIG] ✅ Using ZKTeco scanner (fallback)');
+            debugPrint('[FINGERPRINT_SIG] ✅ Using ZKTeco scanner (fallback)');
           }
         } catch (e) {
-          print('[FINGERPRINT_SIG] ZKTeco check failed: $e');
+          debugPrint('[FINGERPRINT_SIG] ZKTeco check failed: $e');
         }
       }
 
@@ -4980,7 +4980,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
 
       try {
         if (scanner == 'futronic') {
-          print('[FINGERPRINT_SIG] Attempting Futronic verification...');
+          debugPrint('[FINGERPRINT_SIG] Attempting Futronic verification...');
           final hint = (futLeftTemplate != null && futLeftTemplate.isNotEmpty)
               ? 'left'
               : 'right';
@@ -4993,7 +4993,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
             matchedTemplate = futLeftTemplate ?? futRightTemplate ?? '';
           }
         } else if (scanner == 'zkteco') {
-          print('[FINGERPRINT_SIG] Attempting ZKTeco verification...');
+          debugPrint('[FINGERPRINT_SIG] Attempting ZKTeco verification...');
           if (zkLeftTemplate != null && zkLeftTemplate.isNotEmpty) {
             matched = await _fingerprintService.verify('left', zkLeftTemplate);
             if (matched) matchedTemplate = zkLeftTemplate;
@@ -5007,7 +5007,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
           }
         }
       } catch (e) {
-        print('[FINGERPRINT_SIG] Verification error: $e');
+        debugPrint('[FINGERPRINT_SIG] Verification error: $e');
         if (Navigator.canPop(context)) {
           Navigator.of(context).pop(); // Close scanning dialog
         }
@@ -5044,7 +5044,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
       }
 
       // Step 5: Fingerprint matched - call backend to get signature
-      print(
+      debugPrint(
           '[FINGERPRINT_SIG] Fingerprint matched! Fetching signature from backend...');
 
       final response = await http
@@ -5059,7 +5059,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
           .timeout(const Duration(seconds: 30));
 
       final data = jsonDecode(response.body);
-      print(
+      debugPrint(
           '[FINGERPRINT_SIG] Backend response: ${response.statusCode} - ${data['status']}');
 
       if (response.statusCode == 200 && data['verified'] == true) {
@@ -5083,7 +5083,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
         _showError(data['message'] ?? 'Fingerprint verification failed');
       }
     } catch (e) {
-      print('[FINGERPRINT_SIG] Error: $e');
+      debugPrint('[FINGERPRINT_SIG] Error: $e');
       if (Navigator.canPop(context)) {
         Navigator.of(context).pop(); // Close dialog if still open
       }
@@ -5099,10 +5099,10 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
       barrierDismissible: false,
       builder: (context) => WillPopScope(
         onWillPop: () async => false,
-        child: AlertDialog(
+        child: const AlertDialog(
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children: [
               CircularProgressIndicator(),
               SizedBox(height: 16),
               Text(
@@ -5492,16 +5492,16 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                     const Text('Witness:',
                         style: TextStyle(fontWeight: FontWeight.w500)),
                     const SizedBox(height: 8),
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Witness Name',
                         hintText: 'Full name of witness',
                         border: OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      decoration: const InputDecoration(
+                    const TextField(
+                      decoration: InputDecoration(
                         labelText: 'Witness Signature',
                         hintText: 'Type full name',
                         border: OutlineInputBorder(),
@@ -5634,7 +5634,7 @@ class _InputCell extends StatelessWidget {
   final String hintText;
   final TextEditingController? controller;
 
-  const _InputCell(this.hintText, [this.controller]);
+  const _InputCell(this.hintText);
 
   @override
   Widget build(BuildContext context) {

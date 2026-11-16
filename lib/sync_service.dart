@@ -16,20 +16,20 @@ import 'services/http_client_service.dart';
 import 'config/network_config.dart';
 
 Future<bool> syncSingleClockIn(Map<String, dynamic> attendance) async {
-  print('=== CLOCK-IN SYNC START ===');
-  print('Input attendance: $attendance');
+  debugPrint('=== CLOCK-IN SYNC START ===');
+  debugPrint('Input attendance: $attendance');
 
   final connectivityResult = await Connectivity().checkConnectivity();
-  print('Connectivity result: $connectivityResult');
+  debugPrint('Connectivity result: $connectivityResult');
 
   final isOffline = connectivityResult.contains(ConnectivityResult.none);
 
   if (isOffline) {
-    print('No internet connection - returning false');
+    debugPrint('No internet connection - returning false');
     return false;
   }
 
-  print('✅ Internet connection available - proceeding with sync');
+  debugPrint('✅ Internet connection available - proceeding with sync');
 
   // Retry logic with exponential backoff
   const int maxRetries = 2; // Reduced retries for faster response
@@ -39,7 +39,7 @@ Future<bool> syncSingleClockIn(Map<String, dynamic> attendance) async {
   for (int attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       final url = Uri.parse(AppConfig.clockinUrl);
-      print('Target URL: $url (attempt $attempt/$maxRetries)');
+      debugPrint('Target URL: $url (attempt $attempt/$maxRetries)');
 
       // Prepare payload exactly like LearnerListPage.dart
       final payload = {
@@ -58,7 +58,7 @@ Future<bool> syncSingleClockIn(Map<String, dynamic> attendance) async {
         'sync_request': 'true', // CRITICAL: Indicate this is a sync request
       };
 
-      print('Sending clock-in sync request: $payload');
+      debugPrint('Sending clock-in sync request: $payload');
 
       // Convert payload to URL-encoded format
       final body = payload.entries
@@ -66,7 +66,7 @@ Future<bool> syncSingleClockIn(Map<String, dynamic> attendance) async {
               '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value.toString())}')
           .join('&');
 
-      print('Encoded body: $body');
+      debugPrint('Encoded body: $body');
 
       // Use exponential backoff for timeout
       final timeout = Duration(seconds: baseTimeout.inSeconds * attempt);
@@ -79,7 +79,7 @@ Future<bool> syncSingleClockIn(Map<String, dynamic> attendance) async {
           )
           .timeout(timeout);
 
-      print(
+      debugPrint(
           'Clock-in sync response (status ${response.statusCode}): "${response.body}"');
       ClockingLogger.instance.logHttpRequest(
           'POST', url.toString(), payload, response.statusCode, response.body);
@@ -87,7 +87,7 @@ Future<bool> syncSingleClockIn(Map<String, dynamic> attendance) async {
       if (response.statusCode == 200) {
         try {
           final responseJson = json.decode(response.body);
-          print('Parsed response JSON: $responseJson');
+          debugPrint('Parsed response JSON: $responseJson');
 
           // Check for different possible success indicators
           bool success = false;
@@ -97,27 +97,27 @@ Future<bool> syncSingleClockIn(Map<String, dynamic> attendance) async {
                 responseJson['success'] == 'true';
           }
 
-          print('Sync success: $success');
+          debugPrint('Sync success: $success');
           return success;
         } catch (e) {
-          print('Error parsing response JSON: $e');
-          print('Raw response body: "${response.body}"');
+          debugPrint('Error parsing response JSON: $e');
+          debugPrint('Raw response body: "${response.body}"');
           if (attempt == maxRetries) return false;
           // Continue to next attempt
         }
       } else {
-        print('HTTP error: ${response.statusCode}');
-        print('Response body: "${response.body}"');
+        debugPrint('HTTP error: ${response.statusCode}');
+        debugPrint('Response body: "${response.body}"');
         if (attempt == maxRetries) return false;
         // Continue to next attempt
       }
     } catch (e) {
-      print('Error syncing clock-in (attempt $attempt): $e');
+      debugPrint('Error syncing clock-in (attempt $attempt): $e');
       if (attempt == maxRetries) return false;
 
       // Wait before retry with exponential backoff
       final delay = Duration(seconds: attempt * 2); // 2s, 4s, 6s
-      print('Waiting ${delay.inSeconds} seconds before retry...');
+      debugPrint('Waiting ${delay.inSeconds} seconds before retry...');
       await Future.delayed(delay);
     }
   }
@@ -126,20 +126,20 @@ Future<bool> syncSingleClockIn(Map<String, dynamic> attendance) async {
 }
 
 Future<bool> syncSingleClockOut(Map<String, dynamic> attendance) async {
-  print('=== CLOCK-OUT SYNC START ===');
-  print('Input attendance: $attendance');
+  debugPrint('=== CLOCK-OUT SYNC START ===');
+  debugPrint('Input attendance: $attendance');
 
   final connectivityResult = await Connectivity().checkConnectivity();
-  print('Connectivity result: $connectivityResult');
+  debugPrint('Connectivity result: $connectivityResult');
 
   final isOffline = connectivityResult.contains(ConnectivityResult.none);
 
   if (isOffline) {
-    print('No internet connection - returning false');
+    debugPrint('No internet connection - returning false');
     return false;
   }
 
-  print('✅ Internet connection available - proceeding with sync');
+  debugPrint('✅ Internet connection available - proceeding with sync');
 
   // Retry logic with exponential backoff
   const int maxRetries = 2; // Reduced retries for faster response
@@ -149,7 +149,7 @@ Future<bool> syncSingleClockOut(Map<String, dynamic> attendance) async {
   for (int attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       final url = Uri.parse(AppConfig.clockoutUrl);
-      print('Target URL: $url (attempt $attempt/$maxRetries)');
+      debugPrint('Target URL: $url (attempt $attempt/$maxRetries)');
 
       // Prepare payload exactly like LearnerListPage.dart
       final payload = {
@@ -168,7 +168,7 @@ Future<bool> syncSingleClockOut(Map<String, dynamic> attendance) async {
         'sync_request': 'true', // CRITICAL: Indicate this is a sync request
       };
 
-      print('Sending clock-out sync request: $payload');
+      debugPrint('Sending clock-out sync request: $payload');
 
       // Convert payload to URL-encoded format
       final body = payload.entries
@@ -176,7 +176,7 @@ Future<bool> syncSingleClockOut(Map<String, dynamic> attendance) async {
               '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value.toString())}')
           .join('&');
 
-      print('Encoded body: $body');
+      debugPrint('Encoded body: $body');
 
       // Use exponential backoff for timeout
       final timeout = Duration(seconds: baseTimeout.inSeconds * attempt);
@@ -189,7 +189,7 @@ Future<bool> syncSingleClockOut(Map<String, dynamic> attendance) async {
           )
           .timeout(timeout);
 
-      print(
+      debugPrint(
           'Clock-out sync response (status ${response.statusCode}): "${response.body}"');
       ClockingLogger.instance.logHttpRequest(
           'POST', url.toString(), payload, response.statusCode, response.body);
@@ -197,7 +197,7 @@ Future<bool> syncSingleClockOut(Map<String, dynamic> attendance) async {
       if (response.statusCode == 200) {
         try {
           final responseJson = json.decode(response.body);
-          print('Parsed response JSON: $responseJson');
+          debugPrint('Parsed response JSON: $responseJson');
 
           // Check for different possible success indicators
           bool success = false;
@@ -207,27 +207,27 @@ Future<bool> syncSingleClockOut(Map<String, dynamic> attendance) async {
                 responseJson['success'] == 'true';
           }
 
-          print('Sync success: $success');
+          debugPrint('Sync success: $success');
           return success;
         } catch (e) {
-          print('Error parsing response JSON: $e');
-          print('Raw response body: "${response.body}"');
+          debugPrint('Error parsing response JSON: $e');
+          debugPrint('Raw response body: "${response.body}"');
           if (attempt == maxRetries) return false;
           // Continue to next attempt
         }
       } else {
-        print('HTTP error: ${response.statusCode}');
-        print('Response body: "${response.body}"');
+        debugPrint('HTTP error: ${response.statusCode}');
+        debugPrint('Response body: "${response.body}"');
         if (attempt == maxRetries) return false;
         // Continue to next attempt
       }
     } catch (e) {
-      print('Error syncing clock-out (attempt $attempt): $e');
+      debugPrint('Error syncing clock-out (attempt $attempt): $e');
       if (attempt == maxRetries) return false;
 
       // Wait before retry with exponential backoff
       final delay = Duration(seconds: attempt * 2); // 2s, 4s, 6s
-      print('Waiting ${delay.inSeconds} seconds before retry...');
+      debugPrint('Waiting ${delay.inSeconds} seconds before retry...');
       await Future.delayed(delay);
     }
   }
@@ -245,214 +245,214 @@ class SyncService extends ChangeNotifier {
 
   // Sync all tables from the server to the local database
   Future<void> syncData() async {
-    print('[SYNC] ===== STARTING FULL SYNC =====');
+    debugPrint('[SYNC] ===== STARTING FULL SYNC =====');
 
     try {
       await _syncUsers();
-      print('[SYNC] ✅ Users sync complete');
+      debugPrint('[SYNC] ✅ Users sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Users sync failed: $e');
+      debugPrint('[SYNC] ❌ Users sync failed: $e');
     }
 
     try {
       await _syncLearnerDetails();
-      print('[SYNC] ✅ Learner details sync complete');
+      debugPrint('[SYNC] ✅ Learner details sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Learner details sync failed: $e');
+      debugPrint('[SYNC] ❌ Learner details sync failed: $e');
     }
 
     // Only sync current day's clocking data to avoid loading old records
     try {
       await _syncLearnerClocking(currentDayOnly: true);
-      print('[SYNC] ✅ Learner clocking sync complete');
+      debugPrint('[SYNC] ✅ Learner clocking sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Learner clocking sync failed: $e');
+      debugPrint('[SYNC] ❌ Learner clocking sync failed: $e');
     }
 
     try {
       await _syncFacilitator();
-      print('[SYNC] ✅ Facilitator sync complete');
+      debugPrint('[SYNC] ✅ Facilitator sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Facilitator sync failed: $e');
+      debugPrint('[SYNC] ❌ Facilitator sync failed: $e');
     }
 
     try {
       await _syncSdp();
-      print('[SYNC] ✅ SDP sync complete');
+      debugPrint('[SYNC] ✅ SDP sync complete');
     } catch (e) {
-      print('[SYNC] ❌ SDP sync failed: $e');
+      debugPrint('[SYNC] ❌ SDP sync failed: $e');
     }
 
     try {
       await syncSites();
-      print('[SYNC] ✅ Sites sync complete');
+      debugPrint('[SYNC] ✅ Sites sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Sites sync failed: $e');
+      debugPrint('[SYNC] ❌ Sites sync failed: $e');
     }
 
     try {
       await _syncClass();
-      print('[SYNC] ✅ Class sync complete');
+      debugPrint('[SYNC] ✅ Class sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Class sync failed: $e');
+      debugPrint('[SYNC] ❌ Class sync failed: $e');
     }
 
     try {
       await DatabaseHelper().syncLocationTables();
-      print('[SYNC] ✅ Location tables sync complete');
+      debugPrint('[SYNC] ✅ Location tables sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Location tables sync failed: $e');
+      debugPrint('[SYNC] ❌ Location tables sync failed: $e');
     }
 
     try {
       await _syncLearningpathway();
-      print('[SYNC] ✅ Learning pathway sync complete');
+      debugPrint('[SYNC] ✅ Learning pathway sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Learning pathway sync failed: $e');
+      debugPrint('[SYNC] ❌ Learning pathway sync failed: $e');
     }
 
     try {
       await _syncPathwaySelection();
-      print('[SYNC] ✅ Pathway selection sync complete');
+      debugPrint('[SYNC] ✅ Pathway selection sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Pathway selection sync failed: $e');
+      debugPrint('[SYNC] ❌ Pathway selection sync failed: $e');
     }
 
     try {
       await _syncQualification();
-      print('[SYNC] ✅ Qualification sync complete');
+      debugPrint('[SYNC] ✅ Qualification sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Qualification sync failed: $e');
+      debugPrint('[SYNC] ❌ Qualification sync failed: $e');
     }
 
     try {
       await _syncQualification_selection();
-      print('[SYNC] ✅ Qualification selection sync complete');
+      debugPrint('[SYNC] ✅ Qualification selection sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Qualification selection sync failed: $e');
+      debugPrint('[SYNC] ❌ Qualification selection sync failed: $e');
     }
 
     try {
       await _syncQualification_pathway();
-      print('[SYNC] ✅ Qualification pathway sync complete');
+      debugPrint('[SYNC] ✅ Qualification pathway sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Qualification pathway sync failed: $e');
+      debugPrint('[SYNC] ❌ Qualification pathway sync failed: $e');
     }
 
     try {
       await _syncQualificationunitstandard();
-      print('[SYNC] ✅ Qualification unit standard sync complete');
+      debugPrint('[SYNC] ✅ Qualification unit standard sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Qualification unit standard sync failed: $e');
+      debugPrint('[SYNC] ❌ Qualification unit standard sync failed: $e');
     }
 
     try {
       await _syncUnitstandard();
-      print('[SYNC] ✅ Unit standard sync complete');
+      debugPrint('[SYNC] ✅ Unit standard sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Unit standard sync failed: $e');
+      debugPrint('[SYNC] ❌ Unit standard sync failed: $e');
     }
 
     try {
       await _syncUnit_standard_selection();
-      print('[SYNC] ✅ Unit standard selection sync complete');
+      debugPrint('[SYNC] ✅ Unit standard selection sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Unit standard selection sync failed: $e');
+      debugPrint('[SYNC] ❌ Unit standard selection sync failed: $e');
     }
 
     try {
       await _syncAssessment();
-      print('[SYNC] ✅ Assessment sync complete');
+      debugPrint('[SYNC] ✅ Assessment sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Assessment sync failed: $e');
+      debugPrint('[SYNC] ❌ Assessment sync failed: $e');
     }
 
     // Sync learner documents
     try {
       await _syncLearnerDocuments();
-      print('[SYNC] ✅ Learner documents sync complete');
+      debugPrint('[SYNC] ✅ Learner documents sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Learner documents sync failed: $e');
+      debugPrint('[SYNC] ❌ Learner documents sync failed: $e');
     }
 
     try {
       await _syncPoe();
-      print('[SYNC] ✅ POE sync complete');
+      debugPrint('[SYNC] ✅ POE sync complete');
     } catch (e) {
-      print('[SYNC] ❌ POE sync failed: $e');
+      debugPrint('[SYNC] ❌ POE sync failed: $e');
     }
 
     try {
       await syncAcknowledgmentOfReceiptToServer();
-      print('[SYNC] ✅ Acknowledgment of receipt sync complete');
+      debugPrint('[SYNC] ✅ Acknowledgment of receipt sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Acknowledgment of receipt sync failed: $e');
+      debugPrint('[SYNC] ❌ Acknowledgment of receipt sync failed: $e');
     }
 
     try {
       await syncDataFromServer();
-      print('[SYNC] ✅ Sync data from server complete');
+      debugPrint('[SYNC] ✅ Sync data from server complete');
     } catch (e) {
-      print('[SYNC] ❌ Sync data from server failed: $e');
+      debugPrint('[SYNC] ❌ Sync data from server failed: $e');
     }
 
     try {
       await syncMaterialReceiptFormData();
-      print('[SYNC] ✅ Material receipt form data sync complete');
+      debugPrint('[SYNC] ✅ Material receipt form data sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Material receipt form data sync failed: $e');
+      debugPrint('[SYNC] ❌ Material receipt form data sync failed: $e');
     }
 
     try {
       await syncMaterialsReceivedData();
-      print('[SYNC] ✅ Materials received data sync complete');
+      debugPrint('[SYNC] ✅ Materials received data sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Materials received data sync failed: $e');
+      debugPrint('[SYNC] ❌ Materials received data sync failed: $e');
     }
 
     try {
       await syncProjectData();
-      print('[SYNC] ✅ Project data sync complete');
+      debugPrint('[SYNC] ✅ Project data sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Project data sync failed: $e');
+      debugPrint('[SYNC] ❌ Project data sync failed: $e');
     }
 
     try {
       await syncSickNotesToServer();
-      print('[SYNC] ✅ Sick notes sync complete');
+      debugPrint('[SYNC] ✅ Sick notes sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Sick notes sync failed: $e');
+      debugPrint('[SYNC] ❌ Sick notes sync failed: $e');
     }
 
     try {
       await _syncBankDetails();
-      print('[SYNC] ✅ Bank details sync complete');
+      debugPrint('[SYNC] ✅ Bank details sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Bank details sync failed: $e');
+      debugPrint('[SYNC] ❌ Bank details sync failed: $e');
     }
 
     try {
       await _syncInductionClocking();
-      print('[SYNC] ✅ Induction clocking sync complete');
+      debugPrint('[SYNC] ✅ Induction clocking sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Induction clocking sync failed: $e');
+      debugPrint('[SYNC] ❌ Induction clocking sync failed: $e');
     }
 
     try {
       await sync_inductionClocking();
-      print('[SYNC] ✅ Sync induction clocking complete');
+      debugPrint('[SYNC] ✅ Sync induction clocking complete');
     } catch (e) {
-      print('[SYNC] ❌ Sync induction clocking failed: $e');
+      debugPrint('[SYNC] ❌ Sync induction clocking failed: $e');
     }
 
     try {
       await syncMonitoringRecords();
-      print('[SYNC] ✅ Monitoring records sync complete');
+      debugPrint('[SYNC] ✅ Monitoring records sync complete');
     } catch (e) {
-      print('[SYNC] ❌ Monitoring records sync failed: $e');
+      debugPrint('[SYNC] ❌ Monitoring records sync failed: $e');
     }
 
-    print('[SYNC] ===== FULL SYNC COMPLETED =====');
+    debugPrint('[SYNC] ===== FULL SYNC COMPLETED =====');
   }
 
   // Sync users table
@@ -461,10 +461,10 @@ class SyncService extends ChangeNotifier {
       final response = await http.get(Uri.parse(AppConfig.syncUsersUrl));
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
-        print('Users data from server: $data'); // Debug the response
+        debugPrint('Users data from server: $data'); // Debug the response
 
         // SMART SYNC: Update existing, insert new (no delete)
-        print('Syncing ${data.length} users using UPDATE/INSERT pattern');
+        debugPrint('Syncing ${data.length} users using UPDATE/INSERT pattern');
 
         final db = await _dbHelper.database;
 
@@ -475,15 +475,15 @@ class SyncService extends ChangeNotifier {
             user,
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
-          print('Synced user: $user'); // Debug insertion
+          debugPrint('Synced user: $user'); // Debug insertion
         }
-        print(
+        debugPrint(
             "Users table synchronized and data inserted into local database successfully.");
       } else {
-        print('Failed to sync users. Status code: ${response.statusCode}');
+        debugPrint('Failed to sync users. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error during users sync: $e');
+      debugPrint('Error during users sync: $e');
     }
   }
 
@@ -491,7 +491,7 @@ class SyncService extends ChangeNotifier {
   Future<void> printLocalUsers() async {
     final db = await _dbHelper.database;
     final users = await db.query('users');
-    print("Users in local database: $users");
+    debugPrint("Users in local database: $users");
   }
 
   // Sync learnerdetails table
@@ -501,7 +501,7 @@ class SyncService extends ChangeNotifier {
       final connectivityResult = await Connectivity().checkConnectivity();
       if (!connectivityResult.contains(ConnectivityResult.wifi) &&
           !connectivityResult.contains(ConnectivityResult.mobile)) {
-        print("No network available, skipping learner details sync");
+        debugPrint("No network available, skipping learner details sync");
         return;
       }
 
@@ -511,13 +511,13 @@ class SyncService extends ChangeNotifier {
         headers: {'Content-Type': 'application/json'},
       );
 
-      print("Server response status: ${response.statusCode}");
-      print("Server response body: ${response.body}");
+      debugPrint("Server response status: ${response.statusCode}");
+      debugPrint("Server response body: ${response.body}");
 
       if (response.statusCode == 200) {
         final List<dynamic> learners = json.decode(response.body);
         if (learners.isEmpty) {
-          print("Warning: No learner data received from API");
+          debugPrint("Warning: No learner data received from API");
           return;
         }
 
@@ -543,7 +543,7 @@ class SyncService extends ChangeNotifier {
           if (idNumberToServerId.containsKey(idNumber)) {
             int serverId = idNumberToServerId[idNumber]!;
             localToServerIdMapping[localId] = serverId;
-            print(
+            debugPrint(
                 "Mapping local ID $localId to server ID $serverId for IDNumber $idNumber");
           }
         }
@@ -554,14 +554,14 @@ class SyncService extends ChangeNotifier {
         }
 
         // SMART SYNC: Update existing, insert new (no delete)
-        print(
+        debugPrint(
             'Syncing ${learners.length} learner details using UPDATE/INSERT pattern');
 
         // Insert records one by one
         for (var learner in learners) {
           // Validate required fields
           if (learner['IDNumber'] == null || learner['classID'] == null) {
-            print("Skipping invalid learner record: $learner");
+            debugPrint("Skipping invalid learner record: $learner");
             continue;
           }
 
@@ -570,9 +570,7 @@ class SyncService extends ChangeNotifier {
               learner['DateOfBirth'] == null ||
               learner['Name'] == null ||
               learner['Surname'] == null) {
-            print("WARNING: Server returned incomplete data for learner ${learner['IDNumber']}: " +
-                "Title=${learner['Title']}, Name=${learner['Name']}, " +
-                "Surname=${learner['Surname']}, DateOfBirth=${learner['DateOfBirth']}");
+            debugPrint("WARNING: Server returned incomplete data for learner ${learner['IDNumber']}: " "Title=${learner['Title']}, Name=${learner['Name']}, " "Surname=${learner['Surname']}, DateOfBirth=${learner['DateOfBirth']}");
           }
 
           // Extract bank details before inserting learner
@@ -608,30 +606,30 @@ class SyncService extends ChangeNotifier {
               );
             }
 
-            print(
+            debugPrint(
                 "Successfully synced learner with IDNumber: ${learner['IDNumber']}, Server ID: ${learner['LearnerID']}");
           } catch (e) {
             if (e.toString().contains('NOT NULL constraint failed')) {
-              print(
+              debugPrint(
                   "NOT NULL constraint failed for learner with IDNumber ${learner['IDNumber']}: $e");
-              print("Raw learner data: $learner");
+              debugPrint("Raw learner data: $learner");
               // Continue with other learners even if one fails due to constraint issues
             } else {
-              print(
+              debugPrint(
                   "Error syncing learner with IDNumber ${learner['IDNumber']}: $e");
             }
             // Continue with other learners even if one fails
           }
         }
 
-        print("Successfully synchronized ${learners.length} learner records");
+        debugPrint("Successfully synchronized ${learners.length} learner records");
       } else {
         throw Exception(
             "Failed to sync learner details. Status code: ${response.statusCode}");
       }
     } catch (e, stackTrace) {
-      print("Error syncing learner details: $e");
-      print("Stack trace: $stackTrace");
+      debugPrint("Error syncing learner details: $e");
+      debugPrint("Stack trace: $stackTrace");
       rethrow;
     }
   }
@@ -651,7 +649,7 @@ class SyncService extends ChangeNotifier {
           where: 'LearnerID = ?',
           whereArgs: [oldId],
         );
-        print("Updated learner_clocking: $oldId -> $newId");
+        debugPrint("Updated learner_clocking: $oldId -> $newId");
       }
 
       // Update bankdetails table
@@ -665,7 +663,7 @@ class SyncService extends ChangeNotifier {
           where: 'LearnerID = ?',
           whereArgs: [oldId],
         );
-        print("Updated bankdetails: $oldId -> $newId");
+        debugPrint("Updated bankdetails: $oldId -> $newId");
       }
 
       // Update poe table
@@ -679,7 +677,7 @@ class SyncService extends ChangeNotifier {
           where: 'learnerID = ?',
           whereArgs: [oldId],
         );
-        print("Updated poe: $oldId -> $newId");
+        debugPrint("Updated poe: $oldId -> $newId");
       }
 
       // Update learner_document table
@@ -693,12 +691,12 @@ class SyncService extends ChangeNotifier {
           where: 'learner_id = ?',
           whereArgs: [oldId],
         );
-        print("Updated learner_document: $oldId -> $newId");
+        debugPrint("Updated learner_document: $oldId -> $newId");
       }
 
-      print("Successfully updated all related tables with new LearnerIDs");
+      debugPrint("Successfully updated all related tables with new LearnerIDs");
     } catch (e) {
-      print("Error updating related tables: $e");
+      debugPrint("Error updating related tables: $e");
       rethrow;
     }
   }
@@ -712,7 +710,7 @@ class SyncService extends ChangeNotifier {
         List details = json.decode(response.body);
 
         // SMART SYNC: Update existing, insert new (no delete)
-        print(
+        debugPrint(
             'Syncing ${details.length} bank details using UPDATE/INSERT pattern');
 
         final db = await _dbHelper.database;
@@ -724,13 +722,13 @@ class SyncService extends ChangeNotifier {
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
         }
-        print("bankdetails table synchronized successfully.");
+        debugPrint("bankdetails table synchronized successfully.");
       } else {
-        print(
+        debugPrint(
             "Failed to sync bankdetails. Status code: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error syncing bankdetails: $e");
+      debugPrint("Error syncing bankdetails: $e");
     }
   }
 
@@ -746,14 +744,14 @@ class SyncService extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         List facilitatorData = json.decode(response.body);
-        print(
+        debugPrint(
             "[FAC_SYNC] Received ${facilitatorData.length} facilitators from server");
 
         final db = await _dbHelper.database;
 
         // Clear table
         await db.delete('facilitator');
-        print("[FAC_SYNC] Cleared facilitator table");
+        debugPrint("[FAC_SYNC] Cleared facilitator table");
 
         // Insert using direct SQL to avoid any data transformation issues
         int successCount = 0;
@@ -790,21 +788,21 @@ class SyncService extends ChangeNotifier {
             ]);
 
             successCount++;
-            print(
+            debugPrint(
                 "[FAC_SYNC] ✓ Synced facilitator ID ${facilitator['facilitator_id']}: ${facilitator['firstName']} ${facilitator['lastName']}");
           } catch (e) {
-            print(
+            debugPrint(
                 "[FAC_SYNC] ✗ Error inserting facilitator ${facilitator['facilitator_id']}: $e");
           }
         }
 
-        print(
+        debugPrint(
             "[FAC_SYNC] Sync complete: $successCount/${facilitatorData.length} facilitators synced");
       } else {
-        print("[FAC_SYNC] Server error: ${response.statusCode}");
+        debugPrint("[FAC_SYNC] Server error: ${response.statusCode}");
       }
     } catch (e) {
-      print("[FAC_SYNC] Sync error: $e");
+      debugPrint("[FAC_SYNC] Sync error: $e");
     }
   }
 
@@ -829,34 +827,34 @@ class SyncService extends ChangeNotifier {
       if (classID != null && classID.isNotEmpty) {
         if (currentDayOnly) {
           url += '&classID=$classID';
-          print(
+          debugPrint(
               "[SYNC] Fetching learner_clocking for date: $today (SAST), classID: $classID");
         } else {
           url += '?classID=$classID';
-          print(
+          debugPrint(
               "[SYNC] Fetching ALL learner_clocking records for classID: $classID");
         }
       } else if (!currentDayOnly) {
-        print("[SYNC] Fetching ALL learner_clocking records (all classes)");
+        debugPrint("[SYNC] Fetching ALL learner_clocking records (all classes)");
       } else {
-        print(
+        debugPrint(
             "[SYNC] Fetching learner_clocking for date: $today (SAST), all classes");
       }
 
       final response = await http.get(Uri.parse(url));
 
-      print("[SYNC] Response status: ${response.statusCode}");
+      debugPrint("[SYNC] Response status: ${response.statusCode}");
 
       if (response.statusCode == 200) {
         var decodedData = json.decode(response.body);
         if (decodedData is List) {
           List clockingData = decodedData;
-          print(
+          debugPrint(
               "[SYNC] Fetched ${clockingData.length} records for $todayDate (SAST)");
           int insertedCount = 0;
           int skippedCount = 0;
 
-          print(
+          debugPrint(
               "[SYNC] Merging ${clockingData.length} server records (currentDayOnly: $currentDayOnly)");
 
           // Insert or update each record
@@ -882,20 +880,20 @@ class SyncService extends ChangeNotifier {
                 mappedClocking['LearnerID'] == null ||
                 mappedClocking['clock_date'] == null ||
                 mappedClocking['clock_in_time'] == null) {
-              print("Skipping invalid record: $mappedClocking");
+              debugPrint("Skipping invalid record: $mappedClocking");
               skippedCount++;
               continue;
             }
 
             // CRITICAL: If currentDayOnly is true, ONLY insert today's records
             if (currentDayOnly && mappedClocking['clock_date'] != todayDate) {
-              print(
+              debugPrint(
                   "⏩ Skipping non-current day record: ${mappedClocking['clock_date']} (not today: $todayDate)");
               skippedCount++;
               continue;
             }
 
-            print("Merging server record: $mappedClocking");
+            debugPrint("Merging server record: $mappedClocking");
             try {
               final db = await _dbHelper.database;
               // Check for existing record with same learner and date ONLY.
@@ -912,7 +910,7 @@ class SyncService extends ChangeNotifier {
               if (existingRecords.isNotEmpty) {
                 // NEVER overwrite local records - local is source of truth.
                 // Also, do NOT create a second record for the same learner/date.
-                print(
+                debugPrint(
                     "⏭️ PRESERVING local record for ${mappedClocking['LearnerID']} (clock_date=${mappedClocking['clock_date']}) - not inserting duplicate for day");
                 skippedCount++;
               } else {
@@ -922,26 +920,26 @@ class SyncService extends ChangeNotifier {
                   mappedClocking,
                   conflictAlgorithm: ConflictAlgorithm.replace,
                 );
-                print(
+                debugPrint(
                     "✅ Inserted new server record for ${mappedClocking['LearnerID']}");
                 insertedCount++;
               }
             } catch (e) {
-              print("Error merging record $mappedClocking: $e");
+              debugPrint("Error merging record $mappedClocking: $e");
             }
           }
-          print(
+          debugPrint(
               "✅ Sync complete: $insertedCount inserted/updated, $skippedCount skipped (currentDayOnly: $currentDayOnly)");
         } else {
-          print(
+          debugPrint(
               "Error: Expected List, got ${decodedData.runtimeType}: $decodedData");
         }
       } else {
-        print(
+        debugPrint(
             "Failed to sync. Status: ${response.statusCode}, Body: ${response.body}");
       }
     } catch (e) {
-      print("Error syncing learner_clocking: $e");
+      debugPrint("Error syncing learner_clocking: $e");
     }
   }
 
@@ -951,23 +949,23 @@ class SyncService extends ChangeNotifier {
   // Public method to sync clocking data for a specific class (current day only)
   Future<void> syncClassClockingFromServer(String classID) async {
     try {
-      print(
+      debugPrint(
           "[SYNC] Syncing clocking data for classID: $classID (current day only)");
       await _syncLearnerClocking(classID: classID, currentDayOnly: true);
-      print("[SYNC] Class clocking sync completed for classID: $classID");
+      debugPrint("[SYNC] Class clocking sync completed for classID: $classID");
     } catch (e) {
-      print("[SYNC] Error syncing class clocking: $e");
+      debugPrint("[SYNC] Error syncing class clocking: $e");
     }
   }
 
   // Public method to sync ALL clocking data for a specific class (all dates)
   Future<void> syncAllClassClockingFromServer(String classID) async {
     try {
-      print("[SYNC] Syncing ALL clocking data for classID: $classID");
+      debugPrint("[SYNC] Syncing ALL clocking data for classID: $classID");
       await _syncLearnerClocking(classID: classID, currentDayOnly: false);
-      print("[SYNC] All class clocking sync completed for classID: $classID");
+      debugPrint("[SYNC] All class clocking sync completed for classID: $classID");
     } catch (e) {
-      print("[SYNC] Error syncing all class clocking: $e");
+      debugPrint("[SYNC] Error syncing all class clocking: $e");
     }
   }
 
@@ -1032,8 +1030,8 @@ class SyncService extends ChangeNotifier {
             request.fields['user_accuracy'] = userAccuracy?.toString() ?? '';
 
             // Log request details
-            print('Attempt $attempt: Request fields: ${request.fields}');
-            print(
+            debugPrint('Attempt $attempt: Request fields: ${request.fields}');
+            debugPrint(
                 'Attempt $attempt: Request files: ${request.files.map((f) => f.filename).toList()}');
 
             // Send request
@@ -1041,12 +1039,12 @@ class SyncService extends ChangeNotifier {
                 await request.send().timeout(const Duration(seconds: 30));
             final responseString = await response.stream.bytesToString();
 
-            print(
+            debugPrint(
                 'Attempt $attempt: Server response for clocking_id $clockingId: $responseString (Status: ${response.statusCode})');
 
             if (response.statusCode == 200) {
               if (responseString.isEmpty) {
-                print(
+                debugPrint(
                     'Attempt $attempt: Empty response received for clocking_id $clockingId');
                 syncMessage =
                     'Empty response from server for record $clockingId';
@@ -1081,7 +1079,7 @@ class SyncService extends ChangeNotifier {
                   continue;
                 }
               } catch (e) {
-                print(
+                debugPrint(
                     'Attempt $attempt: JSON parse error for clocking_id $clockingId: $e');
                 syncMessage =
                     'Invalid response format for record $clockingId: $e';
@@ -1093,7 +1091,7 @@ class SyncService extends ChangeNotifier {
                 continue;
               }
             } else {
-              print(
+              debugPrint(
                   'Attempt $attempt: Failed for clocking_id $clockingId: Status ${response.statusCode}, Response: $responseString');
               syncMessage =
                   'Failed to sync record $clockingId. Status: ${response.statusCode}, Response: $responseString';
@@ -1105,7 +1103,7 @@ class SyncService extends ChangeNotifier {
               continue;
             }
           } catch (e) {
-            print('Attempt $attempt: Error for clocking_id $clockingId: $e');
+            debugPrint('Attempt $attempt: Error for clocking_id $clockingId: $e');
             syncMessage = 'Error syncing record $clockingId: $e';
             if (attempt == maxRetries) {
               syncMessage = 'Max retries reached for record $clockingId: $e';
@@ -1129,7 +1127,7 @@ class SyncService extends ChangeNotifier {
       }
     } catch (e) {
       syncMessage = 'Sync failed: $e';
-      print('Error syncing data: $e');
+      debugPrint('Error syncing data: $e');
     } finally {
       isSyncing = false;
       notifyListeners();
@@ -1151,14 +1149,14 @@ class SyncService extends ChangeNotifier {
 
         if (response.statusCode == 200) {
           await _dbHelper.deleteData('unsynced_data', data['id']);
-          print("Unsynced data synced successfully.");
+          debugPrint("Unsynced data synced successfully.");
         } else {
-          print(
+          debugPrint(
               "Failed to sync unsynced data. Status code: ${response.statusCode}");
         }
       }
     } catch (e) {
-      print("Error syncing unsynced data: $e");
+      debugPrint("Error syncing unsynced data: $e");
     }
   }
 
@@ -1176,13 +1174,13 @@ class SyncService extends ChangeNotifier {
         if (data['status'] == 'success' && data['data'] is List) {
           List sdpData = data['data']; // Extract the 'data' list
 
-          print("sdp data received from server: $sdpData");
+          debugPrint("sdp data received from server: $sdpData");
 
           // SMART SYNC: Update existing, insert new (no delete)
           final db = await _dbHelper.database;
 
           for (var sdp in sdpData) {
-            print("Syncing sdp: $sdp"); // Debug log
+            debugPrint("Syncing sdp: $sdp"); // Debug log
 
             // Check if record exists
             final existing = await db.query(
@@ -1218,27 +1216,27 @@ class SyncService extends ChangeNotifier {
                 where: 'sdp_id = ?',
                 whereArgs: [sdp['sdp_id']],
               );
-              print("Updated sdp: ${sdp['sdp_id']}");
+              debugPrint("Updated sdp: ${sdp['sdp_id']}");
             } else {
               // Insert new record
               await _dbHelper.insertData('sdp', sdpRecord);
-              print("Inserted new sdp: ${sdp['sdp_id']}");
+              debugPrint("Inserted new sdp: ${sdp['sdp_id']}");
             }
           }
 
           // Query the local sdp table to check if data is synced
           final sdp = await db.query('sdp');
-          print("sdp in local database: ${sdp.length} records");
+          debugPrint("sdp in local database: ${sdp.length} records");
 
-          print("sdp table synchronized successfully.");
+          debugPrint("sdp table synchronized successfully.");
         } else {
-          print("Failed to sync sdp. Unexpected response format.");
+          debugPrint("Failed to sync sdp. Unexpected response format.");
         }
       } else {
-        print("Failed to sync sdp. Status code: ${response.statusCode}");
+        debugPrint("Failed to sync sdp. Status code: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error syncing sdp: $e");
+      debugPrint("Error syncing sdp: $e");
     }
   }
 
@@ -1251,7 +1249,7 @@ class SyncService extends ChangeNotifier {
         var data = json.decode(response.body);
         if (data['status'] == 'success') {
           List sitesData = data['data'];
-          print('Sites data received: ${sitesData.length} sites');
+          debugPrint('Sites data received: ${sitesData.length} sites');
 
           // Process the data and insert it into the local database (SQLite)
           for (var sites in sitesData) {
@@ -1282,17 +1280,17 @@ class SyncService extends ChangeNotifier {
 
           // Query the local sites table to check if data is inserted
           final localSites = await db.query('sites');
-          print("Sites in local database: ${localSites.length} records");
+          debugPrint("Sites in local database: ${localSites.length} records");
 
-          print("Sites table synchronized successfully.");
+          debugPrint("Sites table synchronized successfully.");
         } else {
-          print("Failed to sync sites. Unexpected response format.");
+          debugPrint("Failed to sync sites. Unexpected response format.");
         }
       } else {
-        print("Failed to sync sites. Status code: ${response.statusCode}");
+        debugPrint("Failed to sync sites. Status code: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error syncing sites: $e");
+      debugPrint("Error syncing sites: $e");
     }
   }
 
@@ -1310,17 +1308,17 @@ class SyncService extends ChangeNotifier {
           // Extract the list of classes from the 'data' key
           List classData = responseBody['data'] ?? [];
 
-          print("Class data received from server: $classData");
+          debugPrint("Class data received from server: $classData");
 
           // SMART SYNC: Update existing, insert new (no delete)
-          print(
+          debugPrint(
               'Syncing ${classData.length} classes using UPDATE/INSERT pattern');
 
           final db = await _dbHelper.database;
 
           // Insert each class record into the local database
           for (var classEntry in classData) {
-            print("Syncing class: $classEntry"); // Debug log
+            debugPrint("Syncing class: $classEntry"); // Debug log
             await db.insert(
               'class',
               {
@@ -1335,17 +1333,17 @@ class SyncService extends ChangeNotifier {
 
           // Query the local class table to check if data is inserted
           final localClassData = await db.query('class');
-          print("Class in local database: ${localClassData.length} records");
+          debugPrint("Class in local database: ${localClassData.length} records");
 
-          print("Class table synchronized successfully.");
+          debugPrint("Class table synchronized successfully.");
         } else {
-          print("Failed to sync class. Server responded with error.");
+          debugPrint("Failed to sync class. Server responded with error.");
         }
       } else {
-        print("Failed to sync class. Status code: ${response.statusCode}");
+        debugPrint("Failed to sync class. Status code: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error syncing class: $e");
+      debugPrint("Error syncing class: $e");
     }
   }
 
@@ -1359,15 +1357,15 @@ class SyncService extends ChangeNotifier {
         whereArgs: [0],
       );
       if (results.isNotEmpty) {
-        print(
+        debugPrint(
             "Fetched ${results.length} unsynced record(s) from local database.");
         return results;
       } else {
-        print("No unsynced data found in local database.");
+        debugPrint("No unsynced data found in local database.");
         return [];
       }
     } catch (e) {
-      print("Error fetching data from local database: $e");
+      debugPrint("Error fetching data from local database: $e");
       rethrow;
     }
   }
@@ -1381,9 +1379,9 @@ class SyncService extends ChangeNotifier {
         where: 'clocking_id = ?',
         whereArgs: [clockingId],
       );
-      print("Marked clocking_id $clockingId as synced.");
+      debugPrint("Marked clocking_id $clockingId as synced.");
     } catch (e) {
-      print("Error marking entry as synced: $e");
+      debugPrint("Error marking entry as synced: $e");
       throw Exception("Failed to update sync status.");
     }
   }
@@ -1391,7 +1389,7 @@ class SyncService extends ChangeNotifier {
   Future<void> syncDataToServer({int maxRetries = 3}) async {
     try {
       if (!await isConnected()) {
-        print("No internet connection. Sync aborted.");
+        debugPrint("No internet connection. Sync aborted.");
         showSyncError("No internet connection.");
         return;
       }
@@ -1401,7 +1399,7 @@ class SyncService extends ChangeNotifier {
 
       final unsyncedRecords = await fetchDataFromLocalDatabase();
       if (unsyncedRecords.isEmpty) {
-        print("No data to sync.");
+        debugPrint("No data to sync.");
         return;
       }
 
@@ -1417,7 +1415,7 @@ class SyncService extends ChangeNotifier {
                 localData['clock_in_time'] == null ||
                 !localData.containsKey('clocking_id') ||
                 localData['clocking_id'] == null) {
-              print(
+              debugPrint(
                   "Skipping record ${localData['clocking_id']}: Missing required fields");
               break;
             }
@@ -1432,7 +1430,7 @@ class SyncService extends ChangeNotifier {
                 request.fields[key] = value.toString();
               }
             });
-            print("Request fields: ${request.fields}");
+            debugPrint("Request fields: ${request.fields}");
 
             // Handle signature file
             if (localData['signature'] != null) {
@@ -1442,22 +1440,22 @@ class SyncService extends ChangeNotifier {
                 var multipartFile = await http.MultipartFile.fromPath(
                     'signature', signaturePath);
                 request.files.add(multipartFile);
-                print("Signature file added: $signaturePath");
+                debugPrint("Signature file added: $signaturePath");
               } else {
-                print("Signature file not found: $signaturePath");
+                debugPrint("Signature file not found: $signaturePath");
               }
             }
 
             final response = await request.send();
             final responseBody = await response.stream.bytesToString();
-            print("Server response: $responseBody");
+            debugPrint("Server response: $responseBody");
 
             if (response.statusCode == 200) {
               final responseJson =
                   json.decode(responseBody) as Map<String, dynamic>;
               if (responseJson['status'] == 'success') {
                 await markIsSynced(localData['clocking_id']);
-                print("Record ${localData['clocking_id']} synced.");
+                debugPrint("Record ${localData['clocking_id']} synced.");
                 synced = true;
               } else {
                 throw Exception("Sync failed: ${responseJson['message']}");
@@ -1468,10 +1466,10 @@ class SyncService extends ChangeNotifier {
             }
           } catch (e) {
             attempts++;
-            print(
+            debugPrint(
                 "Attempt $attempts failed for clocking_id ${localData['clocking_id']}: $e");
             if (attempts == maxRetries) {
-              print(
+              debugPrint(
                   "Max retries reached for clocking_id ${localData['clocking_id']}");
               showSyncError(
                   "Failed to sync record ${localData['clocking_id']}");
@@ -1481,7 +1479,7 @@ class SyncService extends ChangeNotifier {
         }
       }
     } catch (e) {
-      print("Error during data sync: $e");
+      debugPrint("Error during data sync: $e");
       showSyncError("Sync error: $e");
       rethrow;
     }
@@ -1493,7 +1491,7 @@ class SyncService extends ChangeNotifier {
   }
 
   void showSyncError(String message) {
-    print("Sync error: $message");
+    debugPrint("Sync error: $message");
     // Add SnackBar or other UI feedback if needed
   }
 
@@ -1568,7 +1566,7 @@ class SyncService extends ChangeNotifier {
         }
 
         // SMART SYNC: Update existing, insert new (no delete)
-        print(
+        debugPrint(
             'Syncing ${insertLearningpathway.length} learning pathways using UPDATE/INSERT pattern');
 
         final db = await _dbHelper.database;
@@ -1580,13 +1578,13 @@ class SyncService extends ChangeNotifier {
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
         }
-        print("Pathway selection table synchronized successfully.");
+        debugPrint("Pathway selection table synchronized successfully.");
       } else {
-        print(
+        debugPrint(
             "Failed to sync pathway selection. Status code: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error syncing pathway selection: $e");
+      debugPrint("Error syncing pathway selection: $e");
     }
   }
 
@@ -1610,7 +1608,7 @@ class SyncService extends ChangeNotifier {
         }
 
         // SMART SYNC: Update existing, insert new (no delete)
-        print(
+        debugPrint(
             'Syncing ${pathwaySelectionlist.length} pathway selections using UPDATE/INSERT pattern');
 
         final db = await _dbHelper.database;
@@ -1623,13 +1621,13 @@ class SyncService extends ChangeNotifier {
           );
         }
 
-        print("Pathway selection table synchronized successfully.");
+        debugPrint("Pathway selection table synchronized successfully.");
       } else {
-        print(
+        debugPrint(
             "Failed to sync pathway selection. Status code: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error syncing pathway selection: $e");
+      debugPrint("Error syncing pathway selection: $e");
     }
   }
 
@@ -1653,7 +1651,7 @@ class SyncService extends ChangeNotifier {
         }
 
         // SMART SYNC: Update existing, insert new (no delete)
-        print(
+        debugPrint(
             'Syncing ${qualificationList.length} qualifications using UPDATE/INSERT pattern');
 
         final db = await _dbHelper.database;
@@ -1666,13 +1664,13 @@ class SyncService extends ChangeNotifier {
           );
         }
 
-        print("Qualification table synchronized successfully.");
+        debugPrint("Qualification table synchronized successfully.");
       } else {
-        print(
+        debugPrint(
             "Failed to sync qualification. Status code: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error syncing qualification data: $e");
+      debugPrint("Error syncing qualification data: $e");
     }
   }
 
@@ -1696,7 +1694,7 @@ class SyncService extends ChangeNotifier {
         }
 
         // SMART SYNC: Update existing, insert new (no delete)
-        print(
+        debugPrint(
             'Syncing ${qualificationSelectionlist.length} qualification selections using UPDATE/INSERT pattern');
 
         final db = await _dbHelper.database;
@@ -1709,13 +1707,13 @@ class SyncService extends ChangeNotifier {
           );
         }
 
-        print("Qualification selection table synchronized successfully.");
+        debugPrint("Qualification selection table synchronized successfully.");
       } else {
-        print(
+        debugPrint(
             "Failed to sync qualification selection. Status code: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error syncing qualification data: $e");
+      debugPrint("Error syncing qualification data: $e");
     }
   }
 
@@ -1739,7 +1737,7 @@ class SyncService extends ChangeNotifier {
         }
 
         // SMART SYNC: Update existing, insert new (no delete)
-        print(
+        debugPrint(
             'Syncing ${qualificationPathwaylist.length} qualification pathways using UPDATE/INSERT pattern');
 
         final db = await _dbHelper.database;
@@ -1752,13 +1750,13 @@ class SyncService extends ChangeNotifier {
           );
         }
 
-        print("Qualification pathway table synchronized successfully.");
+        debugPrint("Qualification pathway table synchronized successfully.");
       } else {
-        print(
+        debugPrint(
             "Failed to sync qualification pathway. Status code: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error syncing qualification data: $e");
+      debugPrint("Error syncing qualification data: $e");
     }
   }
 
@@ -1782,7 +1780,7 @@ class SyncService extends ChangeNotifier {
         }
 
         // SMART SYNC: Update existing, insert new (no delete)
-        print(
+        debugPrint(
             'Syncing ${qualificationunitstandardList.length} qualification unit standards using UPDATE/INSERT pattern');
 
         final db = await _dbHelper.database;
@@ -1796,13 +1794,13 @@ class SyncService extends ChangeNotifier {
           );
         }
 
-        print("Qualification unitstandard table synchronized successfully.");
+        debugPrint("Qualification unitstandard table synchronized successfully.");
       } else {
-        print(
+        debugPrint(
             "Failed to sync qualification unitstandard. Status code: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error syncing qualification data: $e");
+      debugPrint("Error syncing qualification data: $e");
     }
   }
 
@@ -1825,7 +1823,7 @@ class SyncService extends ChangeNotifier {
         }
 
         // SMART SYNC: Update existing, insert new (no delete)
-        print(
+        debugPrint(
             'Syncing ${unitstandardList.length} unit standards using UPDATE/INSERT pattern');
 
         final db = await _dbHelper.database;
@@ -1838,13 +1836,13 @@ class SyncService extends ChangeNotifier {
           );
         }
 
-        print("Unitstandard table synchronized successfully.");
+        debugPrint("Unitstandard table synchronized successfully.");
       } else {
-        print(
+        debugPrint(
             "Failed to sync unitstandard. Status code: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error syncing unitstandard data: $e");
+      debugPrint("Error syncing unitstandard data: $e");
     }
   }
 
@@ -1868,7 +1866,7 @@ class SyncService extends ChangeNotifier {
         }
 
         // SMART SYNC: Update existing, insert new (no delete)
-        print(
+        debugPrint(
             'Syncing ${unitstandardSelectionList.length} unit standard selections using UPDATE/INSERT pattern');
 
         final db = await _dbHelper.database;
@@ -1881,13 +1879,13 @@ class SyncService extends ChangeNotifier {
           );
         }
 
-        print("Unit standard selection table synchronized successfully.");
+        debugPrint("Unit standard selection table synchronized successfully.");
       } else {
-        print(
+        debugPrint(
             "Failed to sync unit standard selection. Status code: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error syncing unit standard selection: $e");
+      debugPrint("Error syncing unit standard selection: $e");
     }
   }
 
@@ -1910,7 +1908,7 @@ class SyncService extends ChangeNotifier {
         }
 
         // SMART SYNC: Update existing, insert new (no delete)
-        print(
+        debugPrint(
             'Syncing ${assessmentsList.length} assessments using UPDATE/INSERT pattern');
 
         final db = await _dbHelper.database;
@@ -1923,13 +1921,13 @@ class SyncService extends ChangeNotifier {
           );
         }
 
-        print("Assessments table synchronized successfully.");
+        debugPrint("Assessments table synchronized successfully.");
       } else {
-        print(
+        debugPrint(
             "Failed to sync assessments. Status code: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error syncing assessments: $e");
+      debugPrint("Error syncing assessments: $e");
     }
   }
 
@@ -1952,7 +1950,7 @@ class SyncService extends ChangeNotifier {
         }
 
         // SMART SYNC: Update existing, insert new (no delete)
-        print(
+        debugPrint(
             'Syncing ${poeList.length} POE records using UPDATE/INSERT pattern');
 
         final db = await _dbHelper.database;
@@ -1965,29 +1963,29 @@ class SyncService extends ChangeNotifier {
               conflictAlgorithm: ConflictAlgorithm.replace,
             );
           } catch (e) {
-            print("Error syncing POE with ID ${poe['poe_id']}: $e");
+            debugPrint("Error syncing POE with ID ${poe['poe_id']}: $e");
             // Continue with other POE records even if one fails
           }
         }
 
-        print("Successfully synchronized ${poeList.length} POE records");
+        debugPrint("Successfully synchronized ${poeList.length} POE records");
       } else {
         throw Exception(
             "Failed to sync POE. Status code: ${response.statusCode}");
       }
     } catch (e) {
-      print("Error syncing POE: $e");
+      debugPrint("Error syncing POE: $e");
     }
   }
 
   // Sync learner documents from server
   Future<void> _syncLearnerDocuments() async {
     try {
-      print('[SYNC] Starting learner documents sync...');
+      debugPrint('[SYNC] Starting learner documents sync...');
       await _dbHelper.syncLearnerDocuments();
-      print('[SYNC] Learner documents sync completed');
+      debugPrint('[SYNC] Learner documents sync completed');
     } catch (e) {
-      print('[SYNC] Error syncing learner documents: $e');
+      debugPrint('[SYNC] Error syncing learner documents: $e');
     }
   }
 
@@ -1999,7 +1997,7 @@ class SyncService extends ChangeNotifier {
         .query('material_receipt_form', where: 'synced = ?', whereArgs: [0]);
 
     // Log the result
-    print("Unsynced records fetched: $unsyncedRecords");
+    debugPrint("Unsynced records fetched: $unsyncedRecords");
 
     return unsyncedRecords;
   }
@@ -2013,21 +2011,21 @@ class SyncService extends ChangeNotifier {
   }
 
   Future<void> syncAcknowledgmentOfReceiptToServer() async {
-    print("Syncing Acknowledgment of Receipt...");
+    debugPrint("Syncing Acknowledgment of Receipt...");
     final unsyncedRecords = await getUnsyncedRecords();
     if (unsyncedRecords.isEmpty) {
-      print("No records to sync.");
+      debugPrint("No records to sync.");
       return;
     }
 
-    print("Found ${unsyncedRecords.length} unsynced records.");
+    debugPrint("Found ${unsyncedRecords.length} unsynced records.");
     final Uri url = Uri.parse(AppConfig.syncAcknowledgmentDataUrl);
     List<Map<String, dynamic>> validRecords = [];
     var request = http.MultipartRequest('POST', url);
 
     for (int i = 0; i < unsyncedRecords.length; i++) {
       var record = unsyncedRecords[i];
-      print("Processing record ${record['student_id_number']}");
+      debugPrint("Processing record ${record['student_id_number']}");
 
       if ([
         'student_id_number',
@@ -2037,7 +2035,7 @@ class SyncService extends ChangeNotifier {
         'date_received',
         'learner_signature'
       ].any((key) => record[key] == null || record[key].toString().isEmpty)) {
-        print(
+        debugPrint(
             "Skipping record ${record['student_id_number']} due to missing required fields.");
         continue;
       }
@@ -2049,17 +2047,17 @@ class SyncService extends ChangeNotifier {
         signaturePaths = List<String>.from(record['learner_signature']);
       }
 
-      print(
+      debugPrint(
           "Signature paths for record ${record['student_id_number']}: $signaturePaths");
       if (signaturePaths.isEmpty || !await _allFilesExist(signaturePaths)) {
-        print(
+        debugPrint(
             "Skipping record ${record['student_id_number']} - Missing or invalid signature files.");
         continue;
       }
 
       validRecords.add(record);
       for (int j = 0; j < signaturePaths.length; j++) {
-        print("Adding signature file for record $i: ${signaturePaths[j]}");
+        debugPrint("Adding signature file for record $i: ${signaturePaths[j]}");
         request.files.add(await http.MultipartFile.fromPath(
           'signature[]', // Simplified field name
           signaturePaths[j],
@@ -2069,28 +2067,28 @@ class SyncService extends ChangeNotifier {
     }
 
     if (validRecords.isEmpty) {
-      print("No valid records to sync in form.");
+      debugPrint("No valid records to sync in form.");
       return;
     }
 
-    print("Sending data to server: ${json.encode(validRecords)}");
+    debugPrint("Sending data to server: ${json.encode(validRecords)}");
     request.fields['data'] = json.encode(validRecords);
 
     try {
       var response = await request.send();
       String responseBody = await response.stream.bytesToString();
-      print("Server response status: ${response.statusCode}");
-      print("Server response body: $responseBody");
+      debugPrint("Server response status: ${response.statusCode}");
+      debugPrint("Server response body: $responseBody");
 
       if (response.statusCode == 200) {
-        print("Batch sync successful for ${validRecords.length} records.");
+        debugPrint("Batch sync successful for ${validRecords.length} records.");
         await _updateSyncedStatus(validRecords);
       } else {
-        print(
+        debugPrint(
             "Batch sync failed. Response: ${response.statusCode}, Body: $responseBody");
       }
     } catch (e) {
-      print("Error syncing batch: $e");
+      debugPrint("Error syncing batch: $e");
     }
   }
 
@@ -2098,7 +2096,7 @@ class SyncService extends ChangeNotifier {
     for (String path in paths) {
       final file = File(path);
       if (!await file.exists()) {
-        print("File does not exist: $path");
+        debugPrint("File does not exist: $path");
         return false;
       }
     }
@@ -2112,11 +2110,11 @@ class SyncService extends ChangeNotifier {
       try {
         // Ensure the record has the 'id' field
         if (record['id'] == null) {
-          print("Skipping record due to missing 'id' field: $record");
+          debugPrint("Skipping record due to missing 'id' field: $record");
           continue;
         }
 
-        print("Marking record ${record['id']} as synced.");
+        debugPrint("Marking record ${record['id']} as synced.");
 
         // Update the 'synced' status to 1 for the record with the given 'id'
         await db.update(
@@ -2129,7 +2127,7 @@ class SyncService extends ChangeNotifier {
         );
       } catch (e) {
         // Log any error encountered while updating the record
-        print("Error updating record ${record['id']}: $e");
+        debugPrint("Error updating record ${record['id']}: $e");
       }
     }
   }
@@ -2148,14 +2146,14 @@ class SyncService extends ChangeNotifier {
         // Check if the response is successful
         if (responseData['success'] == true) {
           List<dynamic> materialForms = responseData['data'];
-          print(
+          debugPrint(
               'Fetched ${materialForms.length} material forms from the server.');
 
           DatabaseHelper dbHelper = DatabaseHelper();
 
           // Insert each material form into the local SQLite database
           for (var form in materialForms) {
-            print('Processing form: ${form['id']}');
+            debugPrint('Processing form: ${form['id']}');
 
             Map<String, dynamic> materialForm = {
               'id': form['id'],
@@ -2173,27 +2171,27 @@ class SyncService extends ChangeNotifier {
             };
 
             // Print data before insertion
-            print('Inserting form data: $materialForm');
+            debugPrint('Inserting form data: $materialForm');
 
             // Insert the material form data into the local database
             int result = await dbHelper.insertMaterialForm(materialForm);
             if (result > 0) {
-              print('Successfully inserted form with ID: ${form['id']}');
+              debugPrint('Successfully inserted form with ID: ${form['id']}');
             } else {
-              print('Failed to insert form with ID: ${form['id']}');
+              debugPrint('Failed to insert form with ID: ${form['id']}');
             }
           }
 
-          print(
+          debugPrint(
               'Data successfully synced from the server to the local database');
         } else {
-          print('Failed to fetch data from the server');
+          debugPrint('Failed to fetch data from the server');
         }
       } else {
-        print('Server error: ${response.statusCode}');
+        debugPrint('Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error syncing data from server: $e');
+      debugPrint('Error syncing data from server: $e');
     }
   }
 
@@ -2204,7 +2202,7 @@ class SyncService extends ChangeNotifier {
       final bytes = await file.readAsBytes();
       return base64Encode(bytes); // Convert the file bytes to Base64
     } catch (e) {
-      print('Error converting file to Base64: $e');
+      debugPrint('Error converting file to Base64: $e');
       return ''; // Return an empty string if there is an error
     }
   }
@@ -2218,7 +2216,7 @@ class SyncService extends ChangeNotifier {
       DatabaseHelper dbHelper = DatabaseHelper();
       List<Map<String, dynamic>> unsyncedForms =
           await dbHelper.fetchUnsyncedMaterialForms();
-      print('Unsynced records fetched: $unsyncedForms');
+      debugPrint('Unsynced records fetched: $unsyncedForms');
 
       // Loop through the unsynced material forms
       for (var form in unsyncedForms) {
@@ -2235,13 +2233,13 @@ class SyncService extends ChangeNotifier {
         String representativeSignaturePath = form['representative_signature'];
 
         // Debug print to check values
-        print('classID: $classID');
-        print('facilitatorFullName: $facilitatorFullName');
-        print('representativeFullName: $representativeFullName');
-        print('qualificationName: $qualificationName');
-        print('description: $description');
-        print('facilitatorSignaturePath: $facilitatorSignaturePath');
-        print('representativeSignaturePath: $representativeSignaturePath');
+        debugPrint('classID: $classID');
+        debugPrint('facilitatorFullName: $facilitatorFullName');
+        debugPrint('representativeFullName: $representativeFullName');
+        debugPrint('qualificationName: $qualificationName');
+        debugPrint('description: $description');
+        debugPrint('facilitatorSignaturePath: $facilitatorSignaturePath');
+        debugPrint('representativeSignaturePath: $representativeSignaturePath');
 
         // Get the created_at and updated_at values
         String createdAt = form['created_at'];
@@ -2269,7 +2267,7 @@ class SyncService extends ChangeNotifier {
             'representativeSignature', representativeSignaturePath);
         request.files.add(representativeSignatureFile);
 
-        print('Uploading material form data for class ID: $classID');
+        debugPrint('Uploading material form data for class ID: $classID');
 
         // Send the request
         final response = await request.send();
@@ -2279,18 +2277,18 @@ class SyncService extends ChangeNotifier {
           final responseJson = json.decode(responseData);
 
           if (responseJson['success'] == true) {
-            print('Material form synced successfully with server');
+            debugPrint('Material form synced successfully with server');
             // Update sync status in local database
             await dbHelper.updateSyncStatus(form['id']);
           } else {
-            print('Failed to sync material form: ${responseJson['message']}');
+            debugPrint('Failed to sync material form: ${responseJson['message']}');
           }
         } else {
-          print('Server error: ${response.statusCode}');
+          debugPrint('Server error: ${response.statusCode}');
         }
       }
     } catch (e) {
-      print('Error syncing material forms with server: $e');
+      debugPrint('Error syncing material forms with server: $e');
     }
   }
 
@@ -2300,7 +2298,7 @@ class SyncService extends ChangeNotifier {
       final response = await http.get(Uri.parse(AppConfig.saveReceiptFormUrl));
 
       if (response.statusCode == 200) {
-        print('Response body: ${response.body}');
+        debugPrint('Response body: ${response.body}');
 
         final decodedResponse = jsonDecode(response.body);
 
@@ -2308,7 +2306,7 @@ class SyncService extends ChangeNotifier {
           List<dynamic> receiptForms = decodedResponse['data'];
 
           if (receiptForms.isEmpty) {
-            print('No material receipt forms found to sync.');
+            debugPrint('No material receipt forms found to sync.');
             return;
           }
 
@@ -2321,11 +2319,11 @@ class SyncService extends ChangeNotifier {
               try {
                 // Check for missing fields and log the specific ones
                 if (receiptForm['student_id_number'] == null) {
-                  print('Skipping record due to missing student_id_number');
+                  debugPrint('Skipping record due to missing student_id_number');
                   continue;
                 }
                 if (receiptForm['class_name'] == null) {
-                  print('Skipping record due to missing class_name');
+                  debugPrint('Skipping record due to missing class_name');
                   continue;
                 }
 
@@ -2363,25 +2361,25 @@ class SyncService extends ChangeNotifier {
                   conflictAlgorithm: ConflictAlgorithm.replace,
                 );
 
-                print(
+                debugPrint(
                     'Successfully inserted: ${receiptForm['student_id_number']}');
               } catch (e) {
-                print('Error inserting material receipt form: $e');
+                debugPrint('Error inserting material receipt form: $e');
               }
             }
 
-            print('Material receipt form data synced successfully.');
+            debugPrint('Material receipt form data synced successfully.');
           });
         } else {
-          print(
+          debugPrint(
               'Error syncing material receipt form data: ${decodedResponse['message']}');
         }
       } else {
-        print(
+        debugPrint(
             'Error: Failed to fetch material receipt form data. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error syncing material receipt form data: $e');
+      debugPrint('Error syncing material receipt form data: $e');
     }
   }
 
@@ -2395,12 +2393,12 @@ class SyncService extends ChangeNotifier {
         () => http.get(Uri.parse(apiUrl)),
         endpoint: 'materials_received_sync',
         maxRetries: NetworkConfig.syncOperationsMaxRetries,
-        timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
+        timeout: const Duration(seconds: NetworkConfig.lightweightTimeout),
       );
 
       // Check if the response is successful
       if (response.statusCode == 200) {
-        print(
+        debugPrint(
             'Response body: ${response.body}'); // Print the response for debugging
 
         try {
@@ -2413,7 +2411,7 @@ class SyncService extends ChangeNotifier {
             List<dynamic> materialsReceived = data['data'];
 
             if (materialsReceived.isEmpty) {
-              print('No materials received data to sync.');
+              debugPrint('No materials received data to sync.');
               return;
             }
 
@@ -2452,71 +2450,71 @@ class SyncService extends ChangeNotifier {
                     conflictAlgorithm: ConflictAlgorithm
                         .replace, // Or ConflictAlgorithm.ignore
                   );
-                  print(
+                  debugPrint(
                       'Inserted material: ${material['LearnerID']}'); // Log inserted material
                 } catch (e) {
-                  print('Error inserting material: $e');
+                  debugPrint('Error inserting material: $e');
                 }
               }
             });
 
-            print('Materials received data synced successfully.');
+            debugPrint('Materials received data synced successfully.');
           } else {
-            print('Error syncing materials received data: ${data['message']}');
+            debugPrint('Error syncing materials received data: ${data['message']}');
           }
         } catch (e) {
-          print('Error decoding JSON response: $e');
+          debugPrint('Error decoding JSON response: $e');
         }
       } else {
-        print(
+        debugPrint(
             'Error: Failed to fetch materials received data. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error syncing materials received data: $e');
+      debugPrint('Error syncing materials received data: $e');
     }
   }
 
   // Method to sync project data
   Future<void> syncProjectData() async {
-    print('[PROJECT_SYNC] ===== STARTING PROJECT SYNC =====');
+    debugPrint('[PROJECT_SYNC] ===== STARTING PROJECT SYNC =====');
     try {
       // Define your PHP API URL
       final apiUrl = AppConfig.syncProjectUrl;
-      print('[PROJECT_SYNC] API URL: $apiUrl');
+      debugPrint('[PROJECT_SYNC] API URL: $apiUrl');
 
       // Make the API call
-      print('[PROJECT_SYNC] Making HTTP GET request...');
+      debugPrint('[PROJECT_SYNC] Making HTTP GET request...');
       final response = await http.get(Uri.parse(apiUrl));
-      print('[PROJECT_SYNC] Response status: ${response.statusCode}');
+      debugPrint('[PROJECT_SYNC] Response status: ${response.statusCode}');
 
       // Check if the response is successful
       if (response.statusCode == 200) {
-        print('[PROJECT_SYNC] ✅ HTTP request successful');
-        print(
+        debugPrint('[PROJECT_SYNC] ✅ HTTP request successful');
+        debugPrint(
             '[PROJECT_SYNC] Response body length: ${response.body.length} characters');
-        print(
+        debugPrint(
             '[PROJECT_SYNC] Response body preview: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}...');
 
         try {
           // Decode the JSON response into a Map
-          print('[PROJECT_SYNC] Attempting to decode JSON...');
+          debugPrint('[PROJECT_SYNC] Attempting to decode JSON...');
           final Map<String, dynamic> data = jsonDecode(response.body);
-          print('[PROJECT_SYNC] ✅ JSON decoded successfully');
-          print('[PROJECT_SYNC] Response status: ${data['status']}');
+          debugPrint('[PROJECT_SYNC] ✅ JSON decoded successfully');
+          debugPrint('[PROJECT_SYNC] Response status: ${data['status']}');
 
           // Check if the response contains 'status' as 'success'
           if (data['status'] == 'success') {
             // Access the 'data' field which contains the list of projects
             List<dynamic> projects = data['data'];
-            print(
+            debugPrint(
                 '[PROJECT_SYNC] ✅ Found ${projects.length} projects in response');
 
             // Get an instance of the database
             final db = await _dbHelper.database;
-            print('[PROJECT_SYNC] ✅ Database connection obtained');
+            debugPrint('[PROJECT_SYNC] ✅ Database connection obtained');
 
             // SMART SYNC: Update existing, insert new (no delete)
-            print(
+            debugPrint(
                 '[PROJECT_SYNC] Syncing ${projects.length} projects using UPDATE/INSERT pattern');
 
             int successCount = 0;
@@ -2524,7 +2522,7 @@ class SyncService extends ChangeNotifier {
 
             for (var project in projects) {
               try {
-                print(
+                debugPrint(
                     '[PROJECT_SYNC] Processing project ID: ${project['project_id']}, Name: ${project['Project_name']}');
                 // Check if required fields are missing and provide default values if necessary
                 String projectName = project['Project_name'] ??
@@ -2586,48 +2584,48 @@ class SyncService extends ChangeNotifier {
                   },
                   conflictAlgorithm: ConflictAlgorithm.replace,
                 );
-                print(
+                debugPrint(
                     '[PROJECT_SYNC] ✅ Successfully inserted project ID: ${project['project_id']}');
                 successCount++;
               } catch (insertError) {
-                print(
+                debugPrint(
                     '[PROJECT_SYNC] ❌ Error inserting project ID ${project['project_id']}: $insertError');
                 errorCount++;
               }
             }
 
-            print(
+            debugPrint(
                 '[PROJECT_SYNC] ✅ Project sync completed: $successCount successful, $errorCount errors');
 
             // Verify data was inserted
             final projectCount =
                 await db.rawQuery('SELECT COUNT(*) as count FROM project');
             final count = projectCount.first['count'] as int? ?? 0;
-            print('[PROJECT_SYNC] 📊 Total projects in local database: $count');
+            debugPrint('[PROJECT_SYNC] 📊 Total projects in local database: $count');
           } else {
-            print(
+            debugPrint(
                 '[PROJECT_SYNC] ❌ Server response status not success: ${data['status']}');
-            print(
+            debugPrint(
                 '[PROJECT_SYNC] Server message: ${data['message'] ?? 'No message provided'}');
           }
         } catch (e) {
-          print('[PROJECT_SYNC] ❌ Error decoding JSON response: $e');
-          print('[PROJECT_SYNC] Raw response body: ${response.body}');
+          debugPrint('[PROJECT_SYNC] ❌ Error decoding JSON response: $e');
+          debugPrint('[PROJECT_SYNC] Raw response body: ${response.body}');
         }
       } else {
-        print(
+        debugPrint(
             '[PROJECT_SYNC] ❌ HTTP request failed with status: ${response.statusCode}');
-        print('[PROJECT_SYNC] Response body: ${response.body}');
+        debugPrint('[PROJECT_SYNC] Response body: ${response.body}');
       }
     } catch (e) {
-      print('[PROJECT_SYNC] ❌ Error syncing project data: $e');
+      debugPrint('[PROJECT_SYNC] ❌ Error syncing project data: $e');
     }
-    print('[PROJECT_SYNC] ===== PROJECT SYNC COMPLETED =====');
+    debugPrint('[PROJECT_SYNC] ===== PROJECT SYNC COMPLETED =====');
   }
 
   // Public method to manually sync project data for testing
   Future<void> manualSyncProjectData() async {
-    print('[MANUAL_SYNC] Manually triggering project sync...');
+    debugPrint('[MANUAL_SYNC] Manually triggering project sync...');
     await syncProjectData();
   }
 
@@ -2646,14 +2644,14 @@ class SyncService extends ChangeNotifier {
           poe['type'].toString().isEmpty ||
           poe['submitted_at'] == null ||
           poe['submitted_at'].toString().isEmpty) {
-        print("Error: Missing required fields!");
+        debugPrint("Error: Missing required fields!");
         return;
       }
 
       // Get file path from poe record
       String? filePath = poe['filePath'];
       if (filePath == null || !await File(filePath).exists()) {
-        print("No POE PDF found for $learnerId at $filePath");
+        debugPrint("No POE PDF found for $learnerId at $filePath");
         return;
       }
 
@@ -2670,7 +2668,7 @@ class SyncService extends ChangeNotifier {
         contentType: MediaType('application', 'pdf'),
       ));
 
-      print("Uploading POE PDF for LearnerID: $learnerId...");
+      debugPrint("Uploading POE PDF for LearnerID: $learnerId...");
 
       // Retry logic
       int maxRetries = 3;
@@ -2681,32 +2679,32 @@ class SyncService extends ChangeNotifier {
               await request.send().timeout(const Duration(seconds: 30));
           final responseBody = await http.Response.fromStream(response);
 
-          print("Server Response: ${responseBody.body}");
+          debugPrint("Server Response: ${responseBody.body}");
 
           if (responseBody.statusCode == 200) {
             var jsonResponse = jsonDecode(responseBody.body);
             if (jsonResponse['success'] == true) {
               await markAsSyncedPOE(poe['poe_id']);
-              print("POE PDF for $learnerId synced successfully.");
+              debugPrint("POE PDF for $learnerId synced successfully.");
               break;
             } else {
-              print("Sync failed: ${jsonResponse['message']}");
+              debugPrint("Sync failed: ${jsonResponse['message']}");
             }
           } else {
-            print("Sync failed: HTTP ${responseBody.statusCode}");
+            debugPrint("Sync failed: HTTP ${responseBody.statusCode}");
           }
         } catch (e) {
           retryCount++;
-          print(
+          debugPrint(
               "Retry $retryCount/$maxRetries for LearnerID: $learnerId, Error: $e");
           if (retryCount == maxRetries) {
-            print("Max retries reached for LearnerID: $learnerId");
+            debugPrint("Max retries reached for LearnerID: $learnerId");
           }
           await Future.delayed(const Duration(seconds: 5));
         }
       }
     } catch (e) {
-      print("Error syncing POE PDF: $e");
+      debugPrint("Error syncing POE PDF: $e");
     }
   }
 
@@ -2717,10 +2715,10 @@ class SyncService extends ChangeNotifier {
         'poe',
         where: 'synced = 0', // Load only unsynced records
       );
-      print("Loaded ${unsyncedData.length} unsynced POE records.");
+      debugPrint("Loaded ${unsyncedData.length} unsynced POE records.");
       return unsyncedData;
     } catch (e) {
-      print("Error loading POE data from local database: $e");
+      debugPrint("Error loading POE data from local database: $e");
       return [];
     }
   }
@@ -2735,9 +2733,9 @@ class SyncService extends ChangeNotifier {
         where: 'poe_id = ?',
         whereArgs: [poeId],
       );
-      print("POE ID $poeId marked as synced.");
+      debugPrint("POE ID $poeId marked as synced.");
     } catch (e) {
-      print("Error marking POE ID $poeId as synced: $e");
+      debugPrint("Error marking POE ID $poeId as synced: $e");
     }
   }
 
@@ -2754,11 +2752,11 @@ class SyncService extends ChangeNotifier {
   // Helper to get unsynced learners
   Future<List<Map<String, dynamic>>> _getUnsyncedLearners() async {
     if (kDebugMode) {
-      print('DEBUG: Starting _getUnsyncedLearners');
+      debugPrint('DEBUG: Starting _getUnsyncedLearners');
     }
     final db = await _dbHelper.database;
     if (kDebugMode) {
-      print('DEBUG: Database path: ${db.path}');
+      debugPrint('DEBUG: Database path: ${db.path}');
     }
     try {
       final result = await db.query(
@@ -2767,12 +2765,12 @@ class SyncService extends ChangeNotifier {
         whereArgs: [0],
       );
       if (kDebugMode) {
-        print('DEBUG: Retrieved ${result.length} unsynced learners: $result');
+        debugPrint('DEBUG: Retrieved ${result.length} unsynced learners: $result');
       }
       return result;
     } catch (e) {
       if (kDebugMode) {
-        print('DEBUG: Error querying unsynced learners: $e');
+        debugPrint('DEBUG: Error querying unsynced learners: $e');
       }
       return [];
     }
@@ -2780,7 +2778,7 @@ class SyncService extends ChangeNotifier {
 
   Future<void> _markAsSynced(String learnerID) async {
     if (kDebugMode) {
-      print('DEBUG: Marking learner $learnerID as synced');
+      debugPrint('DEBUG: Marking learner $learnerID as synced');
     }
     final db = await _dbHelper.database;
     final updatedRows = await db.update(
@@ -2790,18 +2788,18 @@ class SyncService extends ChangeNotifier {
       whereArgs: [learnerID],
     );
     if (kDebugMode) {
-      print('DEBUG: Updated $updatedRows rows for LearnerID $learnerID');
+      debugPrint('DEBUG: Updated $updatedRows rows for LearnerID $learnerID');
     }
   }
 
   Future<Map<String, dynamic>> syncLearnerDetails() async {
     if (kDebugMode) {
-      print('DEBUG: Starting syncLearnerDetails');
+      debugPrint('DEBUG: Starting syncLearnerDetails');
     }
     try {
       List<Map<String, dynamic>> unsyncedLearners =
           await _getUnsyncedLearners();
-      print(
+      debugPrint(
           'DEBUG: Found ${unsyncedLearners.length} unsynced learners to process');
 
       if (unsyncedLearners.isEmpty) {
@@ -2822,7 +2820,7 @@ class SyncService extends ChangeNotifier {
             errors.add(
                 'Skipping learner due to missing LearnerID: ${learner['Name'] ?? 'Unknown'}');
             if (kDebugMode) {
-              print('DEBUG: ${errors.last}');
+              debugPrint('DEBUG: ${errors.last}');
             }
             continue;
           }
@@ -2832,13 +2830,13 @@ class SyncService extends ChangeNotifier {
             errors.add(
                 'Skipping learner due to missing IDNumber: ${learner['Name'] ?? 'Unknown'}');
             if (kDebugMode) {
-              print('DEBUG: ${errors.last}');
+              debugPrint('DEBUG: ${errors.last}');
             }
             continue;
           }
 
           if (kDebugMode) {
-            print('DEBUG: Sending request for learner $learnerID');
+            debugPrint('DEBUG: Sending request for learner $learnerID');
           }
 
           var request = http.MultipartRequest(
@@ -2914,22 +2912,22 @@ class SyncService extends ChangeNotifier {
             if (!shouldExcludeValue(value)) {
               request.fields[key] = value!;
               if (kDebugMode) {
-                print('DEBUG: Including field $key = $value');
+                debugPrint('DEBUG: Including field $key = $value');
               }
             } else {
               if (kDebugMode) {
-                print('DEBUG: Excluding field $key = $value (empty/default value)');
+                debugPrint('DEBUG: Excluding field $key = $value (empty/default value)');
               }
             }
           }
 
-          print(
+          debugPrint(
               'DEBUG: Final request fields for learner $learnerID (${request.fields.length} fields): ${request.fields}');
 
           // Add file uploads if they exist
           if (learner['profile_image'] != null &&
               File(learner['profile_image'].toString()).existsSync()) {
-            print(
+            debugPrint(
                 'DEBUG: Adding profile_image for $learnerID: ${learner['profile_image']}');
             request.files.add(await http.MultipartFile.fromPath(
               'profile_image',
@@ -2939,7 +2937,7 @@ class SyncService extends ChangeNotifier {
 
           if (learner['signature'] != null &&
               File(learner['signature'].toString()).existsSync()) {
-            print(
+            debugPrint(
                 'DEBUG: Adding signature for $learnerID: ${learner['signature']}');
             request.files.add(await http.MultipartFile.fromPath(
               'signature',
@@ -2949,7 +2947,7 @@ class SyncService extends ChangeNotifier {
 
           if (learner['witness_signature'] != null &&
               File(learner['witness_signature'].toString()).existsSync()) {
-            print(
+            debugPrint(
                 'DEBUG: Adding witness_signature for $learnerID: ${learner['witness_signature']}');
             request.files.add(await http.MultipartFile.fromPath(
               'witness_signature',
@@ -2962,28 +2960,28 @@ class SyncService extends ChangeNotifier {
             onTimeout: () {
               errors.add('Request timed out for LearnerID $learnerID');
               if (kDebugMode) {
-                print('DEBUG: ${errors.last}');
+                debugPrint('DEBUG: ${errors.last}');
               }
               return http.StreamedResponse(const Stream.empty(), 408);
             },
           );
 
           if (kDebugMode) {
-            print('DEBUG: Response status for $learnerID: ${response.statusCode}');
-            print('DEBUG: Response headers: ${response.headers}');
+            debugPrint('DEBUG: Response status for $learnerID: ${response.statusCode}');
+            debugPrint('DEBUG: Response headers: ${response.headers}');
           }
 
           String responseBody = await response.stream.bytesToString();
           
           if (kDebugMode) {
-            print('DEBUG: Raw response body for $learnerID: "$responseBody"');
+            debugPrint('DEBUG: Raw response body for $learnerID: "$responseBody"');
           }
 
           if (response.statusCode != 200) {
             errors.add(
                 'Server error for LearnerID $learnerID: Status ${response.statusCode}, Response: $responseBody');
             if (kDebugMode) {
-              print('DEBUG: ${errors.last}');
+              debugPrint('DEBUG: ${errors.last}');
             }
             continue;
           }
@@ -2991,7 +2989,7 @@ class SyncService extends ChangeNotifier {
           if (responseBody.isEmpty) {
             errors.add('Empty server response for LearnerID $learnerID');
             if (kDebugMode) {
-              print('DEBUG: ${errors.last}');
+              debugPrint('DEBUG: ${errors.last}');
             }
             continue;
           }
@@ -3002,27 +3000,27 @@ class SyncService extends ChangeNotifier {
               await _markAsSynced(learnerID);
               syncedCount++;
               if (kDebugMode) {
-                print('DEBUG: Successfully synced learner $learnerID');
+                debugPrint('DEBUG: Successfully synced learner $learnerID');
               }
             } else {
               errors.add(
                   'Server error for LearnerID $learnerID: ${jsonResponse['error'] ?? 'Unknown server error'}');
               if (kDebugMode) {
-                print('DEBUG: ${errors.last}');
+                debugPrint('DEBUG: ${errors.last}');
               }
             }
           } catch (e) {
             errors.add(
                 'Failed to parse server response for LearnerID $learnerID: $e. Response: $responseBody');
             if (kDebugMode) {
-              print('DEBUG: ${errors.last}');
+              debugPrint('DEBUG: ${errors.last}');
             }
           }
         } catch (e) {
           errors.add(
               'Error syncing LearnerID ${learner['LearnerID'] ?? 'unknown'}: $e - Data: $learner');
           if (kDebugMode) {
-            print('DEBUG: ${errors.last}');
+            debugPrint('DEBUG: ${errors.last}');
           }
         }
       }
@@ -3036,12 +3034,12 @@ class SyncService extends ChangeNotifier {
         'errors': errors.isEmpty ? null : errors,
       };
       if (kDebugMode) {
-        print('DEBUG: Sync result: $result');
+        debugPrint('DEBUG: Sync result: $result');
       }
       return result;
     } catch (e) {
       if (kDebugMode) {
-        print('DEBUG: Sync process failed: $e');
+        debugPrint('DEBUG: Sync process failed: $e');
       }
       return {
         'success': false,
@@ -3052,7 +3050,7 @@ class SyncService extends ChangeNotifier {
   }
 
   Future<void> syncSickNotesToServer() async {
-    print("Syncing Sick Notes to server...");
+    debugPrint("Syncing Sick Notes to server...");
     final serverUrl = AppConfig.syncSickNotesUrl;
 
     try {
@@ -3065,11 +3063,11 @@ class SyncService extends ChangeNotifier {
       );
 
       if (unsyncedRecords.isEmpty) {
-        print("No unsynced sick notes to sync.");
+        debugPrint("No unsynced sick notes to sync.");
         return;
       }
 
-      print("Found ${unsyncedRecords.length} unsynced sick note records.");
+      debugPrint("Found ${unsyncedRecords.length} unsynced sick note records.");
 
       // Prepare multipart request for batch sync
       final request = http.MultipartRequest('POST', Uri.parse(serverUrl));
@@ -3078,7 +3076,7 @@ class SyncService extends ChangeNotifier {
 
       for (int i = 0; i < unsyncedRecords.length; i++) {
         var record = unsyncedRecords[i];
-        print("Processing sick note record: $record");
+        debugPrint("Processing sick note record: $record");
 
         // Check for required fields with null safety
         String? learnerId = record['learner_id']?.toString();
@@ -3103,7 +3101,7 @@ class SyncService extends ChangeNotifier {
             dateTo == null ||
             uploadDate == null ||
             status == null) {
-          print(
+          debugPrint(
               "Skipping record ${record['note_id']} due to null required fields.");
           continue;
         }
@@ -3112,7 +3110,7 @@ class SyncService extends ChangeNotifier {
         try {
           final file = File(documentPath);
           if (!await file.exists()) {
-            print(
+            debugPrint(
                 "Document file not found for record ${record['note_id']}: $documentPath");
             continue;
           }
@@ -3141,54 +3139,54 @@ class SyncService extends ChangeNotifier {
             contentType: MediaType('application', 'pdf'),
             filename: fileName,
           ));
-          print(
+          debugPrint(
               "Added document file for record ${record['note_id']}: $documentPath (filename: $fileName)");
 
           // Track local file path for potential deletion
           localFilePaths.add(documentPath);
         } catch (e) {
-          print(
+          debugPrint(
               "Error adding document file for record ${record['note_id']}: $e");
           continue;
         }
       }
 
       if (validRecords.isEmpty) {
-        print("No valid sick note records to sync.");
+        debugPrint("No valid sick note records to sync.");
         return;
       }
 
       // Add valid records as JSON to the request
-      print("Sending sick note data to server: ${json.encode(validRecords)}");
+      debugPrint("Sending sick note data to server: ${json.encode(validRecords)}");
       request.fields['data'] = json.encode(validRecords);
 
       // Send the request
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
 
-      print("Server response status: ${response.statusCode}");
-      print("Server response body: $responseBody");
+      debugPrint("Server response status: ${response.statusCode}");
+      debugPrint("Server response body: $responseBody");
 
       if (response.statusCode == 200) {
         try {
           final responseJson = json.decode(responseBody);
           if (responseJson['success'] == true) {
-            print(
+            debugPrint(
                 "Batch sync successful for ${validRecords.length} sick note records.");
             // Update sync status for valid records
             await _updateSickNoteSyncedStatus(unsyncedRecords, validRecords);
           } else {
-            print("Batch sync failed: ${responseJson['message']}");
+            debugPrint("Batch sync failed: ${responseJson['message']}");
           }
         } catch (e) {
-          print("Error parsing server response: $e");
+          debugPrint("Error parsing server response: $e");
         }
       } else {
-        print(
+        debugPrint(
             "Batch sync failed. Response: ${response.statusCode}, Body: $responseBody");
       }
     } catch (e) {
-      print("Error syncing sick notes to server: $e");
+      debugPrint("Error syncing sick notes to server: $e");
       rethrow;
     }
   }
@@ -3205,12 +3203,12 @@ class SyncService extends ChangeNotifier {
       try {
         final localId = unsyncedRecords[i]['note_id'];
         if (localId == null) {
-          print(
+          debugPrint(
               "Skipping record due to missing 'note_id' field: ${unsyncedRecords[i]}");
           continue;
         }
 
-        print("Marking sick note record $localId as synced.");
+        debugPrint("Marking sick note record $localId as synced.");
         await db.update(
           'sick_note',
           {'synced': 1},
@@ -3218,7 +3216,7 @@ class SyncService extends ChangeNotifier {
           whereArgs: [localId],
         );
       } catch (e) {
-        print(
+        debugPrint(
             "Error updating sick note record ${unsyncedRecords[i]['note_id']}: $e");
       }
     }
@@ -3300,16 +3298,16 @@ class SyncService extends ChangeNotifier {
                 contentType: MediaType.parse(mimeType),
               );
               request.files.add(signatureMultipart);
-              print(
+              debugPrint(
                   'Attempt $attempt: Signature file added: $signaturePath, MIME type: $mimeType');
             } else if (signaturePath != null) {
-              print(
+              debugPrint(
                   'Attempt $attempt: Signature file not found: $signaturePath');
             }
 
             // Log request details
-            print('Attempt $attempt: Request fields: ${request.fields}');
-            print(
+            debugPrint('Attempt $attempt: Request fields: ${request.fields}');
+            debugPrint(
                 'Attempt $attempt: Request files: ${request.files.map((f) => f.filename).toList()}');
 
             // Send request
@@ -3317,12 +3315,12 @@ class SyncService extends ChangeNotifier {
                 await request.send().timeout(const Duration(seconds: 30));
             final responseString = await response.stream.bytesToString();
 
-            print(
+            debugPrint(
                 'Attempt $attempt: Server response for clocking_id $clockingId: $responseString (Status: ${response.statusCode})');
 
             if (response.statusCode == 200) {
               if (responseString.isEmpty) {
-                print(
+                debugPrint(
                     'Attempt $attempt: Empty response received for clocking_id $clockingId');
                 syncMessage =
                     'Empty response from server for record $clockingId';
@@ -3357,7 +3355,7 @@ class SyncService extends ChangeNotifier {
                   continue;
                 }
               } catch (e) {
-                print(
+                debugPrint(
                     'Attempt $attempt: JSON parse error for clocking_id $clockingId: $e');
                 syncMessage =
                     'Invalid response format for record $clockingId: $e';
@@ -3369,7 +3367,7 @@ class SyncService extends ChangeNotifier {
                 continue;
               }
             } else {
-              print(
+              debugPrint(
                   'Attempt $attempt: Failed for clocking_id $clockingId: Status ${response.statusCode}, Response: $responseString');
               syncMessage =
                   'Failed to sync record $clockingId. Status: ${response.statusCode}, Response: $responseString';
@@ -3381,7 +3379,7 @@ class SyncService extends ChangeNotifier {
               continue;
             }
           } catch (e) {
-            print('Attempt $attempt: Error for clocking_id $clockingId: $e');
+            debugPrint('Attempt $attempt: Error for clocking_id $clockingId: $e');
             syncMessage = 'Error syncing record $clockingId: $e';
             if (attempt == maxRetries) {
               syncMessage = 'Max retries reached for record $clockingId: $e';
@@ -3405,7 +3403,7 @@ class SyncService extends ChangeNotifier {
       }
     } catch (e) {
       syncMessage = 'Sync failed: $e';
-      print('Error syncing data: $e');
+      debugPrint('Error syncing data: $e');
     } finally {
       isSyncing = false;
       notifyListeners();
@@ -3417,18 +3415,18 @@ class SyncService extends ChangeNotifier {
       final response =
           await http.get(Uri.parse(AppConfig.syncInductionClockingUrl));
 
-      print("Response status: ${response.statusCode}");
-      print("Response body: ${response.body}");
+      debugPrint("Response status: ${response.statusCode}");
+      debugPrint("Response body: ${response.body}");
 
       if (response.statusCode == 200) {
         var decodedData = json.decode(response.body);
         if (decodedData is List) {
           List clockingData = decodedData;
-          print("Fetched ${clockingData.length} records");
+          debugPrint("Fetched ${clockingData.length} records");
 
           // DON'T clear the local table - preserve local clock-in states
           // await _dbHelper.clearTable('induction_clocking');
-          print(
+          debugPrint(
               "Syncing induction_clocking data without clearing local records");
 
           // Insert each record
@@ -3454,11 +3452,11 @@ class SyncService extends ChangeNotifier {
                 mappedClocking['LearnerID'] == null ||
                 mappedClocking['clock_date'] == null ||
                 mappedClocking['clock_in_time'] == null) {
-              print("Skipping invalid record: $mappedClocking");
+              debugPrint("Skipping invalid record: $mappedClocking");
               continue;
             }
 
-            print("Merging record: $mappedClocking");
+            debugPrint("Merging record: $mappedClocking");
             try {
               // Check if record exists locally
               final db = await _dbHelper.database;
@@ -3481,7 +3479,7 @@ class SyncService extends ChangeNotifier {
                     mappedClocking['clock_out_time'] != null) {
                   // Server has clock-out but we have local clock-in without clock-out
                   // This might be auto-generated - DON'T overwrite
-                  print(
+                  debugPrint(
                       "PRESERVING local clock-in state for ${mappedClocking['LearnerID']} - server has auto clock-out");
                   continue;
                 }
@@ -3496,29 +3494,29 @@ class SyncService extends ChangeNotifier {
                     mappedClocking['clock_date']
                   ],
                 );
-                print(
+                debugPrint(
                     "Updated existing record for ${mappedClocking['LearnerID']}");
               } else {
                 // Insert new record
                 await _dbHelper.insertData(
                     'induction_clocking', mappedClocking);
-                print("Inserted new record for ${mappedClocking['LearnerID']}");
+                debugPrint("Inserted new record for ${mappedClocking['LearnerID']}");
               }
             } catch (e) {
-              print("Error merging record $mappedClocking: $e");
+              debugPrint("Error merging record $mappedClocking: $e");
             }
           }
-          print("Synchronized ${clockingData.length} records");
+          debugPrint("Synchronized ${clockingData.length} records");
         } else {
-          print(
+          debugPrint(
               "Error: Expected List, got ${decodedData.runtimeType}: $decodedData");
         }
       } else {
-        print(
+        debugPrint(
             "Failed to sync. Status: ${response.statusCode}, Body: ${response.body}");
       }
     } catch (e) {
-      print("Error syncing induction_clocking: $e");
+      debugPrint("Error syncing induction_clocking: $e");
     }
   }
 }

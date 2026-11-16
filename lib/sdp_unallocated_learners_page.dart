@@ -254,7 +254,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
 
       return false;
     } catch (e) {
-      print('Error checking documents: $e');
+      debugPrint('Error checking documents: $e');
       return false;
     }
   }
@@ -278,7 +278,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
 
       return existingDocs;
     } catch (e) {
-      print('Error getting existing documents: $e');
+      debugPrint('Error getting existing documents: $e');
       return [];
     }
   }
@@ -288,7 +288,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
       final existingDocs = await getExistingDocuments(learnerId);
       return requiredDocuments.any((doc) => !existingDocs.contains(doc));
     } catch (e) {
-      print('Error checking if documents can be uploaded: $e');
+      debugPrint('Error checking if documents can be uploaded: $e');
       return false;
     }
   }
@@ -308,7 +308,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
       }
       return [];
     } catch (e) {
-      print('Error fetching server documents: $e');
+      debugPrint('Error fetching server documents: $e');
       return [];
     }
   }
@@ -371,7 +371,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
         if (jsonResponse['success'] == true) {
           await _dbHelper.updateLearnerDocumentSynced(
               document['document_id'], 1);
-          print(
+          debugPrint(
               'Document synced: ${document['documentName']} for learner ${document['learner_id']}');
         } else {
           throw Exception(jsonResponse['message'] ?? 'Failed to sync document');
@@ -380,7 +380,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
         throw Exception('Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error syncing document: $e');
+      debugPrint('Error syncing document: $e');
       rethrow;
     }
   }
@@ -396,7 +396,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
     try {
       // Sync documents
       final unsyncedDocs = await _dbHelper.fetchUnsyncedLearnerDocuments();
-      print('Found ${unsyncedDocs.length} unsynced documents');
+      debugPrint('Found ${unsyncedDocs.length} unsynced documents');
 
       for (var doc in unsyncedDocs) {
         await _syncDocument(doc);

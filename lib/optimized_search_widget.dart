@@ -121,7 +121,7 @@ class _OptimizedSearchWidgetState extends State<OptimizedSearchWidget> {
         }
       }
     } catch (e) {
-      print('Autocomplete error: $e');
+      debugPrint('Autocomplete error: $e');
       if (mounted) {
         setState(() {
           _suggestions.clear();
@@ -167,7 +167,7 @@ class _OptimizedSearchWidgetState extends State<OptimizedSearchWidget> {
         }
       }
     } catch (e) {
-      print('Search error: $e');
+      debugPrint('Search error: $e');
       _showErrorMessage('Search failed. Please try again.');
     } finally {
       if (mounted) {
@@ -363,7 +363,7 @@ class SearchExample extends StatelessWidget {
               showAutocomplete: true,
               hintText: 'Search learner by name or ID...',
               onLearnerSelected: (learner) {
-                print('Selected learner: $learner');
+                debugPrint('Selected learner: $learner');
                 // Handle learner selection
               },
             ),

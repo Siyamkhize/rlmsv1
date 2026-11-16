@@ -17,10 +17,10 @@ class ArplAssessorClockingPage extends StatefulWidget {
   final String facilitatorName;
 
   const ArplAssessorClockingPage({
-    Key? key,
+    super.key,
     required this.facilitatorId,
     required this.facilitatorName,
-  }) : super(key: key);
+  });
 
   @override
   _ArplAssessorClockingPageState createState() =>
@@ -75,7 +75,7 @@ class _ArplAssessorClockingPageState extends State<ArplAssessorClockingPage> {
         });
       }
     } catch (e) {
-      print('[ARPL_CLOCKING] Error loading clock status: $e');
+      debugPrint('[ARPL_CLOCKING] Error loading clock status: $e');
     } finally {
       setState(() {
         _isLoading = false;
@@ -100,7 +100,7 @@ class _ArplAssessorClockingPageState extends State<ArplAssessorClockingPage> {
         }
       }
     } catch (e) {
-      print('[ARPL_CLOCKING] Error loading classes: $e');
+      debugPrint('[ARPL_CLOCKING] Error loading classes: $e');
     }
   }
 
@@ -360,14 +360,14 @@ class _ArplAssessorClockingPageState extends State<ArplAssessorClockingPage> {
         whereArgs: [classID],
       );
 
-      print(
+      debugPrint(
           '[ARPL_CLOCKING] Found ${existingLearners.length} learners locally for class $classID');
 
       List<Map<String, dynamic>> learners = existingLearners;
 
       // If no learners found locally, try to sync from server
       if (learners.isEmpty) {
-        print(
+        debugPrint(
             '[ARPL_CLOCKING] No learners found locally - attempting to sync from server...');
 
         try {
@@ -398,7 +398,7 @@ class _ArplAssessorClockingPageState extends State<ArplAssessorClockingPage> {
                   'Unexpected response type: ${responseData.runtimeType}');
             }
 
-            print(
+            debugPrint(
                 '[ARPL_CLOCKING] Received ${serverLearners.length} learners from server');
 
             // Insert learners into local database
@@ -410,7 +410,7 @@ class _ArplAssessorClockingPageState extends State<ArplAssessorClockingPage> {
                   conflictAlgorithm: ConflictAlgorithm.replace,
                 );
               } catch (e) {
-                print('[ARPL_CLOCKING] Error inserting learner: $e');
+                debugPrint('[ARPL_CLOCKING] Error inserting learner: $e');
               }
             }
 
@@ -421,13 +421,13 @@ class _ArplAssessorClockingPageState extends State<ArplAssessorClockingPage> {
               whereArgs: [classID],
             );
 
-            print(
+            debugPrint(
                 '[ARPL_CLOCKING] After sync: ${learners.length} learners found for class $classID');
           } else {
             throw Exception('Server returned status ${response.statusCode}');
           }
         } catch (syncError) {
-          print(
+          debugPrint(
               '[ARPL_CLOCKING] Error syncing learners from server: $syncError');
 
           if (mounted) {
@@ -472,7 +472,7 @@ class _ArplAssessorClockingPageState extends State<ArplAssessorClockingPage> {
         ),
       );
     } catch (e) {
-      print('[ARPL_CLOCKING] Error fetching learners: $e');
+      debugPrint('[ARPL_CLOCKING] Error fetching learners: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(

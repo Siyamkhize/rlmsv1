@@ -51,7 +51,7 @@ class DatabaseHelper {
       );
 
       if (unsyncedRecords.isNotEmpty) {
-        print(
+        debugPrint(
             '[CLEANUP] Found ${unsyncedRecords.length} unsynced records - attempting to sync before cleanup');
 
         // Check if we have internet connectivity
@@ -59,11 +59,11 @@ class DatabaseHelper {
         try {
           hasInternet = await hasNetworkConnectivity();
         } catch (e) {
-          print('[CLEANUP] Error checking connectivity: $e');
+          debugPrint('[CLEANUP] Error checking connectivity: $e');
         }
 
         if (hasInternet) {
-          print(
+          debugPrint(
               '[CLEANUP] Internet available - syncing ${unsyncedRecords.length} unsynced records');
 
           // Attempt to sync each unsynced record
@@ -82,15 +82,15 @@ class DatabaseHelper {
                 syncedCount++;
               }
             } catch (e) {
-              print(
+              debugPrint(
                   '[CLEANUP] Failed to sync record ${record['clocking_id']}: $e');
             }
           }
 
-          print(
+          debugPrint(
               '[CLEANUP] Successfully synced $syncedCount/${unsyncedRecords.length} records');
         } else {
-          print(
+          debugPrint(
               '[CLEANUP] No internet - preserving ${unsyncedRecords.length} unsynced records');
           // Don't delete unsynced records when offline
         }
@@ -125,10 +125,10 @@ class DatabaseHelper {
       final totalDeleted = deletedSyncedLearner + deletedOld;
 
       if (totalDeleted > 0) {
-        print(
+        debugPrint(
             '[CLEANUP] Deleted $totalDeleted learner_clocking records: synced=$deletedSyncedLearner, old=$deletedOld');
       } else {
-        print(
+        debugPrint(
             '[CLEANUP] No old learner_clocking records to delete - database clean');
       }
 
@@ -136,17 +136,17 @@ class DatabaseHelper {
       final remainingCount =
           await db.rawQuery('SELECT COUNT(*) as count FROM learner_clocking');
       final remaining = remainingCount.first['count'];
-      print(
+      debugPrint(
           '[CLEANUP] Remaining learner_clocking records: $remaining (current day only)');
 
       // Log induction_clocking count (not cleaned up)
       final inductionCount =
           await db.rawQuery('SELECT COUNT(*) as count FROM induction_clocking');
       final inductionRemaining = inductionCount.first['count'];
-      print(
+      debugPrint(
           '[CLEANUP] induction_clocking records: $inductionRemaining (kept permanently, NOT deleted)');
     } catch (e) {
-      print('[CLEANUP] Error cleaning up old records: $e');
+      debugPrint('[CLEANUP] Error cleaning up old records: $e');
     }
   }
 
@@ -186,7 +186,7 @@ class DatabaseHelper {
 
       return success;
     } catch (e) {
-      print('[SYNC_SINGLE] Error syncing record: $e');
+      debugPrint('[SYNC_SINGLE] Error syncing record: $e');
       return false;
     }
   }
@@ -213,7 +213,7 @@ class DatabaseHelper {
         ),
         endpoint: 'learner_clockin_sync',
         maxRetries: NetworkConfig.syncOperationsMaxRetries,
-        timeout: Duration(seconds: NetworkConfig.profileSyncTimeout),
+        timeout: const Duration(seconds: NetworkConfig.profileSyncTimeout),
       );
 
       if (response.statusCode == 200) {
@@ -222,7 +222,7 @@ class DatabaseHelper {
       }
       return false;
     } catch (e) {
-      print('[SYNC_CLOCK_IN] Error: $e');
+      debugPrint('[SYNC_CLOCK_IN] Error: $e');
       return false;
     }
   }
@@ -251,7 +251,7 @@ class DatabaseHelper {
         ),
         endpoint: 'learner_clockout_sync',
         maxRetries: NetworkConfig.syncOperationsMaxRetries,
-        timeout: Duration(seconds: NetworkConfig.profileSyncTimeout),
+        timeout: const Duration(seconds: NetworkConfig.profileSyncTimeout),
       );
 
       if (response.statusCode == 200) {
@@ -260,7 +260,7 @@ class DatabaseHelper {
       }
       return false;
     } catch (e) {
-      print('[SYNC_CLOCK_OUT] Error: $e');
+      debugPrint('[SYNC_CLOCK_OUT] Error: $e');
       return false;
     }
   }
@@ -271,9 +271,9 @@ class DatabaseHelper {
       final db = await database;
       await db
           .delete('learnerdetails', where: 'classID = ?', whereArgs: [classID]);
-      print('Cleared all learners for class ID: $classID');
+      debugPrint('Cleared all learners for class ID: $classID');
     } catch (e) {
-      print('Error clearing learners for class $classID: $e');
+      debugPrint('Error clearing learners for class $classID: $e');
       throw Exception('Failed to clear learners: $e');
     }
   }
@@ -284,7 +284,7 @@ class DatabaseHelper {
       final db = await database;
       final today = DateTime.now().toIso8601String().split('T')[0];
 
-      print('[CLEANUP_DUPLICATES] Starting duplicate cleanup for date: $today');
+      debugPrint('[CLEANUP_DUPLICATES] Starting duplicate cleanup for date: $today');
 
       // Find all duplicate records (same learner, same date)
       final duplicates = await db.rawQuery('''
@@ -296,18 +296,18 @@ class DatabaseHelper {
       ''', [today]);
 
       if (duplicates.isEmpty) {
-        print('[CLEANUP_DUPLICATES] No duplicate records found');
+        debugPrint('[CLEANUP_DUPLICATES] No duplicate records found');
         return;
       }
 
-      print(
+      debugPrint(
           '[CLEANUP_DUPLICATES] Found ${duplicates.length} learners with duplicates');
 
       for (var duplicate in duplicates) {
         final learnerId = duplicate['LearnerID'];
         final date = duplicate['clock_date'];
 
-        print(
+        debugPrint(
             '[CLEANUP_DUPLICATES] Cleaning up duplicates for LearnerID: $learnerId, date: $date');
 
         // Get all records for this learner on this date, ordered by clocking_id (newest first)
@@ -323,7 +323,7 @@ class DatabaseHelper {
           final recordToKeep = records.first;
           final recordsToDelete = records.skip(1);
 
-          print(
+          debugPrint(
               '[CLEANUP_DUPLICATES] Keeping record ID: ${recordToKeep['clocking_id']}, deleting ${recordsToDelete.length} duplicates');
 
           for (var recordToDelete in recordsToDelete) {
@@ -332,15 +332,15 @@ class DatabaseHelper {
               where: 'clocking_id = ?',
               whereArgs: [recordToDelete['clocking_id']],
             );
-            print(
+            debugPrint(
                 '[CLEANUP_DUPLICATES] Deleted duplicate record ID: ${recordToDelete['clocking_id']}');
           }
         }
       }
 
-      print('[CLEANUP_DUPLICATES] Duplicate cleanup completed');
+      debugPrint('[CLEANUP_DUPLICATES] Duplicate cleanup completed');
     } catch (e) {
-      print('[CLEANUP_DUPLICATES] Error cleaning up duplicates: $e');
+      debugPrint('[CLEANUP_DUPLICATES] Error cleaning up duplicates: $e');
     }
   }
 
@@ -637,7 +637,7 @@ class DatabaseHelper {
 
     // Server fetch disabled - data is already synced via main sync endpoint
     // This prevents FormatException errors from broken get_clocking_data.php endpoint
-    print(
+    debugPrint(
         '[DB_HELPER] No local record found for LearnerID: $learnerID, date: $date');
 
     return null;
@@ -2646,7 +2646,7 @@ updated_at TIMESTAMP
               'Name': 'TestLearner$learnerNum',
               'Surname': 'Class$classID',
               'IDNumber':
-                  '${(1990000000000 + learnerId).toString().padLeft(13, '0')}',
+                  (1990000000000 + learnerId).toString().padLeft(13, '0'),
               'DateOfBirth':
                   '199${(i % 10).toString()}-${((i % 12) + 1).toString().padLeft(2, '0')}-15',
               'PhoneNumber':
@@ -2720,7 +2720,7 @@ updated_at TIMESTAMP
       whereArgs: [email, password], // The email and password to search for
     );
     // Debug: Print the query result
-    print("Query result: $result");
+    debugPrint("Query result: $result");
     // If result is found, return the first record
     if (result.isNotEmpty) {
       return result.first; // Returns the first matching user
@@ -2751,12 +2751,12 @@ updated_at TIMESTAMP
           'classID': data['classID'],
         });
 
-        print('Facilitator data synced successfully.');
+        debugPrint('Facilitator data synced successfully.');
       } else {
-        print('Failed to fetch facilitator data: ${response.statusCode}');
+        debugPrint('Failed to fetch facilitator data: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error syncing facilitator data: $e');
+      debugPrint('Error syncing facilitator data: $e');
     }
   }
 
@@ -2806,7 +2806,7 @@ updated_at TIMESTAMP
   Future<void> checkFacilitatorData() async {
     final db = await database;
     final result = await db.query('facilitator');
-    print("Facilitator table data: $result");
+    debugPrint("Facilitator table data: $result");
   }
 
   // Insert unsynced data into the tracking table
@@ -2833,15 +2833,15 @@ updated_at TIMESTAMP
           _updateConnectionStatus(
               resultList); // Pass the entire list to the update method
         } catch (e) {
-          print('Error in connectivity listener: $e');
+          debugPrint('Error in connectivity listener: $e');
           // Don't let connectivity errors crash the app
         }
       }, onError: (error) {
-        print('Connectivity listener error: $error');
+        debugPrint('Connectivity listener error: $error');
         // Don't let connectivity errors crash the app
       });
     } catch (e) {
-      print('Error initializing connectivity listener: $e');
+      debugPrint('Error initializing connectivity listener: $e');
       // Don't let connectivity errors crash the app
     }
   }
@@ -2853,21 +2853,21 @@ updated_at TIMESTAMP
           results.isNotEmpty ? results.first : ConnectivityResult.none;
 
       if (result != ConnectivityResult.none) {
-        print('Internet available - syncing offline data...');
+        debugPrint('Internet available - syncing offline data...');
         // Sync unsynced learners (profile, images, etc.) when back online
         syncUnsyncedLearnersWhenOnline().catchError((error) {
-          print('Error syncing learner data: $error');
+          debugPrint('Error syncing learner data: $error');
         });
         // Don't block the UI with sync operations
         syncUnsyncedData().catchError((error) {
-          print('Error syncing data: $error');
+          debugPrint('Error syncing data: $error');
           // Don't let sync errors crash the app
         });
       } else {
-        print('No internet connection.');
+        debugPrint('No internet connection.');
       }
     } catch (e) {
-      print('Error updating connection status: $e');
+      debugPrint('Error updating connection status: $e');
       // Don't let connectivity errors crash the app
     }
   }
@@ -2884,7 +2884,7 @@ updated_at TIMESTAMP
     );
     if (unsyncedLearners.isEmpty) return;
 
-    print(
+    debugPrint(
         '[SYNC] Found ${unsyncedLearners.length} unsynced learners - syncing to server');
     List<Map<String, dynamic>> allDataToSync = [];
     for (var learner in unsyncedLearners) {
@@ -2902,7 +2902,7 @@ updated_at TIMESTAMP
           'bank': bankDetails.isNotEmpty ? Map.from(bankDetails.first) : null,
         });
       } catch (e) {
-        print('Error preparing learner ${learner['IDNumber']}: $e');
+        debugPrint('Error preparing learner ${learner['IDNumber']}: $e');
       }
     }
     final responseData = await _sendAllDataToBackend(allDataToSync);
@@ -2913,10 +2913,10 @@ updated_at TIMESTAMP
           await updateSyncedStatus(
               syncedLearner['IDNumber'], syncedLearner['LearnerID']);
         } catch (e) {
-          print('Error updating sync status: $e');
+          debugPrint('Error updating sync status: $e');
         }
       }
-      print('[SYNC] Successfully synced ${syncedLearners.length} learners');
+      debugPrint('[SYNC] Successfully synced ${syncedLearners.length} learners');
     }
   }
 
@@ -2943,12 +2943,12 @@ updated_at TIMESTAMP
             where: 'id = ?',
             whereArgs: [data['id']],
           );
-          print('Data synced successfully');
+          debugPrint('Data synced successfully');
         } else {
-          print('Failed to sync data: ${response.statusCode}');
+          debugPrint('Failed to sync data: ${response.statusCode}');
         }
       } catch (e) {
-        print('Error syncing data: $e');
+        debugPrint('Error syncing data: $e');
       }
     }
   }
@@ -2970,18 +2970,18 @@ updated_at TIMESTAMP
 
           // Map fingerprint template based on scanner type and hand
           if (fingerprintTemplate.isNotEmpty) {
-            print(
+            debugPrint(
                 '[MAPPING] Processing fingerprint_template: ${fingerprintTemplate.length} chars, isLeftHand: $isLeftHand');
 
             if (isLeftHand == '1' || isLeftHand.toLowerCase() == 'true') {
               // isLeftHand=true means LEFT hand template
               mappedData['futronic_left_template'] = fingerprintTemplate;
-              print(
+              debugPrint(
                   '[MAPPING] ✅ Mapped fingerprint_template to futronic_left_template (isLeftHand=true)');
             } else {
               // isLeftHand=false/0 means RIGHT hand template
               mappedData['futronic_right_template'] = fingerprintTemplate;
-              print(
+              debugPrint(
                   '[MAPPING] ✅ Mapped fingerprint_template to futronic_right_template (isLeftHand=false)');
             }
           }
@@ -2990,20 +2990,20 @@ updated_at TIMESTAMP
 
         if (mappedData.containsKey('isLeftHand')) {
           mappedData.remove('isLeftHand');
-          print('Removed old isLeftHand field');
+          debugPrint('Removed old isLeftHand field');
         }
       }
 
       // For facilitator table, log what we're about to insert
       if (tableName == 'facilitator') {
-        print('[DB_INSERT] Facilitator data being inserted:');
-        print('[DB_INSERT]   ID: ${mappedData['facilitator_id']}');
-        print(
+        debugPrint('[DB_INSERT] Facilitator data being inserted:');
+        debugPrint('[DB_INSERT]   ID: ${mappedData['facilitator_id']}');
+        debugPrint(
             '[DB_INSERT]   Name: ${mappedData['firstName']} ${mappedData['lastName']}');
-        print('[DB_INSERT]   Email: ${mappedData['email']}');
-        print('[DB_INSERT]   Role: ${mappedData['role']}');
-        print('[DB_INSERT]   ClassID: ${mappedData['classID']}');
-        print('[DB_INSERT]   All keys: ${mappedData.keys.toList()}');
+        debugPrint('[DB_INSERT]   Email: ${mappedData['email']}');
+        debugPrint('[DB_INSERT]   Role: ${mappedData['role']}');
+        debugPrint('[DB_INSERT]   ClassID: ${mappedData['classID']}');
+        debugPrint('[DB_INSERT]   All keys: ${mappedData.keys.toList()}');
       }
 
       // learnerdetails has strict NOT NULL columns in local schema.
@@ -3036,11 +3036,11 @@ updated_at TIMESTAMP
       // Insert data as-is (with mappings only for learnerdetails)
       await db.insert(tableName, mappedData,
           conflictAlgorithm: ConflictAlgorithm.replace);
-      print('Successfully inserted data into $tableName');
+      debugPrint('Successfully inserted data into $tableName');
     } catch (e) {
-      print('Error inserting data into $tableName: $e');
-      print('Data keys: ${data.keys.toList()}');
-      print('Data values: ${data.values.toList()}');
+      debugPrint('Error inserting data into $tableName: $e');
+      debugPrint('Data keys: ${data.keys.toList()}');
+      debugPrint('Data values: ${data.values.toList()}');
       rethrow;
     }
   }
@@ -3096,11 +3096,11 @@ updated_at TIMESTAMP
 
       await db.insert('learnerdetails', completeLearnerData,
           conflictAlgorithm: ConflictAlgorithm.replace);
-      print(
+      debugPrint(
           'Successfully inserted learner details with all fields: ${completeLearnerData.keys.toList()}');
     } catch (e) {
-      print('Error inserting learner details: $e');
-      print('Learner data keys: ${learnerData.keys.toList()}');
+      debugPrint('Error inserting learner details: $e');
+      debugPrint('Learner data keys: ${learnerData.keys.toList()}');
       rethrow;
     }
   }
@@ -3114,7 +3114,7 @@ updated_at TIMESTAMP
   Future<void> clearTable(String tableName) async {
     final db = await database;
     await db.delete(tableName); // Deletes all records from the table
-    print('Table $tableName cleared successfully');
+    debugPrint('Table $tableName cleared successfully');
   }
 
   // Future<Map<String, dynamic>?> getFacilitator(String email,
@@ -3129,7 +3129,7 @@ updated_at TIMESTAMP
   //   );
   //
   //   // Print the result to the console for debugging
-  //   print("Facilitator Query Result: $result");
+  //   debugPrint("Facilitator Query Result: $result");
   //
   //   if (result.isNotEmpty) {
   //     // Return the first match (assuming you expect one or more matches)
@@ -3420,7 +3420,7 @@ updated_at TIMESTAMP
       }
       return 0;
     } catch (e) {
-      print(
+      debugPrint(
           '[DATABASE] Error getting approved manual attendance for learner $learnerId: $e');
       return 0;
     }
@@ -3452,7 +3452,7 @@ updated_at TIMESTAMP
             'LearnerID = ? AND clock_date = ? AND clock_out_time IS NULL AND clocking_id != ?',
         whereArgs: [learnerID, clockDate, keepId],
       );
-      print(
+      debugPrint(
           '[CLOCKING_CLEANUP] Removed $deleted duplicate open learner_clocking rows for learner=$learnerID, date=$clockDate, kept clocking_id=$keepId');
     }
 
@@ -3491,7 +3491,7 @@ updated_at TIMESTAMP
     if (existingClockIn.isEmpty) {
       // If no existing record, insert a new clock-in record
       await db.insert('learner_clocking', clockInData);
-      print('Learner Clock In Data Inserted: $clockInData');
+      debugPrint('Learner Clock In Data Inserted: $clockInData');
       return;
     }
 
@@ -3508,7 +3508,7 @@ updated_at TIMESTAMP
         where: 'LearnerID = ? AND clock_date = ? AND clocking_id != ?',
         whereArgs: [learnerID, clockDate, keepId],
       );
-      print(
+      debugPrint(
           '[CLOCKING_CLEANUP] Removed $deleted duplicate learner_clocking rows for learner=$learnerID, date=$clockDate, kept clocking_id=$keepId');
     }
 
@@ -3519,7 +3519,7 @@ updated_at TIMESTAMP
       where: 'LearnerID = ? AND clock_date = ?',
       whereArgs: [learnerID, clockDate],
     );
-    print('Learner Clock In Data Updated: $clockInData');
+    debugPrint('Learner Clock In Data Updated: $clockInData');
   }
 
   /// Insert manual clock-in (signature + geofence) offline
@@ -3533,7 +3533,7 @@ updated_at TIMESTAMP
     final clockDate = clockInData['clock_date'];
     final learnerID = clockInData['LearnerID'];
 
-    print('[MANUAL_CLOCKING] Saving offline clock-in for learner $learnerID on $clockDate');
+    debugPrint('[MANUAL_CLOCKING] Saving offline clock-in for learner $learnerID on $clockDate');
 
     // Check if record already exists
     final existing = await db.query(
@@ -3552,7 +3552,7 @@ updated_at TIMESTAMP
         'is_manual_attendance': 1,
         'synced': 0,
       });
-      print('[MANUAL_CLOCKING] ✅ Inserted offline clock-in for learner $learnerID');
+      debugPrint('[MANUAL_CLOCKING] ✅ Inserted offline clock-in for learner $learnerID');
     } else {
       await db.update(
         'manual_clocking',
@@ -3564,7 +3564,7 @@ updated_at TIMESTAMP
         where: 'LearnerID = ? AND clock_date = ?',
         whereArgs: [learnerID, clockDate],
       );
-      print('[MANUAL_CLOCKING] ✅ Updated offline clock-in for learner $learnerID');
+      debugPrint('[MANUAL_CLOCKING] ✅ Updated offline clock-in for learner $learnerID');
     }
 
     // 2. Insert/Update manual_clocking_evidence table (STORE BASE64 IMAGES)
@@ -3591,7 +3591,7 @@ updated_at TIMESTAMP
 
       if (evidenceExists.isEmpty) {
         await db.insert('manual_clocking_evidence', evidenceData);
-        print('[MANUAL_CLOCKING] ✅ Inserted evidence (base64 images) for learner $learnerID');
+        debugPrint('[MANUAL_CLOCKING] ✅ Inserted evidence (base64 images) for learner $learnerID');
       } else {
         await db.update(
           'manual_clocking_evidence',
@@ -3599,17 +3599,17 @@ updated_at TIMESTAMP
           where: 'LearnerID = ? AND clock_date = ?',
           whereArgs: [learnerID, clockDate],
         );
-        print('[MANUAL_CLOCKING] ✅ Updated evidence (base64 images) for learner $learnerID');
+        debugPrint('[MANUAL_CLOCKING] ✅ Updated evidence (base64 images) for learner $learnerID');
       }
       
       // DEBUG: Log image sizes
       if (clockInData.containsKey('signature_in')) {
         final sigSize = (clockInData['signature_in'] as String).length;
-        print('[MANUAL_CLOCKING] Signature image size: ${(sigSize / 1024).toStringAsFixed(1)} KB');
+        debugPrint('[MANUAL_CLOCKING] Signature image size: ${(sigSize / 1024).toStringAsFixed(1)} KB');
       }
       if (clockInData.containsKey('face_in')) {
         final faceSize = (clockInData['face_in'] as String).length;
-        print('[MANUAL_CLOCKING] Face image size: ${(faceSize / 1024).toStringAsFixed(1)} KB');
+        debugPrint('[MANUAL_CLOCKING] Face image size: ${(faceSize / 1024).toStringAsFixed(1)} KB');
       }
     }
   }
@@ -3624,7 +3624,7 @@ updated_at TIMESTAMP
     final clockDate = clockOutData['clock_date'];
     final learnerID = clockOutData['LearnerID'];
 
-    print('[MANUAL_CLOCKING] Saving offline clock-out for learner $learnerID on $clockDate');
+    debugPrint('[MANUAL_CLOCKING] Saving offline clock-out for learner $learnerID on $clockDate');
 
     // 1. Update manual_clocking table
     await db.update(
@@ -3637,7 +3637,7 @@ updated_at TIMESTAMP
       where: 'LearnerID = ? AND clock_date = ?',
       whereArgs: [learnerID, clockDate],
     );
-    print('[MANUAL_CLOCKING] ✅ Updated offline clock-out for learner $learnerID');
+    debugPrint('[MANUAL_CLOCKING] ✅ Updated offline clock-out for learner $learnerID');
 
     // 2. Update manual_clocking_evidence table (STORE BASE64 IMAGES)
     if (clockOutData.containsKey('signature_out') || clockOutData.containsKey('face_out')) {
@@ -3656,16 +3656,16 @@ updated_at TIMESTAMP
         where: 'LearnerID = ? AND clock_date = ?',
         whereArgs: [learnerID, clockDate],
       );
-      print('[MANUAL_CLOCKING] ✅ Updated offline clock-out evidence (base64 images) for learner $learnerID');
+      debugPrint('[MANUAL_CLOCKING] ✅ Updated offline clock-out evidence (base64 images) for learner $learnerID');
       
       // DEBUG: Log image sizes
       if (clockOutData.containsKey('signature_out')) {
         final sigSize = (clockOutData['signature_out'] as String).length;
-        print('[MANUAL_CLOCKING] Signature image size: ${(sigSize / 1024).toStringAsFixed(1)} KB');
+        debugPrint('[MANUAL_CLOCKING] Signature image size: ${(sigSize / 1024).toStringAsFixed(1)} KB');
       }
       if (clockOutData.containsKey('face_out')) {
         final faceSize = (clockOutData['face_out'] as String).length;
-        print('[MANUAL_CLOCKING] Face image size: ${(faceSize / 1024).toStringAsFixed(1)} KB');
+        debugPrint('[MANUAL_CLOCKING] Face image size: ${(faceSize / 1024).toStringAsFixed(1)} KB');
       }
     }
   }
@@ -3697,7 +3697,7 @@ updated_at TIMESTAMP
         'synced': 0,
       };
 
-      print('Learner Clock Out Data Updated: $updatedData');
+      debugPrint('Learner Clock Out Data Updated: $updatedData');
       // Update the clock-out time and contact time in the same record
       await db.update(
         'learner_clocking',
@@ -3707,10 +3707,10 @@ updated_at TIMESTAMP
       );
 
       // Display updated clock-out data in the console
-      print('Learner Clock Out Data Updated: $clockOutData');
+      debugPrint('Learner Clock Out Data Updated: $clockOutData');
     } else {
       // If no clock-in data exists, log and handle this scenario
-      print('No matching clock-in data found for this learner on this date.');
+      debugPrint('No matching clock-in data found for this learner on this date.');
     }
   }
 
@@ -3780,14 +3780,14 @@ updated_at TIMESTAMP
       whereArgs: [trimmedEmail],
     );
 
-    print("sdp Query Result: $result");
+    debugPrint("sdp Query Result: $result");
 
     if (result.isNotEmpty) {
       final user = result.first;
       final storedPassword = user['password'] as String?;
       
       if (storedPassword == null || storedPassword.isEmpty) {
-        print("No password set for SDP user");
+        debugPrint("No password set for SDP user");
         return null;
       }
 
@@ -3802,17 +3802,17 @@ updated_at TIMESTAMP
       } else {
         // Direct comparison for plain text passwords (not recommended, but handle it)
         passwordMatches = password == storedPassword;
-        print("⚠️ WARNING: Password is stored in plain text for SDP user $trimmedEmail");
+        debugPrint("⚠️ WARNING: Password is stored in plain text for SDP user $trimmedEmail");
       }
       
       if (passwordMatches) {
         return user;
       } else {
-        print("Password verification failed for SDP user");
+        debugPrint("Password verification failed for SDP user");
         return null;
       }
     } else {
-      print("No SDP user found with email: $trimmedEmail");
+      debugPrint("No SDP user found with email: $trimmedEmail");
       return null;
     }
   }
@@ -3831,14 +3831,14 @@ updated_at TIMESTAMP
       whereArgs: [trimmedEmail],
     );
 
-    print("Facilitator Query Result: $result");
+    debugPrint("Facilitator Query Result: $result");
 
     if (result.isNotEmpty) {
       final facilitator = result.first;
       final storedPassword = facilitator['password'] as String?;
       
       if (storedPassword == null || storedPassword.isEmpty) {
-        print("No password set for facilitator user");
+        debugPrint("No password set for facilitator user");
         return null;
       }
 
@@ -3853,17 +3853,17 @@ updated_at TIMESTAMP
       } else {
         // Direct comparison for plain text passwords (not recommended, but handle it)
         passwordMatches = password == storedPassword;
-        print("⚠ WARNING: Password is stored in plain text for facilitator $trimmedEmail");
+        debugPrint("⚠ WARNING: Password is stored in plain text for facilitator $trimmedEmail");
       }
       
       if (passwordMatches) {
         return facilitator;
       } else {
-        print("Password verification failed for facilitator");
+        debugPrint("Password verification failed for facilitator");
         return null;
       }
     } else {
-      print("No facilitator found with email: $trimmedEmail");
+      debugPrint("No facilitator found with email: $trimmedEmail");
       return null;
     }
   }
@@ -3881,7 +3881,7 @@ updated_at TIMESTAMP
       whereArgs: [email],
     );
 
-    print("$tableName Query Result: $result");
+    debugPrint("$tableName Query Result: $result");
 
     if (result.isNotEmpty) {
       final user = result.first;
@@ -3891,11 +3891,11 @@ updated_at TIMESTAMP
       if (BCrypt.checkpw(password, hashedPassword)) {
         return user;
       } else {
-        print("Password verification failed for $tableName user");
+        debugPrint("Password verification failed for $tableName user");
         return null;
       }
     } else {
-      print("No $tableName user found with email: $email");
+      debugPrint("No $tableName user found with email: $email");
       return null;
     }
   }
@@ -3947,7 +3947,7 @@ updated_at TIMESTAMP
       
       // Calculate expiry (7 days from now)
       final now = DateTime.now();
-      final expiresAt = now.add(Duration(days: AppConfig.OFFLINE_SESSION_EXPIRY_DAYS));
+      final expiresAt = now.add(const Duration(days: AppConfig.OFFLINE_SESSION_EXPIRY_DAYS));
       
       // Insert or replace the session
       await db.insert(
@@ -3963,11 +3963,11 @@ updated_at TIMESTAMP
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
       
-      print('[OFFLINE_TOKEN_SECURITY] Token created for $email on device $deviceId, expires ${expiresAt.toIso8601String()}');
+      debugPrint('[OFFLINE_TOKEN_SECURITY] Token created for $email on device $deviceId, expires ${expiresAt.toIso8601String()}');
       debugPrint('[OFFLINE_TOKEN] ✅ Created offline session for $email (expires: ${expiresAt.toIso8601String()})');
       return token;
     } catch (e) {
-      print('[OFFLINE_TOKEN_SECURITY] Token creation FAILED: $e');
+      debugPrint('[OFFLINE_TOKEN_SECURITY] Token creation FAILED: $e');
       debugPrint('[OFFLINE_TOKEN] ❌ Error creating offline token: $e');
       return null;
     }
@@ -3988,7 +3988,7 @@ updated_at TIMESTAMP
       );
       
       if (result.isEmpty) {
-        print('[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token not found for $email');
+        debugPrint('[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token not found for $email');
         debugPrint('[OFFLINE_TOKEN] ❌ No session found for $email');
         return false;
       }
@@ -4003,7 +4003,7 @@ updated_at TIMESTAMP
       final storedDeviceId = session['device_id'] as String?;
       final currentDeviceId = await _getDeviceId();
       if (storedDeviceId != null && storedDeviceId != currentDeviceId && storedDeviceId != 'unknown_device') {
-        print('[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: device_id mismatch for $email (stored: $storedDeviceId, current: $currentDeviceId)');
+        debugPrint('[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: device_id mismatch for $email (stored: $storedDeviceId, current: $currentDeviceId)');
         await db.delete('offline_sessions', where: 'user_email = ?', whereArgs: [email]);
         return false;
       }
@@ -4011,14 +4011,14 @@ updated_at TIMESTAMP
       // Check if token matches
       final providedHash = _hashToken(token);
       if (providedHash != storedHash) {
-        print('[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token hash mismatch for $email');
+        debugPrint('[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token hash mismatch for $email');
         await db.delete('offline_sessions', where: 'user_email = ?', whereArgs: [email]);
         return false;
       }
       
       // Check if expired
       if (now.isAfter(expiresAt)) {
-        print('[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token expired for $email at $expiresAtStr');
+        debugPrint('[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token expired for $email at $expiresAtStr');
         await db.delete('offline_sessions', where: 'user_email = ?', whereArgs: [email]);
         return false;
       }
@@ -4030,7 +4030,7 @@ updated_at TIMESTAMP
       };
       
       if (AppConfig.OFFLINE_TOKEN_REFRESH_ENABLED && hoursUntilExpiry < 24) {
-        final newExpiresAt = now.add(Duration(days: AppConfig.OFFLINE_SESSION_EXPIRY_DAYS));
+        final newExpiresAt = now.add(const Duration(days: AppConfig.OFFLINE_SESSION_EXPIRY_DAYS));
         updateData['expires_at'] = newExpiresAt.toIso8601String();
         debugPrint('[OFFLINE_TOKEN] 🔄 Token refreshed for $email (new expiry: ${newExpiresAt.toIso8601String()})');
       }
@@ -4043,7 +4043,7 @@ updated_at TIMESTAMP
         whereArgs: [email],
       );
       
-      print('[OFFLINE_TOKEN_SECURITY] Token validated for $email');
+      debugPrint('[OFFLINE_TOKEN_SECURITY] Token validated for $email');
       debugPrint('[OFFLINE_TOKEN] ✅ Token validated for $email');
       return true;
     } catch (e) {
@@ -4098,7 +4098,7 @@ updated_at TIMESTAMP
         where: 'user_email = ?',
         whereArgs: [email],
       );
-      print('[OFFLINE_TOKEN_SECURITY] Session cleared for $email');
+      debugPrint('[OFFLINE_TOKEN_SECURITY] Session cleared for $email');
       debugPrint('[OFFLINE_TOKEN] ✅ Cleared session for $email');
     } catch (e) {
       debugPrint('[OFFLINE_TOKEN] ❌ Error clearing session: $e');
@@ -4150,7 +4150,7 @@ updated_at TIMESTAMP
   //   );
   //
   //   // Print the result to the console for debugging
-  //   print("sdp Query Result: $result");
+  //   debugPrint("sdp Query Result: $result");
   //
   //   if (result.isNotEmpty) {
   //     // Return the first match (assuming you expect one or more matches)
@@ -4179,7 +4179,7 @@ updated_at TIMESTAMP
       bankData,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
-    print(
+    debugPrint(
         '[DB_HELPER] Upserted bank details for learner: ${bankData['LearnerID']}');
   }
 
@@ -4447,9 +4447,9 @@ updated_at TIMESTAMP
         whereArgs: [learnerID],
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
-      print('$fieldName saved locally for learner ID: $learnerID');
+      debugPrint('$fieldName saved locally for learner ID: $learnerID');
     } catch (e) {
-      print('Error saving $fieldName locally: $e');
+      debugPrint('Error saving $fieldName locally: $e');
     }
   }
 
@@ -4464,9 +4464,9 @@ updated_at TIMESTAMP
         whereArgs: [learnerID],
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
-      print('$fieldName saved locally for learner ID: $learnerID');
+      debugPrint('$fieldName saved locally for learner ID: $learnerID');
     } catch (e) {
-      print('Error saving $fieldName locally: $e');
+      debugPrint('Error saving $fieldName locally: $e');
     }
   }
 
@@ -4480,9 +4480,9 @@ updated_at TIMESTAMP
         whereArgs: [learnerID],
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
-      print('Image path saved locally for learner ID: $learnerID');
+      debugPrint('Image path saved locally for learner ID: $learnerID');
     } catch (e) {
-      print('Error saving image locally: $e');
+      debugPrint('Error saving image locally: $e');
     }
   }
 
@@ -4506,9 +4506,9 @@ updated_at TIMESTAMP
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
-      print('Document saved to database: $documentName');
+      debugPrint('Document saved to database: $documentName');
     } catch (e) {
-      print('Error saving document to database: $e');
+      debugPrint('Error saving document to database: $e');
     }
   }
 
@@ -4525,7 +4525,7 @@ updated_at TIMESTAMP
       whereArgs: [learnerID],
     );
 
-    print('Updated learner $learnerID profile_image with path: $imagePath');
+    debugPrint('Updated learner $learnerID profile_image with path: $imagePath');
   }
 
   /// Function to update the image path in the database
@@ -4540,7 +4540,7 @@ updated_at TIMESTAMP
       whereArgs: [learnerID],
     );
 
-    print('Image path updated in database for learnerID: $learnerID');
+    debugPrint('Image path updated in database for learnerID: $learnerID');
   }
 
   //get data for class
@@ -4557,7 +4557,7 @@ updated_at TIMESTAMP
         whereArgs: [classID],
       );
 
-      print('Class Data: $classData'); // Debugging
+      debugPrint('Class Data: $classData'); // Debugging
 
       if (classData.isEmpty) {
         throw Exception('Class not found');
@@ -4579,7 +4579,7 @@ updated_at TIMESTAMP
         whereArgs: [siteID],
       );
 
-      print('Site Data: $siteData'); // Debugging
+      debugPrint('Site Data: $siteData'); // Debugging
 
       if (siteData.isEmpty) {
         throw Exception('Site not found');
@@ -4596,7 +4596,7 @@ updated_at TIMESTAMP
         whereArgs: [classID],
       );
 
-      print('Facilitator Data: $facilitatorData'); // Debugging
+      debugPrint('Facilitator Data: $facilitatorData'); // Debugging
 
       if (facilitatorData.isEmpty) {
         throw Exception('Facilitator not found');
@@ -4613,7 +4613,7 @@ updated_at TIMESTAMP
       // 5. Get total attendance for the class
       final int attendanceData = await _getAttendance(
           classID, DateFormat('yyyy-MM-dd').format(DateTime.now()));
-      print('total atendance to day is : $attendanceData');
+      debugPrint('total atendance to day is : $attendanceData');
 
       // 6. Return the combined data in a Map
       return {
@@ -4628,7 +4628,7 @@ updated_at TIMESTAMP
         'site Name': siteName,
       };
     } catch (e) {
-      print('Error fetching class data: $e'); // Debugging error
+      debugPrint('Error fetching class data: $e'); // Debugging error
       throw Exception('Failed to load class data: $e');
     }
   }
@@ -4656,7 +4656,7 @@ updated_at TIMESTAMP
       );
 
       if (learnerIDsData.isEmpty) {
-        print('No learners found for classID: $classID');
+        debugPrint('No learners found for classID: $classID');
         return 0; // No learners linked to the class
       }
 
@@ -4667,11 +4667,11 @@ updated_at TIMESTAMP
           .toList();
 
       if (learnerIDs.isEmpty) {
-        print('No valid learner IDs found for classID: $classID');
+        debugPrint('No valid learner IDs found for classID: $classID');
         return 0;
       }
 
-      print('Learner IDs for classID $classID: $learnerIDs'); // Debugging
+      debugPrint('Learner IDs for classID $classID: $learnerIDs'); // Debugging
 
       // Count attendance for learners with clock_in_time on the given day
       // Changed from contact_time to clock_in_time to properly count clocked-in learners
@@ -4686,11 +4686,11 @@ updated_at TIMESTAMP
         [...learnerIDs, clockDate], // Add clockDate to the parameters
       );
 
-      print(
+      debugPrint(
           '[ATTENDANCE] Counting attendance for classID $classID on date $clockDate: ${attendanceData.first['count']} learners');
 
       if (attendanceData.isEmpty || attendanceData.first['count'] == null) {
-        print(
+        debugPrint(
             'No attendance records found for classID: $classID on date: $clockDate');
         return 0;
       }
@@ -4699,11 +4699,11 @@ updated_at TIMESTAMP
       final attendanceCount =
           int.tryParse(attendanceData.first['count'].toString()) ?? 0;
 
-      print(
+      debugPrint(
           'Total attendance for classID $classID on date $clockDate: $attendanceCount');
       return attendanceCount;
     } catch (e) {
-      print('Error fetching attendance data: $e');
+      debugPrint('Error fetching attendance data: $e');
       return 0; // Return 0 on error
     }
   }
@@ -4813,9 +4813,9 @@ updated_at TIMESTAMP
         poeData,
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
-      print("Data inserted successfully: $poeData");
+      debugPrint("Data inserted successfully: $poeData");
     } catch (e) {
-      print("Error inserting data into poe: $e");
+      debugPrint("Error inserting data into poe: $e");
     }
   }
 
@@ -4847,7 +4847,7 @@ updated_at TIMESTAMP
   ''', [learnerID]);
 
     if (result.isEmpty) {
-      print('No data found for learnerID: $learnerID');
+      debugPrint('No data found for learnerID: $learnerID');
       return [];
     }
 
@@ -4911,7 +4911,7 @@ updated_at TIMESTAMP
             }
           }
         } catch (e) {
-          print(
+          debugPrint(
               'Error parsing Project_pathway JSON for project $projectId: $e');
         }
       }
@@ -5031,7 +5031,7 @@ updated_at TIMESTAMP
             uniqueExercise,
           ],
         );
-        print(
+        debugPrint(
             "POE upload updated (synced=$synced): learnerID=$learnerID, type=$type, exercise=$uniqueExercise, filePath=$filePath");
       } else {
         // Insert new record
@@ -5046,11 +5046,11 @@ updated_at TIMESTAMP
             'synced': synced,
           },
         );
-        print(
+        debugPrint(
             "POE upload inserted (synced=$synced): learnerID=$learnerID, type=$type, exercise=$uniqueExercise, filePath=$filePath");
       }
     } catch (e, stackTrace) {
-      print("Error saving POE upload: $e\nStackTrace: $stackTrace");
+      debugPrint("Error saving POE upload: $e\nStackTrace: $stackTrace");
       rethrow;
     }
   }
@@ -5091,7 +5091,7 @@ updated_at TIMESTAMP
             uniqueExercise,
           ],
         );
-        print(
+        debugPrint(
             "Manual POE entry updated: learnerID=$learnerID, type=$type, exercise=$uniqueExercise, filePath=$filePath");
       } else {
         // Insert new record
@@ -5107,11 +5107,11 @@ updated_at TIMESTAMP
                 0, // Set to 0 for manual entries so they can be updated later by a scan
           },
         );
-        print(
+        debugPrint(
             "Manual POE entry inserted: learnerID=$learnerID, type=$type, exercise=$uniqueExercise, filePath=$filePath");
       }
     } catch (e, stackTrace) {
-      print("Error saving manual POE entry: $e\nStackTrace: $stackTrace");
+      debugPrint("Error saving manual POE entry: $e\nStackTrace: $stackTrace");
       rethrow;
     }
   }
@@ -5138,10 +5138,12 @@ updated_at TIMESTAMP
         if (type.toLowerCase() == 'formative') normalizedTypeOld = 'Formative';
         if (type.toLowerCase() == 'summative') normalizedTypeOld = 'Summative';
         if (type.toLowerCase() == 'logbook') normalizedTypeOld = 'LogBook';
-        if (type.toLowerCase() == 'formativeremedial')
+        if (type.toLowerCase() == 'formativeremedial') {
           normalizedTypeOld = 'FormativeRemedial';
-        if (type.toLowerCase() == 'summativeremedial')
+        }
+        if (type.toLowerCase() == 'summativeremedial') {
           normalizedTypeOld = 'SummativeRemedial';
+        }
 
         final oldKeyNorm = '$normalizedTypeOld-$exercise-$learnerID';
         uploadStatus[oldKeyNorm] = true;
@@ -5149,7 +5151,7 @@ updated_at TIMESTAMP
 
       return uploadStatus;
     } catch (e) {
-      print('Error getting local upload status: $e');
+      debugPrint('Error getting local upload status: $e');
       return {};
     }
   }
@@ -5170,7 +5172,7 @@ updated_at TIMESTAMP
         ),
         endpoint: 'get_poe_questions',
         maxRetries: NetworkConfig.readOperationsMaxRetries,
-        timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
+        timeout: const Duration(seconds: NetworkConfig.lightweightTimeout),
       );
 
       if (response.statusCode == 200) {
@@ -5234,11 +5236,11 @@ updated_at TIMESTAMP
         }
       }
 
-      print(
+      debugPrint(
           'Retrieved ${questions.length} questions from API for learner $learnerID');
       return questions;
     } catch (e) {
-      print('Error getting questions from API: $e');
+      debugPrint('Error getting questions from API: $e');
       return [];
     }
   }
@@ -5290,7 +5292,7 @@ updated_at TIMESTAMP
       String? serverDocumentPath =
           await _getServerDocumentPath(learnerID, type, unitStandard);
       if (serverDocumentPath != null) {
-        print(
+        debugPrint(
             "Found existing document from server for $type in unit $unitStandard: $serverDocumentPath");
         return serverDocumentPath;
       }
@@ -5308,7 +5310,7 @@ updated_at TIMESTAMP
         LIMIT 5
       ''', [learnerID.toString(), type]);
 
-      print(
+      debugPrint(
           "Found ${uploads.length} potential documents in local DB for $type");
 
       for (var upload in uploads) {
@@ -5321,17 +5323,17 @@ updated_at TIMESTAMP
             filePath.isNotEmpty &&
             !filePath.startsWith('MANUALLY_MARKED') &&
             File(filePath).existsSync()) {
-          print(
+          debugPrint(
               "Found existing document from local DB for $type (exercise: $exercise, submitted: $submittedAt): $filePath");
           return filePath;
         }
       }
 
-      print(
+      debugPrint(
           "No existing document found for learnerID=$learnerID, type=$type, unitStandard=$unitStandard");
       return null;
     } catch (e, stackTrace) {
-      print("Error finding existing document: $e\nStackTrace: $stackTrace");
+      debugPrint("Error finding existing document: $e\nStackTrace: $stackTrace");
       return null;
     }
   }
@@ -5342,7 +5344,7 @@ updated_at TIMESTAMP
       // Check connectivity first
       var connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {
-        print("No internet connection, skipping server check");
+        debugPrint("No internet connection, skipping server check");
         return null;
       }
 
@@ -5356,7 +5358,7 @@ updated_at TIMESTAMP
         throw Exception('Server request timed out');
       });
 
-      print(
+      debugPrint(
           'Server POE request for document path: learnerID=$learnerID, type=$type, unitStandard=$unitStandard, statusCode=${response.statusCode}');
 
       if (response.statusCode == 200) {
@@ -5378,7 +5380,7 @@ updated_at TIMESTAMP
 
                     // Only check the specific unit standard we're working with
                     if (unitStandardName == unitStandard) {
-                      print(
+                      debugPrint(
                           'Found matching unit standard on server: $unitStandardName');
 
                       // Check the specific type (formative/summative) for uploaded documents
@@ -5402,7 +5404,7 @@ updated_at TIMESTAMP
                               if (filePath != null &&
                                   filePath.isNotEmpty &&
                                   !filePath.startsWith('MANUALLY_MARKED')) {
-                                print(
+                                debugPrint(
                                     'Server returned document path from POE data for unit $unitStandard: $filePath');
                                 return filePath;
                               }
@@ -5418,14 +5420,14 @@ updated_at TIMESTAMP
           }
         }
       } else {
-        print('Server error: ${response.statusCode}');
+        debugPrint('Server error: ${response.statusCode}');
       }
 
-      print(
+      debugPrint(
           'No document path found on server for learnerID=$learnerID, type=$type, unitStandard=$unitStandard');
       return null;
     } catch (e, stackTrace) {
-      print(
+      debugPrint(
           "Error getting document path from server: $e\nStackTrace: $stackTrace");
       return null;
     }
@@ -5465,10 +5467,10 @@ updated_at TIMESTAMP
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       }
-      print(
+      debugPrint(
           "LogBook text saved: learnerID=$learnerID, type=$type, exercise=$exercise, logbook_text=$logbookText");
     } catch (e, stackTrace) {
-      print("Error saving LogBook text: $e\nStackTrace: $stackTrace");
+      debugPrint("Error saving LogBook text: $e\nStackTrace: $stackTrace");
       rethrow;
     }
   }
@@ -5482,11 +5484,11 @@ updated_at TIMESTAMP
         whereArgs: [learnerID.toString()],
         orderBy: 'submitted_at ASC',
       );
-      print(
+      debugPrint(
           "[POE_SYNC] Found ${unsyncedRecords.length} unsynced POE records for learnerID=$learnerID");
       return unsyncedRecords;
     } catch (e, stackTrace) {
-      print("Error fetching unsynced POE: $e\nStackTrace: $stackTrace");
+      debugPrint("Error fetching unsynced POE: $e\nStackTrace: $stackTrace");
       return [];
     }
   }
@@ -5500,9 +5502,9 @@ updated_at TIMESTAMP
         where: 'id = ?',
         whereArgs: [id],
       );
-      print("[POE_SYNC] Marked POE record as synced: id=$id");
+      debugPrint("[POE_SYNC] Marked POE record as synced: id=$id");
     } catch (e, stackTrace) {
-      print("Error marking POE as synced: $e\nStackTrace: $stackTrace");
+      debugPrint("Error marking POE as synced: $e\nStackTrace: $stackTrace");
       rethrow;
     }
   }
@@ -5520,9 +5522,9 @@ updated_at TIMESTAMP
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       ''');
-      print("[OFFLINE_CACHE] Cache table verified/created");
+      debugPrint("[OFFLINE_CACHE] Cache table verified/created");
     } catch (e) {
-      print("[OFFLINE_CACHE] Error ensuring cache table exists: $e");
+      debugPrint("[OFFLINE_CACHE] Error ensuring cache table exists: $e");
     }
   }
 
@@ -5544,9 +5546,9 @@ updated_at TIMESTAMP
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-      print("[OFFLINE_CACHE] Saved pathways cache for learnerID=$learnerID");
+      debugPrint("[OFFLINE_CACHE] Saved pathways cache for learnerID=$learnerID");
     } catch (e, stackTrace) {
-      print("Error saving learner pathways cache: $e\nStackTrace: $stackTrace");
+      debugPrint("Error saving learner pathways cache: $e\nStackTrace: $stackTrace");
       rethrow;
     }
   }
@@ -5563,7 +5565,7 @@ updated_at TIMESTAMP
       );
 
       if (results.isEmpty) {
-        print(
+        debugPrint(
             "[OFFLINE_CACHE] No cached pathways found for learnerID=$learnerID");
         return null;
       }
@@ -5571,11 +5573,11 @@ updated_at TIMESTAMP
       final pathwaysJson = results.first['pathways_json'] as String;
       final pathways = jsonDecode(pathwaysJson) as Map<String, dynamic>;
 
-      print(
+      debugPrint(
           "[OFFLINE_CACHE] Retrieved cached pathways for learnerID=$learnerID");
       return pathways;
     } catch (e, stackTrace) {
-      print(
+      debugPrint(
           "Error getting learner pathways cache: $e\nStackTrace: $stackTrace");
       return null;
     }
@@ -5638,7 +5640,7 @@ WHERE ld.classID = ?
       }
       return result;
     } catch (e) {
-      print('Error executing query: $e');
+      debugPrint('Error executing query: $e');
       rethrow; // Re-throw the error for further handling if needed
     }
   }
@@ -5670,16 +5672,16 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
          f.firstName, f.lastName, c.className;
     ''', [classID]);
 
-      print('Query Result: $result'); // Print the result to see the data
+      debugPrint('Query Result: $result'); // Print the result to see the data
 
       if (result.isNotEmpty) {
         return result;
       } else {
-        print('No data found for classID: $classID');
+        debugPrint('No data found for classID: $classID');
         return []; // Return an empty list if no data is found
       }
     } catch (e) {
-      print('Error executing query: $e');
+      debugPrint('Error executing query: $e');
       return []; // Return an empty list in case of an error
     }
   }
@@ -5703,7 +5705,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       where: 'is_synced = ?',
       whereArgs: [0], // Only unsynced records
     );
-    print('Unsynced records: $result'); // Debug print
+    debugPrint('Unsynced records: $result'); // Debug print
     return result;
   }
 
@@ -6090,7 +6092,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       await file.writeAsBytes(bytes);
       return file.path;
     } catch (e) {
-      print('Error converting base64 to file: $e');
+      debugPrint('Error converting base64 to file: $e');
       return null;
     }
   }
@@ -6105,7 +6107,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         whereArgs: [idNumber],
       );
       if (learnerResult.isEmpty) {
-        print('No learner found with IDNumber: $idNumber');
+        debugPrint('No learner found with IDNumber: $idNumber');
         return;
       }
       int localLearnerId = learnerResult.first['LearnerID'] as int;
@@ -6126,10 +6128,10 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         whereArgs: [localLearnerId],
       );
 
-      print(
+      debugPrint(
           'Synced status updated for learner ID: $serverLearnerId (IDNumber: $idNumber)');
     } catch (e) {
-      print('Error updating synced status: $e');
+      debugPrint('Error updating synced status: $e');
       rethrow;
     }
   }
@@ -6144,9 +6146,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         where: 'BankID = ?',
         whereArgs: [bankId],
       );
-      print('Synced status updated for bank ID: $bankId');
+      debugPrint('Synced status updated for bank ID: $bankId');
     } catch (e) {
-      print('Error updating bank details synced status: $e');
+      debugPrint('Error updating bank details synced status: $e');
       rethrow;
     }
   }
@@ -6163,7 +6165,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         whereArgs: [classID, 0], // 0 means unsynced
       );
 
-      print('Found ${learners.length} unsynced learners for class $classID');
+      debugPrint('Found ${learners.length} unsynced learners for class $classID');
 
       // For each learner, fetch their bank details
       List<Map<String, dynamic>> learnersWithBankDetails = [];
@@ -6200,7 +6202,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
       return learnersWithBankDetails;
     } catch (e) {
-      print('Error fetching unsynced learners: $e');
+      debugPrint('Error fetching unsynced learners: $e');
       return [];
     }
   }
@@ -6225,9 +6227,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         whereArgs: [learnerID],
       );
 
-      print('Marked learner $learnerID and their bank details as synced');
+      debugPrint('Marked learner $learnerID and their bank details as synced');
     } catch (e) {
-      print('Error marking learner as synced: $e');
+      debugPrint('Error marking learner as synced: $e');
       rethrow;
     }
   }
@@ -6253,7 +6255,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         whereArgs: [oldLearnerID],
       );
     } catch (e) {
-      print('Error updating LearnerID: $e');
+      debugPrint('Error updating LearnerID: $e');
     }
   }
 
@@ -6269,7 +6271,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           ? Map<String, dynamic>.from(result.first)
           : null; // Create mutable copy
     } catch (e) {
-      print('Error fetching learner by IDNumber: $e');
+      debugPrint('Error fetching learner by IDNumber: $e');
       return null;
     }
   }
@@ -6286,7 +6288,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       // Return mutable copies of all results
       return result.map((row) => Map<String, dynamic>.from(row)).toList();
     } catch (e) {
-      print('Error fetching learners for classID $classID: $e');
+      debugPrint('Error fetching learners for classID $classID: $e');
       return [];
     }
   }
@@ -6326,7 +6328,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     try {
       return await hasNetworkConnectivity();
     } catch (e) {
-      print('Error checking connectivity: $e');
+      debugPrint('Error checking connectivity: $e');
       return false;
     }
   }
@@ -6341,20 +6343,20 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       );
 
       if (response.statusCode == 200) {
-        print('All data successfully sent to backend');
+        debugPrint('All data successfully sent to backend');
         final responseData = json.decode(response.body);
         if (responseData['status'] == 'success') {
           return responseData;
         } else {
-          print('Server response error: ${responseData['message']}');
+          debugPrint('Server response error: ${responseData['message']}');
           return null;
         }
       } else {
-        print('Failed to send data to backend: ${response.statusCode}');
+        debugPrint('Failed to send data to backend: ${response.statusCode}');
         return null;
       }
     } catch (e) {
-      print('Error sending data to backend: $e');
+      debugPrint('Error sending data to backend: $e');
       return null;
     }
   }
@@ -6378,7 +6380,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       whereArgs: [0],
     );
 
-    print('Found ${unsyncedLearners.length} unsynced learners');
+    debugPrint('Found ${unsyncedLearners.length} unsynced learners');
 
     if (unsyncedLearners.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -6413,7 +6415,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           'bank': bankData,
         });
       } catch (e) {
-        print(
+        debugPrint(
             'Error preparing learner data for IDNumber ${learner['IDNumber']}: $e');
       }
     }
@@ -6426,9 +6428,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       List<dynamic> syncedLearners = responseData['learners'] ?? [];
       List<dynamic> failedLearners = responseData['failed'] ?? [];
 
-      print('Successfully synced ${syncedLearners.length} learners');
+      debugPrint('Successfully synced ${syncedLearners.length} learners');
       if (failedLearners.isNotEmpty) {
-        print('Failed to sync ${failedLearners.length} learners');
+        debugPrint('Failed to sync ${failedLearners.length} learners');
       }
 
       // Update local database with server IDs
@@ -6454,9 +6456,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
             }
           }
 
-          print('Successfully processed sync for learner: $idNumber');
+          debugPrint('Successfully processed sync for learner: $idNumber');
         } catch (e) {
-          print(
+          debugPrint(
               'Error processing synced learner ${syncedLearner['IDNumber']}: $e');
         }
       }
@@ -6494,7 +6496,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         await syncBankDetails(); // Verify and store bank details locally
       }
     } catch (e) {
-      print('Error submitting learner data: $e');
+      debugPrint('Error submitting learner data: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving data: $e')),
       );
@@ -6529,11 +6531,11 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       if (parsedDate != null) {
         return DateFormat('yyyy-MM-dd').format(parsedDate);
       } else {
-        print('Could not parse date: $dateString, using default');
+        debugPrint('Could not parse date: $dateString, using default');
         return '1900-01-01';
       }
     } catch (e) {
-      print('Error parsing date: $dateString, using default: $e');
+      debugPrint('Error parsing date: $dateString, using default: $e');
       return '1900-01-01';
     }
   }
@@ -6618,13 +6620,13 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         );
         debugPrint(
             '[DB] Updated existing learner with ID: $learnerId (same project)');
-        print('Updated existing learner with ID: $learnerId (same project)');
+        debugPrint('Updated existing learner with ID: $learnerId (same project)');
       } else {
         // Insert new learner (either new or duplicate in different project)
         learnerOnlyData['synced'] = 0; // Ensure synced is 0 for new entries
         learnerId = await txn.insert('learnerdetails', learnerOnlyData);
         debugPrint('[DB] Inserted new learner with ID: $learnerId');
-        print('Inserted new learner with ID: $learnerId');
+        debugPrint('Inserted new learner with ID: $learnerId');
       }
 
       // Handle bank data
@@ -6657,17 +6659,17 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           );
           debugPrint(
               '[DB] Updated existing bank details for learner: $learnerId');
-          print('Updated existing bank details for learner: $learnerId');
+          debugPrint('Updated existing bank details for learner: $learnerId');
         } else {
           // Insert new bank details
           int bankId = await txn.insert('bankdetails', bankDetails);
           debugPrint('[DB] Inserted new bank details with ID: $bankId');
-          print('Inserted new bank details with ID: $bankId');
+          debugPrint('Inserted new bank details with ID: $bankId');
         }
       } else {
         debugPrint(
             '[DB] No bank data to insert/update - bankData is null or empty');
-        print('No bank data to insert/update - bankData is null or empty');
+        debugPrint('No bank data to insert/update - bankData is null or empty');
       }
     });
 
@@ -6751,20 +6753,20 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       whereArgs: [0],
     );
 
-    print(
+    debugPrint(
         'Found ${unsyncedBankDetails.length} unsynced bank details for offline storage');
 
     for (var bankDetail in unsyncedBankDetails) {
       try {
         if (bankDetail['LearnerID'] == null || bankDetail['BankName'] == null) {
-          print(
+          debugPrint(
               'Invalid bank detail for BankID ${bankDetail['BankID']}: Missing required fields');
           continue;
         }
-        print(
+        debugPrint(
             'Bank details for LearnerID ${bankDetail['LearnerID']} verified and stored offline');
       } catch (e) {
-        print(
+        debugPrint(
             'Error processing bank details for BankID ${bankDetail['BankID']}: $e');
       }
     }
@@ -6773,7 +6775,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   // Sync learner documents from server to local database
   Future<void> syncLearnerDocuments() async {
     try {
-      print('[SYNC] Starting learner documents sync...');
+      debugPrint('[SYNC] Starting learner documents sync...');
 
       // Make request to sync endpoint
       final response = await http.get(
@@ -6786,7 +6788,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
         if (jsonData['success'] == true) {
           final documents = jsonData['documents'] as List;
-          print(
+          debugPrint(
               '[SYNC] Retrieved ${documents.length} learner documents from server');
 
           final db = await database;
@@ -6831,21 +6833,21 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
                 );
               }
             } catch (e) {
-              print(
+              debugPrint(
                   '[SYNC] Error syncing document ${document['document_id']}: $e');
             }
           }
 
-          print(
+          debugPrint(
               '[SYNC] Successfully synced $syncedCount new learner documents');
         } else {
-          print('[SYNC] Server returned error: ${jsonData['message']}');
+          debugPrint('[SYNC] Server returned error: ${jsonData['message']}');
         }
       } else {
-        print('[SYNC] HTTP error: ${response.statusCode}');
+        debugPrint('[SYNC] HTTP error: ${response.statusCode}');
       }
     } catch (e) {
-      print('[SYNC] Error syncing learner documents: $e');
+      debugPrint('[SYNC] Error syncing learner documents: $e');
     }
   }
 
@@ -7486,7 +7488,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
             ),
             endpoint: 'learner_profile_sync',
             maxRetries: NetworkConfig.syncOperationsMaxRetries,
-            timeout: Duration(seconds: NetworkConfig.profileSyncTimeout),
+            timeout: const Duration(seconds: NetworkConfig.profileSyncTimeout),
           );
 
           if (response.statusCode == 200) {
@@ -7518,11 +7520,11 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         batchCount++;
         if (batchCount >= batchSize && i < unsyncedLearners.length - 1) {
           debugPrint('[SYNC-LEARNER-PROFILE] Batch complete ($batchCount records), waiting 500ms before next batch...');
-          await Future.delayed(Duration(milliseconds: 500));
+          await Future.delayed(const Duration(milliseconds: 500));
           batchCount = 0;
         } else if (i < unsyncedLearners.length - 1) {
           // Small delay between individual requests within a batch
-          await Future.delayed(Duration(milliseconds: 100));
+          await Future.delayed(const Duration(milliseconds: 100));
         }
       }
 
@@ -7558,10 +7560,10 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         ) ic ON l.LearnerID = ic.LearnerID
         WHERE l.classID = ?
       ''', [DateFormat('yyyy-MM-dd').format(DateTime.now()), classID]);
-      print('Fetched learners with clocking data: $result');
+      debugPrint('Fetched learners with clocking data: $result');
       return result;
     } catch (e) {
-      print('Error fetching learners with clocking data: $e');
+      debugPrint('Error fetching learners with clocking data: $e');
       rethrow;
     }
   }
@@ -7598,10 +7600,10 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         where: 'LearnerID = ? AND clock_date = ?',
         whereArgs: [learnerID, clockDate],
       );
-      print(
+      debugPrint(
           'Updated clocking data for LearnerID: $learnerID on $clockDate: $data');
     } catch (e) {
-      print('Error updating induction_clocking: $e');
+      debugPrint('Error updating induction_clocking: $e');
       rethrow;
     }
   }
@@ -7685,7 +7687,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         return false; // Saved locally but not synced
       }
     } catch (e) {
-      print('Error saving fingerprint: $e');
+      debugPrint('Error saving fingerprint: $e');
       rethrow;
     }
   }
@@ -7703,7 +7705,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       int learnerId) async {
     final db = await database;
 
-    print('[DB_DEBUG] getFingerprintsComprehensive for learner $learnerId');
+    debugPrint('[DB_DEBUG] getFingerprintsComprehensive for learner $learnerId');
 
     // Query ALL columns to see what data exists
     final result = await db.query(
@@ -7729,7 +7731,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           if ((keyLower.contains('template') || keyLower.contains('finger')) &&
               valueStr.length > 50) {
             // Fingerprint templates are usually quite long
-            print(
+            debugPrint(
                 '[DB_DEBUG] Found potential fingerprint data in column "$key": ${valueStr.length} chars');
 
             // Try to determine if it's left or right hand
@@ -7750,7 +7752,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         }
       });
 
-      print(
+      debugPrint(
           '[DB_DEBUG] Comprehensive search result - Left: ${leftTemplate != null}, Right: ${rightTemplate != null}');
       return {
         'left': leftTemplate,
@@ -7767,15 +7769,15 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     // First, let's see what columns actually exist in the table
     try {
       final tableInfo = await db.rawQuery('PRAGMA table_info(learnerdetails)');
-      print('[DB_DEBUG] learnerdetails table columns:');
+      debugPrint('[DB_DEBUG] learnerdetails table columns:');
       for (var col in tableInfo) {
         if (col['name'].toString().toLowerCase().contains('template') ||
             col['name'].toString().toLowerCase().contains('finger')) {
-          print('[DB_DEBUG]   ${col['name']}: ${col['type']}');
+          debugPrint('[DB_DEBUG]   ${col['name']}: ${col['type']}');
         }
       }
     } catch (e) {
-      print('[DB_DEBUG] Error getting table info: $e');
+      debugPrint('[DB_DEBUG] Error getting table info: $e');
     }
 
     // Enhanced debugging - check all possible template columns
@@ -7793,12 +7795,12 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       whereArgs: [learnerId],
     );
 
-    print('[DB_DEBUG] getFingerprints for learner $learnerId:');
-    print('[DB_DEBUG] Query result count: ${result.length}');
+    debugPrint('[DB_DEBUG] getFingerprints for learner $learnerId:');
+    debugPrint('[DB_DEBUG] Query result count: ${result.length}');
 
     if (result.isNotEmpty) {
       final row = result.first;
-      print('[DB_DEBUG] Raw row data keys: ${row.keys.toList()}');
+      debugPrint('[DB_DEBUG] Raw row data keys: ${row.keys.toList()}');
 
       // Try to get templates from any available scanner
       final zkLeft = row['zkteco_left_template'] as String?;
@@ -7807,15 +7809,15 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       final futronicRight = row['futronic_right_template'] as String?;
       final sourceafis = row['sourceafis_template'] as String?;
 
-      print(
+      debugPrint(
           '[DB_DEBUG] ZKTeco left template: ${zkLeft?.length ?? 0} chars, null: ${zkLeft == null}');
-      print(
+      debugPrint(
           '[DB_DEBUG] ZKTeco right template: ${zkRight?.length ?? 0} chars, null: ${zkRight == null}');
-      print(
+      debugPrint(
           '[DB_DEBUG] Futronic left template: ${futronicLeft?.length ?? 0} chars, null: ${futronicLeft == null}');
-      print(
+      debugPrint(
           '[DB_DEBUG] Futronic right template: ${futronicRight?.length ?? 0} chars, null: ${futronicRight == null}');
-      print(
+      debugPrint(
           '[DB_DEBUG] SourceAFIS template: ${sourceafis?.length ?? 0} chars, null: ${sourceafis == null}');
 
       // If no templates found, check if data might be in a different format
@@ -7824,7 +7826,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           (futronicLeft == null || futronicLeft.isEmpty) &&
           (futronicRight == null || futronicRight.isEmpty) &&
           (sourceafis == null || sourceafis.isEmpty)) {
-        print(
+        debugPrint(
             '[DB_DEBUG] No templates found in standard columns, checking for any non-null template data...');
         // Let's see if there's ANY fingerprint data for this learner
         final allData = await db.query(
@@ -7835,11 +7837,11 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
         if (allData.isNotEmpty) {
           final allRow = allData.first;
-          print('[DB_DEBUG] All available columns for learner $learnerId:');
+          debugPrint('[DB_DEBUG] All available columns for learner $learnerId:');
           allRow.forEach((key, value) {
             if (key.toLowerCase().contains('template') ||
                 key.toLowerCase().contains('finger')) {
-              print(
+              debugPrint(
                   '[DB_DEBUG]   $key: ${value != null ? "${value.toString().length} chars" : "NULL"}');
             }
           });
@@ -7861,7 +7863,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       // If no templates found in standard columns, try comprehensive search
       if ((leftTemplate == null || leftTemplate.isEmpty) &&
           (rightTemplate == null || rightTemplate.isEmpty)) {
-        print(
+        debugPrint(
             '[DB_DEBUG] No templates found in standard columns, trying comprehensive search...');
         final comprehensiveResult =
             await getFingerprintsComprehensive(learnerId);
@@ -7870,17 +7872,17 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       }
 
       // Debug logging
-      print(
+      debugPrint(
           '[DB_DEBUG] ZKTeco left template exists: ${zkLeft != null && zkLeft.isNotEmpty}');
-      print(
+      debugPrint(
           '[DB_DEBUG] ZKTeco right template exists: ${zkRight != null && zkRight.isNotEmpty}');
-      print(
+      debugPrint(
           '[DB_DEBUG] Futronic left template exists: ${futronicLeft != null && futronicLeft.isNotEmpty}');
-      print(
+      debugPrint(
           '[DB_DEBUG] Futronic right template exists: ${futronicRight != null && futronicRight.isNotEmpty}');
-      print(
+      debugPrint(
           '[DB_DEBUG] Final left template exists: ${leftTemplate != null && leftTemplate.isNotEmpty}');
-      print(
+      debugPrint(
           '[DB_DEBUG] Final right template exists: ${rightTemplate != null && rightTemplate.isNotEmpty}');
 
       return {
@@ -7888,7 +7890,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         'right': rightTemplate,
       };
     } else {
-      print('[DB_DEBUG] No learner found with ID $learnerId');
+      debugPrint('[DB_DEBUG] No learner found with ID $learnerId');
     }
     return {'left': null, 'right': null};
   }
@@ -7908,7 +7910,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
     // Server fetch disabled - data is already synced via main sync endpoint
     // This prevents FormatException errors from broken get_indaction_data.php endpoint
-    print(
+    debugPrint(
         '[DB_HELPER] No local induction record found for LearnerID: $learnerId, date: $date');
 
     return null;
@@ -7950,7 +7952,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           final bytes = base64Decode(template);
           return img.decodeImage(bytes);
         } catch (e) {
-          print('Error decoding fingerprint image: $e');
+          debugPrint('Error decoding fingerprint image: $e');
           return null;
         }
       }
@@ -7989,7 +7991,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       try {
         return base64Decode(base64Str);
       } catch (e) {
-        print('Error decoding fingerprint features: $e');
+        debugPrint('Error decoding fingerprint features: $e');
         return null;
       }
     }
@@ -8018,7 +8020,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       try {
         return base64Decode(base64Str);
       } catch (e) {
-        print('Error decoding sourceafis_template: $e');
+        debugPrint('Error decoding sourceafis_template: $e');
         return null;
       }
     }
@@ -8041,7 +8043,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       where: 'LearnerID = ?',
       whereArgs: [learnerId],
     );
-    print('Cleared all fingerprint templates for learner $learnerId');
+    debugPrint('Cleared all fingerprint templates for learner $learnerId');
   }
 
   // ==================== RANDOM BIOMETRIC MONITORING METHODS ====================
@@ -8268,7 +8270,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
       return synced;
     } catch (e) {
-      print('[FAC_FP] Error saving facilitator fingerprint: $e');
+      debugPrint('[FAC_FP] Error saving facilitator fingerprint: $e');
       rethrow;
     }
   }
@@ -8677,12 +8679,12 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   /// Generate neural network features from WSQ template for contactless verification
   // Future<void> _generateNeuralNetworkFeatures(int learnerId, String wsqTemplate) async {
   //   try {
-  //     print('[NEURAL_GEN] Starting neural network feature generation for learner $learnerId');
+  //     debugPrint('[NEURAL_GEN] Starting neural network feature generation for learner $learnerId');
   //
   //     // Check connectivity first
   //     final connectivityResult = await Connectivity().checkConnectivity();
   //     if (connectivityResult == ConnectivityResult.none) {
-  //       print('[NEURAL_GEN] No internet connection - neural features will be generated during first contactless verification');
+  //       debugPrint('[NEURAL_GEN] No internet connection - neural features will be generated during first contactless verification');
   //       return;
   //     }
   //
@@ -8704,21 +8706,21 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   //
   //         if (healthResponse.statusCode == 200) {
   //           workingUrl = url;
-  //           print('[NEURAL_GEN] Found working server: $url');
+  //           debugPrint('[NEURAL_GEN] Found working server: $url');
   //           break;
   //         }
   //       } catch (e) {
-  //         print('[NEURAL_GEN] Server $url not reachable: $e');
+  //         debugPrint('[NEURAL_GEN] Server $url not reachable: $e');
   //         continue;
   //       }
   //     }
   //
   //     if (workingUrl == null) {
-  //       print('[NEURAL_GEN] No servers available - neural features will be generated during first contactless verification');
+  //       debugPrint('[NEURAL_GEN] No servers available - neural features will be generated during first contactless verification');
   //       return;
   //     }
   //
-  //     print('[NEURAL_GEN] Sending WSQ template to server for neural feature extraction...');
+  //     debugPrint('[NEURAL_GEN] Sending WSQ template to server for neural feature extraction...');
   //
   //     // Send WSQ template to server for neural network feature extraction
   //     final response = await http.post(
@@ -8733,33 +8735,33 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   //     if (response.statusCode == 200) {
   //       final responseData = json.decode(response.body);
   //       if (responseData['success'] == true) {
-  //         print('[NEURAL_GEN] ✅ Neural network features generated successfully for learner $learnerId');
-  //         print('[NEURAL_GEN] Feature dimensions: ${responseData['feature_dimensions']}');
+  //         debugPrint('[NEURAL_GEN] ✅ Neural network features generated successfully for learner $learnerId');
+  //         debugPrint('[NEURAL_GEN] Feature dimensions: ${responseData['feature_dimensions']}');
   //
   //         // Save the neural features to local SQLite database
   //         final featuresBase64 = responseData['features_base64'] as String;
   //         final featuresBytes = base64Decode(featuresBase64);
   //
-  //         print('[NEURAL_GEN] Saving ${featuresBytes.length} bytes of neural features to local database...');
+  //         debugPrint('[NEURAL_GEN] Saving ${featuresBytes.length} bytes of neural features to local database...');
   //         await saveFingerprintFeatures(learnerId, featuresBytes);
   //
   //         // Verify the save
   //         final savedFeatures = await getFingerprintFeatures(learnerId);
   //         if (savedFeatures != null) {
-  //           print('[NEURAL_GEN] ✅ Confirmed: ${savedFeatures.length} bytes saved to local database');
+  //           debugPrint('[NEURAL_GEN] ✅ Confirmed: ${savedFeatures.length} bytes saved to local database');
   //         } else {
-  //           print('[NEURAL_GEN] ⚠️ Warning: Features not found in local database after save');
+  //           debugPrint('[NEURAL_GEN] ⚠️ Warning: Features not found in local database after save');
   //         }
   //
   //       } else {
-  //         print('[NEURAL_GEN] ❌ Server failed to generate features: ${responseData['error']}');
+  //         debugPrint('[NEURAL_GEN] ❌ Server failed to generate features: ${responseData['error']}');
   //       }
   //     } else {
-  //       print('[NEURAL_GEN] ❌ Server returned status ${response.statusCode}: ${response.body}');
+  //       debugPrint('[NEURAL_GEN] ❌ Server returned status ${response.statusCode}: ${response.body}');
   //     }
   //
   //   } catch (e) {
-  //     print('[NEURAL_GEN] ❌ Error generating neural network features: $e');
+  //     debugPrint('[NEURAL_GEN] ❌ Error generating neural network features: $e');
   //     // Don't throw - this is optional enhancement, main enrollment should still succeed
   //   }
   // }
@@ -8800,18 +8802,18 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
             '[SYNC] Learner ${fp['LearnerID']}: synced=${fp['synced']}, zkteco_left=${fp['zkteco_left_template'] != null}, zkteco_right=${fp['zkteco_right_template'] != null}, futronic_left=${fp['futronic_left_template'] != null}, futronic_right=${fp['futronic_right_template'] != null}');
       }
 
-      print('Found ${fingerprints.length} unsynced fingerprints');
+      debugPrint('Found ${fingerprints.length} unsynced fingerprints');
 
       for (final fingerprint in fingerprints) {
         final learnerId = fingerprint['LearnerID'] as int;
-        print('Syncing fingerprints for learner: $learnerId');
-        print(
+        debugPrint('Syncing fingerprints for learner: $learnerId');
+        debugPrint(
             '  - ZKTeco left template exists: ${fingerprint['zkteco_left_template'] != null}');
-        print(
+        debugPrint(
             '  - ZKTeco right template exists: ${fingerprint['zkteco_right_template'] != null}');
-        print(
+        debugPrint(
             '  - Futronic left template exists: ${fingerprint['futronic_left_template'] != null}');
-        print(
+        debugPrint(
             '  - Futronic right template exists: ${fingerprint['futronic_right_template'] != null}');
 
         // Check which templates exist and are not empty
@@ -8893,19 +8895,19 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
             where: 'LearnerID = ?',
             whereArgs: [learnerId],
           );
-          print(
+          debugPrint(
               'Marked learner $learnerId as synced ($successfulSyncs templates synced successfully)');
         }
 
         // Log any errors but don't stop the overall sync
         if (syncErrors.isNotEmpty) {
-          print('Sync errors for learner $learnerId: ${syncErrors.join(', ')}');
+          debugPrint('Sync errors for learner $learnerId: ${syncErrors.join(', ')}');
         }
       }
 
-      print('Fingerprint sync completed');
+      debugPrint('Fingerprint sync completed');
     } catch (e) {
-      print('Error during fingerprint sync: $e');
+      debugPrint('Error during fingerprint sync: $e');
     }
   }
 
@@ -8950,12 +8952,12 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           if (data['success'] == true) {
             debugPrint(
                 '[SYNC] Successfully synced $templateType template for learner $learnerId');
-            print(
+            debugPrint(
                 'Successfully synced $templateType template for learner $learnerId');
           } else {
             debugPrint(
                 '[SYNC] Server error syncing $templateType for learner $learnerId: ${data['message']}');
-            print(
+            debugPrint(
                 'Server error syncing $templateType for learner $learnerId: ${data['message']}');
             throw Exception('Server error: ${data['message']}');
           }
@@ -8977,7 +8979,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     } catch (e) {
       debugPrint(
           '[SYNC] Exception syncing $templateType for learner $learnerId: $e');
-      print('Exception syncing $templateType for learner $learnerId: $e');
+      debugPrint('Exception syncing $templateType for learner $learnerId: $e');
       rethrow;
     }
   }
@@ -8992,7 +8994,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           await syncUnsyncedFingerprints();
         }
       } catch (e) {
-        print('Error in background fingerprint sync: $e');
+        debugPrint('Error in background fingerprint sync: $e');
       }
     });
   }
@@ -9015,10 +9017,10 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         whereArgs: [learnerID],
       );
 
-      print('Learner information updated locally for learner ID: $learnerID');
-      print('Updated fields: ${updateData.keys.toList()}');
+      debugPrint('Learner information updated locally for learner ID: $learnerID');
+      debugPrint('Updated fields: ${updateData.keys.toList()}');
     } catch (e) {
-      print('Error updating learner information locally: $e');
+      debugPrint('Error updating learner information locally: $e');
       throw Exception('Failed to update learner information locally: $e');
     }
   }
@@ -9225,7 +9227,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           where: 'learner_id = ?',
           whereArgs: [guardianData['learner_id']],
         );
-        print(
+        debugPrint(
             'Guardian details updated for learner ${guardianData['learner_id']}');
       } else {
         // Insert new record
@@ -9238,11 +9240,11 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
             'synced': 0,
           },
         );
-        print(
+        debugPrint(
             'Guardian details inserted for learner ${guardianData['learner_id']}');
       }
     } catch (e) {
-      print('Error saving guardian details: $e');
+      debugPrint('Error saving guardian details: $e');
       rethrow;
     }
   }
@@ -9257,14 +9259,14 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       );
 
       if (result.isNotEmpty) {
-        print('Guardian details found for learner $learnerID');
+        debugPrint('Guardian details found for learner $learnerID');
         return result.first;
       } else {
-        print('No guardian details found for learner $learnerID');
+        debugPrint('No guardian details found for learner $learnerID');
         return null;
       }
     } catch (e) {
-      print('Error fetching guardian details: $e');
+      debugPrint('Error fetching guardian details: $e');
       return null;
     }
   }
@@ -9283,11 +9285,11 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         whereArgs: [learnerID],
         orderBy: 'period_from DESC',
       );
-      print(
+      debugPrint(
           '[WORK_EXP] Found ${result.length} work experiences for learner $learnerID');
       return result;
     } catch (e) {
-      print('[WORK_EXP] Error fetching work experiences: $e');
+      debugPrint('[WORK_EXP] Error fetching work experiences: $e');
       return [];
     }
   }
@@ -9298,10 +9300,10 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       data['created_at'] = DateTime.now().toIso8601String();
       data['updated_at'] = DateTime.now().toIso8601String();
       final id = await db.insert('work_experience', data);
-      print('[WORK_EXP] Inserted work experience with ID: $id');
+      debugPrint('[WORK_EXP] Inserted work experience with ID: $id');
       return id;
     } catch (e) {
-      print('[WORK_EXP] Error inserting work experience: $e');
+      debugPrint('[WORK_EXP] Error inserting work experience: $e');
       rethrow;
     }
   }
@@ -9317,9 +9319,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         where: 'id = ?',
         whereArgs: [id],
       );
-      print('[WORK_EXP] Updated work experience ID: $id');
+      debugPrint('[WORK_EXP] Updated work experience ID: $id');
     } catch (e) {
-      print('[WORK_EXP] Error updating work experience: $e');
+      debugPrint('[WORK_EXP] Error updating work experience: $e');
       rethrow;
     }
   }
@@ -9332,9 +9334,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         where: 'id = ?',
         whereArgs: [id],
       );
-      print('[WORK_EXP] Deleted work experience ID: $id');
+      debugPrint('[WORK_EXP] Deleted work experience ID: $id');
     } catch (e) {
-      print('[WORK_EXP] Error deleting work experience: $e');
+      debugPrint('[WORK_EXP] Error deleting work experience: $e');
       rethrow;
     }
   }
@@ -9348,9 +9350,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         where: 'id = ?',
         whereArgs: [id],
       );
-      print('[WORK_EXP] Marked work experience ID $id as synced');
+      debugPrint('[WORK_EXP] Marked work experience ID $id as synced');
     } catch (e) {
-      print('[WORK_EXP] Error marking work experience as synced: $e');
+      debugPrint('[WORK_EXP] Error marking work experience as synced: $e');
     }
   }
 
@@ -9362,10 +9364,10 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         where: 'synced = ?',
         whereArgs: [0],
       );
-      print('[WORK_EXP] Found ${result.length} unsynced work experiences');
+      debugPrint('[WORK_EXP] Found ${result.length} unsynced work experiences');
       return result;
     } catch (e) {
-      print('[WORK_EXP] Error fetching unsynced work experiences: $e');
+      debugPrint('[WORK_EXP] Error fetching unsynced work experiences: $e');
       return [];
     }
   }
@@ -9426,8 +9428,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     final db = await database;
 
     try {
-      print('\n=== GETTING CLASS UNIT STANDARDS (SQLite) ===');
-      print('ClassID: $classID');
+      debugPrint('\n=== GETTING CLASS UNIT STANDARDS (SQLite) ===');
+      debugPrint('ClassID: $classID');
 
       // Use SQLite JSON operators to extract unit standards directly
       var result = await db.rawQuery('''
@@ -9444,9 +9446,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         WHERE c.classID = ?
       ''', [classID]);
 
-      print('Raw query results (count: ${result.length}):');
+      debugPrint('Raw query results (count: ${result.length}):');
       for (var row in result) {
-        print('Row: $row');
+        debugPrint('Row: $row');
       }
 
       List<Map<String, dynamic>> processedResult = [];
@@ -9468,7 +9470,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
             List<dynamic> unitStandards = jsonDecode(unitStandardsJson);
             enrichedRow['unit_standards_list'] = unitStandards;
 
-            print('✅ Parsed ${unitStandards.length} unit standards from JSON');
+            debugPrint('✅ Parsed ${unitStandards.length} unit standards from JSON');
 
             // Process each unit standard to ensure proper format
             List<Map<String, dynamic>> formattedUnitStandards = [];
@@ -9486,30 +9488,30 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
             enrichedRow['formatted_unit_standards'] = formattedUnitStandards;
 
-            print(
+            debugPrint(
                 'Formatted unit standards: ${formattedUnitStandards.length} items');
             for (int i = 0; i < formattedUnitStandards.length && i < 3; i++) {
-              print(
+              debugPrint(
                   '  - ${formattedUnitStandards[i]['unitstandard_id']}: ${formattedUnitStandards[i]['unit_standard_name']}');
             }
           } catch (e) {
-            print(
+            debugPrint(
                 '❌ JSON parsing error: $e, for unit_standards: $unitStandardsJson');
             enrichedRow['unit_standards_list'] = [];
             enrichedRow['formatted_unit_standards'] = [];
           }
         } else {
-          print('❌ Invalid or empty unit_standards: $unitStandardsJson');
+          debugPrint('❌ Invalid or empty unit_standards: $unitStandardsJson');
           enrichedRow['formatted_unit_standards'] = [];
         }
 
         processedResult.add(enrichedRow);
       }
 
-      print('=== CLASS UNIT STANDARDS FETCH COMPLETE ===\n');
+      debugPrint('=== CLASS UNIT STANDARDS FETCH COMPLETE ===\n');
       return processedResult;
     } catch (e) {
-      print('❌ Error fetching class unit standards: $e');
+      debugPrint('❌ Error fetching class unit standards: $e');
       return [];
     }
   }
@@ -9530,7 +9532,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       }
       return null;
     } catch (e) {
-      print('Error getting learner by ID: $e');
+      debugPrint('Error getting learner by ID: $e');
       return null;
     }
   }
@@ -9552,9 +9554,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-      print('Inserted learner: ${sanitizedData['LearnerID']}');
+      debugPrint('Inserted learner: ${sanitizedData['LearnerID']}');
     } catch (e) {
-      print('Error inserting learner: $e');
+      debugPrint('Error inserting learner: $e');
       rethrow;
     }
   }
@@ -9576,9 +9578,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         whereArgs: [learnerData['LearnerID']],
       );
 
-      print('Updated learner: ${sanitizedData['LearnerID']}');
+      debugPrint('Updated learner: ${sanitizedData['LearnerID']}');
     } catch (e) {
-      print('Error updating learner: $e');
+      debugPrint('Error updating learner: $e');
       rethrow;
     }
   }
@@ -9590,7 +9592,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     try {
       final db = await database;
 
-      print(
+      debugPrint(
           '[DB_REPAIR] Dropping and recreating learner_clocking_evidence table...');
 
       // Drop existing table
@@ -9642,10 +9644,10 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         CREATE INDEX idx_evidence_synced ON learner_clocking_evidence(synced)
       ''');
 
-      print(
+      debugPrint(
           '[DB_REPAIR] ✅ learner_clocking_evidence table recreated successfully');
     } catch (e) {
-      print('[DB_REPAIR] ❌ Error recreating table: $e');
+      debugPrint('[DB_REPAIR] ❌ Error recreating table: $e');
       rethrow;
     }
   }

@@ -10,12 +10,12 @@ class ArplAppendixEPage extends StatefulWidget {
   final int facilitatorId;
 
   const ArplAppendixEPage({
-    Key? key,
+    super.key,
     required this.learnerID,
     required this.learnerName,
     required this.ofoNumber,
     required this.facilitatorId,
-  }) : super(key: key);
+  });
 
   @override
   _ArplAppendixEPageState createState() => _ArplAppendixEPageState();
@@ -24,8 +24,8 @@ class ArplAppendixEPage extends StatefulWidget {
 class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _activities = [];
-  Map<int, int> _ratings = {}; // activity_id => rating (1-5)
-  Map<int, String> _comments = {}; // activity_id => comment
+  final Map<int, int> _ratings = {}; // activity_id => rating (1-5)
+  final Map<int, String> _comments = {}; // activity_id => comment
   bool _isSaving = false;
 
   @override
@@ -136,7 +136,7 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
             SnackBar(
               content: Text(data['message'] ?? 'Ratings saved successfully'),
               backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
+              duration: const Duration(seconds: 2),
             ),
           );
 
@@ -160,7 +160,7 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
       SnackBar(
         content: Text(message),
         backgroundColor: Colors.red,
-        duration: Duration(seconds: 3),
+        duration: const Duration(seconds: 3),
       ),
     );
   }
@@ -172,10 +172,10 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Appendix E - Activity Ratings'),
+            const Text('Appendix E - Activity Ratings'),
             Text(
               widget.learnerName,
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
             ),
           ],
         ),
@@ -183,13 +183,13 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
         actions: [
           if (!_isLoading && _activities.isNotEmpty)
             IconButton(
-              icon: Icon(Icons.info_outline),
+              icon: const Icon(Icons.info_outline),
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: Text('Rating Scale'),
-                    content: Column(
+                    title: const Text('Rating Scale'),
+                    content: const Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -205,7 +205,7 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: Text('Close'),
+                        child: const Text('Close'),
                       ),
                     ],
                   ),
@@ -215,19 +215,19 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
         ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : _activities.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.info_outline, size: 64, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text('No activities found for this qualification'),
-                      SizedBox(height: 16),
+                      const Icon(Icons.info_outline, size: 64, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      const Text('No activities found for this qualification'),
+                      const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _loadActivitiesAndRatings,
-                        child: Text('Retry'),
+                        child: const Text('Retry'),
                       ),
                     ],
                   ),
@@ -236,14 +236,14 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
                   children: [
                     // Summary header
                     Container(
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       color: Colors.deepPurple.shade50,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             'Total Activities: ${_activities.length}',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           Text(
                             'Rated: ${_ratings.length}',
@@ -261,7 +261,7 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
                     // Activities list
                     Expanded(
                       child: ListView.builder(
-                        padding: EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(8),
                         itemCount: _activities.length,
                         itemBuilder: (context, index) {
                           final activity = _activities[index];
@@ -273,9 +273,9 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
 
                           return Card(
                             elevation: 3,
-                            margin: EdgeInsets.symmetric(vertical: 8),
+                            margin: const EdgeInsets.symmetric(vertical: 8),
                             child: Padding(
-                              padding: EdgeInsets.all(16),
+                              padding: const EdgeInsets.all(16),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -283,7 +283,7 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
                                   Row(
                                     children: [
                                       Container(
-                                        padding: EdgeInsets.symmetric(
+                                        padding: const EdgeInsets.symmetric(
                                             horizontal: 8, vertical: 4),
                                         decoration: BoxDecoration(
                                           color: Colors.deepPurple,
@@ -292,18 +292,18 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
                                         ),
                                         child: Text(
                                           '${index + 1}',
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                       ),
-                                      SizedBox(width: 12),
+                                      const SizedBox(width: 12),
                                       Expanded(
                                         child: Text(
                                           activity['activity_name'] ??
                                               'Unknown Activity',
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -319,7 +319,7 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
                                           .toString()
                                           .isNotEmpty)
                                     Padding(
-                                      padding: EdgeInsets.only(top: 8),
+                                      padding: const EdgeInsets.only(top: 8),
                                       child: Text(
                                         activity['activity_description'],
                                         style: TextStyle(
@@ -329,7 +329,7 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
                                       ),
                                     ),
 
-                                  SizedBox(height: 16),
+                                  const SizedBox(height: 16),
 
                                   // Rating label
                                   Text(
@@ -343,7 +343,7 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
                                     ),
                                   ),
 
-                                  SizedBox(height: 8),
+                                  const SizedBox(height: 8),
 
                                   // Rating buttons (1-5)
                                   Row(
@@ -356,7 +356,7 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
 
                                       return Expanded(
                                         child: Padding(
-                                          padding: EdgeInsets.symmetric(
+                                          padding: const EdgeInsets.symmetric(
                                               horizontal: 4),
                                           child: ElevatedButton(
                                             onPressed: () {
@@ -372,7 +372,7 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
                                               foregroundColor: isSelected
                                                   ? Colors.white
                                                   : Colors.black,
-                                              padding: EdgeInsets.symmetric(
+                                              padding: const EdgeInsets.symmetric(
                                                   vertical: 12),
                                               shape: RoundedRectangleBorder(
                                                 borderRadius:
@@ -381,7 +381,7 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
                                             ),
                                             child: Text(
                                               '$ratingValue',
-                                              style: TextStyle(
+                                              style: const TextStyle(
                                                 fontSize: 18,
                                                 fontWeight: FontWeight.bold,
                                               ),
@@ -392,11 +392,11 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
                                     }),
                                   ),
 
-                                  SizedBox(height: 12),
+                                  const SizedBox(height: 12),
 
                                   // Comments field
                                   TextField(
-                                    decoration: InputDecoration(
+                                    decoration: const InputDecoration(
                                       labelText: 'Comments (optional)',
                                       border: OutlineInputBorder(),
                                       hintText:
@@ -424,8 +424,8 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
 
                     // Save button
                     Container(
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
+                      padding: const EdgeInsets.all(16),
+                      decoration: const BoxDecoration(
                         color: Colors.white,
                         boxShadow: [
                           BoxShadow(
@@ -441,13 +441,13 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
                           onPressed: _isSaving ? null : _saveRatings,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
-                            padding: EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
                           child: _isSaving
-                              ? Row(
+                              ? const Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     SizedBox(
@@ -464,7 +464,7 @@ class _ArplAppendixEPageState extends State<ArplAppendixEPage> {
                                     Text('Saving...'),
                                   ],
                                 )
-                              : Text(
+                              : const Text(
                                   'Save Ratings',
                                   style: TextStyle(
                                       fontSize: 18,

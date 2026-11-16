@@ -34,7 +34,7 @@ class _WorkExperienceFormState extends State<WorkExperienceForm> {
         _isLoading = false;
       });
     } catch (e) {
-      print('[WORK_EXP] Error loading work experiences: $e');
+      debugPrint('[WORK_EXP] Error loading work experiences: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -378,13 +378,13 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
 
       // Try to sync to server if online
       bool isOnline = await _checkConnectivity();
-      print('[WORK_EXP] Connectivity check: $isOnline');
+      debugPrint('[WORK_EXP] Connectivity check: $isOnline');
       
       if (isOnline) {
         try {
           final url = '${AppConfig.baseUrl}/save_work_experience.php';
-          print('[WORK_EXP] Syncing to: $url');
-          print('[WORK_EXP] Data: ${jsonEncode(experienceData)}');
+          debugPrint('[WORK_EXP] Syncing to: $url');
+          debugPrint('[WORK_EXP] Data: ${jsonEncode(experienceData)}');
           
           final response = await http.post(
             Uri.parse(url),
@@ -392,8 +392,8 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
             body: jsonEncode(experienceData),
           ).timeout(const Duration(seconds: 30));
 
-          print('[WORK_EXP] Response status: ${response.statusCode}');
-          print('[WORK_EXP] Response body: ${response.body}');
+          debugPrint('[WORK_EXP] Response status: ${response.statusCode}');
+          debugPrint('[WORK_EXP] Response body: ${response.body}');
 
           if (response.statusCode == 200) {
             final jsonResponse = jsonDecode(response.body);
@@ -407,7 +407,7 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
                 ),
               );
             } else {
-              print('[WORK_EXP] Server returned success=false: ${jsonResponse['message']}');
+              debugPrint('[WORK_EXP] Server returned success=false: ${jsonResponse['message']}');
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Saved locally. Server: ${jsonResponse['message']}'),
@@ -416,7 +416,7 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
               );
             }
           } else {
-            print('[WORK_EXP] HTTP error: ${response.statusCode}');
+            debugPrint('[WORK_EXP] HTTP error: ${response.statusCode}');
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Saved locally. Server error: ${response.statusCode}'),
@@ -425,8 +425,8 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
             );
           }
         } catch (e) {
-          print('[WORK_EXP] Error syncing to server: $e');
-          print('[WORK_EXP] Error type: ${e.runtimeType}');
+          debugPrint('[WORK_EXP] Error syncing to server: $e');
+          debugPrint('[WORK_EXP] Error type: ${e.runtimeType}');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Saved locally. Sync error: ${e.toString().substring(0, 50)}...'),
@@ -436,7 +436,7 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
           );
         }
       } else {
-        print('[WORK_EXP] Device is offline');
+        debugPrint('[WORK_EXP] Device is offline');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Saved locally, will sync when online'),
@@ -447,7 +447,7 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
 
       Navigator.pop(context, true);
     } catch (e) {
-      print('[WORK_EXP] Error saving work experience: $e');
+      debugPrint('[WORK_EXP] Error saving work experience: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving: $e')),
       );

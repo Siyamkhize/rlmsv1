@@ -23,11 +23,11 @@ class FacilitatorCameraSignatureWidget extends StatefulWidget {
   final String clockAction; // 'in' or 'out'
 
   const FacilitatorCameraSignatureWidget({
-    Key? key,
+    super.key,
     required this.facilitatorId,
     required this.facilitatorName,
     required this.clockAction,
-  }) : super(key: key);
+  });
 
   @override
   State<FacilitatorCameraSignatureWidget> createState() =>
@@ -1137,7 +1137,7 @@ class _FacilitatorCameraSignatureWidgetState
                         ),
                       ),
                       child: _isSubmitting
-                          ? Row(
+                          ? const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 SizedBox(
@@ -1149,8 +1149,8 @@ class _FacilitatorCameraSignatureWidgetState
                                         Colors.white),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                const Text(
+                                SizedBox(width: 8),
+                                Text(
                                   'Verifying location...',
                                   style: TextStyle(
                                     fontSize: 15,

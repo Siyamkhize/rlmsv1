@@ -56,7 +56,7 @@ class FacilitatorFaceRepository {
   /// - enrolled_at: Enrollment timestamp (if enrolled)
   Future<Map<String, dynamic>> checkFaceEnrolled(int facilitatorId) async {
     try {
-      print(
+      debugPrint(
           '🔷 FacilitatorFaceRepository: Checking enrollment for facilitator $facilitatorId');
 
       final url = AppConfig.buildUrl('check_facilitator_face_enrollment.php');
@@ -66,11 +66,11 @@ class FacilitatorFaceRepository {
         body: json.encode({'facilitator_id': facilitatorId}),
       );
 
-      print('🔷 Check enrollment response status: ${response.statusCode}');
+      debugPrint('🔷 Check enrollment response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = _parseJsonBody(response.body, 'check enrollment');
-        print('🔷 Enrollment status: ${data['enrolled']}');
+        debugPrint('🔷 Enrollment status: ${data['enrolled']}');
         return data;
       } else {
         return {
@@ -80,8 +80,8 @@ class FacilitatorFaceRepository {
         };
       }
     } catch (e, stackTrace) {
-      print('❌ Error checking facilitator face enrollment: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('❌ Error checking facilitator face enrollment: $e');
+      debugPrint('Stack trace: $stackTrace');
       return {
         'success': false,
         'enrolled': false,
@@ -110,7 +110,7 @@ class FacilitatorFaceRepository {
     required bool consentGiven,
   }) async {
     try {
-      print(
+      debugPrint(
           '🔷 FacilitatorFaceRepository: Enrolling face for facilitator $facilitatorId');
 
       final url = AppConfig.buildUrl('enrol_facilitator_face.php');
@@ -125,11 +125,11 @@ class FacilitatorFaceRepository {
         }),
       );
 
-      print('🔷 Enrollment response status: ${response.statusCode}');
+      debugPrint('🔷 Enrollment response status: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 400) {
         final data = _parseJsonBody(response.body, 'enrollment');
-        print('🔷 Enrollment response: $data');
+        debugPrint('🔷 Enrollment response: $data');
         return data;
       } else {
         return {
@@ -138,8 +138,8 @@ class FacilitatorFaceRepository {
         };
       }
     } catch (e, stackTrace) {
-      print('❌ Error enrolling facilitator face: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('❌ Error enrolling facilitator face: $e');
+      debugPrint('Stack trace: $stackTrace');
       return {
         'success': false,
         'message': 'Network error: $e',
@@ -173,7 +173,7 @@ class FacilitatorFaceRepository {
     String? deviceInfo,
   }) async {
     try {
-      print(
+      debugPrint(
           '🔷 FacilitatorFaceRepository: Verifying face for facilitator $facilitatorId');
 
       final url = AppConfig.buildUrl('verify_facilitator_face.php');
@@ -190,11 +190,11 @@ class FacilitatorFaceRepository {
         }),
       );
 
-      print('🔷 Verification response status: ${response.statusCode}');
+      debugPrint('🔷 Verification response status: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 400) {
         final data = _parseJsonBody(response.body, 'verification');
-        print('🔷 Verification response: $data');
+        debugPrint('🔷 Verification response: $data');
         return data;
       } else {
         return {
@@ -204,8 +204,8 @@ class FacilitatorFaceRepository {
         };
       }
     } catch (e, stackTrace) {
-      print('❌ Error verifying facilitator face: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('❌ Error verifying facilitator face: $e');
+      debugPrint('Stack trace: $stackTrace');
       return {
         'success': false,
         'verified': false,

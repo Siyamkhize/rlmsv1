@@ -26,7 +26,7 @@ class PersistentSyncService {
           connectivityResult.first != ConnectivityResult.none;
 
       if (!isOnline) {
-        print('[PERSISTENT_SYNC] Offline - using cached local data');
+        debugPrint('[PERSISTENT_SYNC] Offline - using cached local data');
         final localCount = await _getLocalLearnerCount(classID);
         return {
           'success': true,
@@ -36,7 +36,7 @@ class PersistentSyncService {
         };
       }
 
-      print('[PERSISTENT_SYNC] Online - syncing learner data...');
+      debugPrint('[PERSISTENT_SYNC] Online - syncing learner data...');
 
       // Build URL with optional classID filter
       String url = AppConfig.syncLearnerDetailsUrl;
@@ -51,14 +51,14 @@ class PersistentSyncService {
         ),
         endpoint: 'sync_learners',
         maxRetries: NetworkConfig.syncOperationsMaxRetries,
-        timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
+        timeout: const Duration(seconds: NetworkConfig.lightweightTimeout),
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> learners = json.decode(response.body);
 
         if (learners.isEmpty) {
-          print('[PERSISTENT_SYNC] No learner data received from server');
+          debugPrint('[PERSISTENT_SYNC] No learner data received from server');
           final localCount = await _getLocalLearnerCount(classID);
           return {
             'success': true,
@@ -68,7 +68,7 @@ class PersistentSyncService {
           };
         }
 
-        print(
+        debugPrint(
             '[PERSISTENT_SYNC] Received ${learners.length} learners from server');
 
         int insertedCount = 0;
@@ -80,7 +80,7 @@ class PersistentSyncService {
           try {
             // Validate required fields
             if (learner['IDNumber'] == null || learner['classID'] == null) {
-              print(
+              debugPrint(
                   '[PERSISTENT_SYNC] Skipping invalid learner: Missing IDNumber or classID');
               errorCount++;
               continue;
@@ -94,15 +94,15 @@ class PersistentSyncService {
 
             if (exists) {
               updatedCount++;
-              print(
+              debugPrint(
                   '[PERSISTENT_SYNC] ✅ Updated: ${learner['Name']} ${learner['Surname']} (ID: ${learner['LearnerID']})');
             } else {
               insertedCount++;
-              print(
+              debugPrint(
                   '[PERSISTENT_SYNC] ✅ Inserted: ${learner['Name']} ${learner['Surname']} (ID: ${learner['LearnerID']})');
             }
           } catch (e) {
-            print(
+            debugPrint(
                 '[PERSISTENT_SYNC] ❌ Error processing learner ${learner['LearnerID']}: $e');
             errorCount++;
           }
@@ -110,11 +110,11 @@ class PersistentSyncService {
 
         final totalLocal = await _getLocalLearnerCount(classID);
 
-        print('[PERSISTENT_SYNC] Sync completed:');
-        print('  - Inserted: $insertedCount');
-        print('  - Updated: $updatedCount');
-        print('  - Errors: $errorCount');
-        print('  - Total local: $totalLocal');
+        debugPrint('[PERSISTENT_SYNC] Sync completed:');
+        debugPrint('  - Inserted: $insertedCount');
+        debugPrint('  - Updated: $updatedCount');
+        debugPrint('  - Errors: $errorCount');
+        debugPrint('  - Total local: $totalLocal');
 
         return {
           'success': true,
@@ -129,8 +129,8 @@ class PersistentSyncService {
         throw Exception('Server returned status ${response.statusCode}');
       }
     } catch (e, stackTrace) {
-      print('[PERSISTENT_SYNC] Error: $e');
-      print('[PERSISTENT_SYNC] Stack trace: $stackTrace');
+      debugPrint('[PERSISTENT_SYNC] Error: $e');
+      debugPrint('[PERSISTENT_SYNC] Stack trace: $stackTrace');
 
       // Even on error, check if we have local data
       final localCount = await _getLocalLearnerCount(classID);
@@ -230,7 +230,7 @@ class PersistentSyncService {
   /// Force refresh - clears and re-syncs all data (use sparingly)
   Future<Map<String, dynamic>> forceRefreshAllData() async {
     try {
-      print('[PERSISTENT_SYNC] ⚠️ FORCE REFRESH - Clearing all local data');
+      debugPrint('[PERSISTENT_SYNC] ⚠️ FORCE REFRESH - Clearing all local data');
 
       // Check connectivity first
       final connectivityResult = await Connectivity().checkConnectivity();
@@ -247,12 +247,12 @@ class PersistentSyncService {
 
       // Clear existing data
       await _dbHelper.clearTable('learnerdetails');
-      print('[PERSISTENT_SYNC] Cleared existing learner data');
+      debugPrint('[PERSISTENT_SYNC] Cleared existing learner data');
 
       // Re-sync from server
       return await syncLearnerDetailsPersistent();
     } catch (e) {
-      print('[PERSISTENT_SYNC] Force refresh error: $e');
+      debugPrint('[PERSISTENT_SYNC] Force refresh error: $e');
       return {
         'success': false,
         'message': 'Force refresh failed: $e',

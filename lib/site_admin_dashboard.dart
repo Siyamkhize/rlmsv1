@@ -48,7 +48,7 @@ class _SiteAdminDashboardState extends State<SiteAdminDashboard> {
         }
       }
     } catch (e) {
-      print('Error loading workplaces: $e');
+      debugPrint('Error loading workplaces: $e');
       setState(() => isLoading = false);
     }
   }

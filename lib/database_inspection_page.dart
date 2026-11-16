@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'database_helper.dart';
 
 class DatabaseInspectionPage extends StatefulWidget {
+  const DatabaseInspectionPage({super.key});
+
   @override
   _DatabaseInspectionPageState createState() => _DatabaseInspectionPageState();
 }
@@ -24,7 +26,7 @@ class _DatabaseInspectionPageState extends State<DatabaseInspectionPage> {
   Future<void> _executeQuery() async {
     if (_queryController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Please enter a SQL query')));
+          .showSnackBar(const SnackBar(content: Text('Please enter a SQL query')));
       return;
     }
 
@@ -77,7 +79,7 @@ class _DatabaseInspectionPageState extends State<DatabaseInspectionPage> {
               .map((column) => DataColumn(
                     label: Text(
                       column,
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ))
               .toList(),
@@ -91,12 +93,12 @@ class _DatabaseInspectionPageState extends State<DatabaseInspectionPage> {
                                   Clipboard.setData(ClipboardData(
                                       text: row[column]?.toString() ?? ''));
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
+                                      const SnackBar(
                                           content:
                                               Text('Copied to clipboard')));
                                 },
                                 child: Container(
-                                  constraints: BoxConstraints(maxWidth: 200),
+                                  constraints: const BoxConstraints(maxWidth: 200),
                                   child: Text(
                                     row[column]?.toString() ?? 'NULL',
                                     overflow: TextOverflow.ellipsis,
@@ -117,38 +119,38 @@ class _DatabaseInspectionPageState extends State<DatabaseInspectionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Database Inspector'),
+        title: const Text('Database Inspector'),
         backgroundColor: Colors.blue[800],
       ),
       body: Column(
         children: [
           // Query Input Section
           Container(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             color: Colors.grey[100],
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'SQL Query:',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 TextField(
                   controller: _queryController,
                   maxLines: 3,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     hintText: 'Enter SQL query here...',
                   ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     ElevatedButton(
                       onPressed: _isLoading ? null : _executeQuery,
                       child: _isLoading
-                          ? Row(
+                          ? const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 SizedBox(
@@ -161,9 +163,9 @@ class _DatabaseInspectionPageState extends State<DatabaseInspectionPage> {
                                 Text('Executing...'),
                               ],
                             )
-                          : Text('Execute Query'),
+                          : const Text('Execute Query'),
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     ElevatedButton(
                       onPressed: () {
                         setState(() {
@@ -173,9 +175,9 @@ class _DatabaseInspectionPageState extends State<DatabaseInspectionPage> {
                       },
                       style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.grey),
-                      child: Text('Manual Evidence'),
+                      child: const Text('Manual Evidence'),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () {
                         setState(() {
@@ -185,7 +187,7 @@ class _DatabaseInspectionPageState extends State<DatabaseInspectionPage> {
                       },
                       style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.orange),
-                      child: Text('Show Tables'),
+                      child: const Text('Show Tables'),
                     ),
                   ],
                 ),
@@ -196,15 +198,15 @@ class _DatabaseInspectionPageState extends State<DatabaseInspectionPage> {
           // Results Section
           Expanded(
             child: Container(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Results: (${_results.length} rows)',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Expanded(child: _buildResultsTable()),
                 ],
               ),

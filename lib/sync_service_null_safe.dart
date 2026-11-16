@@ -14,7 +14,7 @@ class SyncServiceNullSafe {
       final connectivityResult = await Connectivity().checkConnectivity();
       if (!connectivityResult.contains(ConnectivityResult.wifi) &&
           !connectivityResult.contains(ConnectivityResult.mobile)) {
-        print("No network available, skipping learner details sync");
+        debugPrint("No network available, skipping learner details sync");
         return;
       }
 
@@ -24,23 +24,23 @@ class SyncServiceNullSafe {
         headers: {'Content-Type': 'application/json'},
       );
 
-      print("Server response status: ${response.statusCode}");
-      print("Server response body length: ${response.body.length}");
+      debugPrint("Server response status: ${response.statusCode}");
+      debugPrint("Server response body length: ${response.body.length}");
 
       if (response.statusCode == 200) {
         final List<dynamic> learners = json.decode(response.body);
         if (learners.isEmpty) {
-          print("Warning: No learner data received from API");
+          debugPrint("Warning: No learner data received from API");
           return;
         }
 
-        print("Received ${learners.length} learners from server");
+        debugPrint("Received ${learners.length} learners from server");
 
         final db = await _dbHelper.database;
 
         // Clear existing learner details
         await _dbHelper.clearTable('learnerdetails');
-        print("Cleared existing learner details");
+        debugPrint("Cleared existing learner details");
 
         int successCount = 0;
         int errorCount = 0;
@@ -50,7 +50,7 @@ class SyncServiceNullSafe {
           try {
             // Validate required fields
             if (learner['IDNumber'] == null || learner['classID'] == null) {
-              print("Skipping invalid learner record: Missing IDNumber or classID");
+              debugPrint("Skipping invalid learner record: Missing IDNumber or classID");
               errorCount++;
               continue;
             }
@@ -61,29 +61,29 @@ class SyncServiceNullSafe {
             // Insert using the enhanced insertData method
             await _dbHelper.insertData('learnerdetails', sanitizedLearnerData);
             
-            print("✅ Successfully inserted learner: ${sanitizedLearnerData['Name']} ${sanitizedLearnerData['Surname']} (ID: ${sanitizedLearnerData['IDNumber']})");
+            debugPrint("✅ Successfully inserted learner: ${sanitizedLearnerData['Name']} ${sanitizedLearnerData['Surname']} (ID: ${sanitizedLearnerData['IDNumber']})");
             successCount++;
             
           } catch (e) {
-            print("❌ Error inserting learner ${learner['IDNumber']}: $e");
+            debugPrint("❌ Error inserting learner ${learner['IDNumber']}: $e");
             errorCount++;
             // Continue with other learners even if one fails
           }
         }
 
-        print("Sync completed: $successCount successful, $errorCount errors");
+        debugPrint("Sync completed: $successCount successful, $errorCount errors");
         
         // Verify the sync
         final insertedCount = await db.rawQuery('SELECT COUNT(*) as count FROM learnerdetails');
         final count = insertedCount.first['count'];
-        print("Verification: $count learners now in local database");
+        debugPrint("Verification: $count learners now in local database");
 
       } else {
         throw Exception("Failed to sync learner details. Status code: ${response.statusCode}");
       }
     } catch (e, stackTrace) {
-      print("Error syncing learner details: $e");
-      print("Stack trace: $stackTrace");
+      debugPrint("Error syncing learner details: $e");
+      debugPrint("Stack trace: $stackTrace");
       rethrow;
     }
   }

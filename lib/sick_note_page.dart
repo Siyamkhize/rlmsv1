@@ -14,10 +14,10 @@ class SickNotePage extends StatefulWidget {
   final String learnerName;
 
   const SickNotePage({
-    Key? key,
+    super.key,
     required this.learnerID,
     required this.learnerName,
-  }) : super(key: key);
+  });
 
   @override
   _SickNotePageState createState() => _SickNotePageState();
@@ -470,8 +470,8 @@ class _SickNotePageState extends State<SickNotePage> {
               context: context,
               barrierDismissible: false,
               builder: (context) => AlertDialog(
-                title: Row(
-                  children: const [
+                title: const Row(
+                  children: [
                     Icon(Icons.check_circle, color: Colors.green, size: 32),
                     SizedBox(width: 12),
                     Text('Success'),

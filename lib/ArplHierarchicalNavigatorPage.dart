@@ -1,13 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'database_helper.dart';
 import 'CameraScanPage.dart';
@@ -71,9 +67,9 @@ class _ArplHierarchicalNavigatorPageState
     }
 
     fetchArplData().then((_) {
-      print('fetchArplData complete');
+      debugPrint('fetchArplData complete');
     }).catchError((e) {
-      print('Error in fetchArplData: $e');
+      debugPrint('Error in fetchArplData: $e');
     });
   }
 
@@ -160,7 +156,7 @@ class _ArplHierarchicalNavigatorPageState
           debugPrint('❌ No pathways in response!');
         }
 
-        print('ARPL DEBUG DATA: ${jsonData['_debug']}');
+        debugPrint('ARPL DEBUG DATA: ${jsonData['_debug']}');
         setState(() {
           if (jsonData['error'] != null) {
             errorMessage = jsonData['error'];
@@ -212,9 +208,9 @@ class _ArplHierarchicalNavigatorPageState
 
     final isUploaded = uploadedExercises[uploadKey] == true;
     if (isUploaded) {
-      print('Paper FOUND in uploaded: $paperTitle ($sectionType)');
+      debugPrint('Paper FOUND in uploaded: $paperTitle ($sectionType)');
     } else {
-      print('Paper NOT in uploaded: $paperTitle ($sectionType)');
+      debugPrint('Paper NOT in uploaded: $paperTitle ($sectionType)');
     }
 
     return isUploaded;
@@ -257,7 +253,7 @@ class _ArplHierarchicalNavigatorPageState
         });
       });
     } catch (e) {
-      print('Error refreshing upload status: $e');
+      debugPrint('Error refreshing upload status: $e');
     }
   }
 
@@ -270,7 +266,7 @@ class _ArplHierarchicalNavigatorPageState
         unsyncedCount = unsynced.length;
       });
     } catch (e) {
-      print('Error updating unsynced count: $e');
+      debugPrint('Error updating unsynced count: $e');
     }
   }
 
@@ -313,17 +309,17 @@ class _ArplHierarchicalNavigatorPageState
               final uploadKey = 'ARPL-$paperTitleNormalized-$sectionType';
               uploadedExercises[uploadKey] = true;
 
-              print(
+              debugPrint(
                   'ARPL paper marked uploaded: ${paper['paper_title']} ($sectionType)');
             }
           });
 
-          print(
+          debugPrint(
               'ARPL upload status loaded: ${uploadedExercises.length} papers');
         }
       }
     } catch (e) {
-      print('Error checking ARPL server upload status: $e');
+      debugPrint('Error checking ARPL server upload status: $e');
     }
   }
 
@@ -335,12 +331,12 @@ class _ArplHierarchicalNavigatorPageState
       setState(() {
         uploadedExercises = localUploads;
       });
-      print('Local uploadedExercises: $uploadedExercises');
+      debugPrint('Local uploadedExercises: $uploadedExercises');
     } catch (e) {
       setState(() {
         errorMessage = 'Error checking local upload status: $e';
       });
-      print('Error checking local upload status: $e');
+      debugPrint('Error checking local upload status: $e');
     }
   }
 
@@ -429,7 +425,7 @@ class _ArplHierarchicalNavigatorPageState
         ));
       }
     } catch (e) {
-      print('Error during sync: $e');
+      debugPrint('Error during sync: $e');
     } finally {
       setState(() {
         isSyncing = false;
@@ -698,7 +694,7 @@ class _ArplHierarchicalNavigatorPageState
             return GestureDetector(
               onTap: isAvailable
                   ? () {
-                      print(
+                      debugPrint(
                           '✅ Section selected: ${section['name']} (${section['key']})');
                       setState(() {
                         selectedSection = section['key'] as String;
@@ -775,12 +771,12 @@ class _ArplHierarchicalNavigatorPageState
     final papers = papersData?.keys.toList() ?? [];
 
     // Debug logging
-    print('📚 PAPER SELECTOR DEBUG:');
-    print('   Selected Pathway: $selectedPathway');
-    print('   Selected Trade: $selectedTrade');
-    print('   Selected Section: $selectedSection');
-    print('   Papers Available: ${papers.length}');
-    print('   Papers List: $papers');
+    debugPrint('📚 PAPER SELECTOR DEBUG:');
+    debugPrint('   Selected Pathway: $selectedPathway');
+    debugPrint('   Selected Trade: $selectedTrade');
+    debugPrint('   Selected Section: $selectedSection');
+    debugPrint('   Papers Available: ${papers.length}');
+    debugPrint('   Papers List: $papers');
 
     if (papers.isEmpty) {
       return Scaffold(
@@ -951,7 +947,7 @@ class _ArplHierarchicalNavigatorPageState
                   ),
                   trailing: const Icon(Icons.arrow_forward),
                   onTap: () {
-                    print('✅ Paper selected: $paper');
+                    debugPrint('✅ Paper selected: $paper');
                     setState(() {
                       selectedPaper = paper;
                       currentStep = 4;
@@ -1125,17 +1121,17 @@ class _ArplHierarchicalNavigatorPageState
                         ],
                       ),
                       if (actualUnuploadedQuestions.length == questions.length)
-                        Column(
+                        const Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Status',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey,
                               ),
                             ),
-                            const Text(
+                            Text(
                               'Not Started',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
@@ -1146,17 +1142,17 @@ class _ArplHierarchicalNavigatorPageState
                           ],
                         )
                       else if (actualUnuploadedQuestions.isEmpty)
-                        Column(
+                        const Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Status',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey,
                               ),
                             ),
-                            const Text(
+                            Text(
                               'Complete',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
@@ -1380,7 +1376,7 @@ class _ArplHierarchicalNavigatorPageState
                   paperName,
                   paperIndex + 1,
                 );
-              }).toList(),
+              }),
               const Divider(height: 16, thickness: 2),
             ],
           );
@@ -1415,7 +1411,7 @@ class _ArplHierarchicalNavigatorPageState
         ),
         title: Text(
           'Paper $paperNumber • Q$questionNumber',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: Colors.deepPurple,
@@ -1507,7 +1503,7 @@ class _ArplHierarchicalNavigatorPageState
     );
 
     if (imageSource == null) {
-      print('User cancelled image selection');
+      debugPrint('User cancelled image selection');
       return;
     }
 
@@ -1529,7 +1525,7 @@ class _ArplHierarchicalNavigatorPageState
       );
 
       if (result == null || result is! Map) {
-        print('Error: No result returned from CameraScanPage');
+        debugPrint('Error: No result returned from CameraScanPage');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -1542,7 +1538,7 @@ class _ArplHierarchicalNavigatorPageState
       final file = result['image'] as File?;
 
       if (file == null || !await file.exists()) {
-        print('Error: No valid file returned from CameraScanPage');
+        debugPrint('Error: No valid file returned from CameraScanPage');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No valid document captured')),
@@ -1552,7 +1548,7 @@ class _ArplHierarchicalNavigatorPageState
       }
 
       if (!file.path.toLowerCase().endsWith('.pdf')) {
-        print('Error: Expected PDF file for ARPL, got ${file.path}');
+        debugPrint('Error: Expected PDF file for ARPL, got ${file.path}');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -1581,7 +1577,7 @@ class _ArplHierarchicalNavigatorPageState
     // Copy the temporary file to POE directory
     await document!.copy(targetFilePath);
     document = targetFile;
-    print('Document copied to: $targetFilePath');
+    debugPrint('Document copied to: $targetFilePath');
 
     // Show processing dialog
     if (mounted) {
@@ -1612,17 +1608,17 @@ class _ArplHierarchicalNavigatorPageState
       // Upload the same document for all selected questions
       bool isConnected = await _checkConnectivity();
 
-      print('📊 ARPL UPLOAD DEBUG:');
-      print('   Total questions to process: ${questions.length}');
-      print('   Is connected: $isConnected');
-      print('   Target file path: $targetFilePath');
+      debugPrint('📊 ARPL UPLOAD DEBUG:');
+      debugPrint('   Total questions to process: ${questions.length}');
+      debugPrint('   Is connected: $isConnected');
+      debugPrint('   Target file path: $targetFilePath');
 
       final dbHelper = DatabaseHelper();
 
       if (isConnected) {
         final url = Uri.parse(AppConfig.buildUrl('arpl_save_metadata.php'));
 
-        print('Starting ARPL upload for ${questions.length} questions');
+        debugPrint('Starting ARPL upload for ${questions.length} questions');
 
         // Send a single bulk request for all selected questions
         var request = http.MultipartRequest('POST', url)
@@ -1638,7 +1634,7 @@ class _ArplHierarchicalNavigatorPageState
               .map((item) => item['exercise']?.toString() ?? 'N/A')
               .toList());
 
-        print(
+        debugPrint(
             'Uploading single ARPL document for ${questions.length} questions: ${document.path}, Size: ${await document.length()} bytes');
 
         request.files.add(await http.MultipartFile.fromPath(
@@ -1690,7 +1686,7 @@ class _ArplHierarchicalNavigatorPageState
               );
             }
           } else {
-            print('❌ Server error for ARPL upload: ${decoded['message']}');
+            debugPrint('❌ Server error for ARPL upload: ${decoded['message']}');
             // Save locally for all exercises
             for (var item in questions) {
               final questionNumber = (item['question_number'] ?? '').toString();
@@ -1723,7 +1719,7 @@ class _ArplHierarchicalNavigatorPageState
           // Close processing dialog if open
           if (mounted) Navigator.of(context).pop();
 
-          print('❌ Upload error: $e');
+          debugPrint('❌ Upload error: $e');
           // Save locally for all exercises
           for (var item in questions) {
             final questionNumber = (item['question_number'] ?? '').toString();
@@ -1785,7 +1781,7 @@ class _ArplHierarchicalNavigatorPageState
 
       await _refreshUploadStatus();
     } catch (e, stackTrace) {
-      print('Error in _scanAllQuestions: $e\nStackTrace: $stackTrace');
+      debugPrint('Error in _scanAllQuestions: $e\nStackTrace: $stackTrace');
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1818,7 +1814,7 @@ class _ArplHierarchicalNavigatorPageState
         ),
         title: Text(
           'Paper $paperNumber • Q$questionNumber',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: Colors.deepPurple,

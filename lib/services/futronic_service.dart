@@ -6,7 +6,7 @@
 //       // For now, return false to indicate no Futronic scanner is available
 //       return false;
 //     } catch (e) {
-//       print('Error checking Futronic connection: $e');
+//       debugPrint('Error checking Futronic connection: $e');
 //       return false;
 //     }
 //   }
@@ -17,7 +17,7 @@
 //       final bool? result = await _channel.invokeMethod('requestUsbPermission');
 //       return result ?? false;
 //     } catch (e) {
-//       print('Error requesting USB permission: $e');
+//       debugPrint('Error requesting USB permission: $e');
 //       return false;
 //     }
 //   }
@@ -32,7 +32,7 @@
 //       // For now, throw an exception to indicate the service is not implemented
 //       throw Exception('Futronic service not implemented - please use ZKTeco scanner instead');
 //     } catch (e) {
-//       print('Futronic verification error: $e');
+//       debugPrint('Futronic verification error: $e');
 //       rethrow;
 //     }
 //   }
@@ -48,7 +48,7 @@ class FutronicService {
       final bool? result = await _channel.invokeMethod('isFutronicConnected');
       return result ?? false;
     } catch (e) {
-      print('Error checking Futronic connection: $e');
+      debugPrint('Error checking Futronic connection: $e');
       return false;
     }
   }
@@ -59,7 +59,7 @@ class FutronicService {
       final bool? result = await _channel.invokeMethod('requestUsbPermission');
       return result ?? false;
     } catch (e) {
-      print('Error requesting USB permission: $e');
+      debugPrint('Error requesting USB permission: $e');
       return false;
     }
   }
@@ -70,7 +70,7 @@ class FutronicService {
       final bool? result = await _channel.invokeMethod('checkUsbPermission');
       return result ?? false;
     } catch (e) {
-      print('Error checking USB permission: $e');
+      debugPrint('Error checking USB permission: $e');
       return false;
     }
   }
@@ -89,7 +89,7 @@ class FutronicService {
       });
       return result ?? false;
     } catch (e) {
-      print('Futronic verification error: $e');
+      debugPrint('Futronic verification error: $e');
       rethrow;
     }
   }

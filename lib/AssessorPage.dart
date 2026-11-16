@@ -36,11 +36,11 @@ class _AssessorPageState extends State<AssessorPage> {
   @override
   void initState() {
     super.initState();
-    print(
+    debugPrint(
         '[AssessorPage] Initializing with forcePathwayType: ${widget.forcePathwayType}');
     if (widget.forcePathwayType != null) {
       _pathwayType = widget.forcePathwayType;
-      print('[AssessorPage] Set _pathwayType to: $_pathwayType');
+      debugPrint('[AssessorPage] Set _pathwayType to: $_pathwayType');
     }
     _classes = fetchClasses(widget.facilitator_id);
   }
@@ -51,7 +51,7 @@ class _AssessorPageState extends State<AssessorPage> {
         'facilitator_id': facilitatorId,
       });
 
-      print('[AssessorPage] Fetching classes from: $url');
+      debugPrint('[AssessorPage] Fetching classes from: $url');
 
       final response = await http.get(Uri.parse(url));
 
@@ -74,11 +74,11 @@ class _AssessorPageState extends State<AssessorPage> {
                           .toUpperCase() ??
                       '';
 
-              print(
+              debugPrint(
                   '[AssessorPage] DEBUG: First class data keys: ${data[0].keys.toList()}');
-              print(
+              debugPrint(
                   '[AssessorPage] DEBUG: Project_pathway raw: ${data[0]['Project_pathway']}');
-              print('[AssessorPage] DEBUG: Pathway uppercase: $pathway');
+              debugPrint('[AssessorPage] DEBUG: Pathway uppercase: $pathway');
 
               // Check for ARPL detection in multiple formats:
               // 1. Full JSON format: [{"type":"ARPL",...}]
@@ -97,11 +97,11 @@ class _AssessorPageState extends State<AssessorPage> {
                 _pathwayType = pathway;
               }
 
-              print(
+              debugPrint(
                   '[AssessorPage] Detected Pathway: $_pathwayType (from data: $pathway) (isARPL=$isARPL)');
             });
           } else if (widget.forcePathwayType != null) {
-            print(
+            debugPrint(
                 '[AssessorPage] Using forced pathway type: ${widget.forcePathwayType}');
           }
           return data;
@@ -113,7 +113,7 @@ class _AssessorPageState extends State<AssessorPage> {
             'Failed to load classes. Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('[AssessorPage] Error fetching classes: $e');
+      debugPrint('[AssessorPage] Error fetching classes: $e');
       throw Exception('Failed to load classes. Error: $e');
     }
   }
@@ -608,7 +608,7 @@ class _AssessmentPreparationPageState extends State<AssessmentPreparationPage> {
         setState(() => _isLoadingLearners = false);
       }
     } catch (e) {
-      print('Error fetching learners: $e');
+      debugPrint('Error fetching learners: $e');
       setState(() => _isLoadingLearners = false);
     }
   }
@@ -915,7 +915,7 @@ class _UnitStandardDetailPageState extends State<UnitStandardDetailPage> {
           'prep_table': prepTable,
         };
 
-        print("Sending payload: ${jsonEncode(payload)}");
+        debugPrint("Sending payload: ${jsonEncode(payload)}");
         final response = await http.post(
           Uri.parse(
               'https://rlms.rlms.co.za/mobile/save_assessment_preparation.php'),
@@ -923,7 +923,7 @@ class _UnitStandardDetailPageState extends State<UnitStandardDetailPage> {
           body: jsonEncode(payload),
         );
 
-        print("Raw response: ${response.statusCode} - ${response.body}");
+        debugPrint("Raw response: ${response.statusCode} - ${response.body}");
         if (response.statusCode == 200) {
           var data = jsonDecode(response.body);
           setState(() {
@@ -956,7 +956,7 @@ class _UnitStandardDetailPageState extends State<UnitStandardDetailPage> {
           _responseMessage = 'Error saving form: $e';
           _isSubmitting = false;
         });
-        print("Exception: $e");
+        debugPrint("Exception: $e");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
@@ -1323,14 +1323,14 @@ class _AssessmentPlanDetailPageState extends State<AssessmentPlanDetailPage> {
           'assessment_method': _assessmentMethod,
         };
 
-        print("Sending payload: ${jsonEncode(payload)}");
+        debugPrint("Sending payload: ${jsonEncode(payload)}");
         final response = await http.post(
           Uri.parse('https://rlms.rlms.co.za/mobile/save_assessment_plan.php'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(payload),
         );
 
-        print("Raw response: ${response.statusCode} - ${response.body}");
+        debugPrint("Raw response: ${response.statusCode} - ${response.body}");
         if (response.statusCode == 200) {
           var data = jsonDecode(response.body);
           setState(() {
@@ -1364,7 +1364,7 @@ class _AssessmentPlanDetailPageState extends State<AssessmentPlanDetailPage> {
           _responseMessage = 'Error saving form: $e';
           _isSubmitting = false;
         });
-        print("Exception: $e");
+        debugPrint("Exception: $e");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
@@ -1649,7 +1649,7 @@ class _AssessorReportPageState extends State<AssessorReportPage> {
         setState(() => _isLoadingLearners = false);
       }
     } catch (e) {
-      print('Error fetching learners: $e');
+      debugPrint('Error fetching learners: $e');
       setState(() => _isLoadingLearners = false);
     }
   }
@@ -1842,13 +1842,13 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
         '_': DateTime.now().millisecondsSinceEpoch.toString(),
       });
 
-      print('[ClassDetailsPage] Fetching learners from: $url');
+      debugPrint('[ClassDetailsPage] Fetching learners from: $url');
       final response = await http.get(Uri.parse(url));
 
-      print('[ClassDetailsPage] Response Status: ${response.statusCode}');
-      print('[ClassDetailsPage] Response Headers: ${response.headers}');
-      print('[ClassDetailsPage] Response Body Length: ${response.body.length}');
-      print(
+      debugPrint('[ClassDetailsPage] Response Status: ${response.statusCode}');
+      debugPrint('[ClassDetailsPage] Response Headers: ${response.headers}');
+      debugPrint('[ClassDetailsPage] Response Body Length: ${response.body.length}');
+      debugPrint(
           '[ClassDetailsPage] Response Body (get_learners): ${response.body}');
 
       if (response.statusCode == 200) {
@@ -1870,31 +1870,31 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
             'learnerId': learnerId,
           });
 
-          print('[ClassDetailsPage] Fetching POE from: $poeUrl');
+          debugPrint('[ClassDetailsPage] Fetching POE from: $poeUrl');
           final poeResponse = await http.get(Uri.parse(poeUrl));
 
-          print(
+          debugPrint(
               'POE Response Status for learner $learnerId: ${poeResponse.statusCode}');
-          print(
+          debugPrint(
               'POE Response Body for learner $learnerId: ${poeResponse.body}');
 
           if (poeResponse.statusCode == 200) {
             if (poeResponse.body.isEmpty) {
               learner['poeData'] = {'pathways': {}};
-              print('Empty POE response for learner $learnerId');
+              debugPrint('Empty POE response for learner $learnerId');
             } else {
               try {
                 Map<String, dynamic> poeData = jsonDecode(poeResponse.body);
                 learner['poeData'] = poeData;
-                print('POE Data for learner $learnerId: $poeData');
+                debugPrint('POE Data for learner $learnerId: $poeData');
               } catch (e) {
                 learner['poeData'] = {'pathways': {}};
-                print('Failed to parse POE JSON for learner $learnerId: $e');
+                debugPrint('Failed to parse POE JSON for learner $learnerId: $e');
               }
             }
           } else {
             learner['poeData'] = {'pathways': {}};
-            print(
+            debugPrint(
                 'Failed to fetch POE for learner $learnerId, status: ${poeResponse.statusCode}');
           }
         }
@@ -1905,7 +1905,7 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
             'Failed to load learners. Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching learners: $e');
+      debugPrint('Error fetching learners: $e');
       throw Exception('Failed to load learners. Error: $e');
     }
   }
@@ -1915,7 +1915,7 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
     String learnerId = learner['LearnerID'].toString();
 
     if (poeData.isEmpty) {
-      print('No POE data for learner $learnerId, color: white');
+      debugPrint('No POE data for learner $learnerId, color: white');
       return Colors.white;
     }
 
@@ -1932,20 +1932,20 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
 
           // Check summative assessments
           for (var assessment in assessments['summative'] ?? []) {
-            print(
+            debugPrint(
                 'Checking summative assessment for learner $learnerId, exercise: ${assessment['exercise']}, '
                 'filePath: ${assessment['filePath']}, marks_scored: ${assessment['marks_scored']}');
             if (assessment['filePath'] != null &&
                 assessment['filePath'].isNotEmpty) {
               hasFile = true;
-              print(
+              debugPrint(
                   'Found file for learner $learnerId in summative, setting hasFile to true');
             }
             var marksScored = assessment['marks_scored'];
             if (marksScored == null ||
                 (marksScored is num && marksScored <= 0)) {
               allMarksScored = false;
-              print(
+              debugPrint(
                   'Missing or zero marks for summative exercise ${assessment['exercise']} in learner $learnerId, '
                   'setting allMarksScored to false');
             }
@@ -1953,20 +1953,20 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
 
           // Check formative assessments
           for (var assessment in assessments['formative'] ?? []) {
-            print(
+            debugPrint(
                 'Checking formative assessment for learner $learnerId, exercise: ${assessment['exercise']}, '
                 'filePath: ${assessment['filePath']}, marks_scored: ${assessment['marks_scored']}');
             if (assessment['filePath'] != null &&
                 assessment['filePath'].isNotEmpty) {
               hasFile = true;
-              print(
+              debugPrint(
                   'Found file for learner $learnerId in formative, setting hasFile to true');
             }
             var marksScored = assessment['marks_scored'];
             if (marksScored == null ||
                 (marksScored is num && marksScored <= 0)) {
               allMarksScored = false;
-              print(
+              debugPrint(
                   'Missing or zero marks for formative exercise ${assessment['exercise']} in learner $learnerId, '
                   'setting allMarksScored to false');
             }
@@ -1976,15 +1976,15 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
     }
 
     if (allMarksScored && hasFile) {
-      print(
+      debugPrint(
           'All exercises for learner $learnerId have marks and at least one file, color: green');
       return Colors.green;
     }
     if (hasFile) {
-      print('Learner $learnerId has file but not all marks, color: amber');
+      debugPrint('Learner $learnerId has file but not all marks, color: amber');
       return Colors.amber;
     }
-    print('Learner $learnerId has no file or all marks, color: white');
+    debugPrint('Learner $learnerId has no file or all marks, color: white');
     return Colors.white;
   }
 
@@ -2557,11 +2557,11 @@ class _POETabState extends State<POETab> {
         'learnerId': learnerId,
       });
 
-      print('[POETab] Fetching POE from: $url');
+      debugPrint('[POETab] Fetching POE from: $url');
       final response = await http.get(Uri.parse(url));
 
-      print('[POETab] POE Response Status: ${response.statusCode}');
-      print('[POETab] POE Response Body: ${response.body}');
+      debugPrint('[POETab] POE Response Status: ${response.statusCode}');
+      debugPrint('[POETab] POE Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -2570,7 +2570,7 @@ class _POETabState extends State<POETab> {
             'Failed to load POE data. Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('[POETab] Error fetching POE: $e');
+      debugPrint('[POETab] Error fetching POE: $e');
       throw Exception('Failed to load POE data. Error: $e');
     }
   }
@@ -2678,7 +2678,7 @@ class _POETabState extends State<POETab> {
     // Defensive: some backends place remedial items inside the main buckets
     // (e.g. type == SummativeRemedial but stored under 'summative').
     // Split them out here so the UI always shows Remedial sections when present.
-    bool _isRemedial(dynamic ex, String kind) {
+    bool isRemedial(dynamic ex, String kind) {
       final t = (ex is Map ? (ex['type'] ?? ex['assessment_type']) : null)
           ?.toString()
           .toLowerCase()
@@ -2694,19 +2694,19 @@ class _POETabState extends State<POETab> {
 
     if (formative.isNotEmpty) {
       final moved =
-          formative.where((ex) => _isRemedial(ex, 'formative')).toList();
+          formative.where((ex) => isRemedial(ex, 'formative')).toList();
       if (moved.isNotEmpty) {
         formative =
-            formative.where((ex) => !_isRemedial(ex, 'formative')).toList();
+            formative.where((ex) => !isRemedial(ex, 'formative')).toList();
         formativeRemedial = [...formativeRemedial, ...moved];
       }
     }
     if (summative.isNotEmpty) {
       final moved =
-          summative.where((ex) => _isRemedial(ex, 'summative')).toList();
+          summative.where((ex) => isRemedial(ex, 'summative')).toList();
       if (moved.isNotEmpty) {
         summative =
-            summative.where((ex) => !_isRemedial(ex, 'summative')).toList();
+            summative.where((ex) => !isRemedial(ex, 'summative')).toList();
         summativeRemedial = [...summativeRemedial, ...moved];
       }
     }
@@ -3257,44 +3257,44 @@ class _POETabState extends State<POETab> {
     try {
       final assessmentDate = DateTime.now().toIso8601String().split('T').first;
 
-      print(
+      debugPrint(
           'DEBUG Pothole: Checking for learner ${widget.learnerId}, date $assessmentDate');
 
       // PRIORITY 1: Check server first using unified endpoint (checks both scanned and system)
       try {
         final url =
             '${AppConfig.baseUrl}/view_pothole_checklists.php?learner_id=${widget.learnerId}';
-        print('DEBUG Pothole: Checking server at $url');
+        debugPrint('DEBUG Pothole: Checking server at $url');
 
         final response =
             await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
 
-        print('DEBUG Pothole: Response status ${response.statusCode}');
-        print('DEBUG Pothole: Response body ${response.body}');
+        debugPrint('DEBUG Pothole: Response status ${response.statusCode}');
+        debugPrint('DEBUG Pothole: Response body ${response.body}');
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           if (data['status'] == 'success' && data['data'] != null) {
             final type = data['data']['type'] ?? 'system';
-            print('DEBUG Pothole: Found checklist on server, type=$type');
+            debugPrint('DEBUG Pothole: Found checklist on server, type=$type');
             return {
               'exists': true,
               'type': type,
               'data': data['data'],
             };
           } else {
-            print(
+            debugPrint(
                 'DEBUG Pothole: No checklist on server - ${data['message'] ?? 'Unknown error'}');
           }
         } else {
-          print('DEBUG Pothole: Server returned status ${response.statusCode}');
+          debugPrint('DEBUG Pothole: Server returned status ${response.statusCode}');
         }
       } catch (e) {
-        print('DEBUG Pothole: Error checking server: $e');
+        debugPrint('DEBUG Pothole: Error checking server: $e');
       }
 
       // PRIORITY 2: Fallback to local database for scanned document
-      print('DEBUG Pothole: Checking local database as fallback');
+      debugPrint('DEBUG Pothole: Checking local database as fallback');
       final scannedDoc = await DatabaseHelper().getScannedPotholeChecklist(
         learnerId: widget.learnerId,
         assessorId: '', // Empty to check any assessor
@@ -3302,7 +3302,7 @@ class _POETabState extends State<POETab> {
       );
 
       if (scannedDoc != null) {
-        print(
+        debugPrint(
             'DEBUG Pothole: Found scanned document in local DB at ${scannedDoc['document_path']}');
         return {
           'exists': true,
@@ -3311,14 +3311,14 @@ class _POETabState extends State<POETab> {
         };
       }
 
-      print('DEBUG Pothole: No checklist found anywhere');
+      debugPrint('DEBUG Pothole: No checklist found anywhere');
       return {
         'exists': false,
         'type': 'none',
         'data': null,
       };
     } catch (e) {
-      print('DEBUG Pothole: Error in _checkPotholeChecklistStatus: $e');
+      debugPrint('DEBUG Pothole: Error in _checkPotholeChecklistStatus: $e');
       return {
         'exists': false,
         'type': 'none',
@@ -3328,14 +3328,14 @@ class _POETabState extends State<POETab> {
   }
 
   void _viewPotholeChecklist(String type, Map<String, dynamic>? data) {
-    print('DEBUG: _viewPotholeChecklist called with type=$type');
-    print('DEBUG: data keys: ${data?.keys}');
-    print('DEBUG: Full data: $data');
+    debugPrint('DEBUG: _viewPotholeChecklist called with type=$type');
+    debugPrint('DEBUG: data keys: ${data?.keys}');
+    debugPrint('DEBUG: Full data: $data');
 
     // The data is already the inner data object from the server response
     if (type == 'scanned' && data?['document_path'] != null) {
-      print('DEBUG: Navigating to scanned PDF view page');
-      print('DEBUG: document_path=${data!['document_path']}');
+      debugPrint('DEBUG: Navigating to scanned PDF view page');
+      debugPrint('DEBUG: document_path=${data!['document_path']}');
 
       // Navigate to scanned document view page with marking
       Navigator.push(
@@ -3351,8 +3351,8 @@ class _POETabState extends State<POETab> {
         ),
       );
     } else if (type == 'system' && data != null) {
-      print('DEBUG: Navigating to system checklist view page');
-      print(
+      debugPrint('DEBUG: Navigating to system checklist view page');
+      debugPrint(
           'DEBUG: checklist_items count: ${(data['checklist_items'] as Map?)?.length ?? 0}');
 
       // Navigate to full page view for system-generated checklist
@@ -3366,8 +3366,8 @@ class _POETabState extends State<POETab> {
         ),
       );
     } else {
-      print('DEBUG: No action taken - type=$type, has data=${data != null}');
-      print(
+      debugPrint('DEBUG: No action taken - type=$type, has data=${data != null}');
+      debugPrint(
           'DEBUG: Expected document_path or checklist_items but got: ${data?.keys}');
     }
   }
@@ -3528,8 +3528,8 @@ class _POETabState extends State<POETab> {
     try {
       final url = AppConfig.buildUrl('save_comment.php');
 
-      print('[POETab] Saving comment to: $url');
-      print('[POETab] Assessment type: $assessmentType, isUpdate: $isUpdate');
+      debugPrint('[POETab] Saving comment to: $url');
+      debugPrint('[POETab] Assessment type: $assessmentType, isUpdate: $isUpdate');
 
       final response = await http.post(
         Uri.parse(url),
@@ -3542,8 +3542,8 @@ class _POETabState extends State<POETab> {
         }),
       );
 
-      print('[POETab] Response status: ${response.statusCode}');
-      print('[POETab] Response body: ${response.body}');
+      debugPrint('[POETab] Response status: ${response.statusCode}');
+      debugPrint('[POETab] Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
@@ -3640,7 +3640,7 @@ class _POETabState extends State<POETab> {
         );
       }
     } catch (e) {
-      print('[POETab] Error saving comment: $e');
+      debugPrint('[POETab] Error saving comment: $e');
       setState(() {
         _responseMessage = 'Error saving comment: $e';
       });
@@ -3664,7 +3664,7 @@ class _POETabState extends State<POETab> {
       try {
         specificOutcomeArray = jsonDecode(specificOutcome);
       } catch (e) {
-        print('Error parsing specificOutcome: $e');
+        debugPrint('Error parsing specificOutcome: $e');
       }
 
       // Check if this exercise already has marks (for update vs insert)
@@ -3715,12 +3715,12 @@ class _POETabState extends State<POETab> {
       if (exerciseForPayload['exercise'] != null) {
         String name = exerciseForPayload['exercise'].toString();
         if (name.length > 255) {
-          exerciseForPayload['exercise'] = name.substring(0, 252) + '...';
+          exerciseForPayload['exercise'] = '${name.substring(0, 252)}...';
         }
       } else if (exerciseForPayload['exercise_name'] != null) {
         String name = exerciseForPayload['exercise_name'].toString();
         if (name.length > 255) {
-          exerciseForPayload['exercise_name'] = name.substring(0, 252) + '...';
+          exerciseForPayload['exercise_name'] = '${name.substring(0, 252)}...';
         }
       }
 
@@ -3732,11 +3732,11 @@ class _POETabState extends State<POETab> {
         'specific_outcome': specificOutcomeArray,
         'isUpdate': hasExistingMarks, // Tell backend this is an update
       };
-      print(
+      debugPrint(
           "Submitting payload (isUpdate: $hasExistingMarks): ${jsonEncode(payload)}");
 
       final saveMarksUrl = AppConfig.buildUrl('save_marks.php');
-      print('[POETab] Saving marks to: $saveMarksUrl');
+      debugPrint('[POETab] Saving marks to: $saveMarksUrl');
 
       final response = await http
           .post(
@@ -3745,8 +3745,8 @@ class _POETabState extends State<POETab> {
             body: jsonEncode(payload),
           )
           .timeout(const Duration(seconds: 15));
-      print('[POETab] save_marks.php status: ${response.statusCode}');
-      print('[POETab] save_marks.php body: ${response.body}');
+      debugPrint('[POETab] save_marks.php status: ${response.statusCode}');
+      debugPrint('[POETab] save_marks.php body: ${response.body}');
 
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
@@ -3814,9 +3814,9 @@ class _POETabState extends State<POETab> {
                             body: jsonEncode(updatePayload),
                           )
                           .timeout(const Duration(seconds: 15));
-                      print(
+                      debugPrint(
                           '[POETab] save_marks.php(update) status: ${updateResponse.statusCode}');
-                      print(
+                      debugPrint(
                           '[POETab] save_marks.php(update) body: ${updateResponse.body}');
 
                       if (updateResponse.statusCode == 200) {
@@ -4132,7 +4132,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
 
       // Check if file already exists locally
       if (await file.exists()) {
-        print('[PDF] Loading existing file found locally: ${file.path}');
+        debugPrint('[PDF] Loading existing file found locally: ${file.path}');
         setState(() {
           _localPath = file.path;
           _isLoading = false;
@@ -4141,13 +4141,13 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
       }
 
       // If file doesn't exist, try to download it
-      print('[PDF] Downloading PDF from: ${widget.pdfUrl}');
+      debugPrint('[PDF] Downloading PDF from: ${widget.pdfUrl}');
       final response = await http.get(Uri.parse(widget.pdfUrl));
-      print('[PDF] Response status code: ${response.statusCode}');
-      print('[PDF] Response headers: ${response.headers}');
+      debugPrint('[PDF] Response status code: ${response.statusCode}');
+      debugPrint('[PDF] Response headers: ${response.headers}');
       if (response.statusCode == 200) {
         await file.writeAsBytes(response.bodyBytes);
-        print(
+        debugPrint(
             '[PDF] PDF saved to: ${file.path}, size: ${response.bodyBytes.length} bytes');
         setState(() {
           _localPath = file.path;
@@ -4161,7 +4161,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
         });
       }
     } catch (e) {
-      print('[PDF ERROR] Exception: $e');
+      debugPrint('[PDF ERROR] Exception: $e');
       setState(() {
         _error = 'Error loading PDF: $e';
         _isLoading = false;
@@ -4205,12 +4205,12 @@ Widget _buildAssessorFeedback({required String facilitatorId}) {
         'facilitator_id': facilitatorId,
       });
 
-      print('[AssessorFeedback] Fetching classes from: $url');
+      debugPrint('[AssessorFeedback] Fetching classes from: $url');
 
       final response = await http.get(Uri.parse(url));
 
-      print('[AssessorFeedback] Response Status: ${response.statusCode}');
-      print('[AssessorFeedback] Response Body: ${response.body}');
+      debugPrint('[AssessorFeedback] Response Status: ${response.statusCode}');
+      debugPrint('[AssessorFeedback] Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -4231,7 +4231,7 @@ Widget _buildAssessorFeedback({required String facilitatorId}) {
             'Failed to load classes. Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('[AssessorFeedback] Error fetching classes: $e');
+      debugPrint('[AssessorFeedback] Error fetching classes: $e');
       throw Exception('Failed to load classes. Error: $e');
     }
   }
@@ -4329,7 +4329,7 @@ class ClassInfoPage extends StatelessWidget {
             'https://rlms.rlms.co.za/mobile/get_f_learners.php?classID=$classId'),
       );
 
-      print('Response Body: ${response.body}');
+      debugPrint('Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -4355,19 +4355,19 @@ class ClassInfoPage extends StatelessWidget {
     final url = Uri.parse(
         'https://rlms.rlms.co.za/mobile/assessor_feedback.php?learner_id=$learnerId');
     try {
-      print('Attempting to launch URL: $url');
+      debugPrint('Attempting to launch URL: $url');
       bool launched = await launchUrl(
         url,
         mode: LaunchMode.externalApplication,
       );
-      print('launchUrl result: $launched');
+      debugPrint('launchUrl result: $launched');
       if (!launched) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to launch $url')),
         );
       }
     } catch (e) {
-      print('Error launching URL: $e');
+      debugPrint('Error launching URL: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error launching URL: $e')),
       );
@@ -4517,7 +4517,7 @@ class _AssessmentReviewPageState extends State<AssessmentReviewPage> {
         setState(() => _isLoadingLearners = false);
       }
     } catch (e) {
-      print('Error fetching learners: $e');
+      debugPrint('Error fetching learners: $e');
       setState(() => _isLoadingLearners = false);
     }
   }
@@ -4999,7 +4999,7 @@ class _AssessmentReviewDetailPageState
               .toList(),
         };
 
-        print("Sending payload: ${jsonEncode(payload)}");
+        debugPrint("Sending payload: ${jsonEncode(payload)}");
         final response = await http.post(
           Uri.parse(
               'https://rlms.rlms.co.za/mobile/save_assessment_review.php'),
@@ -5007,7 +5007,7 @@ class _AssessmentReviewDetailPageState
           body: jsonEncode(payload),
         );
 
-        print("Raw response: ${response.statusCode} - ${response.body}");
+        debugPrint("Raw response: ${response.statusCode} - ${response.body}");
         if (response.statusCode == 200) {
           var data = jsonDecode(response.body);
           setState(() {
@@ -5040,7 +5040,7 @@ class _AssessmentReviewDetailPageState
           _responseMessage = 'Error saving review: $e';
           _isSubmitting = false;
         });
-        print("Exception: $e");
+        debugPrint("Exception: $e");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
@@ -5768,7 +5768,7 @@ class _AppealFormDetailPageState extends State<AppealFormDetailPage> {
           body: jsonEncode(payload),
         );
 
-        print('Raw server response: ${response.body}'); // Debug raw response
+        debugPrint('Raw server response: ${response.body}'); // Debug raw response
 
         if (response.statusCode == 200) {
           try {
@@ -6167,7 +6167,7 @@ class _NonComplianceAndFeedbackPageState
             : '',
       };
 
-      print("Sending payload: ${jsonEncode(payload)}");
+      debugPrint("Sending payload: ${jsonEncode(payload)}");
       final response = await http.post(
         Uri.parse(
             'https://rlms.rlms.co.za/mobile/save_non_compliance_feedback.php'),
@@ -6175,8 +6175,8 @@ class _NonComplianceAndFeedbackPageState
         body: jsonEncode(payload),
       );
 
-      print("Raw response body: ${response.body}");
-      print("Response status code: ${response.statusCode}");
+      debugPrint("Raw response body: ${response.body}");
+      debugPrint("Response status code: ${response.statusCode}");
 
       if (response.statusCode == 200) {
         try {
@@ -6476,16 +6476,16 @@ class _PotholeChecklistClassListPageState
       'facilitator_id': facilitatorId,
     });
 
-    print('[PotholeChecklistClassList] Fetching classes from: $url');
+    debugPrint('[PotholeChecklistClassList] Fetching classes from: $url');
 
     final response = await http.get(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
     );
 
-    print(
+    debugPrint(
         '[PotholeChecklistClassList] Response Status: ${response.statusCode}');
-    print('[PotholeChecklistClassList] Response Body: ${response.body}');
+    debugPrint('[PotholeChecklistClassList] Response Body: ${response.body}');
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -6591,16 +6591,16 @@ class _PotholeChecklistLearnerListPageState
       'classID': classId,
     });
 
-    print('[PotholeChecklistLearnerList] Fetching learners from: $url');
+    debugPrint('[PotholeChecklistLearnerList] Fetching learners from: $url');
 
     final response = await http.get(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
     );
 
-    print(
+    debugPrint(
         '[PotholeChecklistLearnerList] Response Status: ${response.statusCode}');
-    print('[PotholeChecklistLearnerList] Response Body: ${response.body}');
+    debugPrint('[PotholeChecklistLearnerList] Response Body: ${response.body}');
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -6850,20 +6850,20 @@ class _PotholeChecklistLearnerListPageState
   Future<void> _syncScannedDocument(
       String documentPath, String learnerId, String assessmentDate) async {
     try {
-      print('[SYNC] Starting sync for learner: $learnerId');
-      print('[SYNC] Document path: $documentPath');
-      print('[SYNC] Assessment date: $assessmentDate');
+      debugPrint('[SYNC] Starting sync for learner: $learnerId');
+      debugPrint('[SYNC] Document path: $documentPath');
+      debugPrint('[SYNC] Assessment date: $assessmentDate');
 
       final file = File(documentPath);
       if (!await file.exists()) {
-        print('[SYNC] ERROR: File does not exist at path');
+        debugPrint('[SYNC] ERROR: File does not exist at path');
         return;
       }
 
-      print('[SYNC] File exists, size: ${await file.length()} bytes');
+      debugPrint('[SYNC] File exists, size: ${await file.length()} bytes');
 
       final url = '${AppConfig.baseUrl}/upload_scanned_pothole_checklist.php';
-      print('[SYNC] Uploading to: $url');
+      debugPrint('[SYNC] Uploading to: $url');
 
       final request = http.MultipartRequest('POST', Uri.parse(url));
 
@@ -6871,29 +6871,29 @@ class _PotholeChecklistLearnerListPageState
       request.fields['assessor_id'] = widget.facilitatorId ?? '';
       request.fields['assessment_date'] = assessmentDate;
 
-      print('[SYNC] Adding file to request...');
+      debugPrint('[SYNC] Adding file to request...');
       request.files.add(await http.MultipartFile.fromPath(
         'document',
         documentPath,
       ));
 
-      print('[SYNC] Sending request...');
+      debugPrint('[SYNC] Sending request...');
       final response =
           await request.send().timeout(const Duration(seconds: 30));
 
-      print('[SYNC] Response status: ${response.statusCode}');
+      debugPrint('[SYNC] Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
-        print('[SYNC] Response body: $responseBody');
-        print('[SYNC] ✅ Document synced successfully');
+        debugPrint('[SYNC] Response body: $responseBody');
+        debugPrint('[SYNC] ✅ Document synced successfully');
       } else {
         final responseBody = await response.stream.bytesToString();
-        print('[SYNC] ❌ Upload failed with status ${response.statusCode}');
-        print('[SYNC] Response: $responseBody');
+        debugPrint('[SYNC] ❌ Upload failed with status ${response.statusCode}');
+        debugPrint('[SYNC] Response: $responseBody');
       }
     } catch (e) {
-      print('[SYNC] ❌ Error syncing document: $e');
+      debugPrint('[SYNC] ❌ Error syncing document: $e');
     }
   }
 
@@ -6972,7 +6972,7 @@ class _PotholeChecklistLearnerListPageState
         }
       } catch (e) {
         // Offline or server error - just return no checklist
-        print('Server check failed: $e');
+        debugPrint('Server check failed: $e');
       }
 
       return {
@@ -6981,7 +6981,7 @@ class _PotholeChecklistLearnerListPageState
         'data': null,
       };
     } catch (e) {
-      print('Error checking checklist status: $e');
+      debugPrint('Error checking checklist status: $e');
       return {
         'exists': false,
         'type': 'none',
@@ -7036,19 +7036,19 @@ class _PotholeChecklistLearnerListPageState
           filename: images[i].name,
         );
         request.files.add(file);
-        print('Added file ${i + 1}: ${images[i].name}');
+        debugPrint('Added file ${i + 1}: ${images[i].name}');
       }
 
       // Send request
-      print('Sending ${images.length} images for learner $learnerId');
-      print('Request fields: ${request.fields}');
-      print('Request files count: ${request.files.length}');
+      debugPrint('Sending ${images.length} images for learner $learnerId');
+      debugPrint('Request fields: ${request.fields}');
+      debugPrint('Request files count: ${request.files.length}');
 
       var response = await request.send();
       var responseData = await response.stream.bytesToString();
 
-      print('Response status: ${response.statusCode}');
-      print('Response data: $responseData');
+      debugPrint('Response status: ${response.statusCode}');
+      debugPrint('Response data: $responseData');
 
       // Check for non-200 status
       if (response.statusCode != 200) {
@@ -7061,7 +7061,7 @@ class _PotholeChecklistLearnerListPageState
       try {
         jsonResponse = jsonDecode(responseData);
       } catch (e) {
-        print('Failed to parse JSON response: $e');
+        debugPrint('Failed to parse JSON response: $e');
         throw Exception('Invalid server response: $responseData');
       }
 
@@ -7075,11 +7075,11 @@ class _PotholeChecklistLearnerListPageState
 
         // Add debug info if available
         if (jsonResponse['uploaded_files'] != null) {
-          print('Uploaded files: ${jsonResponse['uploaded_files']}');
+          debugPrint('Uploaded files: ${jsonResponse['uploaded_files']}');
         }
         if (jsonResponse['errors'] != null &&
             (jsonResponse['errors'] as List).isNotEmpty) {
-          print('Partial errors: ${jsonResponse['errors']}');
+          debugPrint('Partial errors: ${jsonResponse['errors']}');
           successMsg += '\n(Some files had errors - check console)';
         }
 
@@ -7098,7 +7098,7 @@ class _PotholeChecklistLearnerListPageState
           errorMsg += '\n${(jsonResponse['errors'] as List).join('\n')}';
         }
         if (jsonResponse['debug'] != null) {
-          print('Debug info: ${jsonResponse['debug']}');
+          debugPrint('Debug info: ${jsonResponse['debug']}');
         }
         throw Exception(errorMsg);
       }
@@ -7108,7 +7108,7 @@ class _PotholeChecklistLearnerListPageState
         Navigator.of(context).pop();
       }
 
-      print('Upload error: $e');
+      debugPrint('Upload error: $e');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -7311,12 +7311,12 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
     try {
       final url =
           '${AppConfig.baseUrl}/get_pothole_images.php?learner_id=${widget.learnerId}';
-      print('DEBUG Images: Loading from $url');
+      debugPrint('DEBUG Images: Loading from $url');
 
       final response = await http.get(Uri.parse(url));
 
-      print('DEBUG Images: Response status ${response.statusCode}');
-      print('DEBUG Images: Response body ${response.body}');
+      debugPrint('DEBUG Images: Response status ${response.statusCode}');
+      debugPrint('DEBUG Images: Response body ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -7325,13 +7325,13 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
             _potholeImages =
                 List<Map<String, dynamic>>.from(data['data'] ?? []);
           });
-          print('DEBUG Images: Loaded ${_potholeImages.length} images');
+          debugPrint('DEBUG Images: Loaded ${_potholeImages.length} images');
         } else {
-          print('DEBUG Images: API returned error - ${data['message']}');
+          debugPrint('DEBUG Images: API returned error - ${data['message']}');
         }
       }
     } catch (e) {
-      print('Error loading pothole images: $e');
+      debugPrint('Error loading pothole images: $e');
     } finally {
       setState(() => _isLoadingImages = false);
     }
@@ -7358,7 +7358,7 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
         }
       }
     } catch (e) {
-      print('Error loading marks: $e');
+      debugPrint('Error loading marks: $e');
     } finally {
       setState(() => _isLoading = false);
     }
@@ -7371,8 +7371,8 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
       final response = await http.get(Uri.parse(
           '${AppConfig.baseUrl}/get_logbook_unit_standards.php?learner_id=${widget.learnerId}'));
 
-      print('DEBUG LogBook: Response status ${response.statusCode}');
-      print('DEBUG LogBook: Response body ${response.body}');
+      debugPrint('DEBUG LogBook: Response status ${response.statusCode}');
+      debugPrint('DEBUG LogBook: Response body ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -7388,13 +7388,13 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
             }
           });
 
-          print(
+          debugPrint(
               'DEBUG LogBook: Loaded ${_logbookUnitStandards.length} unit standards');
           await _loadLogbookMarks();
         }
       }
     } catch (e) {
-      print('Error loading logbook unit standards: $e');
+      debugPrint('Error loading logbook unit standards: $e');
     } finally {
       setState(() => _isLoadingLogbook = false);
     }
@@ -7425,7 +7425,7 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
         }
       }
     } catch (e) {
-      print('Error loading logbook marks: $e');
+      debugPrint('Error loading logbook marks: $e');
     }
   }
 
@@ -7572,17 +7572,17 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
 
   @override
   Widget build(BuildContext context) {
-    print('DEBUG ViewPage: checklistData keys: ${widget.checklistData.keys}');
-    print(
+    debugPrint('DEBUG ViewPage: checklistData keys: ${widget.checklistData.keys}');
+    debugPrint(
         'DEBUG ViewPage: learner_name: ${widget.checklistData['learner_name']}');
-    print(
+    debugPrint(
         'DEBUG ViewPage: checklist_items type: ${widget.checklistData['checklist_items'].runtimeType}');
-    print(
+    debugPrint(
         'DEBUG ViewPage: checklist_items: ${widget.checklistData['checklist_items']}');
 
     final items =
         widget.checklistData['checklist_items'] as Map<String, dynamic>? ?? {};
-    print('DEBUG ViewPage: items count: ${items.length}');
+    debugPrint('DEBUG ViewPage: items count: ${items.length}');
 
     return Scaffold(
       appBar: AppBar(
@@ -8284,12 +8284,12 @@ class _PotholeChecklistScannedViewPageState
             _potholeImages =
                 List<Map<String, dynamic>>.from(data['data'] ?? []);
           });
-          print(
+          debugPrint(
               'DEBUG Images: Loaded ${_potholeImages.length} images for scanned view');
         }
       }
     } catch (e) {
-      print('Error loading pothole images: $e');
+      debugPrint('Error loading pothole images: $e');
     } finally {
       setState(() => _isLoadingImages = false);
     }
@@ -8321,7 +8321,7 @@ class _PotholeChecklistScannedViewPageState
         }
       }
     } catch (e) {
-      print('Error loading logbook unit standards: $e');
+      debugPrint('Error loading logbook unit standards: $e');
     } finally {
       setState(() => _isLoadingLogbook = false);
     }
@@ -8347,7 +8347,7 @@ class _PotholeChecklistScannedViewPageState
         }
       }
     } catch (e) {
-      print('Error loading logbook marks: $e');
+      debugPrint('Error loading logbook marks: $e');
     }
   }
 
@@ -8441,7 +8441,7 @@ class _PotholeChecklistScannedViewPageState
         documentUrl = '${AppConfig.baseUrl}/$documentUrl';
       }
 
-      print('DEBUG: Opening document from URL: $documentUrl');
+      debugPrint('DEBUG: Opening document from URL: $documentUrl');
 
       // Download the PDF to local storage
       final response = await http.get(Uri.parse(documentUrl));
@@ -8455,11 +8455,11 @@ class _PotholeChecklistScannedViewPageState
         // Write PDF to local file
         await file.writeAsBytes(response.bodyBytes);
 
-        print('DEBUG: PDF downloaded to: ${file.path}');
+        debugPrint('DEBUG: PDF downloaded to: ${file.path}');
 
         // Open the local file
         final result = await OpenFile.open(file.path);
-        print('DEBUG: OpenFile result: ${result.message}');
+        debugPrint('DEBUG: OpenFile result: ${result.message}');
 
         if (result.type != ResultType.done) {
           throw Exception(result.message);
@@ -8468,7 +8468,7 @@ class _PotholeChecklistScannedViewPageState
         throw Exception('Failed to download PDF: ${response.statusCode}');
       }
     } catch (e) {
-      print('DEBUG: Error opening document: $e');
+      debugPrint('DEBUG: Error opening document: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text('Error opening document: $e'),
@@ -9075,7 +9075,7 @@ class _ARPLEvidenceChecklistPageState extends State<ARPLEvidenceChecklistPage> {
         setState(() => _isLoading = false);
       }
     } catch (e) {
-      print('Error fetching learners: $e');
+      debugPrint('Error fetching learners: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -9089,7 +9089,7 @@ class _ARPLEvidenceChecklistPageState extends State<ARPLEvidenceChecklistPage> {
         _projectId = trace['project_id'];
       });
     } catch (e) {
-      print('[ARPL] Error fetching traceability data: $e');
+      debugPrint('[ARPL] Error fetching traceability data: $e');
     }
   }
 
@@ -9367,7 +9367,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
     'Install and Maintain Rainwater Harvesting',
     'Install and Maintain Solar Water Heating',
   ];
-  Map<int, String> _appendixDValues = {}; // 'Yes' or 'No'
+  final Map<int, String> _appendixDValues = {}; // 'Yes' or 'No'
 
   // Appendix E State
   final List<String> _appendixEQuestions = [
@@ -9375,8 +9375,8 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
     'How do you identify and mitigate risks on a construction site?',
     'What are the common signs of a faulty geyser installation?',
   ];
-  Map<int, int> _appendixERatings = {}; // 1-5
-  Map<int, TextEditingController> _appendixEControllers = {};
+  final Map<int, int> _appendixERatings = {}; // 1-5
+  final Map<int, TextEditingController> _appendixEControllers = {};
 
   // Evaluation Criteria State
   final List<String> _evaluationCriteria = [
@@ -9387,7 +9387,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
     'Compliance with Health and Safety regulations on site.',
     'Ability to perform maintenance and repairs on existing systems.',
   ];
-  Map<int, bool> _evaluationChecks = {};
+  final Map<int, bool> _evaluationChecks = {};
   bool _assessorConfirmed = false;
 
   // Appendix F State
@@ -9483,12 +9483,12 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         _siteId = siteId;
         _projectId = projectId;
       });
-      print(
+      debugPrint(
           '[ARPL] Traceability data: Class=$_classId, Site=$_siteId, Project=$_projectId');
 
       _loadExistingARPLData(learnerId);
     } catch (e) {
-      print('[ARPL] Error fetching traceability data: $e');
+      debugPrint('[ARPL] Error fetching traceability data: $e');
     }
   }
 
@@ -9565,7 +9565,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         }
       }
     } catch (e) {
-      print('[ARPL] Error loading existing data: $e');
+      debugPrint('[ARPL] Error loading existing data: $e');
     }
   }
 
@@ -9820,7 +9820,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         setState(() => _isLoading = false);
       }
     } catch (e) {
-      print('Error fetching learners: $e');
+      debugPrint('Error fetching learners: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -10011,7 +10011,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                 dense: true,
               ),
             );
-          }).toList(),
+          }),
           const SizedBox(height: 20),
           const Divider(),
           const SizedBox(height: 12),
@@ -10173,7 +10173,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                     ),
                   ],
                 );
-              }).toList(),
+              }),
             ],
           ),
           const SizedBox(height: 16),
@@ -10348,7 +10348,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                 ],
               ),
             );
-          }).toList(),
+          }),
           const SizedBox(height: 16),
           DualSignaturePad(
             title: 'Interview Record Signatures',
@@ -10553,7 +10553,7 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
         setState(() => _isLoading = false);
       }
     } catch (e) {
-      print('Error fetching learners: $e');
+      debugPrint('Error fetching learners: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -10595,7 +10595,7 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
         _projectId = projectId;
       });
     } catch (e) {
-      print('[ARPL] Error fetching traceability data: $e');
+      debugPrint('[ARPL] Error fetching traceability data: $e');
     }
   }
 

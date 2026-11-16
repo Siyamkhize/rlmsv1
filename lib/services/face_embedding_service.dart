@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
@@ -41,7 +39,7 @@ class FaceEmbeddingService {
     if (_interpreter != null) return;
 
     try {
-      print('🔷 FaceEmbeddingService: Loading MobileFaceNet model...');
+      debugPrint('🔷 FaceEmbeddingService: Loading MobileFaceNet model...');
 
       // Load the model
       _interpreter = await Interpreter.fromAsset(_modelPath);
@@ -50,16 +48,16 @@ class FaceEmbeddingService {
       final inputShape = _interpreter!.getInputTensor(0).shape;
       final outputShape = _interpreter!.getOutputTensor(0).shape;
 
-      print('🔷 Model loaded successfully');
-      print('🔷 Input shape: $inputShape'); // Should be [1, 112, 112, 3]
-      print('🔷 Output shape: $outputShape'); // Should be [1, 192]
+      debugPrint('🔷 Model loaded successfully');
+      debugPrint('🔷 Input shape: $inputShape'); // Should be [1, 112, 112, 3]
+      debugPrint('🔷 Output shape: $outputShape'); // Should be [1, 192]
 
       if (outputShape[1] != _embeddingLength) {
         throw Exception(
             'Model output mismatch: expected $_embeddingLength dims, got ${outputShape[1]}');
       }
     } catch (e) {
-      print('❌ Failed to load MobileFaceNet model: $e');
+      debugPrint('❌ Failed to load MobileFaceNet model: $e');
       rethrow;
     }
   }
@@ -75,7 +73,7 @@ class FaceEmbeddingService {
       // Load image from file
       final imageFile = File(imagePath);
       if (!await imageFile.exists()) {
-        print('❌ Image file not found: $imagePath');
+        debugPrint('❌ Image file not found: $imagePath');
         return null;
       }
 
@@ -83,7 +81,7 @@ class FaceEmbeddingService {
       final image = img.decodeImage(bytes);
 
       if (image == null) {
-        print('❌ Failed to decode image');
+        debugPrint('❌ Failed to decode image');
         return null;
       }
 
@@ -92,12 +90,12 @@ class FaceEmbeddingService {
       final faces = await _faceDetector.processImage(inputImage);
 
       if (faces.isEmpty) {
-        print('⚠️ No face detected in image');
+        debugPrint('⚠️ No face detected in image');
         return null;
       }
 
       if (faces.length > 1) {
-        print('⚠️ Multiple faces detected (${faces.length})');
+        debugPrint('⚠️ Multiple faces detected (${faces.length})');
         return null;
       }
 
@@ -106,14 +104,14 @@ class FaceEmbeddingService {
       // Check face quality
       final qualityResult = _checkFaceQuality(face);
       if (!qualityResult['passed']) {
-        print('⚠️ Face quality check failed: ${qualityResult['reason']}');
+        debugPrint('⚠️ Face quality check failed: ${qualityResult['reason']}');
         return null;
       }
 
       // Crop face region with some padding
       final faceCrop = _cropFace(image, face.boundingBox);
       if (faceCrop == null) {
-        print('❌ Failed to crop face');
+        debugPrint('❌ Failed to crop face');
         return null;
       }
 
@@ -131,13 +129,13 @@ class FaceEmbeddingService {
       // Extract embedding vector
       final embedding = List<double>.from(output[0]);
 
-      print('✅ Face embedding extracted from file');
-      print('🔷 Quality score: ${qualityResult['score']?.toStringAsFixed(2)}');
+      debugPrint('✅ Face embedding extracted from file');
+      debugPrint('🔷 Quality score: ${qualityResult['score']?.toStringAsFixed(2)}');
 
       return embedding;
     } catch (e, stackTrace) {
-      print('❌ Error extracting embedding from file: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('❌ Error extracting embedding from file: $e');
+      debugPrint('Stack trace: $stackTrace');
       return null;
     }
   }
@@ -155,7 +153,7 @@ class FaceEmbeddingService {
       // Convert CameraImage to InputImage for ML Kit
       final inputImage = _cameraImageToInputImage(cameraImage);
       if (inputImage == null) {
-        print('❌ Failed to convert CameraImage to InputImage');
+        debugPrint('❌ Failed to convert CameraImage to InputImage');
         return null;
       }
 
@@ -163,12 +161,12 @@ class FaceEmbeddingService {
       final faces = await _faceDetector.processImage(inputImage);
 
       if (faces.isEmpty) {
-        print('⚠️ No face detected');
+        debugPrint('⚠️ No face detected');
         return null;
       }
 
       if (faces.length > 1) {
-        print('⚠️ Multiple faces detected (${faces.length})');
+        debugPrint('⚠️ Multiple faces detected (${faces.length})');
         return null;
       }
 
@@ -177,7 +175,7 @@ class FaceEmbeddingService {
       // Check face quality
       final qualityResult = _checkFaceQuality(face);
       if (!qualityResult['passed']) {
-        print('⚠️ Face quality check failed: ${qualityResult['reason']}');
+        debugPrint('⚠️ Face quality check failed: ${qualityResult['reason']}');
         return null;
       }
 
@@ -187,14 +185,14 @@ class FaceEmbeddingService {
       // Convert CameraImage to img.Image for cropping
       final image = _convertCameraImageToImage(cameraImage);
       if (image == null) {
-        print('❌ Failed to convert CameraImage to Image');
+        debugPrint('❌ Failed to convert CameraImage to Image');
         return null;
       }
 
       // Crop face region with some padding
       final faceCrop = _cropFace(image, face.boundingBox);
       if (faceCrop == null) {
-        print('❌ Failed to crop face');
+        debugPrint('❌ Failed to crop face');
         return null;
       }
 
@@ -212,9 +210,9 @@ class FaceEmbeddingService {
       // Extract embedding vector
       final embedding = List<double>.from(output[0]);
 
-      print('✅ Face embedding extracted successfully');
-      print('🔷 Quality score: ${qualityResult['score']?.toStringAsFixed(2)}');
-      print('🔷 Liveness passed: ${livenessResult['passed']}');
+      debugPrint('✅ Face embedding extracted successfully');
+      debugPrint('🔷 Quality score: ${qualityResult['score']?.toStringAsFixed(2)}');
+      debugPrint('🔷 Liveness passed: ${livenessResult['passed']}');
 
       return {
         'embedding': embedding,
@@ -223,8 +221,8 @@ class FaceEmbeddingService {
         'liveness_details': livenessResult,
       };
     } catch (e, stackTrace) {
-      print('❌ Error extracting face embedding: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('❌ Error extracting face embedding: $e');
+      debugPrint('Stack trace: $stackTrace');
       return null;
     }
   }
@@ -238,12 +236,12 @@ class FaceEmbeddingService {
     final headEulerAngleY = face.headEulerAngleY ?? 0.0; // Yaw (left/right)
     final headEulerAngleZ = face.headEulerAngleZ ?? 0.0; // Roll (tilt)
 
-    if (headEulerAngleY!.abs() > maxHeadEulerAngleY) {
+    if (headEulerAngleY.abs() > maxHeadEulerAngleY) {
       qualityScore -= 0.3;
       reason = 'Head turned too far (${headEulerAngleY.toStringAsFixed(1)}°)';
     }
 
-    if (headEulerAngleZ!.abs() > maxHeadEulerAngleZ) {
+    if (headEulerAngleZ.abs() > maxHeadEulerAngleZ) {
       qualityScore -= 0.2;
       reason ??=
           'Head tilted too much (${headEulerAngleZ.toStringAsFixed(1)}°)';
@@ -374,7 +372,7 @@ class FaceEmbeddingService {
 
       return img.copyCrop(image, x: x, y: y, width: w, height: h);
     } catch (e) {
-      print('❌ Error cropping face: $e');
+      debugPrint('❌ Error cropping face: $e');
       return null;
     }
   }
@@ -419,7 +417,7 @@ class FaceEmbeddingService {
       }
       return null;
     } catch (e) {
-      print('❌ Error converting CameraImage: $e');
+      debugPrint('❌ Error converting CameraImage: $e');
       return null;
     }
   }
@@ -497,7 +495,7 @@ class FaceEmbeddingService {
         metadata: metadata,
       );
     } catch (e) {
-      print('❌ Error converting to InputImage: $e');
+      debugPrint('❌ Error converting to InputImage: $e');
       return null;
     }
   }

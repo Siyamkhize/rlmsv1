@@ -17,7 +17,6 @@ import 'package:path_provider/path_provider.dart'; // Added for file paths
 import 'EnrollmentPage.dart';
 import 'services/fingerprint_service.dart';
 import 'services/secure_location_service.dart'; // Added for future location improvements
-import 'DetailsPage.dart';
 import 'LearnerDetailsPage.dart';
 import 'sick_note_page.dart';
 import 'backup_clock_in_page.dart'; // Added for backup clock-in navigation
@@ -31,7 +30,6 @@ import 'utils/scanner_pdf_resolver.dart';
 import 'services/timezone_validator.dart';
 import 'utils/document_scanner_manager.dart';
 import 'utils/monitoring_mixin.dart';
-import 'debug_log_viewer.dart';
 import 'services/futronic_service.dart' as futronic;
 import 'services/database_coordinator.dart';
 
@@ -179,18 +177,18 @@ class _ClockInPageState extends State<ClockInPage>
         });
       }
     }, onError: (e) {
-      print('[GPS_LIVE] Tracking error: $e');
+      debugPrint('[GPS_LIVE] Tracking error: $e');
     });
   }
 
   void _warmUpGPS() {
     // Start getting position in background so it's ready when they click
-    print('[GPS_WARMUP] Proactively warming up GPS for clock-in...');
+    debugPrint('[GPS_WARMUP] Proactively warming up GPS for clock-in...');
     SecureLocationService.getSecurePosition().then((result) {
-      print(
+      debugPrint(
           '[GPS_WARMUP] Warm-up complete: ${result.position.accuracy.toStringAsFixed(1)}m');
     }).catchError((e) {
-      print(
+      debugPrint(
           '[GPS_WARMUP] Warm-up failed (expected if permissions missing): $e');
     });
   }
@@ -280,17 +278,17 @@ class _ClockInPageState extends State<ClockInPage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    print('[DOC_SCAN] App lifecycle state changed to: $state');
+    debugPrint('[DOC_SCAN] App lifecycle state changed to: $state');
 
     if (state == AppLifecycleState.resumed) {
-      print('[DOC_SCAN] App resumed - checking if scanner was active');
+      debugPrint('[DOC_SCAN] App resumed - checking if scanner was active');
       // App has resumed, possibly from document scanner
       // Reset scanner state to prevent stuck SCAN_IN_PROGRESS
       final scannerManager = DocumentScannerManager();
 
       // CRITICAL FIX: Check if scanner was in problematic state
       if (scannerManager.isInProblematicState()) {
-        print(
+        debugPrint(
             '[DOC_SCAN] WARNING: Scanner was in problematic state - potential plugin crash');
         scannerManager.recoverFromProblematicState();
 
@@ -310,9 +308,9 @@ class _ClockInPageState extends State<ClockInPage>
         scannerManager.reset();
       }
     } else if (state == AppLifecycleState.paused) {
-      print('[DOC_SCAN] App paused - possibly opening scanner');
+      debugPrint('[DOC_SCAN] App paused - possibly opening scanner');
     } else if (state == AppLifecycleState.detached) {
-      print('[DOC_SCAN] App detached - resetting scanner state');
+      debugPrint('[DOC_SCAN] App detached - resetting scanner state');
       DocumentScannerManager().forceReset(); // Fire and forget
     }
   }
@@ -383,7 +381,7 @@ class _ClockInPageState extends State<ClockInPage>
         }
       }).catchError((error) {
         _activeRequests--;
-        print('[QUEUE] Error processing request: $error');
+        debugPrint('[QUEUE] Error processing request: $error');
         // Continue processing queue even if one request fails
         if (_requestQueue.isNotEmpty &&
             _activeRequests < _maxConcurrentRequests) {
@@ -446,7 +444,7 @@ class _ClockInPageState extends State<ClockInPage>
             '[CONNECTIVITY] Connection status: ${isConnected ? "Online" : "Offline"}');
       }
     } catch (e) {
-      print('Error refreshing connectivity status: $e');
+      debugPrint('Error refreshing connectivity status: $e');
       if (mounted) {
         setState(() {
           _isConnected = false;
@@ -547,7 +545,7 @@ class _ClockInPageState extends State<ClockInPage>
     try {
       // Cancel any ongoing operations to free up the sensor
       await _fingerprintService.cancelEnrollment().catchError((e) {
-        print('[INIT] Cancel enrollment error (expected on first run): $e');
+        debugPrint('[INIT] Cancel enrollment error (expected on first run): $e');
       });
 
       await Future.delayed(const Duration(milliseconds: 500));
@@ -730,17 +728,17 @@ class _ClockInPageState extends State<ClockInPage>
               '[CLOCK_IN] ✅ FINGERPRINT MATCH CONFIRMED for Learner $learnerId');
           if (action == 'in') {
             // GEOFENCING CHECK: Verify user is within 50 meters before allowing clock-in
-            print('[CLOCK_IN] Fingerprint matched - checking geofence...');
+            debugPrint('[CLOCK_IN] Fingerprint matched - checking geofence...');
             bool withinRadius = await _checkLocationAndRadius();
 
             if (!withinRadius) {
-              print(
+              debugPrint(
                   '[CLOCK_IN] ❌ Geofence check failed - user not within 50 meters');
               setState(() => _isClockingIn[learnerId] = false);
               return;
             }
 
-            print(
+            debugPrint(
                 '[CLOCK_IN] ✅ Geofence check passed - proceeding with clock-in');
 
             final now = _getCurrentTimeString();
@@ -752,7 +750,7 @@ class _ClockInPageState extends State<ClockInPage>
             if (existingAttendance != null &&
                 existingAttendance['clock_in_time'] != null &&
                 existingAttendance['clock_in_time'].toString().isNotEmpty) {
-              print(
+              debugPrint(
                   '[CLOCK_IN] ❌ Learner $learnerId already clocked in today at ${existingAttendance['clock_in_time']}');
               if (!mounted) return;
               FingerprintErrorHandler.showInfo(context,
@@ -769,7 +767,7 @@ class _ClockInPageState extends State<ClockInPage>
                 timeLimit: const Duration(seconds: 20), // Increased timeout
               );
             } catch (e) {
-              print('[CLOCK_IN] High accuracy failed, trying cached: $e');
+              debugPrint('[CLOCK_IN] High accuracy failed, trying cached: $e');
               position = await Geolocator.getLastKnownPosition();
               if (position != null) {
                 final age = DateTime.now().difference(position.timestamp);
@@ -799,8 +797,8 @@ class _ClockInPageState extends State<ClockInPage>
               'user_accuracy': position.accuracy.toString(),
             };
 
-            print('[CLOCK_IN] Starting sync for clock-in...');
-            print(
+            debugPrint('[CLOCK_IN] Starting sync for clock-in...');
+            debugPrint(
                 '[CLOCK_IN] Location: ${position.latitude}, ${position.longitude} (accuracy: ${position.accuracy}m)');
             ClockingLogger.instance.logClockInAttempt(
                 learnerId, 'Manual user action',
@@ -810,28 +808,28 @@ class _ClockInPageState extends State<ClockInPage>
 
             // Check if online - if so, try immediate sync first
             final connectivityCheck = await _checkConnectivity();
-            print('[CLOCK_IN] Connectivity check result: $connectivityCheck');
-            print('[CLOCK_IN] _isConnected state: $_isConnected');
+            debugPrint('[CLOCK_IN] Connectivity check result: $connectivityCheck');
+            debugPrint('[CLOCK_IN] _isConnected state: $_isConnected');
 
             if (connectivityCheck) {
-              print(
+              debugPrint(
                   '[CLOCK_IN] ========== ONLINE MODE - SYNCING TO SERVER ==========');
               try {
                 synced = await syncSingleClockIn(attendance);
-                print('[CLOCK_IN] ========== SYNC RESULT: $synced ==========');
+                debugPrint('[CLOCK_IN] ========== SYNC RESULT: $synced ==========');
               } catch (e) {
-                print('[CLOCK_IN] ========== SYNC FAILED: $e ==========');
+                debugPrint('[CLOCK_IN] ========== SYNC FAILED: $e ==========');
                 synced = false;
               }
             } else {
-              print(
+              debugPrint(
                   '[CLOCK_IN] ========== OFFLINE MODE - WILL SYNC LATER ==========');
               synced = false;
             }
 
             // If immediate sync failed or offline, use queue as fallback
             if (!synced) {
-              print('[CLOCK_IN] Using queue fallback for sync...');
+              debugPrint('[CLOCK_IN] Using queue fallback for sync...');
               final completer = Completer<bool>();
               await _addToRequestQueue({
                 'type': 'clock_in',
@@ -841,13 +839,13 @@ class _ClockInPageState extends State<ClockInPage>
               });
 
               synced = await completer.future;
-              print('[CLOCK_IN] Queue sync result: $synced');
+              debugPrint('[CLOCK_IN] Queue sync result: $synced');
             }
 
-            print('[CLOCK_IN] Final sync result: $synced');
+            debugPrint('[CLOCK_IN] Final sync result: $synced');
 
             // ALWAYS save to local database first (same as facilitator logic)
-            print('[CLOCK_IN] Step 1: Saving to local database...');
+            debugPrint('[CLOCK_IN] Step 1: Saving to local database...');
             final dbData = {
               'LearnerID': learnerId,
               'clock_in_time': now,
@@ -858,7 +856,7 @@ class _ClockInPageState extends State<ClockInPage>
                   synced ? 1 : 0, // Mark as synced if server sync succeeded
             };
             await DatabaseHelper().insertClocking(dbData);
-            print(
+            debugPrint(
                 '[CLOCK_IN] ✅ Saved to local database with synced=${synced ? 1 : 0}');
 
             // Start monitoring service for this learner
@@ -868,12 +866,12 @@ class _ClockInPageState extends State<ClockInPage>
             
             // Show appropriate message
             if (synced) {
-              print('[CLOCK_IN] ✅ Clock-in synced to server successfully');
+              debugPrint('[CLOCK_IN] ✅ Clock-in synced to server successfully');
               FingerprintErrorHandler.showSuccess(
                   context, 'Clock-in synced to server!',
                   duration: const Duration(seconds: 2));
             } else {
-              print(
+              debugPrint(
                   '[CLOCK_IN] 📱 Clock-in saved locally (will sync when online)');
               FingerprintErrorHandler.showInfo(
                   context, 'Saved locally (will sync when online)',
@@ -886,11 +884,11 @@ class _ClockInPageState extends State<ClockInPage>
               _isClockingIn[learnerId] =
                   false; // Reset loading state immediately
             });
-            print(
+            debugPrint(
                 '[CLOCK_IN] ✅ UI updated IMMEDIATELY with clock-in time: $now');
-            print(
+            debugPrint(
                 '[CLOCK_IN] ✅ clockInTimes[$learnerId] = ${clockInTimes[learnerId]}');
-            print(
+            debugPrint(
                 '[CLOCK_IN] ✅ clockOutTimes[$learnerId] = ${clockOutTimes[learnerId]}');
 
             // Show success message immediately
@@ -919,7 +917,7 @@ class _ClockInPageState extends State<ClockInPage>
                   await DatabaseHelper().hasMissedAllMonitoring(learnerId);
 
               if (missedMonitoring) {
-                print(
+                debugPrint(
                     '[CLOCK_OUT] ❌ Clock-out blocked: Learner $learnerId missed all monitoring attempts');
                 if (!mounted) return;
                 FingerprintErrorHandler.showError(context,
@@ -929,17 +927,17 @@ class _ClockInPageState extends State<ClockInPage>
               }
 
               // GEOFENCING CHECK: Verify user is within 50 meters before allowing clock-out
-              print('[CLOCK_OUT] Fingerprint matched - checking geofence...');
+              debugPrint('[CLOCK_OUT] Fingerprint matched - checking geofence...');
               bool withinRadius = await _checkLocationAndRadius();
 
               if (!withinRadius) {
-                print(
+                debugPrint(
                     '[CLOCK_OUT] ❌ Geofence check failed - user not within 50 meters');
                 setState(() => _isClockingIn[learnerId] = false);
                 return;
               }
 
-              print(
+              debugPrint(
                   '[CLOCK_OUT] ✅ Geofence check passed - proceeding with clock-out');
 
               final now = _getCurrentTimeString();
@@ -955,7 +953,7 @@ class _ClockInPageState extends State<ClockInPage>
                   timeLimit: const Duration(seconds: 20), // Increased timeout
                 );
               } catch (e) {
-                print('[CLOCK_OUT] High accuracy failed, trying cached: $e');
+                debugPrint('[CLOCK_OUT] High accuracy failed, trying cached: $e');
                 position = await Geolocator.getLastKnownPosition();
                 if (position != null) {
                   final age = DateTime.now().difference(position.timestamp);
@@ -987,28 +985,28 @@ class _ClockInPageState extends State<ClockInPage>
               };
 
               // Try to sync to server first
-              print('[CLOCK_OUT] Starting sync for clock-out...');
-              print(
+              debugPrint('[CLOCK_OUT] Starting sync for clock-out...');
+              debugPrint(
                   '[CLOCK_OUT] Location: ${position.latitude}, ${position.longitude} (accuracy: ${position.accuracy}m)');
 
               bool synced = false;
 
               // Check if online - if so, try immediate sync first
               if (_isConnected) {
-                print(
+                debugPrint(
                     '[CLOCK_OUT] Online - attempting immediate server sync...');
                 try {
                   synced = await syncSingleClockOut(attendance);
-                  print('[CLOCK_OUT] Immediate sync result: $synced');
+                  debugPrint('[CLOCK_OUT] Immediate sync result: $synced');
                 } catch (e) {
-                  print('[CLOCK_OUT] Immediate sync failed: $e');
+                  debugPrint('[CLOCK_OUT] Immediate sync failed: $e');
                   synced = false;
                 }
               }
 
               // If immediate sync failed or offline, use queue as fallback
               if (!synced) {
-                print('[CLOCK_OUT] Using queue fallback for sync...');
+                debugPrint('[CLOCK_OUT] Using queue fallback for sync...');
                 final completer = Completer<bool>();
                 await _addToRequestQueue({
                   'type': 'clock_out',
@@ -1018,13 +1016,13 @@ class _ClockInPageState extends State<ClockInPage>
                 });
 
                 synced = await completer.future;
-                print('[CLOCK_OUT] Queue sync result: $synced');
+                debugPrint('[CLOCK_OUT] Queue sync result: $synced');
               }
 
-              print('[CLOCK_OUT] Final sync result: $synced');
+              debugPrint('[CLOCK_OUT] Final sync result: $synced');
 
               if (synced) {
-                print(
+                debugPrint(
                     '[CLOCK_OUT] Sync SUCCESS - updating local DB with synced=1');
                 // Sync successful - update local database with synced=1
                 final updatedAttendance = {
@@ -1039,7 +1037,7 @@ class _ClockInPageState extends State<ClockInPage>
                 FingerprintErrorHandler.showSuccess(
                     context, 'Clock-out synced to server!');
               } else {
-                print(
+                debugPrint(
                     '[CLOCK_OUT] Sync FAILED - updating local DB with synced=0');
                 // Sync failed - update local database with synced=0 for later sync
                 final updatedAttendance = {
@@ -1062,7 +1060,7 @@ class _ClockInPageState extends State<ClockInPage>
                 _isClockingIn[learnerId] =
                     false; // Reset loading state immediately
               });
-              print(
+              debugPrint(
                   '[CLOCK_OUT] ✅ UI updated IMMEDIATELY with clock-out time: $now, contact: $contactTime');
 
               // Show success message immediately
@@ -1112,18 +1110,18 @@ class _ClockInPageState extends State<ClockInPage>
   //         enableAudio: false,
   //       );
   //       await _cameraController!.initialize();
-  //       print('Camera initialized: ${_cameras![_selectedCameraIndex].name}');
+  //       debugPrint('Camera initialized: ${_cameras![_selectedCameraIndex].name}');
   //       setState(() {
   //         _isCameraReady = true;
   //       });
   //     } else {
-  //       print('No cameras available');
+  //       debugPrint('No cameras available');
   //       ScaffoldMessenger.of(context).showSnackBar(
   //         const SnackBar(content: Text('No cameras available')),
   //       );
   //     }
   //   } catch (e) {
-  //     print('Camera initialization error: $e');
+  //     debugPrint('Camera initialization error: $e');
   //     ScaffoldMessenger.of(context).showSnackBar(
   //       SnackBar(content: Text('Failed to initialize camera: $e')),
   //     );
@@ -1286,7 +1284,7 @@ class _ClockInPageState extends State<ClockInPage>
         'include_today': includeToday.toString(),
       });
 
-      print('[SERVER_COUNT] Requesting: $uri');
+      debugPrint('[SERVER_COUNT] Requesting: $uri');
 
       final response = await http.get(uri).timeout(const Duration(seconds: 10));
 
@@ -1294,18 +1292,18 @@ class _ClockInPageState extends State<ClockInPage>
         final data = json.decode(response.body);
         if (data['success'] == true) {
           final serverCount = data['data']['clocking_days'] as int? ?? 0;
-          print('[SERVER_COUNT] Server returned: $serverCount days');
+          debugPrint('[SERVER_COUNT] Server returned: $serverCount days');
           return serverCount;
         } else {
-          print('[SERVER_COUNT] Server error: ${data['error']}');
+          debugPrint('[SERVER_COUNT] Server error: ${data['error']}');
           return 0;
         }
       } else {
-        print('[SERVER_COUNT] HTTP error: ${response.statusCode}');
+        debugPrint('[SERVER_COUNT] HTTP error: ${response.statusCode}');
         return 0;
       }
     } catch (e) {
-      print('[SERVER_COUNT] Exception: $e');
+      debugPrint('[SERVER_COUNT] Exception: $e');
       return 0;
     }
   }
@@ -1340,10 +1338,10 @@ class _ClockInPageState extends State<ClockInPage>
 
       final localCount =
           result.isNotEmpty ? (result.first['count'] as int? ?? 0) : 0;
-      print('[LOCAL_COUNT] Local database returned: $localCount days');
+      debugPrint('[LOCAL_COUNT] Local database returned: $localCount days');
       return localCount;
     } catch (e) {
-      print('[LOCAL_COUNT] Error getting local clocking days count: $e');
+      debugPrint('[LOCAL_COUNT] Error getting local clocking days count: $e');
       return 0;
     }
   }
@@ -1351,7 +1349,7 @@ class _ClockInPageState extends State<ClockInPage>
   // Enhanced clocking days count that combines local and server data
   Future<Map<String, dynamic>> _getEnhancedClockingDaysCount(String learnerId,
       {bool includeToday = false}) async {
-    print(
+    debugPrint(
         '[ENHANCED_COUNT] Getting clocking days for learner $learnerId (includeToday: $includeToday)');
 
     // Get local count (always available)
@@ -1363,21 +1361,21 @@ class _ClockInPageState extends State<ClockInPage>
     bool serverAvailable = false;
 
     if (_isConnected) {
-      print('[ENHANCED_COUNT] Online - fetching server count...');
+      debugPrint('[ENHANCED_COUNT] Online - fetching server count...');
       serverCount = await _getServerClockingDaysCount(learnerId,
           includeToday: includeToday);
       serverAvailable = serverCount > 0 ||
           localCount ==
               0; // Consider server available if it returns data or if local is empty
     } else {
-      print('[ENHANCED_COUNT] Offline - using local count only');
+      debugPrint('[ENHANCED_COUNT] Offline - using local count only');
     }
 
     // Use the higher count (server data is more comprehensive)
     final finalCount =
         serverAvailable ? math.max(localCount, serverCount) : localCount;
 
-    print(
+    debugPrint(
         '[ENHANCED_COUNT] Final result - Local: $localCount, Server: $serverCount, Final: $finalCount');
 
     return {
@@ -1407,7 +1405,7 @@ class _ClockInPageState extends State<ClockInPage>
       );
 
       if (learnerResult.isEmpty) {
-        print('[ATTENDANCE_BREAKDOWN] Learner not found in local database');
+        debugPrint('[ATTENDANCE_BREAKDOWN] Learner not found in local database');
         return _getFallbackAttendanceBreakdown(learnerId, monthStr);
       }
 
@@ -1420,7 +1418,7 @@ class _ClockInPageState extends State<ClockInPage>
           final url = Uri.parse(
               '${AppConfig.getAttendanceUrl}?classID=$classID&month=$monthStr&learnerID=$learnerId&_t=$timestamp');
 
-          print('[ATTENDANCE_BREAKDOWN] Fetching from API: $url');
+          debugPrint('[ATTENDANCE_BREAKDOWN] Fetching from API: $url');
 
           final response = await http.get(
             url,
@@ -1445,7 +1443,7 @@ class _ClockInPageState extends State<ClockInPage>
               final sickDays = learnerData['sick_note_days'] ?? 0;
               final totalDays = learnerData['total_days_attended'] ?? 0;
 
-              print(
+              debugPrint(
                   '[ATTENDANCE_BREAKDOWN] From API - Regular: $regularDays, Manual: $manualDays, Sick: $sickDays, Total: $totalDays');
 
               return {
@@ -1465,14 +1463,14 @@ class _ClockInPageState extends State<ClockInPage>
             }
           }
         } catch (e) {
-          print('[ATTENDANCE_BREAKDOWN] API error: $e');
+          debugPrint('[ATTENDANCE_BREAKDOWN] API error: $e');
         }
       }
 
       // Fallback to local database if API fails or offline
       return _getFallbackAttendanceBreakdown(learnerId, monthStr);
     } catch (e) {
-      print('[ATTENDANCE_BREAKDOWN] Error: $e');
+      debugPrint('[ATTENDANCE_BREAKDOWN] Error: $e');
       return {
         'regular': 0,
         'manual': 0,
@@ -1513,7 +1511,7 @@ class _ClockInPageState extends State<ClockInPage>
 
       final totalDays = regularDays + manualDays + sickDays;
 
-      print(
+      debugPrint(
           '[ATTENDANCE_BREAKDOWN] From Local DB - Regular: $regularDays, Manual: $manualDays, Sick: $sickDays, Total: $totalDays');
 
       return {
@@ -1523,7 +1521,7 @@ class _ClockInPageState extends State<ClockInPage>
         'total': totalDays,
       };
     } catch (e) {
-      print('[ATTENDANCE_BREAKDOWN] Fallback error: $e');
+      debugPrint('[ATTENDANCE_BREAKDOWN] Fallback error: $e');
       return {
         'regular': 0,
         'manual': 0,
@@ -1579,7 +1577,7 @@ class _ClockInPageState extends State<ClockInPage>
         idNumber = learnerData.first['IDNumber'].toString();
       }
     } catch (e) {
-      print('[CLOCK_IN_SUMMARY] Error fetching ID number: $e');
+      debugPrint('[CLOCK_IN_SUMMARY] Error fetching ID number: $e');
     }
 
     // Get enhanced clocking data
@@ -1717,7 +1715,7 @@ class _ClockInPageState extends State<ClockInPage>
 
   Future<bool> _checkLocationAndRadius() async {
     try {
-      print('[GEOFENCE] Acquiring secure GPS position (foreground stream)...');
+      debugPrint('[GEOFENCE] Acquiring secure GPS position (foreground stream)...');
       final secure = await SecureLocationService.getSecurePosition();
       final position = secure.position;
 
@@ -1734,9 +1732,9 @@ class _ClockInPageState extends State<ClockInPage>
         return false;
       }
 
-      print(
+      debugPrint(
           '[GEOFENCE] Current position: ${position.latitude}, ${position.longitude}');
-      print('[GEOFENCE] Accuracy: ${position.accuracy} meters');
+      debugPrint('[GEOFENCE] Accuracy: ${position.accuracy} meters');
 
       return await _isWithinSiteRadius(
         widget.classID,
@@ -1745,7 +1743,7 @@ class _ClockInPageState extends State<ClockInPage>
         position.accuracy,
       );
     } catch (e) {
-      print('[GEOFENCE] Error checking location: $e');
+      debugPrint('[GEOFENCE] Error checking location: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1762,7 +1760,7 @@ class _ClockInPageState extends State<ClockInPage>
       double userLon, double userAccuracy) async {
     // Relaxed accuracy threshold - allow up to 60m like server
     if (userAccuracy > 60) {
-      print(
+      debugPrint(
           '[GEOFENCE] Geolocation accuracy too low: $userAccuracy meters (max 60m)');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1782,9 +1780,9 @@ class _ClockInPageState extends State<ClockInPage>
 
       final classes = await db.query('class');
       final sites = await db.query('sites');
-      print('[GEOFENCE] Class table contents: $classes');
-      print('[GEOFENCE] Sites table contents: $sites');
-      print(
+      debugPrint('[GEOFENCE] Class table contents: $classes');
+      debugPrint('[GEOFENCE] Sites table contents: $sites');
+      debugPrint(
           '[GEOFENCE] Querying coordinates for classID: $classID (type: ${classID.runtimeType})');
 
       final result = await db.rawQuery(
@@ -1794,7 +1792,7 @@ class _ClockInPageState extends State<ClockInPage>
 
       if (result.isEmpty) {
         if (classes.isEmpty) {
-          print('[GEOFENCE] Class table is empty');
+          debugPrint('[GEOFENCE] Class table is empty');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -1802,7 +1800,7 @@ class _ClockInPageState extends State<ClockInPage>
             );
           }
         } else if (sites.isEmpty) {
-          print('[GEOFENCE] Sites table is empty');
+          debugPrint('[GEOFENCE] Sites table is empty');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -1810,7 +1808,7 @@ class _ClockInPageState extends State<ClockInPage>
             );
           }
         } else {
-          print(
+          debugPrint(
               '[GEOFENCE] No matching class or site found for classID: $classID');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -1827,7 +1825,7 @@ class _ClockInPageState extends State<ClockInPage>
       final siteLon = double.tryParse(result.first['longitude'].toString());
 
       if (siteLat == null || siteLon == null) {
-        print(
+        debugPrint(
             '[GEOFENCE] Invalid site coordinates for classID: $classID, lat: ${result.first['latitude']}, lon: ${result.first['longitude']}');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1840,11 +1838,11 @@ class _ClockInPageState extends State<ClockInPage>
 
       final distance = _calculateDistance(userLat, userLon, siteLat, siteLon);
 
-      print(
+      debugPrint(
           '[GEOFENCE] Distance to site for classID $classID: ${distance.toStringAsFixed(2)} meters');
-      print('[GEOFENCE] Site coordinates: $siteLat, $siteLon');
-      print('[GEOFENCE] User coordinates: $userLat, $userLon');
-      print('[GEOFENCE] User accuracy: ${userAccuracy.toStringAsFixed(1)}m');
+      debugPrint('[GEOFENCE] Site coordinates: $siteLat, $siteLon');
+      debugPrint('[GEOFENCE] User coordinates: $userLat, $userLon');
+      debugPrint('[GEOFENCE] User accuracy: ${userAccuracy.toStringAsFixed(1)}m');
 
       // Dynamic geofence radius with 60m cap: min(50m + accuracy, 60m)
       final baseRadius = 50.0;
@@ -1854,11 +1852,11 @@ class _ClockInPageState extends State<ClockInPage>
           ? maxAllowedRadius
           : calculatedRadius;
 
-      print('[GEOFENCE] Base radius: ${baseRadius}m');
-      print('[GEOFENCE] GPS accuracy: ${userAccuracy.toStringAsFixed(1)}m');
-      print(
+      debugPrint('[GEOFENCE] Base radius: ${baseRadius}m');
+      debugPrint('[GEOFENCE] GPS accuracy: ${userAccuracy.toStringAsFixed(1)}m');
+      debugPrint(
           '[GEOFENCE] Calculated radius: ${calculatedRadius.toStringAsFixed(1)}m (${baseRadius}m + ${userAccuracy.toStringAsFixed(1)}m)');
-      print(
+      debugPrint(
           '[GEOFENCE] Effective radius: ${effectiveRadius.toStringAsFixed(1)}m (capped at ${maxAllowedRadius}m)');
 
       if (distance > effectiveRadius) {
@@ -1875,11 +1873,11 @@ class _ClockInPageState extends State<ClockInPage>
         return false;
       }
 
-      print(
+      debugPrint(
           '[GEOFENCE] ✅ Within ${effectiveRadius.toStringAsFixed(1)}m radius - clocking allowed');
       return true;
     } catch (e, stackTrace) {
-      print(
+      debugPrint(
           '[GEOFENCE] Error checking site radius for classID $classID: $e\nStack trace: $stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1925,7 +1923,7 @@ class _ClockInPageState extends State<ClockInPage>
       {bool skipMandatoryChecks = false}) async {
     // Only run mandatory checks if NOT already done
     if (!skipMandatoryChecks) {
-      print('[BACKUP_CLOCK_IN] Running mandatory checks...');
+      debugPrint('[BACKUP_CLOCK_IN] Running mandatory checks...');
       final profileIsComplete = await _ensureLearnerProfileComplete(learnerId);
       if (!profileIsComplete) {
         return;
@@ -1948,7 +1946,7 @@ class _ClockInPageState extends State<ClockInPage>
 
       await _showClockingDaysPopup(learnerId, 'in');
     } else {
-      print(
+      debugPrint(
           '[BACKUP_CLOCK_IN] Skipping mandatory checks (already done in main flow)');
     }
 
@@ -2057,7 +2055,7 @@ class _ClockInPageState extends State<ClockInPage>
       );
 
       if (idConfirmed != true) {
-        print('[BACKUP_CLOCK_IN] ID verification failed or cancelled');
+        debugPrint('[BACKUP_CLOCK_IN] ID verification failed or cancelled');
         setState(() {
           _isClockingIn[learnerId] = false;
           _currentLearnerIdForClocking = null;
@@ -2065,7 +2063,7 @@ class _ClockInPageState extends State<ClockInPage>
         return;
       }
 
-      print('[BACKUP_CLOCK_IN] ID verified successfully');
+      debugPrint('[BACKUP_CLOCK_IN] ID verified successfully');
 
       // Step 2: Signature capture
       final signatureController = SignatureController(
@@ -2141,7 +2139,7 @@ class _ClockInPageState extends State<ClockInPage>
       );
 
       if (signatureCaptured != true) {
-        print('[BACKUP_CLOCK_IN] Signature capture cancelled');
+        debugPrint('[BACKUP_CLOCK_IN] Signature capture cancelled');
         signatureController.dispose();
         setState(() {
           _isClockingIn[learnerId] = false;
@@ -2150,7 +2148,7 @@ class _ClockInPageState extends State<ClockInPage>
         return;
       }
 
-      print('[BACKUP_CLOCK_IN] Signature captured successfully');
+      debugPrint('[BACKUP_CLOCK_IN] Signature captured successfully');
 
       // Save signature to file (optional - for record keeping)
       String? signaturePath;
@@ -2164,7 +2162,7 @@ class _ClockInPageState extends State<ClockInPage>
               '${directory.path}/backup_signature_${learnerId}_$timestamp.png';
           final file = File(signaturePath);
           await file.writeAsBytes(signatureBytes);
-          print('[BACKUP_CLOCK_IN] Signature saved to: $signaturePath');
+          debugPrint('[BACKUP_CLOCK_IN] Signature saved to: $signaturePath');
         }
       } catch (e) {
         debugPrint('[BACKUP_CLOCK_IN] Failed to save signature file: $e');
@@ -2174,11 +2172,11 @@ class _ClockInPageState extends State<ClockInPage>
       }
 
       // Step 3 & 4: Geofence and GPS check
-      print('[BACKUP_CLOCK_IN] Checking GPS and geofence...');
+      debugPrint('[BACKUP_CLOCK_IN] Checking GPS and geofence...');
       final gpsOk = await _checkGeofenceAndGPS();
       if (!mounted) return;
       if (!gpsOk) {
-        print('[BACKUP_CLOCK_IN] GPS/geofence check failed');
+        debugPrint('[BACKUP_CLOCK_IN] GPS/geofence check failed');
         setState(() {
           _isClockingIn[learnerId] = false;
           _currentLearnerIdForClocking = null;
@@ -2186,7 +2184,7 @@ class _ClockInPageState extends State<ClockInPage>
         return;
       }
 
-      print('[BACKUP_CLOCK_IN] GPS/geofence check passed');
+      debugPrint('[BACKUP_CLOCK_IN] GPS/geofence check passed');
 
       // Step 5: Perform actual clock-in (same as fingerprint method)
       final now = _getCurrentTimeString();
@@ -2224,7 +2222,7 @@ class _ClockInPageState extends State<ClockInPage>
       bool synced = false;
       try {
         synced = await syncSingleClockIn(attendance);
-        print('[BACKUP_CLOCK_IN] Server sync result: $synced');
+        debugPrint('[BACKUP_CLOCK_IN] Server sync result: $synced');
       } catch (e) {
         debugPrint('[BACKUP_CLOCK_IN] Server sync failed: $e');
       }
@@ -2241,7 +2239,7 @@ class _ClockInPageState extends State<ClockInPage>
       };
 
       await DatabaseHelper().insertClocking(dbData);
-      print('[BACKUP_CLOCK_IN] Saved to local database');
+      debugPrint('[BACKUP_CLOCK_IN] Saved to local database');
 
       // Update UI
       if (mounted) {
@@ -2524,12 +2522,12 @@ class _ClockInPageState extends State<ClockInPage>
 
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        print('[DETECT] Futronic attempt $attempt/$maxAttempts...');
+        debugPrint('[DETECT] Futronic attempt $attempt/$maxAttempts...');
         final isFutronicConnected =
             await _futronicService.isFutronicConnected();
 
         if (isFutronicConnected) {
-          print('[DETECT] ✅ Futronic detected on attempt $attempt!');
+          debugPrint('[DETECT] ✅ Futronic detected on attempt $attempt!');
           if (mounted) {
             setState(() {
               _isSensorConnected = true;
@@ -2543,14 +2541,14 @@ class _ClockInPageState extends State<ClockInPage>
           await Future.delayed(Duration(milliseconds: delays[attempt - 1]));
         }
       } catch (e) {
-        print('[DETECT] Futronic attempt $attempt failed: $e');
+        debugPrint('[DETECT] Futronic attempt $attempt failed: $e');
         if (attempt < maxAttempts) {
           await Future.delayed(const Duration(milliseconds: 1000));
         }
       }
     }
 
-    print('[DETECT] ❌ No Futronic scanner detected after all attempts');
+    debugPrint('[DETECT] ❌ No Futronic scanner detected after all attempts');
     return 'none';
   }
 
@@ -2610,11 +2608,11 @@ class _ClockInPageState extends State<ClockInPage>
     }
 
     // CRASH FIX: Simplified bank completeness check
-    print('[CLOCK_IN] SIMPLIFIED: Checking bank details completeness...');
+    debugPrint('[CLOCK_IN] SIMPLIFIED: Checking bank details completeness...');
     try {
       // Check mounted state before proceeding
       if (!mounted) {
-        print(
+        debugPrint(
             '[CLOCK_IN] SIMPLIFIED: Widget not mounted - skipping bank check');
         return;
       }
@@ -2623,53 +2621,53 @@ class _ClockInPageState extends State<ClockInPage>
         learnerId,
         await _getLearnerForValidation(learnerId),
       );
-      print('[CLOCK_IN] SIMPLIFIED: Bank details check result: $strictBankOk');
+      debugPrint('[CLOCK_IN] SIMPLIFIED: Bank details check result: $strictBankOk');
 
       // CRASH FIX: Don't block flow based on bank check result
       // The bank details dialog will handle missing data if needed
-      print(
+      debugPrint(
           '[CLOCK_IN] SIMPLIFIED: Bank details check completed - continuing flow');
     } catch (e) {
-      print('[CLOCK_IN] SIMPLIFIED: ERROR in bank details check (ignored): $e');
+      debugPrint('[CLOCK_IN] SIMPLIFIED: ERROR in bank details check (ignored): $e');
       // Continue with flow - don't let bank details check block clock-in
     }
 
-    print('[CLOCK_IN] Checking document completeness...');
+    debugPrint('[CLOCK_IN] Checking document completeness...');
     try {
       final documentsComplete =
           await _ensureLearnerDocumentsComplete(learnerId);
-      print('[CLOCK_IN] Documents check result: $documentsComplete');
+      debugPrint('[CLOCK_IN] Documents check result: $documentsComplete');
 
       if (!documentsComplete) {
-        print('[CLOCK_IN] Documents incomplete - returning');
+        debugPrint('[CLOCK_IN] Documents incomplete - returning');
         return;
       }
     } catch (e) {
-      print('[CLOCK_IN] ERROR in documents check: $e');
-      print('[CLOCK_IN] Stack trace: ${StackTrace.current}');
+      debugPrint('[CLOCK_IN] ERROR in documents check: $e');
+      debugPrint('[CLOCK_IN] Stack trace: ${StackTrace.current}');
       return;
     }
 
     // Show clocking days popup before proceeding
-    print('[CLOCK_IN] Showing clocking days popup...');
+    debugPrint('[CLOCK_IN] Showing clocking days popup...');
     try {
       await _showClockingDaysPopup(learnerId, 'in');
-      print('[CLOCK_IN] Clocking days popup completed');
+      debugPrint('[CLOCK_IN] Clocking days popup completed');
     } catch (e) {
-      print('[CLOCK_IN] ERROR in clocking days popup: $e');
-      print('[CLOCK_IN] Stack trace: ${StackTrace.current}');
+      debugPrint('[CLOCK_IN] ERROR in clocking days popup: $e');
+      debugPrint('[CLOCK_IN] Stack trace: ${StackTrace.current}');
       return;
     }
 
     // ===== NOW CHECK SCANNER (AFTER ALL MANDATORY CHECKS) =====
-    print('[CLOCK_IN] All mandatory checks complete. Now detecting scanner...');
+    debugPrint('[CLOCK_IN] All mandatory checks complete. Now detecting scanner...');
     final scanner = await _detectScanner();
 
     if (!mounted) return;
     if (!context.mounted) return;
     
     if (scanner == 'none') {
-      print('[CLOCK_IN] No scanner detected - showing backup method dialog');
+      debugPrint('[CLOCK_IN] No scanner detected - showing backup method dialog');
       final useBackup = await _showBackupMethodDialog();
       if (!mounted) return;
       if (!context.mounted) return;
@@ -2680,13 +2678,13 @@ class _ClockInPageState extends State<ClockInPage>
         return;
       } else {
         // User chose not to use backup method
-        print('[CLOCK_IN] User declined backup method');
+        debugPrint('[CLOCK_IN] User declined backup method');
         return;
       }
     }
 
     // Scanner present - continue with normal fingerprint flow
-    print(
+    debugPrint(
         '[CLOCK_IN] Scanner detected: $scanner - continuing with fingerprint verification');
 
     final learnerIdInt = int.tryParse(learnerId);
@@ -2903,7 +2901,7 @@ class _ClockInPageState extends State<ClockInPage>
       _hideProgressDialog();
       if (match) {
         // GEOFENCING CHECK: Verify user is within 50 meters before allowing clock-in
-        print('[CLOCK_IN] Fingerprint matched - checking geofence...');
+        debugPrint('[CLOCK_IN] Fingerprint matched - checking geofence...');
         if (!mounted) return;
         if (!context.mounted) return;
         _showProgressDialog('Checking location...');
@@ -2912,7 +2910,7 @@ class _ClockInPageState extends State<ClockInPage>
         _hideProgressDialog();
 
         if (!withinRadius) {
-          print(
+          debugPrint(
               '[CLOCK_IN] ❌ Geofence check failed - user not within 50 meters');
           setState(() {
             _isClockingIn[learnerId] = false;
@@ -2922,7 +2920,7 @@ class _ClockInPageState extends State<ClockInPage>
           return;
         }
 
-        print('[CLOCK_IN] ✅ Geofence check passed - proceeding with clock-in');
+        debugPrint('[CLOCK_IN] ✅ Geofence check passed - proceeding with clock-in');
 
         final now = _getCurrentTimeString();
         final date = _getCurrentDateString();
@@ -2935,7 +2933,7 @@ class _ClockInPageState extends State<ClockInPage>
             timeLimit: const Duration(seconds: 20), // Increased timeout
           );
         } catch (e) {
-          print('[CLOCK_IN] High accuracy failed, trying cached: $e');
+          debugPrint('[CLOCK_IN] High accuracy failed, trying cached: $e');
           position = await Geolocator.getLastKnownPosition();
           if (position != null) {
             final age = DateTime.now().difference(position.timestamp);
@@ -2965,27 +2963,27 @@ class _ClockInPageState extends State<ClockInPage>
           'user_accuracy': position.accuracy.toString(),
         };
 
-        print('[CLOCK_IN] Starting sync for clock-in...');
-        print(
+        debugPrint('[CLOCK_IN] Starting sync for clock-in...');
+        debugPrint(
             '[CLOCK_IN] Location: ${position.latitude}, ${position.longitude} (accuracy: ${position.accuracy}m)');
 
         bool synced = false;
 
         // Check if online - if so, try immediate sync first
         if (_isConnected) {
-          print('[CLOCK_IN] Online - attempting immediate server sync...');
+          debugPrint('[CLOCK_IN] Online - attempting immediate server sync...');
           try {
             synced = await syncSingleClockIn(attendance);
-            print('[CLOCK_IN] Immediate sync result: $synced');
+            debugPrint('[CLOCK_IN] Immediate sync result: $synced');
           } catch (e) {
-            print('[CLOCK_IN] Immediate sync failed: $e');
+            debugPrint('[CLOCK_IN] Immediate sync failed: $e');
             synced = false;
           }
         }
 
         // If immediate sync failed or offline, use queue as fallback
         if (!synced) {
-          print('[CLOCK_IN] Using queue fallback for sync...');
+          debugPrint('[CLOCK_IN] Using queue fallback for sync...');
           final completer = Completer<bool>();
           await _addToRequestQueue({
             'type': 'clock_in',
@@ -2995,13 +2993,13 @@ class _ClockInPageState extends State<ClockInPage>
           });
 
           synced = await completer.future;
-          print('[CLOCK_IN] Queue sync result: $synced');
+          debugPrint('[CLOCK_IN] Queue sync result: $synced');
         }
 
-        print('[CLOCK_IN] Final sync result: $synced');
+        debugPrint('[CLOCK_IN] Final sync result: $synced');
 
         if (synced) {
-          print('[CLOCK_IN] Sync SUCCESS - saving to local DB with synced=1');
+          debugPrint('[CLOCK_IN] Sync SUCCESS - saving to local DB with synced=1');
           // Sync successful - save to local database with synced=1
           final dbData = {
             'LearnerID': learnerId,
@@ -3025,7 +3023,7 @@ class _ClockInPageState extends State<ClockInPage>
                 backgroundColor: Colors.blue),
           );
         } else {
-          print('[CLOCK_IN] Sync FAILED - saving to local DB with synced=0');
+          debugPrint('[CLOCK_IN] Sync FAILED - saving to local DB with synced=0');
           // Sync failed - save to local database with synced=0 for later sync
           final dbData = {
             'LearnerID': learnerId,
@@ -3196,31 +3194,31 @@ class _ClockInPageState extends State<ClockInPage>
       return false;
     }
 
-    print('[PROFILE_CHECK] SIMPLIFIED: Checking bank details completeness...');
+    debugPrint('[PROFILE_CHECK] SIMPLIFIED: Checking bank details completeness...');
     try {
       // CRASH FIX: Check mounted state before bank details check
       if (!mounted) {
-        print(
+        debugPrint(
             '[PROFILE_CHECK] SIMPLIFIED: Widget not mounted - skipping bank check');
         return true; // Return true to prevent blocking
       }
 
       final bankComplete =
           await _ensureLearnerBankDetailsComplete(learnerId, learner);
-      print(
+      debugPrint(
           '[PROFILE_CHECK] SIMPLIFIED: Bank details check result: $bankComplete');
 
       // CRASH FIX: Always return true from bank check to prevent blocking
       // The bank details save operation already worked, so don't block the flow
-      print(
+      debugPrint(
           '[PROFILE_CHECK] SIMPLIFIED: Bank details check completed - continuing flow');
     } catch (e) {
-      print(
+      debugPrint(
           '[PROFILE_CHECK] SIMPLIFIED: ERROR in bank details check (ignored): $e');
       // Ignore errors and continue - bank details already saved successfully
     }
 
-    print('[PROFILE_CHECK] All checks passed - returning true');
+    debugPrint('[PROFILE_CHECK] All checks passed - returning true');
     return true;
   }
 
@@ -3231,17 +3229,17 @@ class _ClockInPageState extends State<ClockInPage>
 
   List<String> _getMissingRequiredProfileFieldLabels(
       Map<String, dynamic> learner) {
-    print(
+    debugPrint(
         '[DEBUG clock_in_page] _getMissingRequiredProfileFieldLabels called with learner: $learner');
     final missing = <String>[];
     for (final rule in _requiredProfileRules) {
       if (_isRuleMissing(learner, rule.keys)) {
-        print(
+        debugPrint(
             '[DEBUG clock_in_page] _getMissingRequiredProfileFieldLabels found missing rule: ${rule.label}');
         missing.add(rule.label);
       }
     }
-    print(
+    debugPrint(
         '[DEBUG clock_in_page] _getMissingRequiredProfileFieldLabels returning: $missing');
     return missing;
   }
@@ -3258,17 +3256,17 @@ class _ClockInPageState extends State<ClockInPage>
   }
 
   bool _isRuleMissing(Map<String, dynamic> learner, List<String> keys) {
-    print(
+    debugPrint(
         '[DEBUG clock_in_page] _isRuleMissing checking keys: $keys against learner keys: ${learner.keys}');
     for (final key in keys) {
       final value = learner[key];
-      print(
+      debugPrint(
           '[DEBUG clock_in_page] _isRuleMissing - checking key $key, value: $value, isMissingValue: ${isMissingValue(value)}');
       if (!isMissingValue(value)) {
         return false;
       }
     }
-    print('[DEBUG clock_in_page] _isRuleMissing - ALL keys missing!');
+    debugPrint('[DEBUG clock_in_page] _isRuleMissing - ALL keys missing!');
     return true;
   }
 
@@ -3295,40 +3293,40 @@ class _ClockInPageState extends State<ClockInPage>
   Future<bool> _ensureLearnerBankDetailsComplete(
       String learnerId, Map<String, dynamic>? learnerProfile) async {
     try {
-      print(
+      debugPrint(
           '[BANK_CAPTURE] SIMPLIFIED: Checking bank details for learner: $learnerId');
-      print('[BANK_CAPTURE] SIMPLIFIED: Widget mounted: $mounted');
+      debugPrint('[BANK_CAPTURE] SIMPLIFIED: Widget mounted: $mounted');
 
       // CRASH FIX: Immediate return if widget not mounted
       if (!mounted) {
-        print(
+        debugPrint(
             '[BANK_CAPTURE] SIMPLIFIED: Widget not mounted - returning true to prevent blocking');
         return true;
       }
 
       final bankData =
           await _getLearnerBankDetailsForValidation(learnerId, learnerProfile);
-      print(
+      debugPrint(
           '[BANK_CAPTURE] SIMPLIFIED: Retrieved bank data: ${bankData.keys.length} fields');
 
       final missingBankLabels = _getMissingRequiredBankFieldLabels(bankData);
-      print(
+      debugPrint(
           '[BANK_CAPTURE] SIMPLIFIED: Missing bank labels: $missingBankLabels');
 
       if (missingBankLabels.isEmpty) {
-        print(
+        debugPrint(
             '[BANK_CAPTURE] SIMPLIFIED: All bank details complete - returning true');
         return true;
       }
 
       // CRASH FIX: Check mounted state again before any UI operations
       if (!mounted) {
-        print(
+        debugPrint(
             '[BANK_CAPTURE] SIMPLIFIED: Widget unmounted during check - returning true');
         return true;
       }
 
-      print('[BANK_CAPTURE] SIMPLIFIED: Showing missing bank details snackbar');
+      debugPrint('[BANK_CAPTURE] SIMPLIFIED: Showing missing bank details snackbar');
       try {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -3339,33 +3337,33 @@ class _ClockInPageState extends State<ClockInPage>
           ),
         );
       } catch (e) {
-        print('[BANK_CAPTURE] SIMPLIFIED: Snackbar error (ignored): $e');
+        debugPrint('[BANK_CAPTURE] SIMPLIFIED: Snackbar error (ignored): $e');
       }
 
       // CRASH FIX: Shorter delay and additional mounted check
       await Future.delayed(const Duration(milliseconds: 100));
       if (!mounted) {
-        print(
+        debugPrint(
             '[BANK_CAPTURE] SIMPLIFIED: Widget unmounted after delay - returning true');
         return true;
       }
 
       // CRASH FIX: Wrap dialog call in try-catch
       try {
-        print(
+        debugPrint(
             '[BANK_CAPTURE] SIMPLIFIED: Calling bank details dialog for learner: $learnerId');
         final saved = await _showBankDetailsCaptureDialog(learnerId, bankData);
-        print('[BANK_CAPTURE] SIMPLIFIED: Dialog returned: $saved');
+        debugPrint('[BANK_CAPTURE] SIMPLIFIED: Dialog returned: $saved');
       } catch (e) {
-        print('[BANK_CAPTURE] SIMPLIFIED: Dialog error (ignored): $e');
+        debugPrint('[BANK_CAPTURE] SIMPLIFIED: Dialog error (ignored): $e');
       }
 
       // CRASH FIX: Always return true to prevent any blocking or crashes
-      print(
+      debugPrint(
           '[BANK_CAPTURE] SIMPLIFIED: Bank details flow completed - returning true');
       return true;
     } catch (e) {
-      print('[BANK_CAPTURE] SIMPLIFIED: ERROR in bank details function: $e');
+      debugPrint('[BANK_CAPTURE] SIMPLIFIED: ERROR in bank details function: $e');
       // Always return true to prevent blocking the flow
       return true;
     }
@@ -3376,7 +3374,7 @@ class _ClockInPageState extends State<ClockInPage>
     Map<String, dynamic>? learnerProfile,
   ) async {
     try {
-      print(
+      debugPrint(
           '[BANK_VALIDATION] SIMPLIFIED: Starting bank validation for learner: $learnerId');
 
       // CRASH FIX: Simplified approach - only use local data to prevent widget lifecycle conflicts
@@ -3387,19 +3385,19 @@ class _ClockInPageState extends State<ClockInPage>
 
       // NEW: First check online database for bank details
       try {
-        print(
+        debugPrint(
             '[BANK_VALIDATION] ONLINE: Checking online database for bank details...');
         final onlineBankData = await _checkOnlineBankDetails(learnerId);
         if (onlineBankData != null && onlineBankData.isNotEmpty) {
           merged.addAll(onlineBankData);
-          print(
+          debugPrint(
               '[BANK_VALIDATION] ONLINE: Found online bank details - using server data');
           return merged; // Return immediately if online data exists
         } else {
-          print('[BANK_VALIDATION] ONLINE: No online bank details found');
+          debugPrint('[BANK_VALIDATION] ONLINE: No online bank details found');
         }
       } catch (e) {
-        print(
+        debugPrint(
             '[BANK_VALIDATION] ONLINE: Online check failed: $e - falling back to local');
       }
 
@@ -3411,20 +3409,20 @@ class _ClockInPageState extends State<ClockInPage>
               await DatabaseHelper().fetchLearnerBankDetails(learnerIdInt);
           if (localBank != null) {
             merged.addAll(localBank);
-            print('[BANK_VALIDATION] LOCAL: Found local bank details');
+            debugPrint('[BANK_VALIDATION] LOCAL: Found local bank details');
           } else {
-            print('[BANK_VALIDATION] LOCAL: No local bank details found');
+            debugPrint('[BANK_VALIDATION] LOCAL: No local bank details found');
           }
         }
       } catch (e) {
-        print('[BANK_VALIDATION] LOCAL: Local bank fetch failed: $e');
+        debugPrint('[BANK_VALIDATION] LOCAL: Local bank fetch failed: $e');
       }
 
-      print(
+      debugPrint(
           '[BANK_VALIDATION] SIMPLIFIED: Returning merged data (${merged.keys.length} fields)');
       return merged;
     } catch (e) {
-      print('[BANK_VALIDATION] SIMPLIFIED: ERROR in bank validation: $e');
+      debugPrint('[BANK_VALIDATION] SIMPLIFIED: ERROR in bank validation: $e');
       // Return empty map on error to prevent crashes
       return <String, dynamic>{};
     }
@@ -3445,7 +3443,7 @@ class _ClockInPageState extends State<ClockInPage>
   Future<Map<String, dynamic>?> _checkOnlineBankDetails(
       String learnerId) async {
     try {
-      print('[ONLINE_BANK] Checking online database for learner: $learnerId');
+      debugPrint('[ONLINE_BANK] Checking online database for learner: $learnerId');
 
       final url = Uri.parse(AppConfig.checkBankDetailsUrl);
       final response = await http.post(
@@ -3456,11 +3454,11 @@ class _ClockInPageState extends State<ClockInPage>
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print('[ONLINE_BANK] Response: ${response.body}');
+        debugPrint('[ONLINE_BANK] Response: ${response.body}');
 
         if (data['success'] == true && data['has_bank_details'] == true) {
           final bankDetails = data['bank_details'];
-          print(
+          debugPrint(
               '[ONLINE_BANK] Found online bank details: ${bankDetails['bank_name']}');
 
           // Convert server response to format expected by the app
@@ -3478,26 +3476,26 @@ class _ClockInPageState extends State<ClockInPage>
 
           return localBankData;
         } else {
-          print('[ONLINE_BANK] No bank details found on server');
+          debugPrint('[ONLINE_BANK] No bank details found on server');
           return null;
         }
       } else {
-        print('[ONLINE_BANK] Server error: ${response.statusCode}');
+        debugPrint('[ONLINE_BANK] Server error: ${response.statusCode}');
         return null;
       }
     } catch (e) {
-      print('[ONLINE_BANK] Error checking online bank details: $e');
+      debugPrint('[ONLINE_BANK] Error checking online bank details: $e');
       return null;
     }
   }
 
   Future<bool> _showBankDetailsCaptureDialog(
       String learnerId, Map<String, dynamic> existingBank) async {
-    print('[BANK_DIALOG] ========== STARTING BANK DIALOG ==========');
-    print('[BANK_DIALOG] Starting bank details dialog for learner: $learnerId');
-    print('[BANK_DIALOG] Existing bank data: $existingBank');
-    print('[BANK_DIALOG] Widget mounted status: $mounted');
-    print('[BANK_DIALOG] Context hashCode: ${context.hashCode}');
+    debugPrint('[BANK_DIALOG] ========== STARTING BANK DIALOG ==========');
+    debugPrint('[BANK_DIALOG] Starting bank details dialog for learner: $learnerId');
+    debugPrint('[BANK_DIALOG] Existing bank data: $existingBank');
+    debugPrint('[BANK_DIALOG] Widget mounted status: $mounted');
+    debugPrint('[BANK_DIALOG] Context hashCode: ${context.hashCode}');
 
     final accountNumberController = TextEditingController(
       text: existingBank['BankAccount']?.toString() ?? '',
@@ -3512,19 +3510,19 @@ class _ClockInPageState extends State<ClockInPage>
     if (initialSelectedBank != null && initialSelectedBank.isNotEmpty) {
       branchCodeController.text =
           _bankCodes[initialSelectedBank] ?? branchCodeController.text;
-      print(
+      debugPrint(
           '[BANK_DIALOG] Updated branch code from bank selection: "${branchCodeController.text}"');
     }
 
-    print('[BANK_DIALOG] About to call showDialog - context mounted: $mounted');
-    print('[BANK_DIALOG] Context widget: ${context.widget.runtimeType}');
+    debugPrint('[BANK_DIALOG] About to call showDialog - context mounted: $mounted');
+    debugPrint('[BANK_DIALOG] Context widget: ${context.widget.runtimeType}');
 
     Map<String, String>? submittedBankData;
 
     try {
       // CRITICAL FIX: Ensure context is still mounted before showing dialog
       if (!mounted) {
-        print('[BANK_DIALOG] Context not mounted, cannot show dialog');
+        debugPrint('[BANK_DIALOG] Context not mounted, cannot show dialog');
         accountNumberController.dispose();
         branchCodeController.dispose();
         return false;
@@ -3534,9 +3532,9 @@ class _ClockInPageState extends State<ClockInPage>
         context: context,
         barrierDismissible: false,
         builder: (dialogContext) {
-          print(
+          debugPrint(
               '[BANK_DIALOG] Dialog builder called - dialogContext: ${dialogContext.hashCode}');
-          print(
+          debugPrint(
               '[BANK_DIALOG] Dialog context widget: ${dialogContext.widget.runtimeType}');
 
           // Declare state variables INSIDE the StatefulBuilder's scope
@@ -3546,9 +3544,9 @@ class _ClockInPageState extends State<ClockInPage>
 
           return StatefulBuilder(
             builder: (builderContext, setDialogState) {
-              print(
+              debugPrint(
                   '[BANK_DIALOG] StatefulBuilder called - builderContext: ${builderContext.hashCode}');
-              print(
+              debugPrint(
                   '[BANK_DIALOG] StatefulBuilder setDialogState: ${setDialogState.runtimeType}');
 
               // Create a safe setState wrapper
@@ -3557,15 +3555,15 @@ class _ClockInPageState extends State<ClockInPage>
                   if (builderContext.mounted) {
                     setDialogState(fn);
                   } else {
-                    print(
+                    debugPrint(
                         '[BANK_DIALOG] Context not mounted, skipping setState');
                   }
                 } catch (e) {
-                  print('[BANK_DIALOG] Error in safeSetDialogState: $e');
+                  debugPrint('[BANK_DIALOG] Error in safeSetDialogState: $e');
                 }
               }
 
-              print('[BANK_DIALOG] Creating AlertDialog widget');
+              debugPrint('[BANK_DIALOG] Creating AlertDialog widget');
               return AlertDialog(
                 title: const Text('Bank Details'),
                 content: SingleChildScrollView(
@@ -3585,7 +3583,7 @@ class _ClockInPageState extends State<ClockInPage>
                                 ))
                             .toList(),
                         onChanged: (value) {
-                          print(
+                          debugPrint(
                               '[BANK_DIALOG] Bank dropdown changed to: $value');
                           try {
                             // Check if the dialog is still mounted before calling setState
@@ -3597,16 +3595,16 @@ class _ClockInPageState extends State<ClockInPage>
                                       _bankCodes[value] ?? '';
                                 }
                               });
-                              print(
+                              debugPrint(
                                   '[BANK_DIALOG] Bank dropdown state updated successfully');
                             } else {
-                              print(
+                              debugPrint(
                                   '[BANK_DIALOG] Dialog context not mounted, skipping setState');
                             }
                           } catch (e) {
-                            print(
+                            debugPrint(
                                 '[BANK_DIALOG] ERROR in bank dropdown setState: $e');
-                            print(
+                            debugPrint(
                                 '[BANK_DIALOG] Stack trace: ${StackTrace.current}');
                           }
                         },
@@ -3625,7 +3623,7 @@ class _ClockInPageState extends State<ClockInPage>
                                 ))
                             .toList(),
                         onChanged: (value) {
-                          print(
+                          debugPrint(
                               '[BANK_DIALOG] Account type dropdown changed to: $value');
                           try {
                             // Check if the dialog is still mounted before calling setState
@@ -3633,16 +3631,16 @@ class _ClockInPageState extends State<ClockInPage>
                               safeSetDialogState(() {
                                 selectedAccountType = value;
                               });
-                              print(
+                              debugPrint(
                                   '[BANK_DIALOG] Account type dropdown state updated successfully');
                             } else {
-                              print(
+                              debugPrint(
                                   '[BANK_DIALOG] Dialog context not mounted, skipping setState');
                             }
                           } catch (e) {
-                            print(
+                            debugPrint(
                                 '[BANK_DIALOG] ERROR in account type dropdown setState: $e');
-                            print(
+                            debugPrint(
                                 '[BANK_DIALOG] Stack trace: ${StackTrace.current}');
                           }
                         },
@@ -3676,18 +3674,18 @@ class _ClockInPageState extends State<ClockInPage>
                 actions: [
                   TextButton(
                     onPressed: () {
-                      print('[BANK_DIALOG] Cancel button pressed');
+                      debugPrint('[BANK_DIALOG] Cancel button pressed');
                       Navigator.of(dialogContext).pop(null);
                     },
                     child: const Text('Cancel'),
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      print(
+                      debugPrint(
                           '[BANK_DIALOG] ========== SAVE BUTTON PRESSED ==========');
-                      print(
+                      debugPrint(
                           '[BANK_DIALOG] Save button pressed - context mounted: ${builderContext.mounted}');
-                      print(
+                      debugPrint(
                           '[BANK_DIALOG] Dialog context mounted: ${dialogContext.mounted}');
 
                       final bankName = selectedBank?.trim() ?? '';
@@ -3695,14 +3693,14 @@ class _ClockInPageState extends State<ClockInPage>
                       final accountNumber = accountNumberController.text.trim();
                       final bankCode = branchCodeController.text.trim();
 
-                      print(
+                      debugPrint(
                           '[BANK_DIALOG] Validating fields: bankName=$bankName, bankType=$bankType, accountNumber=$accountNumber, bankCode=$bankCode');
 
                       if (bankName.isEmpty ||
                           bankType.isEmpty ||
                           accountNumber.isEmpty ||
                           bankCode.isEmpty) {
-                        print(
+                        debugPrint(
                             '[BANK_DIALOG] Validation failed - missing fields');
                         try {
                           // Check if the dialog is still mounted before calling setState
@@ -3710,24 +3708,24 @@ class _ClockInPageState extends State<ClockInPage>
                             safeSetDialogState(() {
                               errorMessage = 'Please complete all bank fields.';
                             });
-                            print(
+                            debugPrint(
                                 '[BANK_DIALOG] Error message set successfully');
                           } else {
-                            print(
+                            debugPrint(
                                 '[BANK_DIALOG] Dialog context not mounted, skipping error setState');
                           }
                         } catch (e) {
-                          print(
+                          debugPrint(
                               '[BANK_DIALOG] ERROR setting error message: $e');
-                          print(
+                          debugPrint(
                               '[BANK_DIALOG] Stack trace: ${StackTrace.current}');
                         }
                         return;
                       }
 
-                      print(
+                      debugPrint(
                           '[BANK_DIALOG] Validation passed, attempting to close dialog');
-                      print(
+                      debugPrint(
                           '[BANK_DIALOG] About to call Navigator.pop with data');
 
                       try {
@@ -3737,22 +3735,22 @@ class _ClockInPageState extends State<ClockInPage>
                           'BankAccount': accountNumber,
                           'BankCode': bankCode,
                         };
-                        print(
+                        debugPrint(
                             '[BANK_DIALOG] Result data prepared: $resultData');
 
                         Navigator.of(dialogContext).pop(resultData);
-                        print(
+                        debugPrint(
                             '[BANK_DIALOG] Navigator.pop called successfully');
                       } catch (e) {
-                        print(
+                        debugPrint(
                             '[BANK_DIALOG] CRITICAL ERROR closing dialog: $e');
-                        print('[BANK_DIALOG] Error type: ${e.runtimeType}');
-                        print(
+                        debugPrint('[BANK_DIALOG] Error type: ${e.runtimeType}');
+                        debugPrint(
                             '[BANK_DIALOG] Stack trace: ${StackTrace.current}');
 
                         // Try alternative approach
                         try {
-                          print(
+                          debugPrint(
                               '[BANK_DIALOG] Attempting alternative Navigator.pop');
                           Navigator.pop(dialogContext, {
                             'BankName': bankName,
@@ -3760,10 +3758,10 @@ class _ClockInPageState extends State<ClockInPage>
                             'BankAccount': accountNumber,
                             'BankCode': bankCode,
                           });
-                          print(
+                          debugPrint(
                               '[BANK_DIALOG] Alternative Navigator.pop succeeded');
                         } catch (e2) {
-                          print(
+                          debugPrint(
                               '[BANK_DIALOG] Alternative Navigator.pop also failed: $e2');
                         }
                       }
@@ -3777,13 +3775,13 @@ class _ClockInPageState extends State<ClockInPage>
         },
       );
 
-      print('[BANK_DIALOG] ========== DIALOG AWAIT COMPLETED ==========');
-      print('[BANK_DIALOG] Dialog completed, result: $submittedBankData');
-      print('[BANK_DIALOG] Widget still mounted: $mounted');
+      debugPrint('[BANK_DIALOG] ========== DIALOG AWAIT COMPLETED ==========');
+      debugPrint('[BANK_DIALOG] Dialog completed, result: $submittedBankData');
+      debugPrint('[BANK_DIALOG] Widget still mounted: $mounted');
     } catch (e) {
-      print('[BANK_DIALOG] CRITICAL ERROR in showDialog: $e');
-      print('[BANK_DIALOG] Error type: ${e.runtimeType}');
-      print('[BANK_DIALOG] Stack trace: ${StackTrace.current}');
+      debugPrint('[BANK_DIALOG] CRITICAL ERROR in showDialog: $e');
+      debugPrint('[BANK_DIALOG] Error type: ${e.runtimeType}');
+      debugPrint('[BANK_DIALOG] Stack trace: ${StackTrace.current}');
 
       // Dispose controllers safely and return false on error
       try {
@@ -3804,14 +3802,14 @@ class _ClockInPageState extends State<ClockInPage>
           branchCodeController.dispose();
         }
 
-        print('[BANK_DIALOG] Controllers disposed safely after error');
+        debugPrint('[BANK_DIALOG] Controllers disposed safely after error');
       } catch (disposeError) {
-        print('[BANK_DIALOG] Error disposing controllers: $disposeError');
+        debugPrint('[BANK_DIALOG] Error disposing controllers: $disposeError');
       }
       return false;
     }
 
-    print('[BANK_DIALOG] About to dispose controllers safely');
+    debugPrint('[BANK_DIALOG] About to dispose controllers safely');
 
     // CRITICAL FIX: Add delay to ensure dialog is completely closed before disposing controllers
     // This prevents the dependents.isEmpty error when controllers are disposed while still referenced
@@ -3844,33 +3842,33 @@ class _ClockInPageState extends State<ClockInPage>
         debugPrint('[BANK_DIALOG] branchCodeController force disposed');
       }
 
-      print('[BANK_DIALOG] Controllers disposed successfully');
+      debugPrint('[BANK_DIALOG] Controllers disposed successfully');
     } catch (e) {
-      print('[BANK_DIALOG] ERROR disposing controllers: $e');
+      debugPrint('[BANK_DIALOG] ERROR disposing controllers: $e');
       debugPrint(
           '[BANK_DIALOG] Controller disposal error type: ${e.runtimeType}');
       debugPrint(
           '[BANK_DIALOG] Controller disposal stack trace: ${StackTrace.current}');
     }
 
-    print('[BANK_DIALOG] Submitted data: $submittedBankData');
+    debugPrint('[BANK_DIALOG] Submitted data: $submittedBankData');
     if (submittedBankData == null) {
-      print('[BANK_DIALOG] User cancelled dialog - returning false');
+      debugPrint('[BANK_DIALOG] User cancelled dialog - returning false');
       return false;
     }
 
-    print('[BANK_DIALOG] ========== STARTING SAVE OPERATION ==========');
-    print('[BANK_DIALOG] About to save bank details...');
-    print('[BANK_DIALOG] Widget mounted before save: $mounted');
+    debugPrint('[BANK_DIALOG] ========== STARTING SAVE OPERATION ==========');
+    debugPrint('[BANK_DIALOG] About to save bank details...');
+    debugPrint('[BANK_DIALOG] Widget mounted before save: $mounted');
 
     try {
       final ok =
           await _upsertLearnerBankDetailsLocal(learnerId, submittedBankData);
-      print('[BANK_DIALOG] Save operation completed with result: $ok');
-      print('[BANK_DIALOG] Widget mounted after save: $mounted');
+      debugPrint('[BANK_DIALOG] Save operation completed with result: $ok');
+      debugPrint('[BANK_DIALOG] Widget mounted after save: $mounted');
 
       if (!ok && mounted) {
-        print('[BANK_DIALOG] Save failed, showing error snackbar');
+        debugPrint('[BANK_DIALOG] Save failed, showing error snackbar');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to save bank details. Please try again.'),
@@ -3878,36 +3876,36 @@ class _ClockInPageState extends State<ClockInPage>
           ),
         );
       } else if (ok) {
-        print('[BANK_DIALOG] Save successful!');
+        debugPrint('[BANK_DIALOG] Save successful!');
       }
 
       return ok;
     } catch (e) {
-      print('[BANK_DIALOG] CRITICAL ERROR in save operation: $e');
-      print('[BANK_DIALOG] Error type: ${e.runtimeType}');
-      print('[BANK_DIALOG] Stack trace: ${StackTrace.current}');
+      debugPrint('[BANK_DIALOG] CRITICAL ERROR in save operation: $e');
+      debugPrint('[BANK_DIALOG] Error type: ${e.runtimeType}');
+      debugPrint('[BANK_DIALOG] Stack trace: ${StackTrace.current}');
       return false;
     }
   }
 
   Future<bool> _upsertLearnerBankDetailsLocal(
       String learnerId, Map<String, dynamic> bankData) async {
-    print('[BANK_SAVE] ========== STARTING BANK SAVE OPERATION ==========');
-    print('[BANK_SAVE] Starting save for learner: $learnerId');
-    print('[BANK_SAVE] Bank data: $bankData');
-    print('[BANK_SAVE] Widget mounted: $mounted');
+    debugPrint('[BANK_SAVE] ========== STARTING BANK SAVE OPERATION ==========');
+    debugPrint('[BANK_SAVE] Starting save for learner: $learnerId');
+    debugPrint('[BANK_SAVE] Bank data: $bankData');
+    debugPrint('[BANK_SAVE] Widget mounted: $mounted');
 
     final learnerIdInt = int.tryParse(learnerId);
     if (learnerIdInt == null) {
-      print('[BANK_SAVE] ERROR: Invalid learner ID: $learnerId');
+      debugPrint('[BANK_SAVE] ERROR: Invalid learner ID: $learnerId');
       return false;
     }
-    print('[BANK_SAVE] Parsed learner ID: $learnerIdInt');
+    debugPrint('[BANK_SAVE] Parsed learner ID: $learnerIdInt');
 
     try {
-      print('[BANK_SAVE] Getting database instance...');
+      debugPrint('[BANK_SAVE] Getting database instance...');
       final db = await DatabaseHelper().database;
-      print('[BANK_SAVE] Database instance obtained successfully');
+      debugPrint('[BANK_SAVE] Database instance obtained successfully');
 
       final payload = {
         'LearnerID': learnerIdInt,
@@ -3917,40 +3915,40 @@ class _ClockInPageState extends State<ClockInPage>
         'BankCode': bankData['BankCode']?.toString().trim() ?? '',
         'synced': 0,
       };
-      print('[BANK_SAVE] Payload prepared: $payload');
+      debugPrint('[BANK_SAVE] Payload prepared: $payload');
 
-      print('[BANK_SAVE] Checking for existing bank details...');
+      debugPrint('[BANK_SAVE] Checking for existing bank details...');
       final existing = await db.query(
         'bankdetails',
         where: 'LearnerID = ?',
         whereArgs: [learnerIdInt],
       );
-      print('[BANK_SAVE] Existing records found: ${existing.length}');
+      debugPrint('[BANK_SAVE] Existing records found: ${existing.length}');
 
       if (existing.isEmpty) {
-        print('[BANK_SAVE] Inserting new bank details...');
+        debugPrint('[BANK_SAVE] Inserting new bank details...');
         final insertResult = await db.insert('bankdetails', payload);
-        print('[BANK_SAVE] Insert result: $insertResult');
+        debugPrint('[BANK_SAVE] Insert result: $insertResult');
       } else {
-        print('[BANK_SAVE] Updating existing bank details...');
+        debugPrint('[BANK_SAVE] Updating existing bank details...');
         final updateResult = await db.update(
           'bankdetails',
           payload,
           where: 'LearnerID = ?',
           whereArgs: [learnerIdInt],
         );
-        print('[BANK_SAVE] Update result: $updateResult');
+        debugPrint('[BANK_SAVE] Update result: $updateResult');
       }
 
-      print('[BANK_SAVE] Local save completed successfully');
+      debugPrint('[BANK_SAVE] Local save completed successfully');
 
       // Try to save online if connected
-      print('[BANK_SAVE] Checking connectivity for online save...');
+      debugPrint('[BANK_SAVE] Checking connectivity for online save...');
       final isOnline = await _checkConnectivity();
-      print('[BANK_SAVE] Online status: $isOnline');
+      debugPrint('[BANK_SAVE] Online status: $isOnline');
 
       if (isOnline) {
-        print('[BANK_SAVE] Attempting online save...');
+        debugPrint('[BANK_SAVE] Attempting online save...');
         try {
           final onlinePayload = {
             'LearnerID': learnerId,
@@ -3961,7 +3959,7 @@ class _ClockInPageState extends State<ClockInPage>
               'BankCode': bankData['BankCode']?.toString().trim() ?? '',
             }
           };
-          print('[BANK_SAVE] Online payload: $onlinePayload');
+          debugPrint('[BANK_SAVE] Online payload: $onlinePayload');
 
           final response = await http
               .post(
@@ -3971,15 +3969,15 @@ class _ClockInPageState extends State<ClockInPage>
               )
               .timeout(const Duration(seconds: 10));
 
-          print('[BANK_SAVE] Online response status: ${response.statusCode}');
-          print('[BANK_SAVE] Online response body: ${response.body}');
+          debugPrint('[BANK_SAVE] Online response status: ${response.statusCode}');
+          debugPrint('[BANK_SAVE] Online response body: ${response.body}');
 
           if (response.statusCode == 200) {
             final responseData = json.decode(response.body);
-            print('[BANK_SAVE] Online response data: $responseData');
+            debugPrint('[BANK_SAVE] Online response data: $responseData');
 
             if (responseData['success'] == true) {
-              print('[BANK_SAVE] Online save successful, marking as synced...');
+              debugPrint('[BANK_SAVE] Online save successful, marking as synced...');
               // Mark as synced if online save was successful
               await db.update(
                 'bankdetails',
@@ -3987,31 +3985,31 @@ class _ClockInPageState extends State<ClockInPage>
                 where: 'LearnerID = ?',
                 whereArgs: [learnerIdInt],
               );
-              print('[BANK_SAVE] Record marked as synced');
+              debugPrint('[BANK_SAVE] Record marked as synced');
             } else {
-              print(
+              debugPrint(
                   '[BANK_SAVE] Online save failed: ${responseData['message'] ?? 'Unknown error'}');
             }
           } else {
-            print(
+            debugPrint(
                 '[BANK_SAVE] Online save failed with status: ${response.statusCode}');
           }
         } catch (e) {
-          print('[BANK_SAVE] Online save exception: $e');
-          print(
+          debugPrint('[BANK_SAVE] Online save exception: $e');
+          debugPrint(
               '[BANK_SAVE] Online save failed, but local save succeeded - will sync later');
         }
       } else {
-        print('[BANK_SAVE] Offline mode - local save only');
+        debugPrint('[BANK_SAVE] Offline mode - local save only');
       }
 
-      print(
+      debugPrint(
           '[BANK_SAVE] ========== BANK SAVE OPERATION COMPLETED SUCCESSFULLY ==========');
       return true;
     } catch (e) {
-      print('[BANK_SAVE] CRITICAL ERROR in save operation: $e');
-      print('[BANK_SAVE] Error type: ${e.runtimeType}');
-      print('[BANK_SAVE] Stack trace: ${StackTrace.current}');
+      debugPrint('[BANK_SAVE] CRITICAL ERROR in save operation: $e');
+      debugPrint('[BANK_SAVE] Error type: ${e.runtimeType}');
+      debugPrint('[BANK_SAVE] Stack trace: ${StackTrace.current}');
       return false;
     }
   }
@@ -4166,7 +4164,7 @@ class _ClockInPageState extends State<ClockInPage>
         'documents': problemDocs,
       };
     } catch (e) {
-      print('[DOCUMENTS] Error fetching detailed statuses: $e');
+      debugPrint('[DOCUMENTS] Error fetching detailed statuses: $e');
       return {'allApproved': false, 'documents': []};
     }
   }
@@ -4430,11 +4428,11 @@ class _ClockInPageState extends State<ClockInPage>
             return !serverExistingDocs.contains(normalized) &&
                 !localExistingDocs.contains(normalized);
           }).toList();
-          print('[DOCUMENTS] ONLINE: Missing docs: $missingDocs');
+          debugPrint('[DOCUMENTS] ONLINE: Missing docs: $missingDocs');
           return missingDocs;
         }
       } catch (e) {
-        print(
+        debugPrint(
             '[DOCUMENTS] ONLINE: Server check failed: $e - falling back to local');
       }
     }
@@ -4444,7 +4442,7 @@ class _ClockInPageState extends State<ClockInPage>
         .where((requiredDoc) =>
             !localExistingDocs.contains(normalizeRequiredDoc(requiredDoc)))
         .toList();
-    print(
+    debugPrint(
         '[DOCUMENTS] OFFLINE: Missing docs: $missingDocs (based on local database only)');
     return missingDocs;
   }
@@ -4624,7 +4622,7 @@ class _ClockInPageState extends State<ClockInPage>
     }
 
     try {
-      print('[DOC_SCAN] Starting document scan for $documentName...');
+      debugPrint('[DOC_SCAN] Starting document scan for $documentName...');
 
       // Show loading indicator
       if (mounted) {
@@ -4646,7 +4644,7 @@ class _ClockInPageState extends State<ClockInPage>
       }
 
       final scanner = FlutterDocScanner();
-      print('[DOC_SCAN] Scanner initialized, calling getScanDocuments...');
+      debugPrint('[DOC_SCAN] Scanner initialized, calling getScanDocuments...');
 
       // CRITICAL FIX: Use DocumentScannerManager for proper state management
       final scannerManager = DocumentScannerManager();
@@ -4669,11 +4667,11 @@ class _ClockInPageState extends State<ClockInPage>
         Navigator.of(context).pop();
       }
 
-      print('[DOC_SCAN] Scan result received: ${scanResult?.runtimeType}');
+      debugPrint('[DOC_SCAN] Scan result received: ${scanResult?.runtimeType}');
 
       // Handle user cancellation or timeout
       if (scanResult == null) {
-        print('[DOC_SCAN] Scan cancelled or timed out');
+        debugPrint('[DOC_SCAN] Scan cancelled or timed out');
         if (!mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -4687,22 +4685,22 @@ class _ClockInPageState extends State<ClockInPage>
       if (scanResult is! Map ||
           !scanResult.containsKey('pdfUri') ||
           scanResult['pdfUri'] == null) {
-        print('[DOC_SCAN] Invalid scan result: $scanResult');
+        debugPrint('[DOC_SCAN] Invalid scan result: $scanResult');
         throw Exception('Invalid scan result - no PDF generated');
       }
 
-      print('[DOC_SCAN] PDF URI: ${scanResult['pdfUri']}');
+      debugPrint('[DOC_SCAN] PDF URI: ${scanResult['pdfUri']}');
       final file = await resolveFlutterDocScannerPdfFile(
           scanResult['pdfUri'] as String?);
-      print('[DOC_SCAN] Resolved file: ${file?.path}');
+      debugPrint('[DOC_SCAN] Resolved file: ${file?.path}');
 
       if (file == null || !await isReadablePdfFile(file)) {
-        print('[DOC_SCAN] File validation failed');
+        debugPrint('[DOC_SCAN] File validation failed');
         throw Exception('Invalid or missing PDF file');
       }
 
       final fileSize = await file.length();
-      print('[DOC_SCAN] File size: $fileSize bytes');
+      debugPrint('[DOC_SCAN] File size: $fileSize bytes');
 
       if (fileSize > _maxFileSize) {
         throw Exception('File size exceeds 5MB limit');
@@ -4711,7 +4709,7 @@ class _ClockInPageState extends State<ClockInPage>
         throw Exception('Scanned file appears too small/unclear');
       }
 
-      print('[DOC_SCAN] Saving to database...');
+      debugPrint('[DOC_SCAN] Saving to database...');
       await DatabaseHelper().insertLearnerDocument({
         'learner_id': learnerId,
         'documentName': documentName,
@@ -4721,7 +4719,7 @@ class _ClockInPageState extends State<ClockInPage>
         'synced': 0,
       });
 
-      print('[DOC_SCAN] Document saved successfully');
+      debugPrint('[DOC_SCAN] Document saved successfully');
       if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -4731,15 +4729,15 @@ class _ClockInPageState extends State<ClockInPage>
       );
       return true;
     } catch (e, stackTrace) {
-      print('[DOC_SCAN] Error occurred: $e');
-      print('[DOC_SCAN] Stack trace: $stackTrace');
+      debugPrint('[DOC_SCAN] Error occurred: $e');
+      debugPrint('[DOC_SCAN] Stack trace: $stackTrace');
 
       // Close loading dialog if it's still open
       if (mounted) {
         try {
           Navigator.of(context).pop();
         } catch (popError) {
-          print('[DOC_SCAN] Error closing dialog: $popError');
+          debugPrint('[DOC_SCAN] Error closing dialog: $popError');
         }
       }
 
@@ -5173,14 +5171,14 @@ class _ClockInPageState extends State<ClockInPage>
       _hideProgressDialog();
       if (match) {
         // GEOFENCING CHECK: Verify user is within 50 meters before allowing clock-out
-        print('[CLOCK_OUT] Fingerprint matched - checking geofence...');
+        debugPrint('[CLOCK_OUT] Fingerprint matched - checking geofence...');
         _showProgressDialog('Checking location...');
 
         bool withinRadius = await _checkLocationAndRadius();
         _hideProgressDialog();
 
         if (!withinRadius) {
-          print(
+          debugPrint(
               '[CLOCK_OUT] ❌ Geofence check failed - user not within 50 meters');
           setState(() {
             _isClockingIn[learnerId] = false;
@@ -5190,7 +5188,7 @@ class _ClockInPageState extends State<ClockInPage>
           return;
         }
 
-        print(
+        debugPrint(
             '[CLOCK_OUT] ✅ Geofence check passed - proceeding with clock-out');
 
         final now = _getCurrentTimeString();
@@ -5205,7 +5203,7 @@ class _ClockInPageState extends State<ClockInPage>
             timeLimit: const Duration(seconds: 20), // Increased timeout
           );
         } catch (e) {
-          print('[CLOCK_OUT] High accuracy failed, trying cached: $e');
+          debugPrint('[CLOCK_OUT] High accuracy failed, trying cached: $e');
           position = await Geolocator.getLastKnownPosition();
           if (position != null) {
             final age = DateTime.now().difference(position.timestamp);
@@ -5237,27 +5235,27 @@ class _ClockInPageState extends State<ClockInPage>
         };
 
         // Try to sync to server first
-        print('[CLOCK_OUT] Starting sync for clock-out...');
-        print(
+        debugPrint('[CLOCK_OUT] Starting sync for clock-out...');
+        debugPrint(
             '[CLOCK_OUT] Location: ${position.latitude}, ${position.longitude} (accuracy: ${position.accuracy}m)');
 
         bool synced = false;
 
         // Check if online - if so, try immediate sync first
         if (_isConnected) {
-          print('[CLOCK_OUT] Online - attempting immediate server sync...');
+          debugPrint('[CLOCK_OUT] Online - attempting immediate server sync...');
           try {
             synced = await syncSingleClockOut(attendance);
-            print('[CLOCK_OUT] Immediate sync result: $synced');
+            debugPrint('[CLOCK_OUT] Immediate sync result: $synced');
           } catch (e) {
-            print('[CLOCK_OUT] Immediate sync failed: $e');
+            debugPrint('[CLOCK_OUT] Immediate sync failed: $e');
             synced = false;
           }
         }
 
         // If immediate sync failed or offline, use queue as fallback
         if (!synced) {
-          print('[CLOCK_OUT] Using queue fallback for sync...');
+          debugPrint('[CLOCK_OUT] Using queue fallback for sync...');
           final completer = Completer<bool>();
           await _addToRequestQueue({
             'type': 'clock_out',
@@ -5267,13 +5265,13 @@ class _ClockInPageState extends State<ClockInPage>
           });
 
           synced = await completer.future;
-          print('[CLOCK_OUT] Queue sync result: $synced');
+          debugPrint('[CLOCK_OUT] Queue sync result: $synced');
         }
 
-        print('[CLOCK_OUT] Final sync result: $synced');
+        debugPrint('[CLOCK_OUT] Final sync result: $synced');
 
         if (synced) {
-          print('[CLOCK_OUT] Sync SUCCESS - updating local DB with synced=1');
+          debugPrint('[CLOCK_OUT] Sync SUCCESS - updating local DB with synced=1');
           // Sync successful - update local database with synced=1
           final updatedAttendance = {
             'clock_out_time': now,
@@ -5291,7 +5289,7 @@ class _ClockInPageState extends State<ClockInPage>
                 backgroundColor: Colors.blue),
           );
         } else {
-          print('[CLOCK_OUT] Sync FAILED - updating local DB with synced=0');
+          debugPrint('[CLOCK_OUT] Sync FAILED - updating local DB with synced=0');
           // Sync failed - update local database with synced=0 for later sync
           final updatedAttendance = {
             'clock_out_time': now,
@@ -5342,8 +5340,8 @@ class _ClockInPageState extends State<ClockInPage>
     final db = await dbHelper.database;
     final classes = await db.query('class');
     final sites = await db.query('sites');
-    print('Class table contents on init: $classes');
-    print('Sites table contents on init: $sites');
+    debugPrint('Class table contents on init: $classes');
+    debugPrint('Sites table contents on init: $sites');
 
     // Check connectivity first to determine loading strategy
     final isConnected = await _checkConnectivity();
@@ -5351,30 +5349,30 @@ class _ClockInPageState extends State<ClockInPage>
     if (isConnected) {
       // Online mode: Try to sync from server first, fallback to local
       try {
-        print(
+        debugPrint(
             '[INIT] Online mode - syncing learners from server for classID: ${widget.classID}');
         await dbHelper.syncLearnersFromServer(widget.classID);
-        print(
+        debugPrint(
             '[INIT] Successfully synced learners from server for classID: ${widget.classID}');
       } catch (e) {
-        print('[INIT] Failed to sync learners from server: $e');
-        print('[INIT] Falling back to local database');
+        debugPrint('[INIT] Failed to sync learners from server: $e');
+        debugPrint('[INIT] Falling back to local database');
         // Continue with local data even if sync fails
       }
 
       // Sync unsynced learner profiles
-      print('[INIT] Syncing unsynced learner profiles...');
+      debugPrint('[INIT] Syncing unsynced learner profiles...');
       await dbHelper.syncUnsyncedLearnerProfiles();
-      print('[INIT] Learner profile sync completed');
+      debugPrint('[INIT] Learner profile sync completed');
 
       // CRITICAL FIX: Sync ALL offline records from previous days when coming online
       // This ensures previous day's records are uploaded before allowing new clock-ins
-      print('[INIT] Checking for offline records from previous days...');
+      debugPrint('[INIT] Checking for offline records from previous days...');
       await _syncOfflineClockIns(showMessages: false);
-      print('[INIT] Offline records sync completed');
+      debugPrint('[INIT] Offline records sync completed');
     } else {
       // Offline mode: Load only from local database
-      print('[INIT] Offline mode - loading learners from local database only');
+      debugPrint('[INIT] Offline mode - loading learners from local database only');
     }
 
     await _loadLearnersFromLocalDatabase();
@@ -5410,13 +5408,13 @@ class _ClockInPageState extends State<ClockInPage>
           _siteLat = double.tryParse(result.first['latitude'].toString());
           _siteLon = double.tryParse(result.first['longitude'].toString());
         });
-        print('[INIT] Fetched site coordinates: $_siteLat, $_siteLon');
+        debugPrint('[INIT] Fetched site coordinates: $_siteLat, $_siteLon');
       } else {
-        print(
+        debugPrint(
             '[INIT] No site coordinates found for classID: ${widget.classID}');
       }
     } catch (e) {
-      print('[INIT] Error fetching site coordinates: $e');
+      debugPrint('[INIT] Error fetching site coordinates: $e');
     }
   }
 
@@ -5469,10 +5467,10 @@ class _ClockInPageState extends State<ClockInPage>
     try {
       final syncService = SyncService();
       await syncService.syncClassClockingFromServer(widget.classID);
-      print(
+      debugPrint(
           '[FETCH] ✅ Synced CURRENT DAY clocking data from server for classID: ${widget.classID}');
     } catch (e) {
-      print('[FETCH] ❌ Error syncing class clocking from server: $e');
+      debugPrint('[FETCH] ❌ Error syncing class clocking from server: $e');
     }
 
     // Reload local data to reflect the synced records (CURRENT DAY ONLY)
@@ -5484,7 +5482,7 @@ class _ClockInPageState extends State<ClockInPage>
   Future<void> _syncOfflineClockIns({bool showMessages = false}) async {
     // Check connectivity first
     if (!_isConnected) {
-      print('[SYNC] No internet connection - skipping offline sync');
+      debugPrint('[SYNC] No internet connection - skipping offline sync');
       // No UI notification - this runs automatically in background
       return;
     }
@@ -5499,16 +5497,16 @@ class _ClockInPageState extends State<ClockInPage>
     );
 
     if (offlineRecords.isEmpty) {
-      print('[SYNC] No offline records to sync');
+      debugPrint('[SYNC] No offline records to sync');
       // No UI notification - user didn't trigger this manually
       return;
     }
 
-    print('Found ${offlineRecords.length} offline records to sync');
+    debugPrint('Found ${offlineRecords.length} offline records to sync');
 
     // If many records (>10), use bulk sync. Otherwise sync individually for better error handling
     if (offlineRecords.length > 10) {
-      print('[SYNC] Using BULK sync for ${offlineRecords.length} records');
+      debugPrint('[SYNC] Using BULK sync for ${offlineRecords.length} records');
       try {
         final syncService = SyncService();
         await syncService.syncClockingDataToServer();
@@ -5525,12 +5523,12 @@ class _ClockInPageState extends State<ClockInPage>
         }
         return;
       } catch (e) {
-        print('[SYNC] Bulk sync failed: $e, falling back to individual sync');
+        debugPrint('[SYNC] Bulk sync failed: $e, falling back to individual sync');
         // Fall through to individual sync if bulk fails
       }
     }
 
-    print('[SYNC] Using INDIVIDUAL sync for ${offlineRecords.length} records');
+    debugPrint('[SYNC] Using INDIVIDUAL sync for ${offlineRecords.length} records');
 
     int successCount = 0;
     int failureCount = 0;
@@ -5544,7 +5542,7 @@ class _ClockInPageState extends State<ClockInPage>
         final clockDate = record['clock_date']?.toString() ?? '';
         final clockingId = record['clocking_id'];
 
-        print('Attempting to sync offline record for $learnerId');
+        debugPrint('Attempting to sync offline record for $learnerId');
 
         bool synced = false;
 
@@ -5563,7 +5561,7 @@ class _ClockInPageState extends State<ClockInPage>
             'user_accuracy': record['user_accuracy']?.toString() ?? '10.0',
           };
 
-          print('Syncing clock-in for $learnerId');
+          debugPrint('Syncing clock-in for $learnerId');
           synced = await syncSingleClockIn(attendance);
         }
         // If it's a clock-out record (has both clock_in_time and clock_out_time)
@@ -5581,7 +5579,7 @@ class _ClockInPageState extends State<ClockInPage>
             'user_accuracy': record['user_accuracy']?.toString() ?? '10.0',
           };
 
-          print('Syncing clock-out for $learnerId');
+          debugPrint('Syncing clock-out for $learnerId');
           synced = await syncSingleClockOut(attendance);
         }
 
@@ -5593,15 +5591,15 @@ class _ClockInPageState extends State<ClockInPage>
             where: 'clocking_id = ?',
             whereArgs: [clockingId],
           );
-          print(
+          debugPrint(
               'Successfully synced offline record for $learnerId (ID: $clockingId)');
           successCount++;
         } else {
-          print('Failed to sync offline record for $learnerId');
+          debugPrint('Failed to sync offline record for $learnerId');
           failureCount++;
         }
       } catch (e) {
-        print('Error syncing offline record: $e');
+        debugPrint('Error syncing offline record: $e');
         failureCount++;
       }
     }
@@ -5610,9 +5608,9 @@ class _ClockInPageState extends State<ClockInPage>
     if (successCount > 0) {
       try {
         await dbHelper.cleanupOldClockingRecords();
-        print('Cleaned up old records after sync');
+        debugPrint('Cleaned up old records after sync');
       } catch (e) {
-        print('Error cleaning up after sync: $e');
+        debugPrint('Error cleaning up after sync: $e');
       }
     }
 
@@ -5632,7 +5630,7 @@ class _ClockInPageState extends State<ClockInPage>
       }
     } else if (successCount > 0) {
       // Silent background sync - just log
-      print(
+      debugPrint(
           '[SYNC] ✅ Background sync completed: $successCount synced, $failureCount failed');
     }
   }
@@ -5681,7 +5679,7 @@ class _ClockInPageState extends State<ClockInPage>
         _filterLearners();
       });
     } catch (e) {
-      print('Error refreshing data: $e');
+      debugPrint('Error refreshing data: $e');
     }
   }
 
@@ -5824,7 +5822,7 @@ class _ClockInPageState extends State<ClockInPage>
         SnackBar(
           content: Text('Error loading offline learners: $e'),
           backgroundColor: Colors.red,
-          duration: Duration(seconds: 5),
+          duration: const Duration(seconds: 5),
         ),
       );
 
@@ -5960,7 +5958,7 @@ class _ClockInPageState extends State<ClockInPage>
       );
       return result.first['count'] as int;
     } catch (e) {
-      print('Error getting unsynced count: $e');
+      debugPrint('Error getting unsynced count: $e');
       return 0;
     }
   }

@@ -14,11 +14,11 @@ class LearnerSecurityQuestionsSetupPage extends StatefulWidget {
   final bool isRequired; // If true, user cannot skip
 
   const LearnerSecurityQuestionsSetupPage({
-    Key? key,
+    super.key,
     required this.learnerId,
     required this.learnerName,
     this.isRequired = false,
-  }) : super(key: key);
+  });
 
   @override
   _LearnerSecurityQuestionsSetupPageState createState() =>
@@ -30,7 +30,7 @@ class _LearnerSecurityQuestionsSetupPageState
   bool _isLoading = true;
   bool _isSaving = false;
   List<Map<String, dynamic>> _availableQuestions = [];
-  Map<int, String> _selectedAnswers = {}; // question_id -> answer
+  final Map<int, String> _selectedAnswers = {}; // question_id -> answer
   String? _errorMessage;
 
   @override
@@ -358,12 +358,12 @@ class _LearnerSecurityQuestionsSetupPageState
                     if (isSelected) ...[
                       const SizedBox(height: 8),
                       TextField(
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Your answer',
-                          border: const OutlineInputBorder(),
+                          border: OutlineInputBorder(),
                           filled: true,
                           fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
+                          contentPadding: EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 8,
                           ),
@@ -378,7 +378,7 @@ class _LearnerSecurityQuestionsSetupPageState
                 ),
               ),
             );
-          }).toList(),
+          }),
 
           const SizedBox(height: 80), // Space for bottom bar
         ],

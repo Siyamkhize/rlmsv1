@@ -1,0 +1,2 @@
+C:/projects/rlmss/android/app/.cxx/Debug/3r5o3t4e/x86/CMakeFiles/edit_cache.dir
+C:/projects/rlmss/android/app/.cxx/Debug/3r5o3t4e/x86/CMakeFiles/rebuild_cache.dir

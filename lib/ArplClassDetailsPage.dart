@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'config.dart';
-import 'ArplAssessorMarkingPage.dart';
 import 'ArplHierarchicalNavigatorPage.dart';
 
 // arl: ARPL Class Details Page
@@ -31,14 +30,14 @@ class _ArplClassDetailsPageState extends State<ArplClassDetailsPage> {
         '_': DateTime.now().millisecondsSinceEpoch.toString(),
       });
 
-      print('[ArplClassDetailsPage] Fetching learners from: $url');
+      debugPrint('[ArplClassDetailsPage] Fetching learners from: $url');
       final response = await http.get(Uri.parse(url));
 
-      print('[ArplClassDetailsPage] Response Status: ${response.statusCode}');
-      print('[ArplClassDetailsPage] Response Headers: ${response.headers}');
-      print(
+      debugPrint('[ArplClassDetailsPage] Response Status: ${response.statusCode}');
+      debugPrint('[ArplClassDetailsPage] Response Headers: ${response.headers}');
+      debugPrint(
           '[ArplClassDetailsPage] Response Body Length: ${response.body.length}');
-      print(
+      debugPrint(
           '[ArplClassDetailsPage] Response Body (get_learners): ${response.body}');
 
       if (response.statusCode == 200) {
@@ -60,31 +59,31 @@ class _ArplClassDetailsPageState extends State<ArplClassDetailsPage> {
             'learnerId': learnerId,
           });
 
-          print('[ArplClassDetailsPage] Fetching POE from: $poeUrl');
+          debugPrint('[ArplClassDetailsPage] Fetching POE from: $poeUrl');
           final poeResponse = await http.get(Uri.parse(poeUrl));
 
-          print(
+          debugPrint(
               'POE Response Status for learner $learnerId: ${poeResponse.statusCode}');
-          print(
+          debugPrint(
               'POE Response Body for learner $learnerId: ${poeResponse.body}');
 
           if (poeResponse.statusCode == 200) {
             if (poeResponse.body.isEmpty) {
               learner['poeData'] = {'pathways': {}};
-              print('Empty POE response for learner $learnerId');
+              debugPrint('Empty POE response for learner $learnerId');
             } else {
               try {
                 Map<String, dynamic> poeData = jsonDecode(poeResponse.body);
                 learner['poeData'] = poeData;
-                print('POE Data for learner $learnerId: $poeData');
+                debugPrint('POE Data for learner $learnerId: $poeData');
               } catch (e) {
                 learner['poeData'] = {'pathways': {}};
-                print('Failed to parse POE JSON for learner $learnerId: $e');
+                debugPrint('Failed to parse POE JSON for learner $learnerId: $e');
               }
             }
           } else {
             learner['poeData'] = {'pathways': {}};
-            print(
+            debugPrint(
                 'Failed to fetch POE for learner $learnerId, status: ${poeResponse.statusCode}');
           }
         }
@@ -95,7 +94,7 @@ class _ArplClassDetailsPageState extends State<ArplClassDetailsPage> {
             'Failed to load learners. Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching learners: $e');
+      debugPrint('Error fetching learners: $e');
       throw Exception('Failed to load learners. Error: $e');
     }
   }
@@ -105,7 +104,7 @@ class _ArplClassDetailsPageState extends State<ArplClassDetailsPage> {
     String learnerId = learner['LearnerID'].toString();
 
     if (poeData.isEmpty) {
-      print('No POE data for learner $learnerId, color: white');
+      debugPrint('No POE data for learner $learnerId, color: white');
       return Colors.white;
     }
 
@@ -122,20 +121,20 @@ class _ArplClassDetailsPageState extends State<ArplClassDetailsPage> {
 
           // Check summative assessments
           for (var assessment in assessments['summative'] ?? []) {
-            print(
+            debugPrint(
                 'Checking summative assessment for learner $learnerId, exercise: ${assessment['exercise']}, '
                 'filePath: ${assessment['filePath']}, marks_scored: ${assessment['marks_scored']}');
             if (assessment['filePath'] != null &&
                 assessment['filePath'].isNotEmpty) {
               hasFile = true;
-              print(
+              debugPrint(
                   'Found file for learner $learnerId in summative, setting hasFile to true');
             }
             var marksScored = assessment['marks_scored'];
             if (marksScored == null ||
                 (marksScored is num && marksScored <= 0)) {
               allMarksScored = false;
-              print(
+              debugPrint(
                   'Missing or zero marks for summative exercise ${assessment['exercise']} in learner $learnerId, '
                   'setting allMarksScored to false');
             }
@@ -143,20 +142,20 @@ class _ArplClassDetailsPageState extends State<ArplClassDetailsPage> {
 
           // Check formative assessments
           for (var assessment in assessments['formative'] ?? []) {
-            print(
+            debugPrint(
                 'Checking formative assessment for learner $learnerId, exercise: ${assessment['exercise']}, '
                 'filePath: ${assessment['filePath']}, marks_scored: ${assessment['marks_scored']}');
             if (assessment['filePath'] != null &&
                 assessment['filePath'].isNotEmpty) {
               hasFile = true;
-              print(
+              debugPrint(
                   'Found file for learner $learnerId in formative, setting hasFile to true');
             }
             var marksScored = assessment['marks_scored'];
             if (marksScored == null ||
                 (marksScored is num && marksScored <= 0)) {
               allMarksScored = false;
-              print(
+              debugPrint(
                   'Missing or zero marks for formative exercise ${assessment['exercise']} in learner $learnerId, '
                   'setting allMarksScored to false');
             }
@@ -166,15 +165,15 @@ class _ArplClassDetailsPageState extends State<ArplClassDetailsPage> {
     }
 
     if (allMarksScored && hasFile) {
-      print(
+      debugPrint(
           'All exercises for learner $learnerId have marks and at least one file, color: green');
       return Colors.green;
     }
     if (hasFile) {
-      print('Learner $learnerId has file but not all marks, color: amber');
+      debugPrint('Learner $learnerId has file but not all marks, color: amber');
       return Colors.amber;
     }
-    print('Learner $learnerId has no file or all marks, color: white');
+    debugPrint('Learner $learnerId has no file or all marks, color: white');
     return Colors.white;
   }
 

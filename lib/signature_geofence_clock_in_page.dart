@@ -15,17 +15,12 @@ import 'dart:typed_data';
 import 'services/comprehensive_manual_clocking_sync.dart';
 import 'package:uuid/uuid.dart';
 
-import 'DetailsPage.dart';
-import 'LearnerDetailsPage.dart';
-import 'sick_note_page.dart';
 import 'database_helper.dart';
-import 'services/secure_location_service.dart';
 import 'services/timezone_validator.dart';
 import 'services/offline_sync_queue_service.dart';
 import 'widgets/smart_framed_camera_capture.dart';
 import 'config.dart';
 import 'mixins/learner_clockin_gates_mixin.dart';
-import 'widgets/smart_framed_camera_capture.dart';
 
 /// Signature + Geofencing Clock-In Page
 /// Works like clock_in_page.dart but uses signature capture and geofencing validation
@@ -50,7 +45,7 @@ class _SignatureGeofenceClockInPageState
   Map<String, String> clockInTimes = {};
   Map<String, String> clockOutTimes = {};
   Map<String, String> contactTimes = {};
-  Map<String, bool> _unsyncedLearners = {}; // Track learners with offline data
+  final Map<String, bool> _unsyncedLearners = {}; // Track learners with offline data
   final Map<String, bool> _isClockingIn = {};
 
   // Search functionality
@@ -66,22 +61,22 @@ class _SignatureGeofenceClockInPageState
   );
 
   // Photo capture state (FIXED - per learner to prevent race conditions)
-  Map<int, File> _learnerPhotoFiles = {}; // Store photo files per learner ID
-  Map<int, Uint8List> _learnerPhotoBytes =
+  final Map<int, File> _learnerPhotoFiles = {}; // Store photo files per learner ID
+  final Map<int, Uint8List> _learnerPhotoBytes =
       {}; // Store photo bytes per learner ID
-  Map<int, Uint8List> _learnerSignatureBytes =
+  final Map<int, Uint8List> _learnerSignatureBytes =
       {}; // Store signature bytes per learner ID
   String? _currentLearnerForCapture;
-  bool _isClockInProcess = false; // true for clock-in, false for clock-out
+  final bool _isClockInProcess = false; // true for clock-in, false for clock-out
 
   // Track which learners have completed evidence capture
-  Map<int, bool> _learnerHasPhoto = {};
-  Map<int, bool> _learnerHasSignature = {};
+  final Map<int, bool> _learnerHasPhoto = {};
+  final Map<int, bool> _learnerHasSignature = {};
 
   // Batch mode state
   bool _batchMode = false;
   bool _isSubmittingBatch = false;
-  Map<String, Map<String, dynamic>> _batchClockings = {};
+  final Map<String, Map<String, dynamic>> _batchClockings = {};
   int get _pendingBatchCount => _batchClockings.length;
 
   // Geofencing state
@@ -127,7 +122,7 @@ class _SignatureGeofenceClockInPageState
       
       // If just came online, trigger sync of offline records
       if (wasOffline && _isOnline) {
-        print('[SIGNATURE_GEO] 🌐 Network restored - triggering sync of offline records');
+        debugPrint('[SIGNATURE_GEO] 🌐 Network restored - triggering sync of offline records');
         _triggerOfflineSync();
       }
     });
@@ -146,7 +141,7 @@ class _SignatureGeofenceClockInPageState
         if (!mounted) return;
         if (newPermission == LocationPermission.denied ||
             newPermission == LocationPermission.deniedForever) {
-          print('[SIGNATURE_GEO] Location permission denied');
+          debugPrint('[SIGNATURE_GEO] Location permission denied');
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -165,7 +160,7 @@ class _SignatureGeofenceClockInPageState
 
       // Try to get GPS position first (30 second timeout for better acquisition)
       try {
-        print('[SIGNATURE_GEO] Acquiring GPS position (high accuracy)...');
+        debugPrint('[SIGNATURE_GEO] Acquiring GPS position (high accuracy)...');
         final gpsPosition = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
         ).timeout(const Duration(seconds: 30));
@@ -186,14 +181,14 @@ class _SignatureGeofenceClockInPageState
           _isLoadingLocation = false;
         });
 
-        print(
+        debugPrint(
             '[SIGNATURE_GEO] ✅ GPS position obtained: ${gpsPosition.latitude}, ${gpsPosition.longitude}, accuracy: ${gpsPosition.accuracy}m');
       } catch (e) {
-        print('[SIGNATURE_GEO] GPS acquisition failed: $e');
+        debugPrint('[SIGNATURE_GEO] GPS acquisition failed: $e');
         
         // Fallback to network location (less accurate but better than nothing)
         try {
-          print('[SIGNATURE_GEO] Trying network location fallback...');
+          debugPrint('[SIGNATURE_GEO] Trying network location fallback...');
           final networkPosition = await Geolocator.getCurrentPosition(
             desiredAccuracy: LocationAccuracy.medium,
           ).timeout(const Duration(seconds: 15));
@@ -214,7 +209,7 @@ class _SignatureGeofenceClockInPageState
             _isLoadingLocation = false;
           });
 
-          print(
+          debugPrint(
               '[SIGNATURE_GEO] ⚠️ Network location obtained: ${networkPosition.latitude}, ${networkPosition.longitude}, accuracy: ${networkPosition.accuracy}m');
           
           // Show warning that network location is less accurate
@@ -228,7 +223,7 @@ class _SignatureGeofenceClockInPageState
             ),
           );
         } catch (e2) {
-          print('[SIGNATURE_GEO] ❌ Network location also failed: $e2');
+          debugPrint('[SIGNATURE_GEO] ❌ Network location also failed: $e2');
           setState(() => _isLoadingLocation = false);
           
           // Show error with retry option
@@ -273,7 +268,7 @@ class _SignatureGeofenceClockInPageState
         });
       }
     } catch (e) {
-      print('[SIGNATURE_GEO] Error starting location monitoring: $e');
+      debugPrint('[SIGNATURE_GEO] Error starting location monitoring: $e');
       setState(() => _isLoadingLocation = false);
     }
   }
@@ -291,12 +286,12 @@ class _SignatureGeofenceClockInPageState
       if (result.isNotEmpty) {
         _siteLat = double.tryParse(result.first['latitude'].toString());
         _siteLon = double.tryParse(result.first['longitude'].toString());
-        print(
+        debugPrint(
           '[SIGNATURE_GEO] Site coordinates loaded: ($_siteLat, $_siteLon)',
         );
       }
     } catch (e) {
-      print('[SIGNATURE_GEO] Error loading site coordinates: $e');
+      debugPrint('[SIGNATURE_GEO] Error loading site coordinates: $e');
     }
   }
 
@@ -323,15 +318,15 @@ class _SignatureGeofenceClockInPageState
     // Step 1: Sync learners from server API (if online)
     if (_isOnline) {
       try {
-        print('[SIGNATURE_GEO] Syncing learners from server API...');
+        debugPrint('[SIGNATURE_GEO] Syncing learners from server API...');
         final dbHelper = DatabaseHelper();
         await dbHelper.syncLearnersFromServer(widget.classID);
-        print('[SIGNATURE_GEO] ✅ Successfully synced learners from server');
+        debugPrint('[SIGNATURE_GEO] ✅ Successfully synced learners from server');
       } catch (e) {
-        print('[SIGNATURE_GEO] ⚠️ Server sync failed, will use local data: $e');
+        debugPrint('[SIGNATURE_GEO] ⚠️ Server sync failed, will use local data: $e');
       }
     } else {
-      print('[SIGNATURE_GEO] Offline mode - skipping server sync');
+      debugPrint('[SIGNATURE_GEO] Offline mode - skipping server sync');
     }
 
     // Step 2: Load learners from local database (now contains fresh server data if online)
@@ -349,18 +344,18 @@ class _SignatureGeofenceClockInPageState
       final dbHelper = DatabaseHelper();
       final db = await dbHelper.database;
 
-      print('[SIGNATURE_GEO] ===== DATABASE DIAGNOSTIC =====');
-      print('[SIGNATURE_GEO] Looking for classID: ${widget.classID}');
-      print('[SIGNATURE_GEO] ClassID type: ${widget.classID.runtimeType}');
+      debugPrint('[SIGNATURE_GEO] ===== DATABASE DIAGNOSTIC =====');
+      debugPrint('[SIGNATURE_GEO] Looking for classID: ${widget.classID}');
+      debugPrint('[SIGNATURE_GEO] ClassID type: ${widget.classID.runtimeType}');
 
       // Check if class exists in database
       final classCheck = await db.rawQuery('''
         SELECT classID FROM class WHERE classID = ?
       ''', [widget.classID]);
-      print('[SIGNATURE_GEO] Class exists in DB: ${classCheck.isNotEmpty}');
+      debugPrint('[SIGNATURE_GEO] Class exists in DB: ${classCheck.isNotEmpty}');
 
       if (classCheck.isNotEmpty) {
-        print(
+        debugPrint(
             '[SIGNATURE_GEO] Found class with ID: ${classCheck.first['classID']} (type: ${classCheck.first['classID'].runtimeType})');
       }
 
@@ -368,44 +363,44 @@ class _SignatureGeofenceClockInPageState
       final countResult = await db.rawQuery('''
         SELECT COUNT(*) as total FROM learnerdetails WHERE CAST(classID AS TEXT) = ?
       ''', [normalizeClassId(widget.classID)]);
-      print(
+      debugPrint(
           '[SIGNATURE_GEO] Total learners in DB for classID ${widget.classID}: ${countResult.first['total']}');
 
       // Check for type mismatches - try both STRING and INTEGER
       final countAsString = await db.rawQuery('''
         SELECT COUNT(*) as total FROM learnerdetails WHERE classID = ?
       ''', [widget.classID.toString()]);
-      print(
+      debugPrint(
           '[SIGNATURE_GEO] Learners found with STRING classID: ${countAsString.first['total']}');
 
       final countAsInt = await db.rawQuery('''
         SELECT COUNT(*) as total FROM learnerdetails WHERE classID = ?
       ''', [int.tryParse(widget.classID.toString()) ?? 0]);
-      print(
+      debugPrint(
           '[SIGNATURE_GEO] Learners found with INTEGER classID: ${countAsInt.first['total']}');
 
       // Show sample classID values in database
       final sampleClassIDs = await db.rawQuery('''
         SELECT DISTINCT classID FROM learnerdetails ORDER BY classID LIMIT 10
       ''');
-      print(
+      debugPrint(
           '[SIGNATURE_GEO] Sample classIDs in DB: ${sampleClassIDs.map((r) => '${r['classID']} (${r['classID'].runtimeType})').join(', ')}');
 
       final learnersWithClockingData =
           await dbHelper.getLearnersWithClockingData(widget.classID);
 
-      print(
+      debugPrint(
           '[SIGNATURE_GEO] getLearnersWithClockingData returned: ${learnersWithClockingData.length} records');
 
       if (learnersWithClockingData.isNotEmpty) {
-        print(
+        debugPrint(
             '[SIGNATURE_GEO] First 3 learners: ${learnersWithClockingData.take(3).map((l) => '${l['Name']} ${l['Surname']} (ID: ${l['LearnerID']})').join(', ')}');
       }
-      print('[SIGNATURE_GEO] ===== END DIAGNOSTIC =====');
+      debugPrint('[SIGNATURE_GEO] ===== END DIAGNOSTIC =====');
 
       // If no learners found, try to create test learners for offline functionality
       if (learnersWithClockingData.isEmpty) {
-        print(
+        debugPrint(
             '[SIGNATURE_GEO] 🔄 No learners found, attempting to create test learners...');
         try {
           await dbHelper.ensureClassDataExists(widget.classID);
@@ -417,7 +412,7 @@ class _SignatureGeofenceClockInPageState
               await dbHelper.getLearnersWithClockingData(widget.classID);
 
           if (retryData.isNotEmpty) {
-            print(
+            debugPrint(
                 '[SIGNATURE_GEO] ✅ Successfully created ${retryData.length} test learners');
             setState(() {
               widget.learners.clear();
@@ -428,19 +423,19 @@ class _SignatureGeofenceClockInPageState
               }
               _filteredLearners = List.from(widget.learners);
             });
-            print(
+            debugPrint(
                 '[SIGNATURE_GEO] Loaded ${widget.learners.length} test learners for class ${widget.classID}');
             return;
           } else {
-            print('[SIGNATURE_GEO] ❌ Failed to create test learners');
+            debugPrint('[SIGNATURE_GEO] ❌ Failed to create test learners');
           }
         } catch (e) {
-          print('[SIGNATURE_GEO] ❌ Error creating test learners: $e');
+          debugPrint('[SIGNATURE_GEO] ❌ Error creating test learners: $e');
         }
       }
 
       if (learnersWithClockingData.isEmpty && widget.learners.isNotEmpty) {
-        print(
+        debugPrint(
             '[SIGNATURE_GEO] Using ${widget.learners.length} learners from dashboard (offline cache)');
         setState(() {
           _filteredLearners = List.from(widget.learners);
@@ -480,12 +475,12 @@ class _SignatureGeofenceClockInPageState
         _filteredLearners = List.from(widget.learners);
       });
 
-      print(
+      debugPrint(
         '[SIGNATURE_GEO] Loaded ${widget.learners.length} learners for class ${widget.classID}',
       );
     } catch (e) {
-      print('[SIGNATURE_GEO] Error loading learners: $e');
-      print('[SIGNATURE_GEO] Stack trace: ${StackTrace.current}');
+      debugPrint('[SIGNATURE_GEO] Error loading learners: $e');
+      debugPrint('[SIGNATURE_GEO] Stack trace: ${StackTrace.current}');
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(
@@ -508,17 +503,17 @@ class _SignatureGeofenceClockInPageState
         final response =
             await http.get(url).timeout(const Duration(seconds: 10));
 
-        print('[SIGNATURE_GEO] Fetch status response code: ${response.statusCode}');
-        print('[SIGNATURE_GEO] Fetch status URL: $url');
+        debugPrint('[SIGNATURE_GEO] Fetch status response code: ${response.statusCode}');
+        debugPrint('[SIGNATURE_GEO] Fetch status URL: $url');
 
         if (response.statusCode == 200) {
           final result = jsonDecode(response.body);
           
-          print('[SIGNATURE_GEO] Endpoint response keys: ${result.keys.toList()}');
-          print('[SIGNATURE_GEO] success=${result['success']}, count=${result['count']}');
+          debugPrint('[SIGNATURE_GEO] Endpoint response keys: ${result.keys.toList()}');
+          debugPrint('[SIGNATURE_GEO] success=${result['success']}, count=${result['count']}');
 
           if (result['success'] == true && result['records'] is List) {
-            print('[SIGNATURE_GEO] Processing ${result['records'].length} records...');
+            debugPrint('[SIGNATURE_GEO] Processing ${result['records'].length} records...');
             
             // Track which learners are confirmed on server
             Set<String> serverLearnerIDs = {};
@@ -530,17 +525,20 @@ class _SignatureGeofenceClockInPageState
               final contactTime = record['contact_time']?.toString() ?? '';
 
               if (clockInTime.isNotEmpty) {
-                print('[SIGNATURE_GEO] Setting clock-in for learner $learnerID: $clockInTime');
+                debugPrint('[SIGNATURE_GEO] Setting clock-in for learner $learnerID: $clockInTime');
                 serverLearnerIDs.add(learnerID); // Mark as on server
               }
 
               setState(() {
-                if (clockInTime.isNotEmpty)
+                if (clockInTime.isNotEmpty) {
                   clockInTimes[learnerID] = clockInTime;
-                if (clockOutTime.isNotEmpty)
+                }
+                if (clockOutTime.isNotEmpty) {
                   clockOutTimes[learnerID] = clockOutTime;
-                if (contactTime.isNotEmpty)
+                }
+                if (contactTime.isNotEmpty) {
                   contactTimes[learnerID] = contactTime;
+                }
                   
                 // Mark as synced (on server) - GREEN
                 if (clockInTime.isNotEmpty) {
@@ -549,21 +547,21 @@ class _SignatureGeofenceClockInPageState
               });
             }
 
-            print('[SIGNATURE_GEO] ✅ Loaded ${result['count']} manual clocking records from server');
-            print('[SIGNATURE_GEO] ✅ clockInTimes map now has ${clockInTimes.length} entries');
-            print('[SIGNATURE_GEO] 🟢 Server learners (synced): $serverLearnerIDs');
+            debugPrint('[SIGNATURE_GEO] ✅ Loaded ${result['count']} manual clocking records from server');
+            debugPrint('[SIGNATURE_GEO] ✅ clockInTimes map now has ${clockInTimes.length} entries');
+            debugPrint('[SIGNATURE_GEO] 🟢 Server learners (synced): $serverLearnerIDs');
           } else {
-            print('[SIGNATURE_GEO] ⚠️ Unexpected response format or empty records');
+            debugPrint('[SIGNATURE_GEO] ⚠️ Unexpected response format or empty records');
           }
         }
       } catch (e) {
-        print(
+        debugPrint(
             '[SIGNATURE_GEO] Server fetch failed, falling back to local: $e');
         await _loadClockingDataFromLocal(currentDate);
       }
     } else {
       // OFFLINE: Load from local database
-      print('[SIGNATURE_GEO] Offline mode - loading from local database');
+      debugPrint('[SIGNATURE_GEO] Offline mode - loading from local database');
       await _loadClockingDataFromLocal(currentDate);
     }
   }
@@ -586,16 +584,17 @@ class _SignatureGeofenceClockInPageState
 
         setState(() {
           if (clockInTime.isNotEmpty) clockInTimes[learnerID] = clockInTime;
-          if (clockOutTime.isNotEmpty)
+          if (clockOutTime.isNotEmpty) {
             clockOutTimes[learnerID] = clockOutTime;
+          }
           if (contactTime.isNotEmpty) contactTimes[learnerID] = contactTime;
         });
       }
 
-      print(
+      debugPrint(
           '[SIGNATURE_GEO] Loaded ${records.length} records from local manual_clocking table');
     } catch (e) {
-      print('[SIGNATURE_GEO] Error loading local clocking data: $e');
+      debugPrint('[SIGNATURE_GEO] Error loading local clocking data: $e');
     }
   }
 
@@ -612,7 +611,7 @@ class _SignatureGeofenceClockInPageState
         whereArgs: [currentDate],
       );
 
-      print('[SIGNATURE_GEO] Found ${localRecords.length} local records for today');
+      debugPrint('[SIGNATURE_GEO] Found ${localRecords.length} local records for today');
       
       setState(() {
         for (var record in localRecords) {
@@ -632,20 +631,20 @@ class _SignatureGeofenceClockInPageState
               clockInTimes[learnerID] = clockInTime;
             }
             
-            print('[SIGNATURE_GEO] 🟠 Learner $learnerID in local DB but NOT on server - marked UNSYNCED');
+            debugPrint('[SIGNATURE_GEO] 🟠 Learner $learnerID in local DB but NOT on server - marked UNSYNCED');
           } else {
-            print('[SIGNATURE_GEO] 🟢 Learner $learnerID confirmed on server - SYNCED');
+            debugPrint('[SIGNATURE_GEO] 🟢 Learner $learnerID confirmed on server - SYNCED');
           }
         }
       });
       
       final unsyncedCount = _unsyncedLearners.values.where((v) => v == true).length;
       final syncedCount = _unsyncedLearners.values.where((v) => v == false).length;
-      print('[SIGNATURE_GEO] === Sync Summary ===');
-      print('[SIGNATURE_GEO] 🟢 Synced (on server): $syncedCount learners');
-      print('[SIGNATURE_GEO] 🟠 Unsynced (offline only): $unsyncedCount learners');
+      debugPrint('[SIGNATURE_GEO] === Sync Summary ===');
+      debugPrint('[SIGNATURE_GEO] 🟢 Synced (on server): $syncedCount learners');
+      debugPrint('[SIGNATURE_GEO] 🟠 Unsynced (offline only): $unsyncedCount learners');
     } catch (e) {
-      print('[SIGNATURE_GEO] Error checking unsynced records: $e');
+      debugPrint('[SIGNATURE_GEO] Error checking unsynced records: $e');
     }
   }
 
@@ -669,9 +668,9 @@ class _SignatureGeofenceClockInPageState
           where: 'LearnerID = ? AND clock_date = ?',
           whereArgs: [learnerID, record['clock_date'].toString()],
         );
-        print('[SIGNATURE_GEO] Synced offline clock-in for $learnerID');
+        debugPrint('[SIGNATURE_GEO] Synced offline clock-in for $learnerID');
       } catch (e) {
-        print('[SIGNATURE_GEO] Failed to sync offline clock-in: $e');
+        debugPrint('[SIGNATURE_GEO] Failed to sync offline clock-in: $e');
       }
     }
   }
@@ -729,8 +728,8 @@ class _SignatureGeofenceClockInPageState
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Row(
-            children: const [
+          title: const Row(
+            children: [
               Icon(Icons.error, color: Colors.red, size: 28),
               SizedBox(width: 8),
               Text('Outside Site Range'),
@@ -816,8 +815,8 @@ class _SignatureGeofenceClockInPageState
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.purple, width: 2),
                 ),
-                child: Row(
-                  children: const [
+                child: const Row(
+                  children: [
                     Icon(Icons.photo_camera, color: Colors.purple),
                     SizedBox(width: 8),
                     Expanded(
@@ -932,7 +931,7 @@ class _SignatureGeofenceClockInPageState
                   _learnerHasSignature[learnerIdInt] = true;
                 }
               } catch (e) {
-                print('Error storing signature: $e');
+                debugPrint('Error storing signature: $e');
               }
 
               if (!context.mounted) return;
@@ -1015,7 +1014,7 @@ class _SignatureGeofenceClockInPageState
       debugPrint('[SIGNATURE_GEO] ✓ Document check passed');
 
       // CRITICAL FIX: First capture face photo using SmartFramedCameraCapture
-      print('[SIGNATURE_GEO] Starting face capture for learner: $learnerID');
+      debugPrint('[SIGNATURE_GEO] Starting face capture for learner: $learnerID');
 
       // Step 1: Navigate to SmartFramedCameraCapture for face photo
       final learnerData = widget.learners.firstWhere(
@@ -1043,7 +1042,7 @@ class _SignatureGeofenceClockInPageState
 
       // Check if camera was closed without capturing (user cancelled)
       if (!_learnerPhotoBytes.containsKey(int.parse(learnerID))) {
-        print('[SIGNATURE_GEO] Face capture failed or cancelled');
+        debugPrint('[SIGNATURE_GEO] Face capture failed or cancelled');
         return;
       }
 
@@ -1051,17 +1050,17 @@ class _SignatureGeofenceClockInPageState
       setState(() {
         _learnerHasPhoto[int.parse(learnerID)] = true;
       });
-      print('[SIGNATURE_GEO] Face photo captured successfully for: $learnerID');
+      debugPrint('[SIGNATURE_GEO] Face photo captured successfully for: $learnerID');
 
       // Step 2: Capture signature using existing signature dialog
-      print(
+      debugPrint(
           '[SIGNATURE_GEO] Starting signature capture for learner: $learnerID');
       await _showSignatureDialog(learnerID, true); // true = isClockIn
       if (!mounted) return;
 
       // Check if signature was captured successfully
       if (!_learnerSignatureBytes.containsKey(int.parse(learnerID))) {
-        print('[SIGNATURE_GEO] Signature capture failed or cancelled');
+        debugPrint('[SIGNATURE_GEO] Signature capture failed or cancelled');
         return;
       }
 
@@ -1072,28 +1071,28 @@ class _SignatureGeofenceClockInPageState
         // EXISTING INDIVIDUAL MODE - keep exactly as is
         final clockInTime = DateFormat('HH:mm:ss').format(DateTime.now());
 
-        print('[SIGNATURE_GEO] 🌐 Network status: ${_isOnline ? "ONLINE" : "OFFLINE"}');
+        debugPrint('[SIGNATURE_GEO] 🌐 Network status: ${_isOnline ? "ONLINE" : "OFFLINE"}');
         
         if (_isOnline) {
-          print('[SIGNATURE_GEO] 🚀 Attempting ONLINE clock-in for learner: $learnerID');
+          debugPrint('[SIGNATURE_GEO] 🚀 Attempting ONLINE clock-in for learner: $learnerID');
           try {
             await _clockInOnline(learnerID, '');
             if (!mounted) return;
-            print('[SIGNATURE_GEO] ✅ ONLINE clock-in succeeded');
+            debugPrint('[SIGNATURE_GEO] ✅ ONLINE clock-in succeeded');
           } catch (onlineError) {
-            print('[SIGNATURE_GEO] ❌ ONLINE clock-in FAILED: $onlineError');
-            print('[SIGNATURE_GEO] 🔄 Falling back to OFFLINE mode');
+            debugPrint('[SIGNATURE_GEO] ❌ ONLINE clock-in FAILED: $onlineError');
+            debugPrint('[SIGNATURE_GEO] 🔄 Falling back to OFFLINE mode');
             
             // Fall back to offline mode if online fails
             await _clockInOffline(learnerID, clockInTime);
             if (!mounted) return;
             
             // Trigger sync immediately (will try to upload what we just saved)
-            print('[SIGNATURE_GEO] 🔄 Triggering immediate sync after offline save');
+            debugPrint('[SIGNATURE_GEO] 🔄 Triggering immediate sync after offline save');
             _triggerOfflineSync();
           }
         } else {
-          print('[SIGNATURE_GEO] 💾 Using OFFLINE clock-in (no network)');
+          debugPrint('[SIGNATURE_GEO] 💾 Using OFFLINE clock-in (no network)');
           await _clockInOffline(learnerID, clockInTime);
           if (!mounted) return;
         }
@@ -1103,8 +1102,8 @@ class _SignatureGeofenceClockInPageState
         });
       }
     } catch (e) {
-      print('[SIGNATURE_GEO] ⚠️ CRITICAL Clock-in error: $e');
-      print('[SIGNATURE_GEO] Stack trace: ${StackTrace.current}');
+      debugPrint('[SIGNATURE_GEO] ⚠️ CRITICAL Clock-in error: $e');
+      debugPrint('[SIGNATURE_GEO] Stack trace: ${StackTrace.current}');
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(
@@ -1112,7 +1111,7 @@ class _SignatureGeofenceClockInPageState
       ).showSnackBar(SnackBar(
         content: Text('Clock-in failed: $e'),
         backgroundColor: Colors.red,
-        duration: Duration(seconds: 5),
+        duration: const Duration(seconds: 5),
       ));
     } finally {
       setState(() => _isClockingIn[learnerID] = false);
@@ -1151,7 +1150,7 @@ class _SignatureGeofenceClockInPageState
 
     try {
       // CRITICAL FIX: Capture face photo for clock-out
-      print('[SIGNATURE_GEO] Starting face capture for clock-out: $learnerID');
+      debugPrint('[SIGNATURE_GEO] Starting face capture for clock-out: $learnerID');
 
       final learnerData = widget.learners.firstWhere(
         (l) => l['LearnerID'].toString() == learnerID,
@@ -1177,7 +1176,7 @@ class _SignatureGeofenceClockInPageState
 
       // Check if camera was closed without capturing (user cancelled)
       if (!_learnerPhotoBytes.containsKey(int.parse(learnerID))) {
-        print('[SIGNATURE_GEO] Face capture failed or cancelled for clock-out');
+        debugPrint('[SIGNATURE_GEO] Face capture failed or cancelled for clock-out');
         return;
       }
 
@@ -1185,17 +1184,17 @@ class _SignatureGeofenceClockInPageState
       setState(() {
         _learnerHasPhoto[int.parse(learnerID)] = true;
       });
-      print('[SIGNATURE_GEO] Face photo captured successfully for clock-out: $learnerID');
+      debugPrint('[SIGNATURE_GEO] Face photo captured successfully for clock-out: $learnerID');
 
       // Capture signature for clock-out
-      print(
+      debugPrint(
           '[SIGNATURE_GEO] Starting signature capture for clock-out: $learnerID');
       await _showSignatureDialog(learnerID, false); // false = isClockOut
       if (!mounted) return;
 
       // Check if signature was captured successfully
       if (!_learnerSignatureBytes.containsKey(int.parse(learnerID))) {
-        print('[SIGNATURE_GEO] Signature capture failed or cancelled');
+        debugPrint('[SIGNATURE_GEO] Signature capture failed or cancelled');
         return;
       }
 
@@ -1220,7 +1219,7 @@ class _SignatureGeofenceClockInPageState
         });
       }
     } catch (e) {
-      print('[SIGNATURE_GEO] Clock-out error: $e');
+      debugPrint('[SIGNATURE_GEO] Clock-out error: $e');
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(
@@ -1433,7 +1432,7 @@ class _SignatureGeofenceClockInPageState
         throw Exception(result['message'] ?? 'Batch submission failed');
       }
     } catch (e) {
-      print('[SIGNATURE_GEO] Batch submission error: $e');
+      debugPrint('[SIGNATURE_GEO] Batch submission error: $e');
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1448,36 +1447,36 @@ class _SignatureGeofenceClockInPageState
   }
 
   Future<void> _clockInOnline(String learnerID, String signaturePath) async {
-    print('[SIGNATURE_GEO] 📡 Starting ONLINE clock-in for learner: $learnerID');
+    debugPrint('[SIGNATURE_GEO] 📡 Starting ONLINE clock-in for learner: $learnerID');
     try {
       if (widget.classID.isEmpty) {
         throw Exception('ClassID is missing or empty');
       }
 
       // Step 1: Prepare signature from per-learner storage
-      print('[SIGNATURE_GEO] Step 1: Preparing signature...');
+      debugPrint('[SIGNATURE_GEO] Step 1: Preparing signature...');
       String signatureBase64 = '';
       final learnerIdInt = int.parse(learnerID);
 
       if (_learnerSignatureBytes.containsKey(learnerIdInt)) {
         signatureBase64 = base64Encode(_learnerSignatureBytes[learnerIdInt]!);
-        print('[SIGNATURE_GEO] ✅ Signature prepared (${signatureBase64.length} chars)');
+        debugPrint('[SIGNATURE_GEO] ✅ Signature prepared (${signatureBase64.length} chars)');
       } else {
         throw Exception('Signature not captured for this learner');
       }
 
       // Step 2: Prepare face photo from per-learner storage
-      print('[SIGNATURE_GEO] Step 2: Preparing face photo...');
+      debugPrint('[SIGNATURE_GEO] Step 2: Preparing face photo...');
       String? faceImageBase64;
       if (_learnerPhotoBytes.containsKey(learnerIdInt)) {
         faceImageBase64 = base64Encode(_learnerPhotoBytes[learnerIdInt]!);
-        print('[SIGNATURE_GEO] ✅ Face photo prepared (${faceImageBase64.length} chars)');
+        debugPrint('[SIGNATURE_GEO] ✅ Face photo prepared (${faceImageBase64.length} chars)');
       } else {
         throw Exception('Face photo not captured for this learner');
       }
 
       // Step 3: Upload images to server and get filenames
-      print('[SIGNATURE_GEO] Step 3: Uploading images to server...');
+      debugPrint('[SIGNATURE_GEO] Step 3: Uploading images to server...');
       final timestamp =
           DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
       final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -1488,11 +1487,11 @@ class _SignatureGeofenceClockInPageState
       if (token == null) {
         throw Exception('Authentication token not available');
       }
-      print('[SIGNATURE_GEO] ✅ Auth token retrieved');
+      debugPrint('[SIGNATURE_GEO] ✅ Auth token retrieved');
 
       final uploadUrl =
           Uri.parse(AppConfig.buildUrl('save_manual_clocking_images.php'));
-      print('[SIGNATURE_GEO] Upload URL: $uploadUrl');
+      debugPrint('[SIGNATURE_GEO] Upload URL: $uploadUrl');
       
       final uploadPayload = {
         'learner_id': learnerID,
@@ -1503,7 +1502,7 @@ class _SignatureGeofenceClockInPageState
         'timestamp': timestamp,
       };
 
-      print('[SIGNATURE_GEO] 📤 Sending image upload request...');
+      debugPrint('[SIGNATURE_GEO] 📤 Sending image upload request...');
       final uploadResponse = await _makeAuthenticatedRequest(
         () => http.post(
           uploadUrl,
@@ -1516,8 +1515,8 @@ class _SignatureGeofenceClockInPageState
         maxRetries: 2,
       );
 
-      print('[SIGNATURE_GEO] 📥 Upload response status: ${uploadResponse.statusCode}');
-      print('[SIGNATURE_GEO] 📥 Upload response body: ${uploadResponse.body}');
+      debugPrint('[SIGNATURE_GEO] 📥 Upload response status: ${uploadResponse.statusCode}');
+      debugPrint('[SIGNATURE_GEO] 📥 Upload response body: ${uploadResponse.body}');
       
       final uploadResult = jsonDecode(uploadResponse.body);
 
@@ -1530,12 +1529,12 @@ class _SignatureGeofenceClockInPageState
       final faceInFilename = uploadResult['files']?['face_in'];
       final signatureInFilename = uploadResult['files']?['signature_in'];
 
-      print('[SIGNATURE_GEO] ✅ Images uploaded successfully');
-      print('[SIGNATURE_GEO] Face filename: $faceInFilename');
-      print('[SIGNATURE_GEO] Signature filename: $signatureInFilename');
+      debugPrint('[SIGNATURE_GEO] ✅ Images uploaded successfully');
+      debugPrint('[SIGNATURE_GEO] Face filename: $faceInFilename');
+      debugPrint('[SIGNATURE_GEO] Signature filename: $signatureInFilename');
 
       // Step 4: Save clock-in record with filenames
-      print('[SIGNATURE_GEO] Step 4: Saving clock-in record...');
+      debugPrint('[SIGNATURE_GEO] Step 4: Saving clock-in record...');
       final clockInUrl =
           Uri.parse(AppConfig.buildUrl('save_manual_clockin.php'));
 
@@ -1557,7 +1556,7 @@ class _SignatureGeofenceClockInPageState
         'is_offline_sync': false, // Real-time manual clock-in
       };
 
-      print('[SIGNATURE_GEO] 📤 Sending clock-in record...');
+      debugPrint('[SIGNATURE_GEO] 📤 Sending clock-in record...');
       final response = await _makeAuthenticatedRequest(
         () => http.post(
           clockInUrl,
@@ -1571,8 +1570,8 @@ class _SignatureGeofenceClockInPageState
         endpoint: 'save_manual_clockin',
       );
 
-      print('[SIGNATURE_GEO] 📥 Clock-in response status: ${response.statusCode}');
-      print('[SIGNATURE_GEO] 📥 Clock-in response body: ${response.body}');
+      debugPrint('[SIGNATURE_GEO] 📥 Clock-in response status: ${response.statusCode}');
+      debugPrint('[SIGNATURE_GEO] 📥 Clock-in response body: ${response.body}');
       
       final result = jsonDecode(response.body);
 
@@ -1599,7 +1598,7 @@ class _SignatureGeofenceClockInPageState
           _signatureController.clear();
         });
 
-        print('[SIGNATURE_GEO] ✅✅✅ Clock-in COMPLETELY SUCCESSFUL for learner: $learnerID (SYNCED TO SERVER)');
+        debugPrint('[SIGNATURE_GEO] ✅✅✅ Clock-in COMPLETELY SUCCESSFUL for learner: $learnerID (SYNCED TO SERVER)');
 
         if (!mounted) return;
         if (!context.mounted) return;
@@ -1614,8 +1613,8 @@ class _SignatureGeofenceClockInPageState
         throw Exception('Server rejected clock-in: $errorMsg');
       }
     } catch (e, stackTrace) {
-      print('[SIGNATURE_GEO] ❌❌❌ Online clock-in FAILED: $e');
-      print('[SIGNATURE_GEO] Stack trace: $stackTrace');
+      debugPrint('[SIGNATURE_GEO] ❌❌❌ Online clock-in FAILED: $e');
+      debugPrint('[SIGNATURE_GEO] Stack trace: $stackTrace');
       throw Exception('Online clock-in failed: $e');
     }
   }
@@ -1654,7 +1653,7 @@ class _SignatureGeofenceClockInPageState
           DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
       final clockOutTime = DateFormat('HH:mm:ss').format(DateTime.now());
 
-      print('[SIGNATURE_GEO] Uploading images for clock-out: $learnerID');
+      debugPrint('[SIGNATURE_GEO] Uploading images for clock-out: $learnerID');
 
       // Get authentication token
       final token = await AppConfig.getAuthToken();
@@ -1697,7 +1696,7 @@ class _SignatureGeofenceClockInPageState
       final faceOutFilename = uploadResult['files']?['face_out'];
       final signatureOutFilename = uploadResult['files']?['signature_out'];
 
-      print(
+      debugPrint(
           '[SIGNATURE_GEO] Images uploaded. Face: $faceOutFilename, Signature: $signatureOutFilename');
 
       // Step 4: Save clock-out record with filenames
@@ -1721,7 +1720,7 @@ class _SignatureGeofenceClockInPageState
         'is_offline_sync': false, // Real-time manual clock-out
       };
 
-      print('[SIGNATURE_GEO] Sending manual clock-out for learner: $learnerID');
+      debugPrint('[SIGNATURE_GEO] Sending manual clock-out for learner: $learnerID');
 
       final response = await _makeAuthenticatedRequest(
         () => http.post(
@@ -1758,7 +1757,7 @@ class _SignatureGeofenceClockInPageState
             );
             contactTime = formatDuration(contactTimeDuration);
           } catch (e) {
-            print('[SIGNATURE_GEO] Error calculating contact time: $e');
+            debugPrint('[SIGNATURE_GEO] Error calculating contact time: $e');
           }
         }
 
@@ -1778,7 +1777,7 @@ class _SignatureGeofenceClockInPageState
           _signatureController.clear();
         });
 
-        print('[SIGNATURE_GEO] Clock-out successful for learner: $learnerID');
+        debugPrint('[SIGNATURE_GEO] Clock-out successful for learner: $learnerID');
 
         // Check if record is now complete (both clock-in and clock-out)
         final hasClockIn = clockInTimes[learnerID]?.isNotEmpty == true;
@@ -1799,14 +1798,14 @@ class _SignatureGeofenceClockInPageState
         throw Exception(result['message'] ?? 'Server error');
       }
     } catch (e) {
-      print('[SIGNATURE_GEO] Online clock-out failed: $e');
+      debugPrint('[SIGNATURE_GEO] Online clock-out failed: $e');
       throw Exception('Online clock-out failed: $e');
     }
   }
 
   Future<void> _clockInOffline(String learnerID, String clockInTime) async {
     try {
-      print('[SIGNATURE_GEO] Starting offline clock-in for: $learnerID');
+      debugPrint('[SIGNATURE_GEO] Starting offline clock-in for: $learnerID');
       final dbHelper = DatabaseHelper();
       final clockDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
       final appDir = await getApplicationDocumentsDirectory();
@@ -1823,12 +1822,12 @@ class _SignatureGeofenceClockInPageState
           await signatureFile
               .writeAsBytes(_learnerSignatureBytes[learnerIdInt]!);
           finalSignaturePath = signaturePath;
-          print('[SIGNATURE_GEO] Signature saved to: $finalSignaturePath');
+          debugPrint('[SIGNATURE_GEO] Signature saved to: $finalSignaturePath');
         } catch (e) {
-          print('[SIGNATURE_GEO] Signature save failed: $e');
+          debugPrint('[SIGNATURE_GEO] Signature save failed: $e');
         }
       } else {
-        print('[SIGNATURE_GEO] No signature found for learner $learnerID');
+        debugPrint('[SIGNATURE_GEO] No signature found for learner $learnerID');
       }
 
       // Save face photo from per-learner storage
@@ -1841,12 +1840,12 @@ class _SignatureGeofenceClockInPageState
           final facePhotoFile = File(facePhotoPath);
           await facePhotoFile.writeAsBytes(_learnerPhotoBytes[learnerIdInt]!);
           finalFacePhotoPath = facePhotoPath;
-          print('[SIGNATURE_GEO] Face photo saved to: $finalFacePhotoPath');
+          debugPrint('[SIGNATURE_GEO] Face photo saved to: $finalFacePhotoPath');
         } catch (e) {
-          print('[SIGNATURE_GEO] Face photo save failed: $e');
+          debugPrint('[SIGNATURE_GEO] Face photo save failed: $e');
         }
       } else {
-        print('[SIGNATURE_GEO] No face photo found for learner $learnerID');
+        debugPrint('[SIGNATURE_GEO] No face photo found for learner $learnerID');
       }
 
       // Get location data
@@ -1869,7 +1868,7 @@ class _SignatureGeofenceClockInPageState
       };
 
       await dbHelper.insertManualClockInOffline(clockInData);
-      print(
+      debugPrint(
           '[SIGNATURE_GEO] Offline clock-in saved for: $learnerID to manual_clocking + manual_clocking_evidence');
 
       setState(() {
@@ -1877,7 +1876,7 @@ class _SignatureGeofenceClockInPageState
         _unsyncedLearners[learnerID] = true; // Mark as unsynced (offline)
       });
 
-      print('[SIGNATURE_GEO] 🟠 Learner $learnerID marked as UNSYNCED (offline data)');
+      debugPrint('[SIGNATURE_GEO] 🟠 Learner $learnerID marked as UNSYNCED (offline data)');
 
       if (!mounted) return;
       if (!context.mounted) return;
@@ -1888,7 +1887,7 @@ class _SignatureGeofenceClockInPageState
         ),
       );
     } catch (e) {
-      print('[SIGNATURE_GEO] Offline clock-in error: $e');
+      debugPrint('[SIGNATURE_GEO] Offline clock-in error: $e');
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1905,7 +1904,7 @@ class _SignatureGeofenceClockInPageState
     String clockDate,
   ) async {
     try {
-      print('[SIGNATURE_GEO] Starting offline clock-out for: $learnerID');
+      debugPrint('[SIGNATURE_GEO] Starting offline clock-out for: $learnerID');
       final dbHelper = DatabaseHelper();
       final db = await dbHelper.database;
       final appDir = await getApplicationDocumentsDirectory();
@@ -1939,7 +1938,7 @@ class _SignatureGeofenceClockInPageState
           );
           contactTime = formatDuration(contactTimeDuration);
         } catch (e) {
-          print('[SIGNATURE_GEO] Error calculating contact time: $e');
+          debugPrint('[SIGNATURE_GEO] Error calculating contact time: $e');
         }
       }
 
@@ -1955,12 +1954,12 @@ class _SignatureGeofenceClockInPageState
           await signatureFile
               .writeAsBytes(_learnerSignatureBytes[learnerIdInt]!);
           finalSignaturePath = signaturePath;
-          print('[SIGNATURE_GEO] Clock-out signature saved to: $finalSignaturePath');
+          debugPrint('[SIGNATURE_GEO] Clock-out signature saved to: $finalSignaturePath');
         } catch (e) {
-          print('[SIGNATURE_GEO] Clock-out signature save failed: $e');
+          debugPrint('[SIGNATURE_GEO] Clock-out signature save failed: $e');
         }
       } else {
-        print('[SIGNATURE_GEO] No signature found for learner $learnerID clock-out');
+        debugPrint('[SIGNATURE_GEO] No signature found for learner $learnerID clock-out');
       }
 
       // Save face photo for clock-out from per-learner storage
@@ -1973,12 +1972,12 @@ class _SignatureGeofenceClockInPageState
           final facePhotoFile = File(facePhotoPath);
           await facePhotoFile.writeAsBytes(_learnerPhotoBytes[learnerIdInt]!);
           finalFacePhotoPath = facePhotoPath;
-          print('[SIGNATURE_GEO] Clock-out face photo saved to: $finalFacePhotoPath');
+          debugPrint('[SIGNATURE_GEO] Clock-out face photo saved to: $finalFacePhotoPath');
         } catch (e) {
-          print('[SIGNATURE_GEO] Clock-out face photo save failed: $e');
+          debugPrint('[SIGNATURE_GEO] Clock-out face photo save failed: $e');
         }
       } else {
-        print('[SIGNATURE_GEO] No face photo found for learner $learnerID clock-out');
+        debugPrint('[SIGNATURE_GEO] No face photo found for learner $learnerID clock-out');
       }
 
       // Prepare clock-out data
@@ -1994,7 +1993,7 @@ class _SignatureGeofenceClockInPageState
       };
 
       await dbHelper.updateManualClockOutOffline(clockOutData);
-      print(
+      debugPrint(
           '[SIGNATURE_GEO] Offline clock-out saved for: $learnerID to manual_clocking + manual_clocking_evidence');
 
       setState(() {
@@ -2031,7 +2030,7 @@ class _SignatureGeofenceClockInPageState
         ),
       );
     } catch (e) {
-      print('[SIGNATURE_GEO] Offline clock-out error: $e');
+      debugPrint('[SIGNATURE_GEO] Offline clock-out error: $e');
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2077,7 +2076,7 @@ class _SignatureGeofenceClockInPageState
           );
           contactTime = formatDuration(contactTimeDuration);
         } catch (e) {
-          print('[SIGNATURE_GEO] Error calculating contact time: $e');
+          debugPrint('[SIGNATURE_GEO] Error calculating contact time: $e');
         }
       }
 
@@ -2117,7 +2116,7 @@ class _SignatureGeofenceClockInPageState
         ),
       );
     } catch (e) {
-      print('[SIGNATURE_GEO] Error updating clock-out: $e');
+      debugPrint('[SIGNATURE_GEO] Error updating clock-out: $e');
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(
@@ -2180,15 +2179,15 @@ class _SignatureGeofenceClockInPageState
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               color: Colors.blue[100],
-              child: Row(
+              child: const Row(
                 children: [
-                  const SizedBox(
+                  SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                  const SizedBox(width: 12),
-                  const Expanded(
+                  SizedBox(width: 12),
+                  Expanded(
                     child: Text(
                       'Acquiring GPS location... (may take 30-60s on first load)',
                       style: TextStyle(
@@ -2590,7 +2589,7 @@ class _SignatureGeofenceClockInPageState
     // Check current rate
     final requestCount = _requestCounts[key] ?? 0;
     if (requestCount >= _maxRequestsPerWindow) {
-      print(
+      debugPrint(
           '[RATE_LIMIT] Endpoint $endpoint exceeded rate limit: $requestCount requests');
       return true;
     }
@@ -2620,7 +2619,7 @@ class _SignatureGeofenceClockInPageState
 
     for (int attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        print(
+        debugPrint(
             '[HTTP_REQUEST] Attempt ${attempt + 1}/${maxRetries + 1} for $endpoint');
 
         final response = await requestFunction().timeout(
@@ -2631,7 +2630,7 @@ class _SignatureGeofenceClockInPageState
 
         // Success
         if (response.statusCode >= 200 && response.statusCode < 300) {
-          print(
+          debugPrint(
               '[HTTP_REQUEST] Success for $endpoint (${response.statusCode})');
           return response;
         }
@@ -2640,7 +2639,7 @@ class _SignatureGeofenceClockInPageState
         if (response.statusCode >= 500 && attempt < maxRetries) {
           lastException = HttpException('Server error: ${response.statusCode}',
               uri: Uri.parse(endpoint));
-          print(
+          debugPrint(
               '[HTTP_REQUEST] Server error ${response.statusCode}, will retry...');
           continue;
         }
@@ -2660,7 +2659,7 @@ class _SignatureGeofenceClockInPageState
         }
       } catch (e) {
         lastException = e is Exception ? e : Exception('Request failed: $e');
-        print('[HTTP_REQUEST] Error on attempt ${attempt + 1}: $e');
+        debugPrint('[HTTP_REQUEST] Error on attempt ${attempt + 1}: $e');
 
         // Don't retry on authentication or client errors
         if (e is HttpException && e.message.contains('Authentication failed')) {
@@ -2671,7 +2670,7 @@ class _SignatureGeofenceClockInPageState
         if (attempt < maxRetries) {
           final delayMs =
               _retryDelaysMs[attempt.clamp(0, _retryDelaysMs.length - 1)];
-          print('[HTTP_REQUEST] Waiting ${delayMs}ms before retry...');
+          debugPrint('[HTTP_REQUEST] Waiting ${delayMs}ms before retry...');
           await Future.delayed(Duration(milliseconds: delayMs));
         }
       }
@@ -2691,12 +2690,12 @@ class _SignatureGeofenceClockInPageState
       final unsyncedCount = await syncService.getUnsyncedCount();
       
       if (unsyncedCount == 0) {
-        print('[SIGNATURE_GEO] 📊 No unsynced records to upload');
+        debugPrint('[SIGNATURE_GEO] 📊 No unsynced records to upload');
         return;
       }
       
-      print('[SIGNATURE_GEO] 🔄 Starting queued sync of $unsyncedCount unsynced records...');
-      print('[SIGNATURE_GEO] ⏱️  Rate limit: 10 records/batch, 500ms delay between records');
+      debugPrint('[SIGNATURE_GEO] 🔄 Starting queued sync of $unsyncedCount unsynced records...');
+      debugPrint('[SIGNATURE_GEO] ⏱️  Rate limit: 10 records/batch, 500ms delay between records');
       
       final result = await syncService.syncAllUnsyncedClockIns();
       
@@ -2705,10 +2704,10 @@ class _SignatureGeofenceClockInPageState
         final failedCount = result['failedCount'] ?? 0;
         final remainingCount = result['remainingCount'] ?? 0;
         
-        print('[SIGNATURE_GEO] ✅ Sync complete: $syncedCount uploaded, $failedCount failed');
+        debugPrint('[SIGNATURE_GEO] ✅ Sync complete: $syncedCount uploaded, $failedCount failed');
         
         if (remainingCount > 0) {
-          print('[SIGNATURE_GEO] ⏳ $remainingCount records remaining (will sync in next batch)');
+          debugPrint('[SIGNATURE_GEO] ⏳ $remainingCount records remaining (will sync in next batch)');
         }
         
         if (syncedCount > 0 && mounted && context.mounted) {
@@ -2716,7 +2715,7 @@ class _SignatureGeofenceClockInPageState
             SnackBar(
               content: Text('✅ Synced $syncedCount offline record(s) to server${remainingCount > 0 ? ' ($remainingCount remaining)' : ''}'),
               backgroundColor: Colors.green,
-              duration: Duration(seconds: 3),
+              duration: const Duration(seconds: 3),
             ),
           );
           
@@ -2726,10 +2725,10 @@ class _SignatureGeofenceClockInPageState
           setState(() {}); // Refresh UI instead
         }
       } else {
-        print('[SIGNATURE_GEO] ❌ Sync failed: ${result['error']}');
+        debugPrint('[SIGNATURE_GEO] ❌ Sync failed: ${result['error']}');
       }
     } catch (e) {
-      print('[SIGNATURE_GEO] ❌ Error during sync: $e');
+      debugPrint('[SIGNATURE_GEO] ❌ Error during sync: $e');
       // Don't show error to user - sync will retry later
     }
   }

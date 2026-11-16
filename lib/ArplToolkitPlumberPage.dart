@@ -10,11 +10,11 @@ class ArplToolkitPlumberPage extends StatefulWidget {
   final String ofoNumber;
 
   const ArplToolkitPlumberPage({
-    Key? key,
+    super.key,
     required this.learnerID,
     required this.classID,
     required this.ofoNumber,
-  }) : super(key: key);
+  });
 
   @override
   _ArplToolkitPlumberPageState createState() => _ArplToolkitPlumberPageState();
@@ -98,13 +98,25 @@ class _ArplToolkitPlumberPageState extends State<ArplToolkitPlumberPage>
     _appendixBComments.forEach((key, controller) => controller.dispose());
     _appendixEComments.forEach((key, controller) => controller.dispose());
 
-    _practicalTasks.forEach((c) => c.dispose());
-    _practicalScores.forEach((c) => c.dispose());
-    _practicalPercentages.forEach((c) => c.dispose());
+    for (var c in _practicalTasks) {
+      c.dispose();
+    }
+    for (var c in _practicalScores) {
+      c.dispose();
+    }
+    for (var c in _practicalPercentages) {
+      c.dispose();
+    }
 
-    _workplaceObservationTechKnowledge.forEach((c) => c.dispose());
-    _workplaceObservationInterpretation.forEach((c) => c.dispose());
-    _workplaceObservationTeamWork.forEach((c) => c.dispose());
+    for (var c in _workplaceObservationTechKnowledge) {
+      c.dispose();
+    }
+    for (var c in _workplaceObservationInterpretation) {
+      c.dispose();
+    }
+    for (var c in _workplaceObservationTeamWork) {
+      c.dispose();
+    }
 
     _assessorSignatureDate.dispose();
     _candidateSignatureDate.dispose();
@@ -402,7 +414,7 @@ class _ArplToolkitPlumberPageState extends State<ArplToolkitPlumberPage>
           const Text('Trade: Plumber',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
           Text('OFO Number: ${widget.ofoNumber}',
-              style: TextStyle(fontSize: 14, color: Colors.grey)),
+              style: const TextStyle(fontSize: 14, color: Colors.grey)),
           const SizedBox(height: 24),
           if (_toolkitData?.learner != null)
             Column(

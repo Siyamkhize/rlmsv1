@@ -34,7 +34,7 @@ class _ModeratorPageState extends State<ModeratorPage> {
             'get_classes.php?facilitator_id=$facilitatorId')),
       );
 
-      print('Response Body (get_classes): ${response.body}');
+      debugPrint('Response Body (get_classes): ${response.body}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -248,7 +248,7 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
         Uri.parse(AppConfig.buildUrl('get_learners.php?classID=$classId')),
       );
 
-      print('Response Body (get_learners): ${response.body}');
+      debugPrint('Response Body (get_learners): ${response.body}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -427,12 +427,12 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
     try {
       final url =
           '${AppConfig.baseUrl}/get_pothole_images.php?learner_id=${widget.learnerId}';
-      print('DEBUG Images: Loading from $url');
+      debugPrint('DEBUG Images: Loading from $url');
 
       final response = await http.get(Uri.parse(url));
 
-      print('DEBUG Images: Response status ${response.statusCode}');
-      print('DEBUG Images: Response body ${response.body}');
+      debugPrint('DEBUG Images: Response status ${response.statusCode}');
+      debugPrint('DEBUG Images: Response body ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -441,13 +441,13 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
             _potholeImages =
                 List<Map<String, dynamic>>.from(data['data'] ?? []);
           });
-          print('DEBUG Images: Loaded ${_potholeImages.length} images');
+          debugPrint('DEBUG Images: Loaded ${_potholeImages.length} images');
         } else {
-          print('DEBUG Images: API returned error - ${data['message']}');
+          debugPrint('DEBUG Images: API returned error - ${data['message']}');
         }
       }
     } catch (e) {
-      print('Error loading pothole images: $e');
+      debugPrint('Error loading pothole images: $e');
     } finally {
       setState(() => _isLoadingImages = false);
     }
@@ -465,11 +465,11 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
         'learnerId': learnerId,
       });
 
-      print('[ModeratorPOETab] Fetching POE from: $url');
+      debugPrint('[ModeratorPOETab] Fetching POE from: $url');
       final response = await http.get(Uri.parse(url));
 
-      print('[ModeratorPOETab] POE Response Status: ${response.statusCode}');
-      print('[ModeratorPOETab] POE Response Body: ${response.body}');
+      debugPrint('[ModeratorPOETab] POE Response Status: ${response.statusCode}');
+      debugPrint('[ModeratorPOETab] POE Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -478,7 +478,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
             'Failed to load POE data. Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('[ModeratorPOETab] Error fetching POE: $e');
+      debugPrint('[ModeratorPOETab] Error fetching POE: $e');
       throw Exception('Failed to load POE data. Error: $e');
     }
   }
@@ -1298,7 +1298,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
                 final image = _potholeImages[index];
                 // Use correct domain for images with serve_file.php
                 final imageUrl =
-                    '${AppConfig.baseUrl}/serve_file.php?file=' + Uri.encodeComponent(image['file_path']);
+                    '${AppConfig.baseUrl}/serve_file.php?file=${Uri.encodeComponent(image['file_path'])}';
 
                 return GestureDetector(
                   onTap: () {
@@ -1440,25 +1440,25 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
 
   Future<Map<String, dynamic>> _checkPotholeChecklistStatus() async {
     try {
-      print('DEBUG Pothole: Checking for learner ${widget.learnerId}');
+      debugPrint('DEBUG Pothole: Checking for learner ${widget.learnerId}');
 
       // Check server using unified endpoint
       try {
         final url =
             '${AppConfig.baseUrl}/view_pothole_checklists.php?learner_id=${widget.learnerId}';
-        print('DEBUG Pothole: Checking server at $url');
+        debugPrint('DEBUG Pothole: Checking server at $url');
 
         final response =
             await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
 
-        print('DEBUG Pothole: Response status ${response.statusCode}');
-        print('DEBUG Pothole: Response body ${response.body}');
+        debugPrint('DEBUG Pothole: Response status ${response.statusCode}');
+        debugPrint('DEBUG Pothole: Response body ${response.body}');
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           if (data['status'] == 'success' && data['data'] != null) {
             final type = data['data']['type'] ?? 'system';
-            print('DEBUG Pothole: Found checklist on server, type=$type');
+            debugPrint('DEBUG Pothole: Found checklist on server, type=$type');
             return {
               'exists': true,
               'type': type,
@@ -1467,17 +1467,17 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
           }
         }
       } catch (e) {
-        print('DEBUG Pothole: Error checking server: $e');
+        debugPrint('DEBUG Pothole: Error checking server: $e');
       }
 
-      print('DEBUG Pothole: No checklist found');
+      debugPrint('DEBUG Pothole: No checklist found');
       return {
         'exists': false,
         'type': 'none',
         'data': null,
       };
     } catch (e) {
-      print('DEBUG Pothole: Error in _checkPotholeChecklistStatus: $e');
+      debugPrint('DEBUG Pothole: Error in _checkPotholeChecklistStatus: $e');
       return {
         'exists': false,
         'type': 'none',
@@ -1487,10 +1487,10 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
   }
 
   void _viewPotholeChecklist(String type, Map<String, dynamic>? data) {
-    print('DEBUG: _viewPotholeChecklist called with type=$type');
+    debugPrint('DEBUG: _viewPotholeChecklist called with type=$type');
 
     if (type == 'scanned' && data?['document_path'] != null) {
-      print('DEBUG: Opening scanned PDF');
+      debugPrint('DEBUG: Opening scanned PDF');
 
       String documentPath = data!['document_path'];
 
@@ -1509,7 +1509,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
         fullUrl = '${AppConfig.baseUrl}/$documentPath';
       }
 
-      print('DEBUG: Full PDF URL: $fullUrl');
+      debugPrint('DEBUG: Full PDF URL: $fullUrl');
 
       // Navigate to PDF viewer page
       Navigator.push(
@@ -1524,7 +1524,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
         ),
       );
     } else if (type == 'system' && data != null) {
-      print('DEBUG: Opening system checklist');
+      debugPrint('DEBUG: Opening system checklist');
 
       // Show dialog with checklist data
       showDialog(
@@ -1712,9 +1712,9 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
     try {
       final url = '${AppConfig.baseUrl}/save_moderation.php';
 
-      print('[Moderation] Submitting moderation');
-      print('[Moderation] URL: $url');
-      print('[Moderation] Type: $assessmentType, Status: $status');
+      debugPrint('[Moderation] Submitting moderation');
+      debugPrint('[Moderation] URL: $url');
+      debugPrint('[Moderation] Type: $assessmentType, Status: $status');
 
       final response = await http.post(
         Uri.parse(url),
@@ -1729,8 +1729,8 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
         }),
       );
 
-      print('[Moderation] Response status: ${response.statusCode}');
-      print('[Moderation] Response body: ${response.body}');
+      debugPrint('[Moderation] Response status: ${response.statusCode}');
+      debugPrint('[Moderation] Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
@@ -1761,7 +1761,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
         throw Exception('Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('[Moderation] Error: $e');
+      debugPrint('[Moderation] Error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error submitting moderation: $e'),
@@ -1781,10 +1781,10 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
     try {
       final url = '${AppConfig.baseUrl}/moderate_marks.php';
 
-      print(
+      debugPrint(
           '[Pothole Moderation] Submitting moderation for unit standard $unitStandardId');
-      print('[Pothole Moderation] URL: $url');
-      print(
+      debugPrint('[Pothole Moderation] URL: $url');
+      debugPrint(
           '[Pothole Moderation] Record ID: $recordId, Status: $status, Comment: $comment');
 
       final response = await http.post(
@@ -1800,8 +1800,8 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
         }),
       );
 
-      print('[Pothole Moderation] Response status: ${response.statusCode}');
-      print('[Pothole Moderation] Response body: ${response.body}');
+      debugPrint('[Pothole Moderation] Response status: ${response.statusCode}');
+      debugPrint('[Pothole Moderation] Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
@@ -1831,7 +1831,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
         throw Exception('Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('[Pothole Moderation] Error: $e');
+      debugPrint('[Pothole Moderation] Error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error submitting moderation: $e'),
@@ -2092,13 +2092,13 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
         // PHP expects: learnerId, exerciseId (the exercise question text), moderation_status, assessment_type
 
         // Debug: Print ALL exercise data to understand structure
-        print('[DEBUG] ========== EXERCISE DATA DUMP ==========');
-        print('[DEBUG] Full exercise map: $exercise');
-        print('[DEBUG] Available keys: ${exercise.keys.toList()}');
+        debugPrint('[DEBUG] ========== EXERCISE DATA DUMP ==========');
+        debugPrint('[DEBUG] Full exercise map: $exercise');
+        debugPrint('[DEBUG] Available keys: ${exercise.keys.toList()}');
         exercise.forEach((key, value) {
-          print('[DEBUG]   $key: $value (${value.runtimeType})');
+          debugPrint('[DEBUG]   $key: $value (${value.runtimeType})');
         });
-        print('[DEBUG] ==========================================');
+        debugPrint('[DEBUG] ==========================================');
 
         // Try multiple field names to extract exercise name
         // IMPORTANT: The database and API use 'exercise' as the field name
@@ -2112,7 +2112,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
             exercise['question_text']?.toString() ??
             '';
 
-        print(
+        debugPrint(
             '[DEBUG] Exercise name extracted (before cleanup): "$exerciseName"');
 
         // Remove "Exercise " prefix if it exists to get the actual question text
@@ -2120,20 +2120,20 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
           exerciseName = exerciseName.substring(9); // Remove "Exercise " prefix
         }
 
-        print('[DEBUG] Exercise name after cleanup: "$exerciseName"');
+        debugPrint('[DEBUG] Exercise name after cleanup: "$exerciseName"');
 
         // If exerciseName is STILL empty, this is a critical error
         if (exerciseName.isEmpty) {
-          print('[DEBUG] ERROR: Exercise name is empty after all attempts!');
-          print(
+          debugPrint('[DEBUG] ERROR: Exercise name is empty after all attempts!');
+          debugPrint(
               '[DEBUG] This will cause "missing required fields" error on backend');
 
           // Last resort: use ID if available
           if (exercise['id'] != null) {
             exerciseName = 'Exercise ${exercise['id']}';
-            print('[DEBUG] Using last resort exercise name: "$exerciseName"');
+            debugPrint('[DEBUG] Using last resort exercise name: "$exerciseName"');
           } else {
-            print('[DEBUG] CRITICAL: No ID available either!');
+            debugPrint('[DEBUG] CRITICAL: No ID available either!');
             throw Exception(
                 'Cannot determine exercise name from exercise data');
           }
@@ -2160,7 +2160,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
         };
 
         // Debug: Print request body
-        print('[DEBUG] Request body: $requestBody');
+        debugPrint('[DEBUG] Request body: $requestBody');
       } else {
         // Logbook/Pothole endpoint
         requestBody = {
@@ -2175,9 +2175,9 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
         };
       }
 
-      print('[DEBUG] Sending POST request to: $url');
-      print('[DEBUG] Request headers: Content-Type: application/json');
-      print('[DEBUG] Request body: ${jsonEncode(requestBody)}');
+      debugPrint('[DEBUG] Sending POST request to: $url');
+      debugPrint('[DEBUG] Request headers: Content-Type: application/json');
+      debugPrint('[DEBUG] Request body: ${jsonEncode(requestBody)}');
 
       final response = await http
           .post(
@@ -2188,17 +2188,17 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
           .timeout(
         const Duration(seconds: 30),
         onTimeout: () {
-          print('[DEBUG] Request timed out after 30 seconds');
+          debugPrint('[DEBUG] Request timed out after 30 seconds');
           throw Exception('Request timed out - server not responding');
         },
       );
 
-      print('[DEBUG] Response status code: ${response.statusCode}');
-      print('[DEBUG] Response body: ${response.body}');
+      debugPrint('[DEBUG] Response status code: ${response.statusCode}');
+      debugPrint('[DEBUG] Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
-        print('[DEBUG] Parsed response data: $responseData');
+        debugPrint('[DEBUG] Parsed response data: $responseData');
 
         // Handle both 'success' and 'warning' as successful operations
         if (responseData['status'] == 'success' ||
@@ -2396,7 +2396,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
         );
       }
     } catch (e) {
-      print('[Pothole Comment Update] Error: $e');
+      debugPrint('[Pothole Comment Update] Error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error updating comments: $e'),
@@ -2489,7 +2489,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
         );
       }
     } catch (e) {
-      print('[Comment Update] Error: $e');
+      debugPrint('[Comment Update] Error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error updating comments: $e'),
@@ -2555,11 +2555,11 @@ class _ModerationFeedbackPageState extends State<ModerationFeedbackPage> {
             queryParams: {'class_id': classId.toString()})),
       );
 
-      print(
+      debugPrint(
           'Request URL: ${AppConfig.buildUrl("generate_moderation_report.php", queryParams: {
             "class_id": classId.toString()
           })}');
-      print('Response Status: ${response.statusCode}');
+      debugPrint('Response Status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         if (response.headers['content-type']?.contains('application/pdf') ==
@@ -2748,19 +2748,19 @@ class _ModerationReportPageState extends State<ModerationReportPage> {
         AppConfig.buildUrl('moderationReport.php?learner_id=$learnerId'));
 
     try {
-      print('Attempting to launch URL: $url');
+      debugPrint('Attempting to launch URL: $url');
       bool launched = await launchUrl(
         url,
         mode: LaunchMode.externalApplication,
       );
-      print('launchUrl result: $launched');
+      debugPrint('launchUrl result: $launched');
       if (!launched) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to launch $url')),
         );
       }
     } catch (e) {
-      print('Error launching URL: $e');
+      debugPrint('Error launching URL: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error launching URL: $e')),
       );
@@ -3011,8 +3011,8 @@ class _ModerationSamplingPageState extends State<ModerationSamplingPage> {
         },
       );
 
-      print('Sampling Response Status: ${response.statusCode}');
-      print('Sampling Response Body: ${response.body}');
+      debugPrint('Sampling Response Status: ${response.statusCode}');
+      debugPrint('Sampling Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -3598,7 +3598,7 @@ class _PotholeChecklistPDFViewerState extends State<PotholeChecklistPDFViewer> {
 
   Future<void> _downloadAndOpenPDF() async {
     try {
-      print('DEBUG PDF: Downloading from ${widget.pdfUrl}');
+      debugPrint('DEBUG PDF: Downloading from ${widget.pdfUrl}');
 
       final response = await http.get(Uri.parse(widget.pdfUrl));
 
@@ -3614,7 +3614,7 @@ class _PotholeChecklistPDFViewerState extends State<PotholeChecklistPDFViewer> {
           isLoading = false;
         });
 
-        print('DEBUG PDF: Downloaded to ${file.path}');
+        debugPrint('DEBUG PDF: Downloaded to ${file.path}');
       } else {
         setState(() {
           errorMessage = 'Failed to download PDF: ${response.statusCode}';
@@ -3622,7 +3622,7 @@ class _PotholeChecklistPDFViewerState extends State<PotholeChecklistPDFViewer> {
         });
       }
     } catch (e) {
-      print('DEBUG PDF: Error downloading: $e');
+      debugPrint('DEBUG PDF: Error downloading: $e');
       setState(() {
         errorMessage = 'Error: $e';
         isLoading = false;
@@ -3755,7 +3755,7 @@ class _PotholeChecklistPDFViewerState extends State<PotholeChecklistPDFViewer> {
                               });
                             },
                             onError: (error) {
-                              print('DEBUG PDF: Error rendering: $error');
+                              debugPrint('DEBUG PDF: Error rendering: $error');
                               setState(() {
                                 errorMessage = 'Error rendering PDF: $error';
                               });
@@ -3797,7 +3797,7 @@ class _ModeratorPdfViewerScreenState extends State<ModeratorPdfViewerScreen> {
 
   Future<void> _downloadAndSavePdf() async {
     try {
-      print('[PDF Viewer] Downloading from: ${widget.pdfUrl}');
+      debugPrint('[PDF Viewer] Downloading from: ${widget.pdfUrl}');
 
       final response = await http.get(Uri.parse(widget.pdfUrl));
 
@@ -3812,7 +3812,7 @@ class _ModeratorPdfViewerScreenState extends State<ModeratorPdfViewerScreen> {
           _isLoading = false;
         });
 
-        print('[PDF Viewer] Downloaded to: ${file.path}');
+        debugPrint('[PDF Viewer] Downloaded to: ${file.path}');
       } else {
         setState(() {
           _error = 'Failed to download PDF: ${response.statusCode}';
@@ -3820,7 +3820,7 @@ class _ModeratorPdfViewerScreenState extends State<ModeratorPdfViewerScreen> {
         });
       }
     } catch (e) {
-      print('[PDF Viewer] Error: $e');
+      debugPrint('[PDF Viewer] Error: $e');
       setState(() {
         _error = 'Error downloading PDF: $e';
         _isLoading = false;
@@ -3952,7 +3952,7 @@ class _ModeratorPdfViewerScreenState extends State<ModeratorPdfViewerScreen> {
                               });
                             },
                             onError: (error) {
-                              print('[PDF Viewer] Error rendering: $error');
+                              debugPrint('[PDF Viewer] Error rendering: $error');
                               setState(() {
                                 _error = 'Error rendering PDF: $error';
                               });
@@ -4015,7 +4015,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           });
         },
         onError: (error) {
-          print('PDF Error: $error');
+          debugPrint('PDF Error: $error');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error loading PDF: $error')),
           );

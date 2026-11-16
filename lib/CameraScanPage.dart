@@ -53,7 +53,7 @@ class _CameraScanPageState extends State<CameraScanPage> {
       'SummativeRemedial',
       'ARPL'
     ].contains(widget.type)) {
-      print('Error: Invalid type ${widget.type}');
+      debugPrint('Error: Invalid type ${widget.type}');
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showErrorSnackBar('Invalid assessment type: ${widget.type}');
         Navigator.pop(context);
@@ -61,7 +61,7 @@ class _CameraScanPageState extends State<CameraScanPage> {
     }
     if (widget.type == 'LogBook' && widget.logbookText != null) {
       _logbookTextController.text = widget.logbookText!;
-      print('Initialized LogBook Text: ${widget.logbookText}');
+      debugPrint('Initialized LogBook Text: ${widget.logbookText}');
     }
   }
 
@@ -108,11 +108,11 @@ class _CameraScanPageState extends State<CameraScanPage> {
       // 80 is the recommended maximum to avoid GMS memory crashes on some devices.
       final dynamic scanResult =
           await FlutterDocScanner().getScanDocuments(page: 80);
-      print('Scan Result: $scanResult');
+      debugPrint('Scan Result: $scanResult');
       if (scanResult is! Map ||
           !scanResult.containsKey('pdfUri') ||
           scanResult['pdfUri'] == null) {
-        print('Invalid scan result: $scanResult');
+        debugPrint('Invalid scan result: $scanResult');
         _showErrorSnackBar('Document scanner returned invalid data',
             retryable: true);
         return;
@@ -120,18 +120,18 @@ class _CameraScanPageState extends State<CameraScanPage> {
       final String? pdfUri = scanResult['pdfUri'] as String?;
       final file = await resolveFlutterDocScannerPdfFile(pdfUri);
       if (file == null || !await isReadablePdfFile(file)) {
-        print('Unable to resolve pdfUri to readable PDF: $pdfUri');
+        debugPrint('Unable to resolve pdfUri to readable PDF: $pdfUri');
         _showErrorSnackBar('Scanner returned an unreadable file (try again)',
             retryable: true);
         return;
       }
 
-      print('PDF exists: ${file.path}, size: ${await file.length()} bytes');
+      debugPrint('PDF exists: ${file.path}, size: ${await file.length()} bytes');
       if (!mounted) return;
       setState(() => scannedImages = [file]);
       _showSnackBar('PDF document scanned successfully!');
     } catch (e, stackTrace) {
-      print('Scan Error: $e\nStack Trace: $stackTrace');
+      debugPrint('Scan Error: $e\nStack Trace: $stackTrace');
       _showErrorSnackBar('Document scan error: $e', retryable: true);
     } finally {
       if (mounted) {
@@ -169,7 +169,7 @@ class _CameraScanPageState extends State<CameraScanPage> {
           await _saveLocally(filePaths, logbookText);
         }
       } else {
-        print(
+        debugPrint(
             'Auto-upload disabled for CameraScanPage. Returning results to caller.');
       }
 
@@ -180,7 +180,7 @@ class _CameraScanPageState extends State<CameraScanPage> {
         });
       }
     } catch (e, stackTrace) {
-      print('Save Error: $e\nStack Trace: $stackTrace');
+      debugPrint('Save Error: $e\nStack Trace: $stackTrace');
       _showErrorSnackBar('Error saving documents: $e');
     }
   }
@@ -221,7 +221,7 @@ class _CameraScanPageState extends State<CameraScanPage> {
       for (int i = 0; i < imagePaths.length; i++) {
         final file = File(imagePaths[i]);
         if (await file.exists()) {
-          print(
+          debugPrint(
               'Uploading file: ${imagePaths[i]}, Size: ${await file.length()} bytes');
 
           // Generate standardized filename for server
@@ -241,9 +241,9 @@ class _CameraScanPageState extends State<CameraScanPage> {
               contentType: contentType,
             ),
           );
-          print('Assigned filename: $standardizedName');
+          debugPrint('Assigned filename: $standardizedName');
         } else {
-          print('Invalid file path for upload: ${imagePaths[i]}');
+          debugPrint('Invalid file path for upload: ${imagePaths[i]}');
         }
       }
 
@@ -254,12 +254,12 @@ class _CameraScanPageState extends State<CameraScanPage> {
         'unit_standard_name': (widget.unitStandard ?? '').trim(),
         if (widget.type == 'LogBook') 'logbook_text': logbookText,
       });
-      print('Sending fields: ${request.fields}');
+      debugPrint('Sending fields: ${request.fields}');
 
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
 
-      print(
+      debugPrint(
           'Server Response: $responseBody (Status Code: ${response.statusCode})');
 
       if (response.statusCode == 200) {
@@ -292,28 +292,28 @@ class _CameraScanPageState extends State<CameraScanPage> {
                 conflictAlgorithm: ConflictAlgorithm.replace,
               );
             } else {
-              print('Invalid file path for database update: $path');
+              debugPrint('Invalid file path for database update: $path');
             }
           }
 
           await batch.commit();
-          print('Database updated with ${imagePaths.length} uploaded files');
+          debugPrint('Database updated with ${imagePaths.length} uploaded files');
           _showSnackBar('Documents uploaded and saved successfully!');
         } else {
           final errorMessage =
               'Server error: ${responseData['message'] ?? 'Unknown error'}';
-          print(errorMessage);
+          debugPrint(errorMessage);
           _showErrorSnackBar(errorMessage);
           await _saveLocally(imagePaths, logbookText);
         }
       } else {
         final errorMessage = 'Upload failed with status ${response.statusCode}';
-        print(errorMessage);
+        debugPrint(errorMessage);
         _showErrorSnackBar(errorMessage);
         await _saveLocally(imagePaths, logbookText);
       }
     } catch (e, stackTrace) {
-      print('Upload Error: $e\nStack Trace: $stackTrace');
+      debugPrint('Upload Error: $e\nStack Trace: $stackTrace');
       _showErrorSnackBar('Upload error: $e');
       await _saveLocally(imagePaths, logbookText);
     }
@@ -377,10 +377,10 @@ class _CameraScanPageState extends State<CameraScanPage> {
             },
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
-          print(
+          debugPrint(
               'Local DB Insert: learnerID=${widget.learnerID}, exercise=$uniqueExercise, type=${widget.type}, logbook_text=$logbookText');
         } else {
-          print('Invalid file path for local save: ${imagePaths[i]}');
+          debugPrint('Invalid file path for local save: ${imagePaths[i]}');
         }
       }
 
@@ -390,16 +390,16 @@ class _CameraScanPageState extends State<CameraScanPage> {
       }
 
       await batch.commit();
-      print('Database updated with ${savedPaths.length} local files');
+      debugPrint('Database updated with ${savedPaths.length} local files');
       _showSnackBar('Documents saved locally due to no connectivity!');
     } catch (e, stackTrace) {
-      print('Local Save Error: $e\nStack Trace: $stackTrace');
+      debugPrint('Local Save Error: $e\nStack Trace: $stackTrace');
       _showErrorSnackBar('Error saving locally: $e');
     }
   }
 
   void _showSnackBar(String message) {
-    print('SnackBar: $message');
+    debugPrint('SnackBar: $message');
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -410,7 +410,7 @@ class _CameraScanPageState extends State<CameraScanPage> {
   }
 
   void _showErrorSnackBar(String message, {bool retryable = false}) {
-    print('Error SnackBar: $message');
+    debugPrint('Error SnackBar: $message');
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -463,7 +463,7 @@ class _CameraScanPageState extends State<CameraScanPage> {
                 ),
                 maxLines: 3,
                 onChanged: (value) {
-                  print('LogBook TextField onChanged: $value');
+                  debugPrint('LogBook TextField onChanged: $value');
                 },
               ),
             ),

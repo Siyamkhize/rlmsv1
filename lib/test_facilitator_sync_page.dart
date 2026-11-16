@@ -31,7 +31,7 @@ class _TestFacilitatorSyncPageState extends State<TestFacilitatorSyncPage> {
         _loading = false;
       });
     } catch (e) {
-      print('Error loading facilitators: $e');
+      debugPrint('Error loading facilitators: $e');
       setState(() => _loading = false);
     }
   }

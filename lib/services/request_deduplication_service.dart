@@ -16,7 +16,7 @@ class RequestDeduplicationService {
     if (lastRequest != null) {
       final timeSinceLastRequest = DateTime.now().difference(lastRequest);
       if (timeSinceLastRequest.inSeconds < _cooldownPeriod.inSeconds) {
-        print('[DEDUPLICATION] Blocking duplicate request for $key '
+        debugPrint('[DEDUPLICATION] Blocking duplicate request for $key '
               '(last request ${timeSinceLastRequest.inSeconds}s ago)');
         return false;
       }
@@ -29,7 +29,7 @@ class RequestDeduplicationService {
   static void recordRequest(String learnerID, String action) {
     final key = '${learnerID}_$action';
     _lastRequestTimes[key] = DateTime.now();
-    print('[DEDUPLICATION] Recorded request for $key');
+    debugPrint('[DEDUPLICATION] Recorded request for $key');
   }
   
   /// Deduplicate identical concurrent requests
@@ -43,7 +43,7 @@ class RequestDeduplicationService {
     
     // Check if same request is already pending
     if (_pendingRequests.containsKey(key)) {
-      print('[DEDUPLICATION] Request already pending for $key, waiting for result');
+      debugPrint('[DEDUPLICATION] Request already pending for $key, waiting for result');
       return await _pendingRequests[key]!.future as T;
     }
     
@@ -58,7 +58,7 @@ class RequestDeduplicationService {
     _pendingRequests[key] = completer;
     
     try {
-      print('[DEDUPLICATION] Starting new request for $key');
+      debugPrint('[DEDUPLICATION] Starting new request for $key');
       recordRequest(learnerID, action);
       
       final result = await requestFunction();
@@ -71,7 +71,7 @@ class RequestDeduplicationService {
     } finally {
       // Clean up pending request
       _pendingRequests.remove(key);
-      print('[DEDUPLICATION] Completed request for $key');
+      debugPrint('[DEDUPLICATION] Completed request for $key');
     }
   }
   

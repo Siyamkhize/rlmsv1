@@ -3,47 +3,57 @@
 
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'lib/utils/clocking_logger.dart';
 
 Future<void> fixLocalDatabaseColumn() async {
+  final logger = ClockingLogger.instance;
+  await logger.initialize();
+
   try {
     final databasesPath = await getDatabasesPath();
     final path = join(databasesPath, 'local_data.db');
-    
+
     final database = await openDatabase(path);
-    
-    print('Checking if assessorExpiryDate column exists...');
-    
+
+    await logger.logDatabaseOperation('CHECK_COLUMN', 'facilitator', 'SYSTEM',
+        {'action': 'Checking if assessorExpiryDate column exists'});
+
     // Check if column exists
     final result = await database.rawQuery("PRAGMA table_info(facilitator)");
     bool columnExists = false;
-    
+
     for (final row in result) {
       if (row['name'] == 'assessorExpiryDate') {
         columnExists = true;
         break;
       }
     }
-    
+
     if (!columnExists) {
-      print('Adding assessorExpiryDate column...');
-      await database.execute('ALTER TABLE facilitator ADD COLUMN assessorExpiryDate TEXT');
-      print('✓ Column added successfully!');
+      await logger.logDatabaseOperation('ADD_COLUMN', 'facilitator', 'SYSTEM',
+          {'column': 'assessorExpiryDate', 'type': 'TEXT'});
+      await database.execute(
+          'ALTER TABLE facilitator ADD COLUMN assessorExpiryDate TEXT');
+      await logger.logDatabaseOperation('ADD_COLUMN_SUCCESS', 'facilitator',
+          'SYSTEM', {'result': 'Column added successfully'});
     } else {
-      print('✓ Column already exists');
+      await logger.logDatabaseOperation('COLUMN_EXISTS', 'facilitator',
+          'SYSTEM', {'result': 'Column already exists'});
     }
-    
+
     // Verify the column was added
-    final verifyResult = await database.rawQuery("PRAGMA table_info(facilitator)");
-    print('\nCurrent facilitator table columns:');
-    for (final row in verifyResult) {
-      print('- ${row['name']} (${row['type']})');
-    }
-    
+    final verifyResult =
+        await database.rawQuery("PRAGMA table_info(facilitator)");
+    final columns =
+        verifyResult.map((row) => '${row['name']} (${row['type']})').toList();
+    await logger.logDatabaseOperation(
+        'VERIFY_COLUMNS', 'facilitator', 'SYSTEM', {'columns': columns});
+
     await database.close();
-    print('\nDatabase fix completed!');
-    
+    await logger.logDatabaseOperation('FIX_COMPLETE', 'facilitator', 'SYSTEM',
+        {'result': 'Database fix completed'});
   } catch (e) {
-    print('Error fixing database: $e');
+    await logger.logError('DB_COLUMN_FIX', e);
   }
 }
 

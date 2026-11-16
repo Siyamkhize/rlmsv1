@@ -207,7 +207,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
 
   Future<void> _loadExistingChecklist() async {
     if (widget.learnerId.isEmpty || widget.facilitatorId == null) {
-      print(
+      debugPrint(
           'DEBUG: Cannot load checklist - missing learner_id or facilitator_id');
       return;
     }
@@ -215,20 +215,20 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
     try {
       final url =
           '${AppConfig.baseUrl}/view_pothole_checklists.php?learner_id=${widget.learnerId}&assessor_id=${widget.facilitatorId}&assessment_date=${_date.toIso8601String().split('T').first}';
-      print('DEBUG: Loading checklist from: $url');
+      debugPrint('DEBUG: Loading checklist from: $url');
 
       final response = await http.get(Uri.parse(url));
 
-      print('DEBUG: Response status: ${response.statusCode}');
-      print('DEBUG: Response body: ${response.body}');
+      debugPrint('DEBUG: Response status: ${response.statusCode}');
+      debugPrint('DEBUG: Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('DEBUG: Parsed data status: ${data['status']}');
+        debugPrint('DEBUG: Parsed data status: ${data['status']}');
 
         if (data['status'] == 'success' && data['data'] != null) {
           final checklistData = data['data'];
-          print('DEBUG: Checklist found! Loading data...');
+          debugPrint('DEBUG: Checklist found! Loading data...');
 
           // Populate form fields
           setState(() {
@@ -248,7 +248,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
 
             // Load checklist items
             final itemsData = checklistData['checklist_items'] ?? {};
-            print('DEBUG: Loading ${itemsData.length} sections');
+            debugPrint('DEBUG: Loading ${itemsData.length} sections');
 
             for (var section in _items) {
               final sectionName = section['section'] as String;
@@ -272,16 +272,16 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
             }
           });
 
-          print('DEBUG: Checklist loaded successfully in view mode');
+          debugPrint('DEBUG: Checklist loaded successfully in view mode');
         } else {
-          print(
+          debugPrint(
               'DEBUG: No checklist found - ${data['message'] ?? 'Unknown error'}');
         }
       } else {
-        print('DEBUG: HTTP error - status code: ${response.statusCode}');
+        debugPrint('DEBUG: HTTP error - status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('ERROR loading existing checklist: $e');
+      debugPrint('ERROR loading existing checklist: $e');
     }
   }
 
@@ -327,7 +327,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
           }
         }
       } catch (e) {
-        print('Server check failed (offline?): $e');
+        debugPrint('Server check failed (offline?): $e');
       }
 
       setState(() => _isLoading = false);
@@ -338,7 +338,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
       };
     } catch (e) {
       setState(() => _isLoading = false);
-      print('Error checking checklist status: $e');
+      debugPrint('Error checking checklist status: $e');
       return {
         'exists': false,
         'type': 'none',
@@ -409,7 +409,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
     try {
       final file = File(documentPath);
       if (!await file.exists()) {
-        print('File does not exist: $documentPath');
+        debugPrint('File does not exist: $documentPath');
         return;
       }
 
@@ -435,7 +435,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
         final data = jsonDecode(responseData);
 
         if (data['status'] == 'success') {
-          print('Scanned document synced successfully');
+          debugPrint('Scanned document synced successfully');
           // Mark as synced in local database
           final scannedDoc = await _dbHelper.getScannedPotholeChecklist(
             learnerId: widget.learnerId,
@@ -449,7 +449,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
         }
       }
     } catch (e) {
-      print('Error syncing scanned document (will retry later): $e');
+      debugPrint('Error syncing scanned document (will retry later): $e');
       // Document remains unsynced and will be synced later
     }
   }
@@ -856,7 +856,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
         }
       }
     } catch (e) {
-      print('Error loading logbook unit standards: $e');
+      debugPrint('Error loading logbook unit standards: $e');
     } finally {
       setState(() => _isLoadingLogbook = false);
     }
@@ -889,7 +889,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
         }
       }
     } catch (e) {
-      print('Error loading logbook marks: $e');
+      debugPrint('Error loading logbook marks: $e');
     }
   }
 
@@ -937,13 +937,13 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
-          print('LogBook marks saved successfully');
+          debugPrint('LogBook marks saved successfully');
         } else {
           throw Exception(data['message']);
         }
       }
     } catch (e) {
-      print('Error saving logbook marks: $e');
+      debugPrint('Error saving logbook marks: $e');
       // Don't show error to user, just log it
     }
   }
@@ -1573,10 +1573,10 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
     }
 
     // Debug print
-    print(
+    debugPrint(
         'Unit Standard: $unitStandardId, Outcomes count: ${specificOutcomes.length}');
     if (specificOutcomes.isNotEmpty) {
-      print('First outcome: ${specificOutcomes[0]}');
+      debugPrint('First outcome: ${specificOutcomes[0]}');
     }
 
     return Card(
@@ -1657,10 +1657,10 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
                           ...specificOutcomes.map((outcome) {
                             final outcomeText =
                                 outcome['outcome_text']?.toString() ?? '';
-                            print('Rendering outcome: $outcomeText');
+                            debugPrint('Rendering outcome: $outcomeText');
 
                             if (outcomeText.isEmpty) {
-                              print('Empty outcome text, skipping');
+                              debugPrint('Empty outcome text, skipping');
                               return const SizedBox.shrink();
                             }
 

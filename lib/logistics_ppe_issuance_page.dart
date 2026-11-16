@@ -464,8 +464,8 @@ class _LogisticsPPEIssuancePageState extends State<LogisticsPPEIssuancePage> {
           return;
         }
 
-        final leftTemplate = templates['futronic_left_template'] as String?;
-        final rightTemplate = templates['futronic_right_template'] as String?;
+        final leftTemplate = templates['futronic_left_template'];
+        final rightTemplate = templates['futronic_right_template'];
         final hint = (leftTemplate != null && leftTemplate.isNotEmpty)
             ? 'left'
             : 'right';

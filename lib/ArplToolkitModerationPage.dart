@@ -11,12 +11,12 @@ class ArplToolkitModerationPage extends StatefulWidget {
   final String moderatorId;
 
   const ArplToolkitModerationPage({
-    Key? key,
+    super.key,
     required this.learnerID,
     required this.classID,
     required this.ofoNumber,
     required this.moderatorId,
-  }) : super(key: key);
+  });
 
   @override
   _ArplToolkitModerationPageState createState() =>
@@ -163,15 +163,31 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
     _moderatorSignatureName.dispose();
     _appendixFKnowledgeModeratorComments.dispose();
     _appendixFPracticalModeratorComments.dispose();
-    for (var c in _appendixDModeratorComments.values) c.dispose();
-    for (var c in _appendixEModeratorComments.values) c.dispose();
-    for (var c in _appendixHModeratorComments.values) c.dispose();
+    for (var c in _appendixDModeratorComments.values) {
+      c.dispose();
+    }
+    for (var c in _appendixEModeratorComments.values) {
+      c.dispose();
+    }
+    for (var c in _appendixHModeratorComments.values) {
+      c.dispose();
+    }
     // Override controllers
-    for (var c in _appendixDOverrides.values) c.dispose();
-    for (var c in _appendixECommentOverrides.values) c.dispose();
-    for (var c in _appendixFMarkOverrides.values) c.dispose();
-    for (var c in _appendixHStatusOverrides.values) c.dispose();
-    for (var c in _appendixHRemarksOverrides.values) c.dispose();
+    for (var c in _appendixDOverrides.values) {
+      c.dispose();
+    }
+    for (var c in _appendixECommentOverrides.values) {
+      c.dispose();
+    }
+    for (var c in _appendixFMarkOverrides.values) {
+      c.dispose();
+    }
+    for (var c in _appendixHStatusOverrides.values) {
+      c.dispose();
+    }
+    for (var c in _appendixHRemarksOverrides.values) {
+      c.dispose();
+    }
     // Moderator Report controllers
     _reportCenterName.dispose();
     _reportAccreditationNo.dispose();
@@ -182,7 +198,9 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
     _reportCandidateName.dispose();
     _reportCandidateIdNo.dispose();
     _reportTrade.dispose();
-    for (var c in _reportObservationComments.values) c.dispose();
+    for (var c in _reportObservationComments.values) {
+      c.dispose();
+    }
     // Additional report fields
     _reportModeratorObservations.dispose();
     _reportRecommendations.dispose();
@@ -259,7 +277,7 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
         endpointUrl = AppConfig.getArplToolkitDataUrl;
       }
 
-      print('[MOD_LOAD] OFO=${widget.ofoNumber} → Endpoint: $endpointUrl');
+      debugPrint('[MOD_LOAD] OFO=${widget.ofoNumber} → Endpoint: $endpointUrl');
       final response = await http.post(
         Uri.parse(endpointUrl),
         headers: {'Content-Type': 'application/json'},
@@ -270,7 +288,7 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
         }),
       );
 
-      print(
+      debugPrint(
           '[MOD_LOAD] HTTP ${response.statusCode} · body-len=${response.body.length}');
 
       if (response.statusCode == 200) {
@@ -297,7 +315,7 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
         });
       }
     } catch (e) {
-      print('[MOD_LOAD] Exception: $e');
+      debugPrint('[MOD_LOAD] Exception: $e');
       setState(() {
         _errorMessage = 'Error loading data: $e';
         _isLoading = false;
@@ -488,7 +506,7 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
       'decision_date': DateTime.now().toIso8601String(),
     };
 
-    print('[MODERATION_SAVE] Payload: ${jsonEncode(payload)}');
+    debugPrint('[MODERATION_SAVE] Payload: ${jsonEncode(payload)}');
 
     try {
       final url = AppConfig.saveModerationJudgementUrl;
@@ -502,8 +520,8 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
             const Duration(seconds: 60),
           );
 
-      print('[MODERATION_SAVE] Status: ${response.statusCode}');
-      print('[MODERATION_SAVE] Body: ${response.body}');
+      debugPrint('[MODERATION_SAVE] Status: ${response.statusCode}');
+      debugPrint('[MODERATION_SAVE] Body: ${response.body}');
 
       if (!mounted) return;
 
@@ -534,7 +552,7 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
         );
       }
     } catch (e) {
-      print('[MODERATION_SAVE] Exception: $e');
+      debugPrint('[MODERATION_SAVE] Exception: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -746,7 +764,7 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
                 _summaryRow('ID Number', learner?.idNumber ?? '-'),
                 _summaryRow('Class ID', widget.classID.toString()),
                 _summaryRow(
-                    'Assessor', '${assessor?.fullName ?? 'Not assigned'}'),
+                    'Assessor', assessor?.fullName ?? 'Not assigned'),
                 const Divider(height: 24),
                 _summaryRow('Appendix D (Workplace)',
                     data.appendixD.isNotEmpty ? 'Submitted' : 'No data'),

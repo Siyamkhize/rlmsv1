@@ -10,11 +10,11 @@ class ArplToolkitBricklayerPage extends StatefulWidget {
   final String ofoNumber;
 
   const ArplToolkitBricklayerPage({
-    Key? key,
+    super.key,
     required this.learnerID,
     required this.classID,
     this.ofoNumber = '641201',
-  }) : super(key: key);
+  });
 
   @override
   _ArplToolkitBricklayerPageState createState() =>
@@ -110,13 +110,25 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
     _appendixBComments.forEach((key, controller) => controller.dispose());
     _appendixEComments.forEach((key, controller) => controller.dispose());
 
-    _practicalTasks.forEach((c) => c.dispose());
-    _practicalScores.forEach((c) => c.dispose());
-    _practicalPercentages.forEach((c) => c.dispose());
+    for (var c in _practicalTasks) {
+      c.dispose();
+    }
+    for (var c in _practicalScores) {
+      c.dispose();
+    }
+    for (var c in _practicalPercentages) {
+      c.dispose();
+    }
 
-    _workplaceObservationTechKnowledge.forEach((c) => c.dispose());
-    _workplaceObservationInterpretation.forEach((c) => c.dispose());
-    _workplaceObservationTeamWork.forEach((c) => c.dispose());
+    for (var c in _workplaceObservationTechKnowledge) {
+      c.dispose();
+    }
+    for (var c in _workplaceObservationInterpretation) {
+      c.dispose();
+    }
+    for (var c in _workplaceObservationTeamWork) {
+      c.dispose();
+    }
 
     _assessorSignatureDate.dispose();
     _candidateSignatureDate.dispose();
@@ -141,59 +153,59 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
         }),
       );
 
-      print('[BRICKLAYER_TRACE] API Response Status: ${response.statusCode}');
-      print(
+      debugPrint('[BRICKLAYER_TRACE] API Response Status: ${response.statusCode}');
+      debugPrint(
           '[BRICKLAYER_TRACE] API Response Length: ${response.body.length} bytes');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print('[BRICKLAYER_TRACE] ═══ RAW API RESPONSE ═══');
-        print('[BRICKLAYER_TRACE] ${response.body}');
-        print('[BRICKLAYER_TRACE] ═══ END RAW RESPONSE ═══');
+        debugPrint('[BRICKLAYER_TRACE] ═══ RAW API RESPONSE ═══');
+        debugPrint('[BRICKLAYER_TRACE] ${response.body}');
+        debugPrint('[BRICKLAYER_TRACE] ═══ END RAW RESPONSE ═══');
 
         if (data['status'] == 'success') {
           try {
-            print('[BRICKLAYER_TRACE] ═══ TYPE CHECKING ═══');
-            print(
+            debugPrint('[BRICKLAYER_TRACE] ═══ TYPE CHECKING ═══');
+            debugPrint(
                 '[BRICKLAYER_TRACE] appendixA type: ${data['appendixA'].runtimeType}');
-            print(
+            debugPrint(
                 '[BRICKLAYER_TRACE] appendixB type: ${data['appendixB'].runtimeType}, is List: ${data['appendixB'] is List}');
-            print(
+            debugPrint(
                 '[BRICKLAYER_TRACE] appendixC type: ${data['appendixC'].runtimeType}');
-            print(
+            debugPrint(
                 '[BRICKLAYER_TRACE] appendixD type: ${data['appendixD'].runtimeType}');
-            print(
+            debugPrint(
                 '[BRICKLAYER_TRACE] appendixE type: ${data['appendixE'].runtimeType}, is List: ${data['appendixE'] is List}');
-            print(
+            debugPrint(
                 '[BRICKLAYER_TRACE] appendixF type: ${data['appendixF'].runtimeType}');
-            print(
+            debugPrint(
                 '[BRICKLAYER_TRACE] appendixG type: ${data['appendixG'].runtimeType}');
-            print(
+            debugPrint(
                 '[BRICKLAYER_TRACE] appendixH type: ${data['appendixH'].runtimeType}');
             if (data['appendixH'] != null) {
-              print(
+              debugPrint(
                   '[BRICKLAYER_TRACE] appendixH.items type: ${data['appendixH']['items'].runtimeType}');
-              print(
+              debugPrint(
                   '[BRICKLAYER_TRACE] appendixH.recommendations type: ${data['appendixH']['recommendations'].runtimeType}');
-              print(
+              debugPrint(
                   '[BRICKLAYER_TRACE] appendixH.gap_standards type: ${data['appendixH']['gap_standards'].runtimeType}');
             }
-            print('[BRICKLAYER_TRACE] ═══ END TYPE CHECKING ═══');
+            debugPrint('[BRICKLAYER_TRACE] ═══ END TYPE CHECKING ═══');
 
-            print('[BRICKLAYER_TRACE] Attempting to parse ArplToolkitData...');
+            debugPrint('[BRICKLAYER_TRACE] Attempting to parse ArplToolkitData...');
             _toolkitData = ArplToolkitData.fromJson(data);
-            print('[BRICKLAYER_TRACE] ✅ ArplToolkitData parsed successfully');
+            debugPrint('[BRICKLAYER_TRACE] ✅ ArplToolkitData parsed successfully');
 
             setState(() {
               _isLoading = false;
               _populateControllers();
             });
           } catch (parseError, stackTrace) {
-            print('[BRICKLAYER_ERROR] ═══ PARSE ERROR ═══');
-            print('[BRICKLAYER_ERROR] Error: $parseError');
-            print('[BRICKLAYER_ERROR] Stack Trace:');
-            print(stackTrace);
-            print('[BRICKLAYER_ERROR] ═══ END PARSE ERROR ═══');
+            debugPrint('[BRICKLAYER_ERROR] ═══ PARSE ERROR ═══');
+            debugPrint('[BRICKLAYER_ERROR] Error: $parseError');
+            debugPrint('[BRICKLAYER_ERROR] Stack Trace:');
+            debugPrint(stackTrace);
+            debugPrint('[BRICKLAYER_ERROR] ═══ END PARSE ERROR ═══');
 
             setState(() {
               _errorMessage =
@@ -202,7 +214,7 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
             });
           }
         } else {
-          print(
+          debugPrint(
               '[BRICKLAYER_ERROR] API returned non-success status: ${data['message']}');
           setState(() {
             _errorMessage = data['message'] ?? 'Failed to load toolkit data';
@@ -210,9 +222,9 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
           });
         }
       } else {
-        print(
+        debugPrint(
             '[BRICKLAYER_ERROR] Server returned status ${response.statusCode}');
-        print('[BRICKLAYER_ERROR] Response: ${response.body}');
+        debugPrint('[BRICKLAYER_ERROR] Response: ${response.body}');
         setState(() {
           _errorMessage =
               'Server error: ${response.statusCode}\n${response.body}';
@@ -220,11 +232,11 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
         });
       }
     } catch (e, stackTrace) {
-      print('[BRICKLAYER_ERROR] ═══ NETWORK ERROR ═══');
-      print('[BRICKLAYER_ERROR] Error: $e');
-      print('[BRICKLAYER_ERROR] Stack Trace:');
-      print(stackTrace);
-      print('[BRICKLAYER_ERROR] ═══ END NETWORK ERROR ═══');
+      debugPrint('[BRICKLAYER_ERROR] ═══ NETWORK ERROR ═══');
+      debugPrint('[BRICKLAYER_ERROR] Error: $e');
+      debugPrint('[BRICKLAYER_ERROR] Stack Trace:');
+      debugPrint(stackTrace);
+      debugPrint('[BRICKLAYER_ERROR] ═══ END NETWORK ERROR ═══');
 
       setState(() {
         _errorMessage = 'Error loading data: $e\n\nStack trace:\n$stackTrace';
@@ -414,15 +426,15 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
-          print('[BRICKLAYER] Gap closure data saved successfully');
+          debugPrint('[BRICKLAYER] Gap closure data saved successfully');
         } else {
-          print('[BRICKLAYER] Gap closure save error: ${data['message']}');
+          debugPrint('[BRICKLAYER] Gap closure save error: ${data['message']}');
         }
       } else {
-        print('[BRICKLAYER] Gap closure save failed: ${response.statusCode}');
+        debugPrint('[BRICKLAYER] Gap closure save failed: ${response.statusCode}');
       }
     } catch (e) {
-      print('[BRICKLAYER] Gap closure save exception: $e');
+      debugPrint('[BRICKLAYER] Gap closure save exception: $e');
     }
   }
 
@@ -1158,7 +1170,7 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
                   _buildGapClosureSection(),
               ],
             );
-          }).toList(),
+          }),
         ],
       ),
     );
@@ -1386,7 +1398,7 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
                       dense: true,
                       contentPadding: EdgeInsets.zero,
                     );
-                  }).toList(),
+                  }),
                   if (_selectedGapUnitStandards.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),

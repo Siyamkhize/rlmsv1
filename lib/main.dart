@@ -8,7 +8,6 @@ import 'package:workmanager/workmanager.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:sqflite/sqflite.dart';
 import 'dashboard_page.dart';
 import 'sdp_projects_page.dart';
 import 'database_helper.dart';
@@ -18,18 +17,14 @@ import 'AssessorPage.dart';
 import 'ArplAssessorPage.dart';
 import 'ModeratorPage.dart';
 import 'facilitator_fingerprint_page.dart';
-import 'facilitator_face_enroll_page.dart';
 import 'facilitator_face_clockin_page.dart';
 import 'finance_dashboard.dart';
 import 'logistics_dashboard.dart';
 import 'utils/global_error_handler.dart';
 import 'utils/ultimate_scanner_crash_prevention.dart';
 import 'services/random_prompt_service.dart';
-import 'monitoring_prompt_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'repositories/facilitator_face_repository.dart';
-import 'widgets/simple_face_capture.dart';
-import 'services/face_embedding_service.dart';
 
 // Define unique task names for Workmanager
 const String syncTask = "com.example.rlmss.syncTask";
@@ -42,9 +37,9 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 // Request notification permission
 Future<void> requestNotificationPermission() async {
   if (await Permission.notification.request().isGranted) {
-    print("Notification permission granted");
+    debugPrint("Notification permission granted");
   } else {
-    print("Notification permission denied");
+    debugPrint("Notification permission denied");
     // Optionally, guide user to enable notifications in settings
   }
 }
@@ -52,9 +47,9 @@ Future<void> requestNotificationPermission() async {
 // Request battery optimization exemption
 Future<void> requestIgnoreBatteryOptimization() async {
   if (await Permission.ignoreBatteryOptimizations.request().isGranted) {
-    print("Battery optimization disabled");
+    debugPrint("Battery optimization disabled");
   } else {
-    print("Battery optimization permission denied");
+    debugPrint("Battery optimization permission denied");
     // Optionally, guide user to disable battery optimization in settings
   }
 }
@@ -87,30 +82,30 @@ void callbackDispatcher() {
                 connectivityResult.contains(ConnectivityResult.mobile);
 
         if (hasNetwork) {
-          print("Background sync: Network available, starting sync...");
+          debugPrint("Background sync: Network available, starting sync...");
           await syncService.syncDataToServer();
           await syncService.syncAllPOERecords();
           await syncService.syncLearnerDetails();
           await syncService.syncMaterialFormsWithServer();
           await syncService.syncAcknowledgmentOfReceiptToServer();
           await syncService.sync_inductionClocking();
-          print("Background sync completed successfully.");
+          debugPrint("Background sync completed successfully.");
           return Future.value(true);
         } else {
-          print("Background sync: No network available, skipping sync.");
+          debugPrint("Background sync: No network available, skipping sync.");
           return Future.value(false);
         }
       } else if (task == connectivityCheckTask) {
-        print("Connectivity check task started at ${DateTime.now()}");
+        debugPrint("Connectivity check task started at ${DateTime.now()}");
         final connectivityResult = await Connectivity().checkConnectivity();
-        print("Connectivity result: $connectivityResult");
+        debugPrint("Connectivity result: $connectivityResult");
         final hasNetwork =
             connectivityResult.contains(ConnectivityResult.wifi) ||
                 connectivityResult.contains(ConnectivityResult.mobile);
-        print("Has network: $hasNetwork");
+        debugPrint("Has network: $hasNetwork");
 
         if (!hasNetwork) {
-          print("No network detected, attempting to trigger alert...");
+          debugPrint("No network detected, attempting to trigger alert...");
           try {
             const AndroidNotificationDetails androidDetails =
                 AndroidNotificationDetails(
@@ -139,12 +134,12 @@ void callbackDispatcher() {
               'Please turn on Wi-Fi or mobile data to enable background syncing',
               platformDetails,
             );
-            print("Notification shown successfully");
+            debugPrint("Notification shown successfully");
           } catch (e) {
-            print("Notification failed: $e");
+            debugPrint("Notification failed: $e");
           }
         } else {
-          print("Network available, no alert needed.");
+          debugPrint("Network available, no alert needed.");
         }
 
         // Reschedule the connectivity check task for 2 minutes later
@@ -158,12 +153,12 @@ void callbackDispatcher() {
             requiresCharging: false,
           ),
         );
-        print("Rescheduled connectivity check task for 2 minutes later");
+        debugPrint("Rescheduled connectivity check task for 2 minutes later");
         return Future.value(true);
       }
       return Future.value(false);
     } catch (e) {
-      print("Task $task failed: $e");
+      debugPrint("Task $task failed: $e");
       return Future.value(false);
     }
   });
@@ -487,7 +482,7 @@ class _LoginPageState extends State<LoginPage> {
         body: {'email': username, 'password': password},
       ).timeout(const Duration(seconds: 15));
 
-      print("Raw login response: ${response.body}"); // Log raw response
+      debugPrint("Raw login response: ${response.body}"); // Log raw response
 
       if (response.statusCode == 200) {
         // Clean response by removing HTML tags and trimming extra characters
@@ -509,25 +504,25 @@ class _LoginPageState extends State<LoginPage> {
           return null;
         }
       }
-      print('Login HTTP error: ${response.statusCode}');
+      debugPrint('Login HTTP error: ${response.statusCode}');
       return null;
     } catch (e) {
-      print('Error during login: $e');
+      debugPrint('Error during login: $e');
       return null;
     }
   }
 
   Future<void> _performBackgroundSync() async {
     try {
-      print("Initiating background sync");
+      debugPrint("Initiating background sync");
       await syncService.syncDataToServer();
       await syncService.syncAllPOERecords();
       var result = await syncService.syncLearnerDetails();
-      print(result);
+      debugPrint(result);
       await syncService.syncMaterialFormsWithServer();
       await syncService.syncAcknowledgmentOfReceiptToServer();
       await syncService.sync_inductionClocking();
-      print("Background sync completed successfully.");
+      debugPrint("Background sync completed successfully.");
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -536,7 +531,7 @@ class _LoginPageState extends State<LoginPage> {
         );
       }
     } catch (syncError) {
-      print("Background sync failed: $syncError");
+      debugPrint("Background sync failed: $syncError");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Background sync failed: $syncError')),
@@ -633,9 +628,9 @@ class _LoginPageState extends State<LoginPage> {
                   facilitatorName: null);
 
               await dbHelper.syncLearnersFromServer(classID);
-              print('Successfully synced learners for classID: $classID');
+              debugPrint('Successfully synced learners for classID: $classID');
             } catch (e) {
-              print('Failed to sync learners for classID $classID: $e');
+              debugPrint('Failed to sync learners for classID $classID: $e');
               // Continue even if sync fails
             }
           }
@@ -728,9 +723,9 @@ class _LoginPageState extends State<LoginPage> {
                   facilitatorName: null);
 
               await dbHelper.syncLearnersFromServer(classID);
-              print('Successfully synced learners for classID: $classID');
+              debugPrint('Successfully synced learners for classID: $classID');
             } catch (e) {
-              print('Failed to sync learners for classID $classID: $e');
+              debugPrint('Failed to sync learners for classID $classID: $e');
               // Continue with local data even if sync fails
             }
           }
@@ -795,7 +790,7 @@ class _LoginPageState extends State<LoginPage> {
         }
       } catch (e) {
         _showError('Error during offline login: $e');
-        print('Error during offline login: $e');
+        debugPrint('Error during offline login: $e');
       }
 
       setState(() {
@@ -1379,9 +1374,9 @@ class _LoginPageState extends State<LoginPage> {
                                       borderRadius: BorderRadius.circular(26),
                                     ),
                                   ),
-                                  child: Row(
+                                  child: const Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
+                                    children: [
                                       Text(
                                         'Login',
                                         style: TextStyle(
@@ -1519,9 +1514,9 @@ class _LoginPageState extends State<LoginPage> {
               bottom: 0,
               right: 12,
             ),
-            decoration: BoxDecoration(
-              color: const Color(0xFF5FA6DD),
-              borderRadius: const BorderRadius.only(
+            decoration: const BoxDecoration(
+              color: Color(0xFF5FA6DD),
+              borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(18),
                 bottomLeft: Radius.circular(18),
                 topRight: Radius.circular(18),
@@ -1909,11 +1904,11 @@ class _LoginPageState extends State<LoginPage> {
       barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Row(
+          title: const Row(
             children: [
-              Icon(Icons.access_time, color: const Color(0xFF006341)),
-              const SizedBox(width: 12),
-              const Text('Clock In Required'),
+              Icon(Icons.access_time, color: Color(0xFF006341)),
+              SizedBox(width: 12),
+              Text('Clock In Required'),
             ],
           ),
           content: Column(

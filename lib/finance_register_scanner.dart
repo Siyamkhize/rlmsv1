@@ -99,7 +99,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
-        print('Fetched attendance data: $data');
+        debugPrint('Fetched attendance data: $data');
 
         if (data is List) {
           setState(() {
@@ -114,8 +114,8 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
             selectedDates = Set.from(savedDates);
             isLoading = false;
 
-            print('Loaded ${savedDates.length} attendance dates');
-            print('Selected dates: $selectedDates');
+            debugPrint('Loaded ${savedDates.length} attendance dates');
+            debugPrint('Selected dates: $selectedDates');
           });
         } else {
           setState(() {
@@ -130,7 +130,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
         });
       }
     } catch (e) {
-      print('Error fetching attendance: $e');
+      debugPrint('Error fetching attendance: $e');
       setState(() {
         isLoading = false;
       });
@@ -204,7 +204,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
         isSaving = false;
       });
 
-      print('Error saving attendance: $e');
+      debugPrint('Error saving attendance: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -234,7 +234,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
 
       await request.send();
     } catch (e) {
-      print('Error uploading register: $e');
+      debugPrint('Error uploading register: $e');
     }
   }
 
@@ -253,8 +253,8 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
       final docScanner = FlutterDocScanner();
       final scannedImage = await docScanner.getScanDocuments(page: 80);
 
-      print('Scanned image result: $scannedImage');
-      print('Scanned image type: ${scannedImage.runtimeType}');
+      debugPrint('Scanned image result: $scannedImage');
+      debugPrint('Scanned image type: ${scannedImage.runtimeType}');
 
       if (scannedImage == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -296,7 +296,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
         ),
       );
     } catch (e) {
-      print('Error scanning: $e');
+      debugPrint('Error scanning: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
@@ -654,7 +654,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
 
       // Debug: Print first few dates to check comparison
       if (day <= 3) {
-        print('Day $day: date=$date, isSelected=$isSelected, isSaved=$isSaved');
+        debugPrint('Day $day: date=$date, isSelected=$isSelected, isSaved=$isSaved');
       }
 
       currentWeek.add(

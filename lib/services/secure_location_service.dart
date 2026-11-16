@@ -102,7 +102,7 @@ class SecureLocationService {
       if (ageSeconds <= 300 &&
           _lastResult!.position.accuracy <=
               LocationSecurityConfig.absoluteMaxAccuracyMeters) {
-        print(
+        debugPrint(
           '[SECURE_LOC] Using cached secure position '
           '(${ageSeconds}s old, '
           '${_lastResult!.position.accuracy.toStringAsFixed(0)}m)',
@@ -113,7 +113,7 @@ class SecureLocationService {
 
     final isMock = await _detectMockLocation();
     if (isMock) {
-      print('[SECURE_LOC] ⚠️ Mock location / emulator detected!');
+      debugPrint('[SECURE_LOC] ⚠️ Mock location / emulator detected!');
     }
 
     final position = await _getPositionViaStream();
@@ -139,7 +139,7 @@ class SecureLocationService {
 
     _lastResult = result;
 
-    print(
+    debugPrint(
       '[SECURE_LOC] Position secured: '
       'lat=${position.latitude.toStringAsFixed(6)}, '
       'lon=${position.longitude.toStringAsFixed(6)}, '
@@ -158,7 +158,7 @@ class SecureLocationService {
         final age = DateTime.now().difference(cached.timestamp);
         if (age.inSeconds < 15 &&
             cached.accuracy <= LocationSecurityConfig.strictAccuracyMeters) {
-          print(
+          debugPrint(
             '[SECURE_LOC] Using fresh cache '
             '(${age.inSeconds}s old, ${cached.accuracy.toStringAsFixed(0)}m)',
           );
@@ -177,7 +177,7 @@ class SecureLocationService {
         lastError = e;
         if (attempt >= LocationSecurityConfig.maxStreamRetries - 1) break;
         final delaySeconds = 1 << attempt; // 1, 2, 4, 8
-        print(
+        debugPrint(
           '[SECURE_LOC] Stream failed (attempt ${attempt + 1}): $e. '
           'Retrying in ${delaySeconds}s...',
         );
@@ -199,7 +199,7 @@ class SecureLocationService {
 
     void accept(Position pos, String reason) {
       if (completer.isCompleted) return;
-      print(
+      debugPrint(
         '[SECURE_LOC] Accepting position ($reason): '
         '${pos.accuracy.toStringAsFixed(0)}m accuracy',
       );
@@ -215,7 +215,7 @@ class SecureLocationService {
       _currentAccuracy = pos.accuracy;
       _accuracyController.add(pos.accuracy);
 
-      print(
+      debugPrint(
         '[SECURE_LOC] Stream: ${pos.accuracy.toStringAsFixed(0)}m '
         '(need <=$threshold m, mock=${pos.isMocked})',
       );
@@ -225,7 +225,7 @@ class SecureLocationService {
       }
 
       if (pos.isMocked) {
-        print('[SECURE_LOC] ⚠️ Stream position flagged as mocked, skipping');
+        debugPrint('[SECURE_LOC] ⚠️ Stream position flagged as mocked, skipping');
         return;
       }
 
@@ -251,7 +251,7 @@ class SecureLocationService {
         onPosition(pos);
       },
       onError: (Object e, StackTrace st) {
-        print('[SECURE_LOC] Stream onError: $e');
+        debugPrint('[SECURE_LOC] Stream onError: $e');
         _currentAccuracy = null;
         _accuracyController.add(null);
         if (!completer.isCompleted) {
@@ -265,7 +265,7 @@ class SecureLocationService {
       },
       onDone: () {
         if (!completer.isCompleted) {
-          print('[SECURE_LOC] Stream ended unexpectedly');
+          debugPrint('[SECURE_LOC] Stream ended unexpectedly');
           completer.completeError(
             Exception('Location stream closed before a fix was obtained'),
           );
@@ -279,7 +279,7 @@ class SecureLocationService {
       () {
         if (!completer.isCompleted) {
           threshold = LocationSecurityConfig.relaxedAccuracyMeters;
-          print(
+          debugPrint(
             '[SECURE_LOC] Relaxing to ${threshold.toStringAsFixed(0)}m',
           );
 
@@ -352,19 +352,19 @@ class SecureLocationService {
       if (Platform.isAndroid) {
         final androidInfo = await _deviceInfo.androidInfo;
         if (!androidInfo.isPhysicalDevice) {
-          print('[SECURE_LOC] ⚠️ Running on emulator/virtual device');
+          debugPrint('[SECURE_LOC] ⚠️ Running on emulator/virtual device');
           return true;
         }
       } else if (Platform.isIOS) {
         final iosInfo = await _deviceInfo.iosInfo;
         if (!iosInfo.isPhysicalDevice) {
-          print('[SECURE_LOC] ⚠️ Running on iOS simulator');
+          debugPrint('[SECURE_LOC] ⚠️ Running on iOS simulator');
           return true;
         }
       }
       return false;
     } catch (e) {
-      print('[SECURE_LOC] Mock detection error: $e');
+      debugPrint('[SECURE_LOC] Mock detection error: $e');
       return false;
     }
   }
@@ -372,7 +372,7 @@ class SecureLocationService {
   static void _validatePositionAge(Position position) {
     final age = DateTime.now().difference(position.timestamp);
     if (age.inSeconds > LocationSecurityConfig.maxPositionAgeSeconds) {
-      print(
+      debugPrint(
         '[SECURE_LOC] Position age ${age.inSeconds}s exceeds strict '
         'limit of ${LocationSecurityConfig.maxPositionAgeSeconds}s, '
         'continuing with latest available fix.',
@@ -399,7 +399,7 @@ class SecureLocationService {
     final impliedSpeed = distance / timeDelta;
 
     if (impliedSpeed > LocationSecurityConfig.maxReasonableSpeedMs) {
-      print(
+      debugPrint(
         '[SECURE_LOC] ⚠️ Sanity FAILED: '
         'Moved ${distance.toStringAsFixed(0)}m in ${timeDelta.toStringAsFixed(0)}s '
         '(${(impliedSpeed * 3.6).toStringAsFixed(0)} km/h)',
@@ -407,7 +407,7 @@ class SecureLocationService {
       return false;
     }
 
-    print(
+    debugPrint(
       '[SECURE_LOC] ✅ Sanity passed: '
       '${distance.toStringAsFixed(0)}m in ${timeDelta.toStringAsFixed(0)}s',
     );
@@ -475,14 +475,14 @@ class SecureLocationService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['success'] == true) {
-          print('[SECURE_LOC] ✅ Server geofence verification passed');
+          debugPrint('[SECURE_LOC] ✅ Server geofence verification passed');
           return {
             'success': true,
             'distance': data['distance'],
             'effective_radius': data['effective_radius'],
           };
         } else {
-          print(
+          debugPrint(
             '[SECURE_LOC] ❌ Server geofence rejected: ${data['error']}',
           );
           return {
@@ -498,7 +498,7 @@ class SecureLocationService {
         'error': 'Server returned status ${response.statusCode}',
       };
     } catch (e) {
-      print(
+      debugPrint(
           '[SECURE_LOC] ⚠️ Server verification failed: $e - BLOCKING clock-in');
       // SECURITY FIX: When server is unreachable, BLOCK the clock-in completely
       // Do NOT allow fallback success - this was allowing users to clock in from anywhere
@@ -541,7 +541,7 @@ class SecureLocationService {
     if (Platform.isAndroid && permission == LocationPermission.whileInUse) {
       final upgraded = await Geolocator.requestPermission();
       if (upgraded != LocationPermission.always) {
-        print(
+        debugPrint(
           '[SECURE_LOC] "Allow all the time" not granted; '
           'disable battery optimization for RLMSS if GPS drops',
         );

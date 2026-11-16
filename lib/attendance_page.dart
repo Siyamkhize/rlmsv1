@@ -177,7 +177,7 @@ class _AttendancePageState extends State<AttendancePage> {
 
       return totalSickDays;
     } catch (e) {
-      print(
+      debugPrint(
           '[ATTENDANCE] Error getting sick note days for learner $learnerId: $e');
       return 0;
     }
@@ -190,24 +190,24 @@ class _AttendancePageState extends State<AttendancePage> {
       final monthStr =
           '${selectedMonth.year}-${selectedMonth.month.toString().padLeft(2, '0')}';
 
-      print(
+      debugPrint(
           '[ATTENDANCE] Loading local records for month: $monthStr, class: ${widget.classID}');
 
       // Debug: Check what's actually in the database
       final allClockingRecords = await db.query('learner_clocking', limit: 10);
-      print(
+      debugPrint(
           '[ATTENDANCE] DEBUG: Total clocking records in DB: ${allClockingRecords.length}');
       if (allClockingRecords.isNotEmpty) {
-        print(
+        debugPrint(
             '[ATTENDANCE] DEBUG: Sample clocking record: ${allClockingRecords.first}');
       }
 
       final allLearners = await db.query('learnerdetails',
           where: 'classID = ?', whereArgs: [widget.classID], limit: 5);
-      print(
+      debugPrint(
           '[ATTENDANCE] DEBUG: Learners in class ${widget.classID}: ${allLearners.length}');
       if (allLearners.isNotEmpty) {
-        print('[ATTENDANCE] DEBUG: Sample learner: ${allLearners.first}');
+        debugPrint('[ATTENDANCE] DEBUG: Sample learner: ${allLearners.first}');
       }
 
       // Get learners in this class with their local clocking records for the month
@@ -227,17 +227,17 @@ class _AttendancePageState extends State<AttendancePage> {
         ORDER BY l.Surname, l.Name
       ''', ['$monthStr%', widget.classID]);
 
-      print('[ATTENDANCE] Found ${localRecords.length} local learner records');
+      debugPrint('[ATTENDANCE] Found ${localRecords.length} local learner records');
 
       if (localRecords.isNotEmpty) {
-        print('[ATTENDANCE] First local record: ${localRecords.first}');
+        debugPrint('[ATTENDANCE] First local record: ${localRecords.first}');
         // Show records that have any clocking data
         final recordsWithClocking = localRecords
             .where((r) =>
                 (r['local_days_clocked'] as int) > 0 ||
                 (r['total_days_clocked'] as int) > 0)
             .toList();
-        print(
+        debugPrint(
             '[ATTENDANCE] Records with clocking data: ${recordsWithClocking.length}');
       }
 
@@ -258,7 +258,7 @@ class _AttendancePageState extends State<AttendancePage> {
 
       return enrichedRecords;
     } catch (e) {
-      print('[ATTENDANCE] Error loading local records: $e');
+      debugPrint('[ATTENDANCE] Error loading local records: $e');
       return [];
     }
   }
@@ -277,7 +277,7 @@ class _AttendancePageState extends State<AttendancePage> {
       final isOffline = connectivityResult.contains(ConnectivityResult.none);
 
       if (isOffline) {
-        print('[ATTENDANCE] No internet connection - skipping server sync');
+        debugPrint('[ATTENDANCE] No internet connection - skipping server sync');
         if (showMessage && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -296,7 +296,7 @@ class _AttendancePageState extends State<AttendancePage> {
       final url = Uri.parse(
           '${AppConfig.getAttendanceUrl}?classID=${widget.classID}&month=$monthStr&_t=$timestamp');
 
-      print('[ATTENDANCE] Syncing from server: $url');
+      debugPrint('[ATTENDANCE] Syncing from server: $url');
 
       // Add headers to prevent caching
       final response = await http.get(
@@ -310,13 +310,13 @@ class _AttendancePageState extends State<AttendancePage> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print('[ATTENDANCE] Server response: $data');
+        debugPrint('[ATTENDANCE] Server response: $data');
 
         if (data['success'] == true) {
-          print(
+          debugPrint(
               '[ATTENDANCE] Server sync successful: ${data['data'].length} records');
           if (data['data'].isNotEmpty) {
-            print(
+            debugPrint(
                 '[ATTENDANCE] First server record from API: ${data['data'][0]}');
           }
 
@@ -336,7 +336,7 @@ class _AttendancePageState extends State<AttendancePage> {
           }
           return serverData;
         } else {
-          print('[ATTENDANCE] Server sync failed: ${data['error']}');
+          debugPrint('[ATTENDANCE] Server sync failed: ${data['error']}');
           if (showMessage && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -346,7 +346,7 @@ class _AttendancePageState extends State<AttendancePage> {
           }
         }
       } else {
-        print('[ATTENDANCE] Server returned status: ${response.statusCode}');
+        debugPrint('[ATTENDANCE] Server returned status: ${response.statusCode}');
         if (showMessage && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -356,7 +356,7 @@ class _AttendancePageState extends State<AttendancePage> {
         }
       }
     } catch (e) {
-      print('[ATTENDANCE] Error syncing from server: $e');
+      debugPrint('[ATTENDANCE] Error syncing from server: $e');
       if (showMessage && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -390,20 +390,20 @@ class _AttendancePageState extends State<AttendancePage> {
       final expectedDays = workingDays;
       final dailyRate = totalStipend / expectedDays;
 
-      print(
+      debugPrint(
           '[ATTENDANCE] Working days: $workingDays, Holidays: $holidaysInMonth, Daily rate: $dailyRate');
-      print('[ATTENDANCE] Local data: ${localData.length} records');
+      debugPrint('[ATTENDANCE] Local data: ${localData.length} records');
 
       // Try to sync with server (but don't block on it)
       final serverData = await _syncAttendanceFromServer(showMessage: false);
-      print(
+      debugPrint(
           '[ATTENDANCE] Server data: ${serverData != null ? serverData.length : 0} records');
 
       List<Map<String, dynamic>> finalData = [];
 
       if (serverData != null && serverData.isNotEmpty) {
         // Use server data (most up-to-date)
-        print('[ATTENDANCE] ✅ Using server data: ${serverData.length} records');
+        debugPrint('[ATTENDANCE] ✅ Using server data: ${serverData.length} records');
 
         for (final record in serverData) {
           final totalDaysAttended = (record['total_days_attended'] is int)
@@ -440,7 +440,7 @@ class _AttendancePageState extends State<AttendancePage> {
         }
       } else if (localData.isNotEmpty) {
         // Fallback to local data when server is unavailable
-        print('[ATTENDANCE] 📱 Using local data: ${localData.length} records');
+        debugPrint('[ATTENDANCE] 📱 Using local data: ${localData.length} records');
 
         for (final record in localData) {
           final localDaysClocked = record['local_days_clocked'] ?? 0;
@@ -478,7 +478,7 @@ class _AttendancePageState extends State<AttendancePage> {
         }
       } else {
         // No data available at all
-        print('[ATTENDANCE] ❌ No data available (server or local)');
+        debugPrint('[ATTENDANCE] ❌ No data available (server or local)');
         finalData = [];
       }
 
@@ -487,14 +487,14 @@ class _AttendancePageState extends State<AttendancePage> {
         isLoading = false;
       });
 
-      print('[ATTENDANCE] ✅ Loaded ${finalData.length} attendance records');
+      debugPrint('[ATTENDANCE] ✅ Loaded ${finalData.length} attendance records');
       if (finalData.isNotEmpty) {
         final source = finalData.first['data_source'];
-        print('[ATTENDANCE] Data source: $source');
+        debugPrint('[ATTENDANCE] Data source: $source');
       }
     } catch (e, stackTrace) {
-      print('[ATTENDANCE] ❌ Error loading attendance: $e');
-      print('[ATTENDANCE] Stack trace: $stackTrace');
+      debugPrint('[ATTENDANCE] ❌ Error loading attendance: $e');
+      debugPrint('[ATTENDANCE] Stack trace: $stackTrace');
 
       setState(() {
         learnerAttendance = [];
@@ -519,7 +519,7 @@ class _AttendancePageState extends State<AttendancePage> {
 
   @override
   Widget build(BuildContext context) {
-    print(
+    debugPrint(
         '[ATTENDANCE BUILD] Building with ${learnerAttendance.length} learners, isLoading: $isLoading');
 
     final monthName = [

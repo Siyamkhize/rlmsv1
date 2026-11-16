@@ -24,7 +24,7 @@ class PersistentSyncService {
 
   /// Start listening for connectivity changes and trigger auto-sync
   void startAutoSync() {
-    print('[PERSISTENT_SYNC] Starting auto-sync service');
+    debugPrint('[PERSISTENT_SYNC] Starting auto-sync service');
 
     // Listen for connectivity changes
     _connectivitySubscription =
@@ -32,7 +32,7 @@ class PersistentSyncService {
       final result =
           results.isNotEmpty ? results.first : ConnectivityResult.none;
       if (result != ConnectivityResult.none) {
-        print('[PERSISTENT_SYNC] Connectivity restored: $result');
+        debugPrint('[PERSISTENT_SYNC] Connectivity restored: $result');
         _triggerBackgroundSync();
       }
     });
@@ -47,7 +47,7 @@ class PersistentSyncService {
   void stopAutoSync() {
     _connectivitySubscription?.cancel();
     _periodicSyncTimer?.cancel();
-    print('[PERSISTENT_SYNC] Auto-sync service stopped');
+    debugPrint('[PERSISTENT_SYNC] Auto-sync service stopped');
   }
 
   /// Trigger background sync (non-blocking)
@@ -55,7 +55,7 @@ class PersistentSyncService {
     // Check if enough time has passed since last sync
     if (!_coordinator.shouldAllowSync(
         minInterval: const Duration(minutes: 2))) {
-      print('[PERSISTENT_SYNC] Skipping sync - too soon since last sync');
+      debugPrint('[PERSISTENT_SYNC] Skipping sync - too soon since last sync');
       return;
     }
 
@@ -65,7 +65,7 @@ class PersistentSyncService {
         connectivityResult.first != ConnectivityResult.none;
 
     if (!isConnected) {
-      print('[PERSISTENT_SYNC] No connectivity, skipping sync');
+      debugPrint('[PERSISTENT_SYNC] No connectivity, skipping sync');
       return;
     }
 
@@ -79,7 +79,7 @@ class PersistentSyncService {
         timeout: const Duration(minutes: 5),
       );
     } catch (e) {
-      print('[PERSISTENT_SYNC] Background sync failed: $e');
+      debugPrint('[PERSISTENT_SYNC] Background sync failed: $e');
     }
   }
 
@@ -94,7 +94,7 @@ class PersistentSyncService {
     _isSyncing = true;
     
     try {
-      print('[PERSISTENT_SYNC] Starting full data sync');
+      debugPrint('[PERSISTENT_SYNC] Starting full data sync');
 
       final result = SyncResult();
 
@@ -122,14 +122,14 @@ class PersistentSyncService {
 
       result.success = true;
       result.message = 'Sync completed successfully';
-      print('[PERSISTENT_SYNC] Full sync completed: ${result.message}');
+      debugPrint('[PERSISTENT_SYNC] Full sync completed: ${result.message}');
       
       return result;
     } catch (e) {
       final result = SyncResult();
       result.success = false;
       result.message = 'Sync failed: $e';
-      print('[PERSISTENT_SYNC] Sync error: $e');
+      debugPrint('[PERSISTENT_SYNC] Sync error: $e');
       return result;
     } finally {
       _isSyncing = false;
@@ -146,7 +146,7 @@ class PersistentSyncService {
       final classes = await db.rawQuery(
           'SELECT DISTINCT classID FROM learnerdetails WHERE classID IS NOT NULL');
 
-      print('[PERSISTENT_SYNC] Found ${classes.length} classes to sync');
+      debugPrint('[PERSISTENT_SYNC] Found ${classes.length} classes to sync');
 
       for (var classRow in classes) {
         final classID = classRow['classID']?.toString();
@@ -155,13 +155,13 @@ class PersistentSyncService {
             await _syncLearnersForClass(classID, dbHelper);
             result.learnersSynced++;
           } catch (e) {
-            print('[PERSISTENT_SYNC] Failed to sync class $classID: $e');
+            debugPrint('[PERSISTENT_SYNC] Failed to sync class $classID: $e');
             result.errors.add('Class $classID: $e');
           }
         }
       }
     } catch (e) {
-      print('[PERSISTENT_SYNC] Error syncing learners: $e');
+      debugPrint('[PERSISTENT_SYNC] Error syncing learners: $e');
       result.errors.add('Learners sync: $e');
     }
   }
@@ -169,7 +169,7 @@ class PersistentSyncService {
   /// Sync learners for a specific class using UPSERT logic
   Future<void> _syncLearnersForClass(
       String classID, DatabaseHelper dbHelper) async {
-    print('[PERSISTENT_SYNC] Syncing learners for class: $classID');
+    debugPrint('[PERSISTENT_SYNC] Syncing learners for class: $classID');
 
     try {
       final response = await HttpClientService.makeRequest(
@@ -178,7 +178,7 @@ class PersistentSyncService {
         ),
         endpoint: 'learners_by_class',
         maxRetries: NetworkConfig.syncOperationsMaxRetries,
-        timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
+        timeout: const Duration(seconds: NetworkConfig.lightweightTimeout),
       );
 
       if (response.statusCode != 200) {
@@ -186,7 +186,7 @@ class PersistentSyncService {
       }
 
       final List<dynamic> serverLearners = json.decode(response.body);
-      print(
+      debugPrint(
           '[PERSISTENT_SYNC] Received ${serverLearners.length} learners from server for class $classID');
 
       final db = await dbHelper.database;
@@ -237,7 +237,7 @@ class PersistentSyncService {
             if (existing.isEmpty) {
               // Insert new learner
               await txn.insert('learnerdetails', learnerData);
-              print('[PERSISTENT_SYNC] Inserted new learner: $learnerID');
+              debugPrint('[PERSISTENT_SYNC] Inserted new learner: $learnerID');
             } else {
               // Update existing learner (merge with local data)
               final existingData = existing.first;
@@ -270,7 +270,7 @@ class PersistentSyncService {
                 where: 'LearnerID = ?',
                 whereArgs: [learnerID],
               );
-              print('[PERSISTENT_SYNC] Updated learner: $learnerID');
+              debugPrint('[PERSISTENT_SYNC] Updated learner: $learnerID');
             }
           }
         }).timeout(const Duration(seconds: 5)); // Add timeout to prevent locks
@@ -281,10 +281,10 @@ class PersistentSyncService {
         }
       }
 
-      print(
+      debugPrint(
           '[PERSISTENT_SYNC] Successfully synced ${serverLearners.length} learners for class $classID');
     } catch (e) {
-      print('[PERSISTENT_SYNC] Error syncing class $classID: $e');
+      debugPrint('[PERSISTENT_SYNC] Error syncing class $classID: $e');
       rethrow;
     }
   }
@@ -302,7 +302,7 @@ class PersistentSyncService {
         whereArgs: [0],
       );
 
-      print(
+      debugPrint(
           '[PERSISTENT_SYNC] Found ${unsyncedRecords.length} unsynced clocking records');
 
       for (var record in unsyncedRecords) {
@@ -311,13 +311,13 @@ class PersistentSyncService {
           await _syncSingleClockingRecord(record, dbHelper);
           result.clockingRecordsSynced++;
         } catch (e) {
-          print(
+          debugPrint(
               '[PERSISTENT_SYNC] Failed to sync clocking record ${record['clocking_id']}: $e');
           result.errors.add('Clocking ${record['clocking_id']}: $e');
         }
       }
     } catch (e) {
-      print('[PERSISTENT_SYNC] Error syncing clocking records: $e');
+      debugPrint('[PERSISTENT_SYNC] Error syncing clocking records: $e');
       result.errors.add('Clocking sync: $e');
     }
   }
@@ -348,7 +348,7 @@ class PersistentSyncService {
       endpoint:
           hasClockOut ? 'clocking_clockout_sync' : 'clocking_clockin_sync',
       maxRetries: NetworkConfig.syncOperationsMaxRetries,
-      timeout: Duration(seconds: NetworkConfig.lightweightTimeout),
+      timeout: const Duration(seconds: NetworkConfig.lightweightTimeout),
     );
 
     if (response.statusCode == 200) {
@@ -360,7 +360,7 @@ class PersistentSyncService {
         where: 'clocking_id = ?',
         whereArgs: [record['clocking_id']],
       );
-      print(
+      debugPrint(
           '[PERSISTENT_SYNC] Synced clocking record ${record['clocking_id']}');
     } else {
       throw Exception('Server returned ${response.statusCode}');
@@ -371,7 +371,7 @@ class PersistentSyncService {
   Future<void> _syncOtherPendingData(
       DatabaseHelper dbHelper, SyncResult result) async {
     // Add other sync operations as needed
-    print('[PERSISTENT_SYNC] Syncing other pending data...');
+    debugPrint('[PERSISTENT_SYNC] Syncing other pending data...');
   }
 
   /// Get last sync time

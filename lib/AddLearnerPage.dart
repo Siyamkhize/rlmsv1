@@ -163,48 +163,48 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
 
   // Fetch provinces from server
   Future<void> _fetchProvinces() async {
-    print('🌍 AddLearnerPage: _fetchProvinces called');
+    debugPrint('🌍 AddLearnerPage: _fetchProvinces called');
     try {
       final url = AppConfig.buildUrl('fetch_provinces.php');
-      print('🌍 AddLearnerPage: Fetching from URL: $url');
+      debugPrint('🌍 AddLearnerPage: Fetching from URL: $url');
 
       final response = await http.get(Uri.parse(url)).timeout(
             const Duration(seconds: 10),
           );
 
-      print('🌍 AddLearnerPage: Response status: ${response.statusCode}');
-      print('🌍 AddLearnerPage: Response body: ${response.body}');
+      debugPrint('🌍 AddLearnerPage: Response status: ${response.statusCode}');
+      debugPrint('🌍 AddLearnerPage: Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print('🌍 AddLearnerPage: Decoded data: $data');
+        debugPrint('🌍 AddLearnerPage: Decoded data: $data');
         if (data['success'] == true && data['data'] != null) {
           setState(() {
             _provinces = (data['data']['provinces'] as List)
                 .map((e) => e['name'].toString())
                 .toList();
           });
-          print(
+          debugPrint(
               '🌍 AddLearnerPage: _provinces set to: $_provinces (${_provinces.length} items)');
         } else {
-          print(
+          debugPrint(
               '🌍 AddLearnerPage: ERROR - data[success] is false or data[data] is null');
           _useHardcodedProvinces();
         }
       } else {
-        print('🌍 AddLearnerPage: ERROR - HTTP ${response.statusCode}');
+        debugPrint('🌍 AddLearnerPage: ERROR - HTTP ${response.statusCode}');
         _useHardcodedProvinces();
       }
     } catch (e, stackTrace) {
-      print('🌍 AddLearnerPage: EXCEPTION - Error fetching provinces: $e');
-      print('🌍 AddLearnerPage: Stack trace: $stackTrace');
+      debugPrint('🌍 AddLearnerPage: EXCEPTION - Error fetching provinces: $e');
+      debugPrint('🌍 AddLearnerPage: Stack trace: $stackTrace');
       _useHardcodedProvinces();
     }
   }
 
   // Fallback hardcoded provinces
   void _useHardcodedProvinces() {
-    print('🌍 AddLearnerPage: Using hardcoded provinces as fallback');
+    debugPrint('🌍 AddLearnerPage: Using hardcoded provinces as fallback');
     setState(() {
       _provinces = [
         'Eastern Cape',
@@ -218,7 +218,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
         'Western Cape',
       ];
     });
-    print(
+    debugPrint(
         '🌍 AddLearnerPage: Hardcoded provinces loaded: ${_provinces.length} items');
   }
 
@@ -244,7 +244,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
         }
       }
     } catch (e) {
-      print('Error fetching districts: $e');
+      debugPrint('Error fetching districts: $e');
     }
   }
 
@@ -269,14 +269,14 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
         }
       }
     } catch (e) {
-      print('Error fetching municipalities: $e');
+      debugPrint('Error fetching municipalities: $e');
     }
   }
 
   @override
   void initState() {
     super.initState();
-    print('AddLearnerPage: initState called');
+    debugPrint('AddLearnerPage: initState called');
     _fetchProvinces(); // Load provinces when page loads
   }
 
@@ -355,8 +355,8 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
     }
 
     // Debug print
-    print('Learner Data: $learnerData');
-    print('Bank Data: $bankData');
+    debugPrint('Learner Data: $learnerData');
+    debugPrint('Bank Data: $bankData');
 
     // Validate required fields
     if (_nameController.text.isEmpty || _surnameController.text.isEmpty) {
@@ -404,16 +404,16 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
 
   // Extract date, age, and gender from SA ID number and check for duplicates
   void _extractFromIdAndCheckDuplicate(String idNumber) async {
-    print(
+    debugPrint(
         '🔥 DEBUG: Method called with ID: $idNumber (length: ${idNumber.length})');
 
     if (idNumber.length == 13 && RegExp(r'^\d{13}$').hasMatch(idNumber)) {
-      print('🔥 DEBUG: ID validation passed!');
+      debugPrint('🔥 DEBUG: ID validation passed!');
       int year = int.parse(idNumber.substring(0, 2));
       int month = int.parse(idNumber.substring(2, 4));
       int day = int.parse(idNumber.substring(4, 6));
       int genderCode = int.parse(idNumber.substring(6, 10));
-      print(
+      debugPrint(
           '🔥 DEBUG: Extracted - Year: $year, Month: $month, Day: $day, GenderCode: $genderCode');
 
       // SA ID standard: 00-24 = 2000s, 25-99 = 1900s (matches LearnerDetailsPage)
@@ -441,9 +441,9 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
             _ageController.text = age.toString();
             _selectedGender = gender; // Auto-populate gender
             _isValidSAId = true;
-            print('🎯 DEBUG: Gender extracted from ID: $gender');
-            print('🎯 DEBUG: _selectedGender set to: $_selectedGender');
-            print(
+            debugPrint('🎯 DEBUG: Gender extracted from ID: $gender');
+            debugPrint('🎯 DEBUG: _selectedGender set to: $_selectedGender');
+            debugPrint(
                 '🎯 DEBUG: DOB: ${_dobController.text}, Age: ${_ageController.text}');
           });
 
@@ -562,7 +562,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
             }
           }
         } catch (e) {
-          print('Error extracting from ID: $e');
+          debugPrint('Error extracting from ID: $e');
         }
       }
     } else {
@@ -668,7 +668,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
       navigator.pop(true); // Return true to indicate success
       return true;
     } catch (e) {
-      print('Error adding learner: $e');
+      debugPrint('Error adding learner: $e');
       if (mounted) {
         messenger.showSnackBar(
           SnackBar(
@@ -703,10 +703,10 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
       // Use the proper configuration URL
       final url = AppConfig.addLearnerUrl;
 
-      print('=== BACKEND SYNC DEBUG ===');
-      print('Full URL: $url');
-      print('Request data: $requestData');
-      print('========================');
+      debugPrint('=== BACKEND SYNC DEBUG ===');
+      debugPrint('Full URL: $url');
+      debugPrint('Request data: $requestData');
+      debugPrint('========================');
 
       final response = await http
           .post(
@@ -718,24 +718,24 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           )
           .timeout(const Duration(seconds: 30));
 
-      print('Backend response status: ${response.statusCode}');
-      print('Backend response body: ${response.body}');
+      debugPrint('Backend response status: ${response.statusCode}');
+      debugPrint('Backend response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         if (responseData['success'] == true) {
-          print('Successfully synced with backend');
+          debugPrint('Successfully synced with backend');
           return true;
         } else {
-          print('Backend sync failed: ${responseData['message']}');
+          debugPrint('Backend sync failed: ${responseData['message']}');
           return false;
         }
       } else {
-        print('Backend sync failed with status code: ${response.statusCode}');
+        debugPrint('Backend sync failed with status code: ${response.statusCode}');
         return false;
       }
     } catch (e) {
-      print('Error syncing with backend: $e');
+      debugPrint('Error syncing with backend: $e');
       return false;
     }
   }
@@ -833,7 +833,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
             // Province - Show dropdown if null or empty, show text if has value
             if (_selectedProvince == null || _selectedProvince!.isEmpty)
               Builder(builder: (context) {
-                print(
+                debugPrint(
                     'AddLearnerPage: Building Province dropdown, _provinces.length = ${_provinces.length}');
                 return _buildDropdownField(
                     'Province', _selectedProvince, _provinces, (value) {
@@ -971,14 +971,14 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
             _buildDropdownField('Bank Name', _selectedBank, _banks, (value) {
               setState(() {
                 _selectedBank = value;
-                print('🏦 DEBUG: Bank selected: $value');
+                debugPrint('🏦 DEBUG: Bank selected: $value');
                 // Auto-populate bank code when bank is selected
                 if (value != null && _bankCodes.containsKey(value)) {
                   _bankBranchCodeController.text = _bankCodes[value]!;
-                  print('🏦 DEBUG: Bank code set to: ${_bankCodes[value]}');
+                  debugPrint('🏦 DEBUG: Bank code set to: ${_bankCodes[value]}');
                 } else {
                   _bankBranchCodeController.text = '';
-                  print('🏦 DEBUG: Bank code cleared (bank not in map)');
+                  debugPrint('🏦 DEBUG: Bank code cleared (bank not in map)');
                 }
               });
             }),
@@ -1097,7 +1097,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
         ),
         items: options.isEmpty
             ? [
-                DropdownMenuItem<String>(
+                const DropdownMenuItem<String>(
                   value: null,
                   enabled: false,
                   child:

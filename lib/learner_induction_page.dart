@@ -70,7 +70,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
 
   Future<void> _initializeData() async {
     // Fast initialization for single learner - skip unnecessary operations
-    print('Fast init for single learner: ${widget.learnerID}');
+    debugPrint('Fast init for single learner: ${widget.learnerID}');
 
     // Load only the specific learner data
     await _loadSingleLearnerFromDatabase();
@@ -126,7 +126,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
   Future<void> _fetchClockingDataFromServer() async {
     // Skip server fetch for single learner - induction is one-time only
     // This prevents unnecessary network calls and speeds up the page
-    print('[INDUCTION] Skipping server fetch - single learner induction mode');
+    debugPrint('[INDUCTION] Skipping server fetch - single learner induction mode');
     return;
   }
 
@@ -153,9 +153,9 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
           where: 'LearnerID = ? AND clock_date = ?',
           whereArgs: [learnerID, stringRecord['clock_date']],
         );
-        print('Synced offline clock-in for $learnerID');
+        debugPrint('Synced offline clock-in for $learnerID');
       } catch (e) {
-        print('Failed to sync offline clock-in: $e');
+        debugPrint('Failed to sync offline clock-in: $e');
       }
     }
 
@@ -163,9 +163,9 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
     try {
       final dbHelper = DatabaseHelper();
       await dbHelper.cleanupOldClockingRecords();
-      print('Cleaned up synced records after induction sync');
+      debugPrint('Cleaned up synced records after induction sync');
     } catch (e) {
-      print('Error cleaning up after induction sync: $e');
+      debugPrint('Error cleaning up after induction sync: $e');
     }
   }
 
@@ -179,7 +179,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
         await _syncOfflineClockIns();
       }
     } catch (e) {
-      print('Error refreshing single learner data: $e');
+      debugPrint('Error refreshing single learner data: $e');
     }
   }
 
@@ -234,7 +234,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
         });
       }
     } catch (e) {
-      print('Error loading single learner: $e');
+      debugPrint('Error loading single learner: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading learner data: $e')),
       );
@@ -259,7 +259,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
   Future<bool> _isWithinSiteRadius(String classID, double userLat,
       double userLon, double userAccuracy) async {
     if (userAccuracy > 50) {
-      print('Geolocation accuracy too low: $userAccuracy meters');
+      debugPrint('Geolocation accuracy too low: $userAccuracy meters');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Geolocation accuracy too low. Please enable GPS.')),
@@ -273,9 +273,9 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
 
       final classes = await db.query('class');
       final sites = await db.query('sites');
-      print('Class table contents: $classes');
-      print('Sites table contents: $sites');
-      print(
+      debugPrint('Class table contents: $classes');
+      debugPrint('Sites table contents: $sites');
+      debugPrint(
           'Querying coordinates for classID: $classID (type: ${classID.runtimeType})');
 
       final result = await db.rawQuery(
@@ -285,19 +285,19 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
 
       if (result.isEmpty) {
         if (classes.isEmpty) {
-          print('Class table is empty');
+          debugPrint('Class table is empty');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('No class data available in local database.')),
           );
         } else if (sites.isEmpty) {
-          print('Sites table is empty');
+          debugPrint('Sites table is empty');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('No site data available in local database.')),
           );
         } else {
-          print('No matching class or site found for classID: $classID');
+          debugPrint('No matching class or site found for classID: $classID');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('No site coordinates found for class $classID.')),
@@ -310,7 +310,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
       final siteLon = double.tryParse(result.first['longitude'].toString());
 
       if (siteLat == null || siteLon == null) {
-        print(
+        debugPrint(
             'Invalid site coordinates for classID: $classID, lat: ${result.first['latitude']}, lon: ${result.first['longitude']}');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -321,7 +321,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
 
       final distance = _calculateDistance(userLat, userLon, siteLat, siteLon);
 
-      print('Distance to site for classID $classID: $distance meters');
+      debugPrint('Distance to site for classID $classID: $distance meters');
       if (distance > 100) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -332,7 +332,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
       }
       return true;
     } catch (e, stackTrace) {
-      print(
+      debugPrint(
           'Error checking site radius for classID $classID: $e\nStack trace: $stackTrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error checking location: $e')),
@@ -811,7 +811,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
 
   Future<void> _clockInOffline(String learnerID, String clockInTime) async {
     try {
-      print(
+      debugPrint(
           'Starting offline clock-in for learnerID: $learnerID at $clockInTime');
       final dbHelper = DatabaseHelper();
       final clockDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -846,9 +846,9 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
         'user_accuracy': '0.0', // No longer using Geolocator
       };
 
-      print('Inserting clock-in data: $clockInData');
+      debugPrint('Inserting clock-in data: $clockInData');
       await dbHelper.insertInductionClocking(clockInData);
-      print('Offline clock-in inserted successfully for learnerID: $learnerID');
+      debugPrint('Offline clock-in inserted successfully for learnerID: $learnerID');
 
       setState(() {
         clockInTimes[learnerID] = clockInTime;
@@ -859,7 +859,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
             content: Text('Clock-in saved locally. Will sync when online.')),
       );
     } catch (e, stackTrace) {
-      print(
+      debugPrint(
           'Offline clock-in error for learnerID: $learnerID: $e\nStack trace: $stackTrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving offline clock-in: $e')),
@@ -897,7 +897,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
               clockOutDateTime.difference(clockInDateTime);
           contactTime = formatDuration(contactTimeDuration);
         } catch (e) {
-          print('Error calculating contact time: $e');
+          debugPrint('Error calculating contact time: $e');
         }
       }
 
@@ -920,7 +920,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
             content: Text('Clock-out saved locally. Will sync when online.')),
       );
     } catch (e) {
-      print('Offline clock-out error: $e');
+      debugPrint('Offline clock-out error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving offline clock-out: $e')),
       );

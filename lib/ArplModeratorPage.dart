@@ -24,9 +24,9 @@ class _ArplModeratorPageState extends State<ArplModeratorPage> {
   @override
   void initState() {
     super.initState();
-    print('[ArplModeratorPage] ===== INITIALIZATION =====');
-    print('[ArplModeratorPage] Facilitator ID: ${widget.facilitator_id}');
-    print('[ArplModeratorPage] Starting fetchClasses...');
+    debugPrint('[ArplModeratorPage] ===== INITIALIZATION =====');
+    debugPrint('[ArplModeratorPage] Facilitator ID: ${widget.facilitator_id}');
+    debugPrint('[ArplModeratorPage] Starting fetchClasses...');
     _classes = fetchClasses(widget.facilitator_id);
   }
 
@@ -36,7 +36,7 @@ class _ArplModeratorPageState extends State<ArplModeratorPage> {
         'facilitator_id': facilitatorId,
       });
 
-      print('[ArplModeratorPage] Fetching classes from: $url');
+      debugPrint('[ArplModeratorPage] Fetching classes from: $url');
 
       final response = await http.get(Uri.parse(url));
 
@@ -56,9 +56,9 @@ class _ArplModeratorPageState extends State<ArplModeratorPage> {
                           .toUpperCase() ??
                       '';
 
-              print(
+              debugPrint(
                   '[ArplModeratorPage] DEBUG: Raw pathway from data: "${data[0]['Project_pathway']}"');
-              print(
+              debugPrint(
                   '[ArplModeratorPage] DEBUG: Uppercased pathway: "$pathway"');
 
               try {
@@ -69,12 +69,12 @@ class _ArplModeratorPageState extends State<ArplModeratorPage> {
                   if (pathwayList.isNotEmpty &&
                       pathwayList[0]['ofo_code'] != null) {
                     _ofoNumber = pathwayList[0]['ofo_code'].toString();
-                    print(
+                    debugPrint(
                         '[ArplModeratorPage] Extracted OFO Code: $_ofoNumber');
                   }
                 }
               } catch (e) {
-                print('[ArplModeratorPage] Could not parse OFO code: $e');
+                debugPrint('[ArplModeratorPage] Could not parse OFO code: $e');
               }
 
               bool isARPL = pathway.contains('ARPL') ||
@@ -85,7 +85,7 @@ class _ArplModeratorPageState extends State<ArplModeratorPage> {
                   pathway.contains('PLUMBER') ||
                   pathway.contains('ELECTRICITY');
 
-              print('[ArplModeratorPage] DEBUG: isARPL check result: $isARPL');
+              debugPrint('[ArplModeratorPage] DEBUG: isARPL check result: $isARPL');
 
               if (isARPL) {
                 _pathwayType = 'ARPL';
@@ -93,7 +93,7 @@ class _ArplModeratorPageState extends State<ArplModeratorPage> {
                 _pathwayType = pathway;
               }
 
-              print(
+              debugPrint(
                   '[ArplModeratorPage] Detected Pathway: $_pathwayType (from data: $pathway, isARPL: $isARPL)');
             });
           }
@@ -106,7 +106,7 @@ class _ArplModeratorPageState extends State<ArplModeratorPage> {
             'Failed to load classes. Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('[ArplModeratorPage] Error fetching classes: $e');
+      debugPrint('[ArplModeratorPage] Error fetching classes: $e');
       throw Exception('Failed to load classes. Error: $e');
     }
   }
@@ -575,11 +575,11 @@ class _ArplModeratorPageState extends State<ArplModeratorPage> {
 
   @override
   Widget build(BuildContext context) {
-    print('[ArplModeratorPage] ===== BUILD METHOD =====');
-    print('[ArplModeratorPage] _pathwayType: "$_pathwayType"');
-    print(
+    debugPrint('[ArplModeratorPage] ===== BUILD METHOD =====');
+    debugPrint('[ArplModeratorPage] _pathwayType: "$_pathwayType"');
+    debugPrint(
         '[ArplModeratorPage] Will show ${_pathwayType == 'ARPL' ? 'ARPL' : 'DEFAULT'} dashboard');
-    print('[ArplModeratorPage] ===========================');
+    debugPrint('[ArplModeratorPage] ===========================');
 
     return Scaffold(
       appBar: AppBar(
@@ -796,7 +796,7 @@ class _ArplModeratorClassDetailsPageState
         'classID': classId,
         '_': DateTime.now().millisecondsSinceEpoch.toString(),
       });
-      print('[ArplModClassDetails] Fetching learners from: $url');
+      debugPrint('[ArplModClassDetails] Fetching learners from: $url');
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
@@ -809,7 +809,7 @@ class _ArplModeratorClassDetailsPageState
         throw Exception('HTTP ${response.statusCode}');
       }
     } catch (e) {
-      print('[ArplModClassDetails] Error: $e');
+      debugPrint('[ArplModClassDetails] Error: $e');
       throw Exception('Failed to load learners: $e');
     }
   }
@@ -824,12 +824,15 @@ class _ArplModeratorClassDetailsPageState
         final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
           final tradeName = (data['trade_name'] ?? '').toString().toLowerCase();
-          if (tradeName.contains('brick') || tradeName.contains('641201'))
+          if (tradeName.contains('brick') || tradeName.contains('641201')) {
             return '641201';
-          if (tradeName.contains('plumb') || tradeName.contains('642601'))
+          }
+          if (tradeName.contains('plumb') || tradeName.contains('642601')) {
             return '642601';
-          if (tradeName.contains('electr') || tradeName.contains('671101'))
+          }
+          if (tradeName.contains('electr') || tradeName.contains('671101')) {
             return '671101';
+          }
         }
       }
     } catch (_) {}
@@ -1091,12 +1094,15 @@ class _ModeratorPracticalImagesSelectionPageState
         final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
           final tradeName = (data['trade_name'] ?? '').toString().toLowerCase();
-          if (tradeName.contains('brick') || tradeName.contains('641201'))
+          if (tradeName.contains('brick') || tradeName.contains('641201')) {
             return '641201';
-          if (tradeName.contains('plumb') || tradeName.contains('642601'))
+          }
+          if (tradeName.contains('plumb') || tradeName.contains('642601')) {
             return '642601';
-          if (tradeName.contains('electr') || tradeName.contains('671101'))
+          }
+          if (tradeName.contains('electr') || tradeName.contains('671101')) {
             return '671101';
+          }
         }
       }
     } catch (_) {}
@@ -1189,7 +1195,7 @@ class _ModeratorPracticalImagesSelectionPageState
                           }
                         }
                       } catch (e) {
-                        print('Could not parse OFO: $e');
+                        debugPrint('Could not parse OFO: $e');
                       }
 
                       // Fallback to API lookup if needed

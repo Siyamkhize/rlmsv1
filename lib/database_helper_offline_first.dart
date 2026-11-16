@@ -30,7 +30,7 @@ class DatabaseHelperOfflineFirst {
     bool preserveLocalTemplates = true,
   }) async {
     try {
-      print('[OFFLINE_FIRST_SYNC] Starting learner sync for classID: $classID');
+      debugPrint('[OFFLINE_FIRST_SYNC] Starting learner sync for classID: $classID');
 
       final response = await http
           .get(
@@ -43,7 +43,7 @@ class DatabaseHelperOfflineFirst {
       }
 
       final List<dynamic> learnersData = json.decode(response.body);
-      print(
+      debugPrint(
           '[OFFLINE_FIRST_SYNC] Received ${learnersData.length} learners from server');
 
       // Get existing learners for this class
@@ -59,7 +59,7 @@ class DatabaseHelperOfflineFirst {
         existingLearnersMap[learner['LearnerID'].toString()] = learner;
       }
 
-      print(
+      debugPrint(
           '[OFFLINE_FIRST_SYNC] Found ${existingLearners.length} existing learners in local database');
 
       int insertedCount = 0;
@@ -194,18 +194,18 @@ class DatabaseHelperOfflineFirst {
             insertedCount++;
           }
         } catch (e) {
-          print('[OFFLINE_FIRST_SYNC] Error processing learner: $e');
+          debugPrint('[OFFLINE_FIRST_SYNC] Error processing learner: $e');
           skippedCount++;
         }
       }
 
-      print('[OFFLINE_FIRST_SYNC] Sync completed for classID: $classID');
-      print(
+      debugPrint('[OFFLINE_FIRST_SYNC] Sync completed for classID: $classID');
+      debugPrint(
           '[OFFLINE_FIRST_SYNC] Inserted: $insertedCount, Updated: $updatedCount, Skipped: $skippedCount');
-      print(
+      debugPrint(
           '[OFFLINE_FIRST_SYNC] Total learners in local DB for this class: ${insertedCount + updatedCount}');
     } catch (e) {
-      print('[OFFLINE_FIRST_SYNC] Error syncing learners: $e');
+      debugPrint('[OFFLINE_FIRST_SYNC] Error syncing learners: $e');
       throw Exception('Failed to sync learners: $e');
     }
   }

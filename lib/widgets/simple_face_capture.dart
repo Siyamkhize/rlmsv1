@@ -32,7 +32,7 @@ class SimpleFaceCapture extends StatefulWidget {
   final VoidCallback? onTimeout;
 
   const SimpleFaceCapture({
-    Key? key,
+    super.key,
     this.mode = FaceCaptureMode.register,
     required this.title,
     required this.instruction,
@@ -41,7 +41,7 @@ class SimpleFaceCapture extends StatefulWidget {
     this.autoCapture = true,
     this.timeout,
     this.onTimeout,
-  }) : super(key: key);
+  });
 
   @override
   State<SimpleFaceCapture> createState() => _SimpleFaceCaptureState();
@@ -288,7 +288,9 @@ class _SimpleFaceCaptureState extends State<SimpleFaceCapture>
         _isCapturing ||
         _captureTriggered ||
         _cameraController == null ||
-        !_cameraController!.value.isInitialized) return;
+        !_cameraController!.value.isInitialized) {
+      return;
+    }
 
     _isAnalyzing = true;
     XFile? picture;
@@ -1087,10 +1089,10 @@ class FaceGuidePainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 9
         ..strokeCap = StrokeCap.round
-        ..shader = SweepGradient(
+        ..shader = const SweepGradient(
           startAngle: -math.pi / 2,
           endAngle: math.pi * 1.5,
-          colors: const [
+          colors: [
             Color(0xFFA7FFC1),
             Color(0xFF4ADE80),
             Color(0xFF22D3EE),

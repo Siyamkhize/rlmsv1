@@ -147,7 +147,7 @@ class _SdpLearnersPageState extends State<SdpLearnersPage> {
         }
       }
     } catch (e) {
-      print('Smart search autocomplete error: $e');
+      debugPrint('Smart search autocomplete error: $e');
       if (mounted) {
         setState(() {
           _searchSuggestions.clear();
@@ -222,7 +222,7 @@ class _SdpLearnersPageState extends State<SdpLearnersPage> {
 
     try {
       // Always try online first - prioritize fresh data
-      print('Attempting online data fetch...');
+      debugPrint('Attempting online data fetch...');
       final isOnline = await _checkConnectivity();
       _isOnlineMode = isOnline;
 
@@ -231,15 +231,15 @@ class _SdpLearnersPageState extends State<SdpLearnersPage> {
         await _fetchLearnersFromApi();
       } else {
         // Offline mode - use local database
-        print('No internet connection, using local database...');
+        debugPrint('No internet connection, using local database...');
         await _fetchLearnersFromDatabase();
       }
     } catch (e) {
-      print('Error in _loadLearners: $e');
+      debugPrint('Error in _loadLearners: $e');
 
       // If online fetch failed, try local database as fallback
       if (_isOnlineMode && _learners.isEmpty) {
-        print('Online fetch failed, trying local database as fallback...');
+        debugPrint('Online fetch failed, trying local database as fallback...');
         try {
           await _fetchLearnersFromDatabase();
           // Update UI to show we're using cached data
@@ -332,7 +332,7 @@ class _SdpLearnersPageState extends State<SdpLearnersPage> {
               'https://rlms.rlms.co.za/mobile/get_sdp_learners_paginated.php')
           .replace(queryParameters: queryParams);
 
-      print('Fetching learners from: $uri');
+      debugPrint('Fetching learners from: $uri');
 
       final response = await http.get(uri).timeout(
         const Duration(seconds: 15),
@@ -341,7 +341,7 @@ class _SdpLearnersPageState extends State<SdpLearnersPage> {
         },
       );
 
-      print('API Response status: ${response.statusCode}');
+      debugPrint('API Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
@@ -383,7 +383,7 @@ class _SdpLearnersPageState extends State<SdpLearnersPage> {
             _isLoadingMore = false;
           });
 
-          print(
+          debugPrint(
               'Loaded ${learnersData.length} learners (page $_currentPage of $_totalPages)');
         } else {
           throw Exception(jsonData['message'] ?? 'Failed to load learners');
@@ -392,7 +392,7 @@ class _SdpLearnersPageState extends State<SdpLearnersPage> {
         throw Exception('Server returned status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching from API: $e');
+      debugPrint('Error fetching from API: $e');
       if (!append) {
         // Fallback to local database only on initial load
         await _fetchLearnersFromDatabase();
@@ -404,7 +404,7 @@ class _SdpLearnersPageState extends State<SdpLearnersPage> {
 
   Future<void> _syncLearnersToLocal(List<dynamic> learnersData) async {
     try {
-      print('Starting background sync of ${learnersData.length} learners...');
+      debugPrint('Starting background sync of ${learnersData.length} learners...');
 
       // Show a brief sync indicator
       if (mounted) {
@@ -458,12 +458,12 @@ class _SdpLearnersPageState extends State<SdpLearnersPage> {
               updatedCount++;
             }
           } catch (e) {
-            print('Error syncing learner ${learnerData['LearnerID']}: $e');
+            debugPrint('Error syncing learner ${learnerData['LearnerID']}: $e');
             // Continue with next learner even if one fails
           }
         }
 
-        print(
+        debugPrint(
             'Background sync completed: $syncedCount new, $updatedCount updated');
 
         // Show completion message
@@ -479,7 +479,7 @@ class _SdpLearnersPageState extends State<SdpLearnersPage> {
         }
       });
     } catch (e) {
-      print('Error starting background sync: $e');
+      debugPrint('Error starting background sync: $e');
     }
   }
 
@@ -495,7 +495,7 @@ class _SdpLearnersPageState extends State<SdpLearnersPage> {
         _isLoading = false;
         _isLoadingMore = false;
       });
-      print('Loaded ${_learners.length} learners from local database');
+      debugPrint('Loaded ${_learners.length} learners from local database');
     } catch (e) {
       setState(() {
         _errorMessage = 'Unable to load learners: $e';

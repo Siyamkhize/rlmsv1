@@ -26,13 +26,13 @@ class CameraResourceManager {
   /// Request camera access - will wait if camera is busy
   Future<bool> requestCameraAccess(String requester,
       {Duration? timeout}) async {
-    print('[CAMERA_MANAGER] $requester requesting camera access');
+    debugPrint('[CAMERA_MANAGER] $requester requesting camera access');
 
     // If camera is free (including ML Kit), grant access immediately
     if (!_isCameraInUse && !_isMLKitScannerActive) {
       _isCameraInUse = true;
       _currentUser = requester;
-      print('[CAMERA_MANAGER] Camera access granted to $requester');
+      debugPrint('[CAMERA_MANAGER] Camera access granted to $requester');
       return true;
     }
 
@@ -41,7 +41,7 @@ class CameraResourceManager {
       String busyReason = _isMLKitScannerActive
           ? 'ML Kit Document Scanner'
           : _currentUser ?? 'Unknown';
-      print(
+      debugPrint(
           '[CAMERA_MANAGER] Camera busy (used by $busyReason), $requester waiting with timeout ${timeout.inSeconds}s');
 
       final completer = Completer<void>();
@@ -53,14 +53,14 @@ class CameraResourceManager {
         if (!_isCameraInUse && !_isMLKitScannerActive) {
           _isCameraInUse = true;
           _currentUser = requester;
-          print(
+          debugPrint(
               '[CAMERA_MANAGER] Camera access granted to $requester after wait');
           return true;
         }
       } catch (e) {
         // Timeout or other error
         _waitingQueue.remove(completer);
-        print('[CAMERA_MANAGER] Camera access timeout for $requester');
+        debugPrint('[CAMERA_MANAGER] Camera access timeout for $requester');
         return false;
       }
     }
@@ -68,7 +68,7 @@ class CameraResourceManager {
     String busyReason = _isMLKitScannerActive
         ? 'ML Kit Document Scanner'
         : _currentUser ?? 'Unknown';
-    print(
+    debugPrint(
         '[CAMERA_MANAGER] Camera busy (used by $busyReason), $requester denied access');
     return false;
   }
@@ -76,7 +76,7 @@ class CameraResourceManager {
   /// Release camera access
   void releaseCameraAccess(String requester) {
     if (_currentUser == requester) {
-      print('[CAMERA_MANAGER] Camera access released by $requester');
+      debugPrint('[CAMERA_MANAGER] Camera access released by $requester');
       _isCameraInUse = false;
       _currentUser = null;
 
@@ -88,14 +88,14 @@ class CameraResourceManager {
         }
       }
     } else {
-      print(
+      debugPrint(
           '[CAMERA_MANAGER] WARNING: $requester tried to release camera but current user is $_currentUser');
     }
   }
 
   /// Force release camera (for emergency situations)
   void forceReleaseCameraAccess(String reason) {
-    print(
+    debugPrint(
         '[CAMERA_MANAGER] FORCE RELEASE: $reason (was used by $_currentUser)');
     _isCameraInUse = false;
     _currentUser = null;
@@ -121,20 +121,20 @@ class CameraResourceManager {
 
   /// Mark ML Kit document scanner as active
   void markMLKitScannerActive() {
-    print('[CAMERA_MANAGER] ML Kit Document Scanner started');
+    debugPrint('[CAMERA_MANAGER] ML Kit Document Scanner started');
     _isMLKitScannerActive = true;
 
     // Set a timeout to automatically release if ML Kit gets stuck
     _mlkitTimeoutTimer?.cancel();
     _mlkitTimeoutTimer = Timer(const Duration(minutes: 5), () {
-      print('[CAMERA_MANAGER] ML Kit Scanner timeout - force releasing');
+      debugPrint('[CAMERA_MANAGER] ML Kit Scanner timeout - force releasing');
       markMLKitScannerInactive();
     });
   }
 
   /// Mark ML Kit document scanner as inactive
   void markMLKitScannerInactive() {
-    print('[CAMERA_MANAGER] ML Kit Document Scanner finished');
+    debugPrint('[CAMERA_MANAGER] ML Kit Document Scanner finished');
     _isMLKitScannerActive = false;
 
     // Cancel timeout timer

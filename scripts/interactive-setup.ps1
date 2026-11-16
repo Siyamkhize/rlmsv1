@@ -66,7 +66,7 @@ Write-Host "  2. Click 'Generate'"
 Write-Host "  3. Copy the token"
 Write-Host ""
 
-$sonarToken = Get-ValidatedInput -Prompt "Paste your SONAR_TOKEN here" -ValidationPattern ".{20,}"
+$sonarToken = Get-ValidatedInput -Prompt "9425cbd42754ec4f9c0338cbe1f0fedd065c2855" -ValidationPattern ".{20,}"
 $sonarUrl = "https://sonarcloud.io"
 
 Write-Host "✓ SonarCloud token saved!" -ForegroundColor Green
@@ -99,7 +99,7 @@ Write-Host "  2. Click 'click to show'"
 Write-Host "  3. Click the copy icon"
 Write-Host ""
 
-$snykToken = Get-ValidatedInput -Prompt "Paste your SNYK_TOKEN here" -ValidationPattern ".{30,}"
+$snykToken = Get-ValidatedInput -Prompt "snyk_uat.1fcad39e.eyJlIjoxODAyNjAxNjYzLCJoIjoic255ay5pbyIsImoiOiJBYUhqOG5uaDJTcEE2M1EyZWhtSmdBIiwicyI6ImZVeW5CNElzUmJhejk4UGFmUXZqWkEiLCJ0aWQiOiJBQUFBQUFBQUFBQUFBQUFBQUFBQUFBIn0.BItODQ7nBFTROCh5uf2G27vyQwBNGjn_Um8oIv_JxN-4vkEkZicN6KZ0uu3gvlxdjs-NQqVNsYYDn0ft5ziPCg" -ValidationPattern ".{30,}"
 
 Write-Host "✓ Snyk token saved!" -ForegroundColor Green
 

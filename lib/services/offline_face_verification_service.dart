@@ -70,7 +70,7 @@ class OfflineFaceVerificationService {
       );
 
       if (results.isEmpty) {
-        print(
+        debugPrint(
             '[OFFLINE_FACE] No cached embeddings found for learner $learnerId');
         return [];
       }
@@ -89,11 +89,11 @@ class OfflineFaceVerificationService {
         });
       }
 
-      print(
+      debugPrint(
           '[OFFLINE_FACE] Retrieved ${embeddings.length} cached embedding(s) for learner $learnerId');
       return embeddings;
     } catch (e) {
-      print('[OFFLINE_FACE] Error retrieving cached embeddings: $e');
+      debugPrint('[OFFLINE_FACE] Error retrieving cached embeddings: $e');
       return [];
     }
   }
@@ -126,11 +126,11 @@ class OfflineFaceVerificationService {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-      print(
+      debugPrint(
           '[OFFLINE_FACE] Cached $cameraFacing embedding for learner $learnerId (${embedding.length} dimensions, quality: $qualityScore)');
       return true;
     } catch (e) {
-      print('[OFFLINE_FACE] Error caching embedding: $e');
+      debugPrint('[OFFLINE_FACE] Error caching embedding: $e');
       return false;
     }
   }
@@ -145,7 +145,7 @@ class OfflineFaceVerificationService {
       ));
       return count != null && count > 0;
     } catch (e) {
-      print('[OFFLINE_FACE] Error checking cached embedding: $e');
+      debugPrint('[OFFLINE_FACE] Error checking cached embedding: $e');
       return false;
     }
   }
@@ -161,7 +161,7 @@ class OfflineFaceVerificationService {
       ));
       return (count ?? 0) >= 2;
     } catch (e) {
-      print('[OFFLINE_FACE] Error checking both cameras: $e');
+      debugPrint('[OFFLINE_FACE] Error checking both cameras: $e');
       return false;
     }
   }
@@ -178,7 +178,7 @@ class OfflineFaceVerificationService {
       );
       return results.map((r) => r['camera_facing'] as String).toList();
     } catch (e) {
-      print('[OFFLINE_FACE] Error getting enrolled cameras: $e');
+      debugPrint('[OFFLINE_FACE] Error getting enrolled cameras: $e');
       return [];
     }
   }
@@ -194,12 +194,12 @@ class OfflineFaceVerificationService {
     String verificationType = 'clock_in',
   }) async {
     try {
-      print(
+      debugPrint(
           '[OFFLINE_FACE] Starting offline verification for learner $learnerId (camera: $cameraFacing)');
 
       // QUALITY CHECK: Reject poor quality captures before comparison
       if (qualityScore < MIN_VERIFICATION_QUALITY) {
-        print(
+        debugPrint(
             '[OFFLINE_FACE] Quality too low: $qualityScore < $MIN_VERIFICATION_QUALITY');
 
         await _queueVerificationLog(
@@ -226,7 +226,7 @@ class OfflineFaceVerificationService {
       // Get ALL cached embeddings (front + back)
       final cachedEmbeddings = await getCachedEmbeddings(learnerId);
       if (cachedEmbeddings.isEmpty) {
-        print('[OFFLINE_FACE] No cached embeddings - verification failed');
+        debugPrint('[OFFLINE_FACE] No cached embeddings - verification failed');
 
         await _queueVerificationLog(
           learnerId: learnerId,
@@ -257,7 +257,7 @@ class OfflineFaceVerificationService {
         final storedCamera = cachedData['camera_facing'] as String;
 
         final similarity = cosineSimilarity(liveEmbedding, cachedEmbedding);
-        print('[OFFLINE_FACE] Score vs $storedCamera camera: $similarity');
+        debugPrint('[OFFLINE_FACE] Score vs $storedCamera camera: $similarity');
 
         if (similarity > bestScore) {
           bestScore = similarity;
@@ -265,7 +265,7 @@ class OfflineFaceVerificationService {
         }
       }
 
-      print(
+      debugPrint(
           '[OFFLINE_FACE] BEST score: $bestScore (matched: $matchedCamera, threshold: $FACE_MATCH_THRESHOLD)');
 
       final verified = bestScore >= FACE_MATCH_THRESHOLD;
@@ -293,7 +293,7 @@ class OfflineFaceVerificationService {
         'failureReason': verified ? null : 'similarity_below_threshold',
       };
     } catch (e) {
-      print('[OFFLINE_FACE] Error during offline verification: $e');
+      debugPrint('[OFFLINE_FACE] Error during offline verification: $e');
 
       await _queueVerificationLog(
         learnerId: learnerId,
@@ -347,10 +347,10 @@ class OfflineFaceVerificationService {
         'created_at': now,
       });
 
-      print(
+      debugPrint(
           '[OFFLINE_FACE] Queued verification log for sync (verified: $verified, score: $matchScore, camera: $cameraFacing)');
     } catch (e) {
-      print('[OFFLINE_FACE] Error queueing verification log: $e');
+      debugPrint('[OFFLINE_FACE] Error queueing verification log: $e');
     }
   }
 
@@ -363,7 +363,7 @@ class OfflineFaceVerificationService {
       ));
       return count ?? 0;
     } catch (e) {
-      print('[OFFLINE_FACE] Error getting unsynced count: $e');
+      debugPrint('[OFFLINE_FACE] Error getting unsynced count: $e');
       return 0;
     }
   }
@@ -383,11 +383,11 @@ class OfflineFaceVerificationService {
       );
 
       if (unsyncedLogs.isEmpty) {
-        print('[OFFLINE_FACE] No verification logs to sync');
+        debugPrint('[OFFLINE_FACE] No verification logs to sync');
         return 0;
       }
 
-      print(
+      debugPrint(
           '[OFFLINE_FACE] Found ${unsyncedLogs.length} verification logs to sync');
 
       // Prepare logs for sync
@@ -434,24 +434,24 @@ class OfflineFaceVerificationService {
               );
             }
 
-            print(
+            debugPrint(
                 '[OFFLINE_FACE] Successfully synced $syncedCount/${unsyncedLogs.length} verification logs');
           } else {
-            print(
+            debugPrint(
                 '[OFFLINE_FACE] Server accepted request but confirmed 0 synced logs');
           }
 
           return syncedCount;
         } else {
-          print('[OFFLINE_FACE] Server rejected sync: ${result['message']}');
+          debugPrint('[OFFLINE_FACE] Server rejected sync: ${result['message']}');
           return 0;
         }
       } else {
-        print('[OFFLINE_FACE] Sync failed with status ${response.statusCode}');
+        debugPrint('[OFFLINE_FACE] Sync failed with status ${response.statusCode}');
         return 0;
       }
     } catch (e) {
-      print('[OFFLINE_FACE] Error syncing verification logs: $e');
+      debugPrint('[OFFLINE_FACE] Error syncing verification logs: $e');
       return 0;
     }
   }
@@ -469,11 +469,11 @@ class OfflineFaceVerificationService {
         whereArgs: [cutoffDate],
       );
 
-      print(
+      debugPrint(
           '[OFFLINE_FACE] Deleted $deleted old cached embeddings (older than $daysOld days)');
       return deleted;
     } catch (e) {
-      print('[OFFLINE_FACE] Error cleaning up cache: $e');
+      debugPrint('[OFFLINE_FACE] Error cleaning up cache: $e');
       return 0;
     }
   }
@@ -488,11 +488,11 @@ class OfflineFaceVerificationService {
         where: 'learner_id = ?',
         whereArgs: [learnerId],
       );
-      print(
+      debugPrint(
           '[OFFLINE_FACE] Deleted $deleted cached embedding(s) for learner $learnerId');
       return deleted > 0;
     } catch (e) {
-      print('[OFFLINE_FACE] Error deleting cached embedding: $e');
+      debugPrint('[OFFLINE_FACE] Error deleting cached embedding: $e');
       return false;
     }
   }

@@ -454,11 +454,11 @@ class _POESubmitPageState extends State<POESubmitPage> {
 
     try {
       // GEOFENCING CHECK: Verify user is within 300 meters before allowing POE collection
-      print('[POE_SUBMIT] Starting geofence check...');
+      debugPrint('[POE_SUBMIT] Starting geofence check...');
       bool withinRadius = await _checkLocationAndRadius();
 
       if (!withinRadius) {
-        print(
+        debugPrint(
             '[POE_SUBMIT] ❌ Geofence check failed - user not within 300 meters');
         setState(() {
           isLoading = false;
@@ -466,7 +466,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         return;
       }
 
-      print(
+      debugPrint(
           '[POE_SUBMIT] ✅ Geofence check passed - proceeding with fingerprint verification');
 
       // Use the EXACT same verification logic as clock_in_page.dart
@@ -509,15 +509,15 @@ class _POESubmitPageState extends State<POESubmitPage> {
   // Direct fingerprint verification using EXACT same logic as clock_in_page.dart
   Future<bool> _performDirectFingerprintVerification() async {
     try {
-      print('[POE_SUBMIT] Starting direct fingerprint verification...');
+      debugPrint('[POE_SUBMIT] Starting direct fingerprint verification...');
 
       // Get learner ID from learner data
       final learnerId =
           widget.learner['learnerID'] ?? widget.learner['LearnerID'] ?? 0;
-      print('[POE_SUBMIT] Learner ID: $learnerId');
+      debugPrint('[POE_SUBMIT] Learner ID: $learnerId');
 
       if (learnerId == 0) {
-        print('[POE_SUBMIT] ❌ Invalid learner ID');
+        debugPrint('[POE_SUBMIT] ❌ Invalid learner ID');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Invalid learner ID. Cannot verify fingerprint.'),
@@ -529,7 +529,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
 
       final learnerIdInt = int.tryParse(learnerId.toString());
       if (learnerIdInt == null) {
-        print('[POE_SUBMIT] ❌ Invalid learner ID format');
+        debugPrint('[POE_SUBMIT] ❌ Invalid learner ID format');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content:
@@ -541,10 +541,10 @@ class _POESubmitPageState extends State<POESubmitPage> {
       }
 
       // Get learner templates from database - EXACT SAME AS CLOCK_IN_PAGE
-      print('[POE_SUBMIT] Getting templates from database...');
+      debugPrint('[POE_SUBMIT] Getting templates from database...');
       final templates = await DatabaseHelper().getAllTemplates(learnerIdInt);
       final scanner = await _detectScanner();
-      print('[POE_SUBMIT] Scanner detected: $scanner');
+      debugPrint('[POE_SUBMIT] Scanner detected: $scanner');
 
       // Evaluate available templates per scanner - EXACT SAME AS CLOCK_IN_PAGE
       final hasZkLeft =
@@ -556,14 +556,14 @@ class _POESubmitPageState extends State<POESubmitPage> {
       final hasFutRight =
           (templates['futronic_right_template']?.isNotEmpty ?? false);
 
-      print(
+      debugPrint(
           '[POE_SUBMIT] Template availability - ZK Left: $hasZkLeft, ZK Right: $hasZkRight, Fut Left: $hasFutLeft, Fut Right: $hasFutRight');
 
       // If current scanner has no templates but the other scanner does, guide user - EXACT SAME AS CLOCK_IN_PAGE
       if (scanner == 'futronic' &&
           !(hasFutLeft || hasFutRight) &&
           (hasZkLeft || hasZkRight)) {
-        print('[POE_SUBMIT] ❌ Futronic scanner but only ZKTeco templates');
+        debugPrint('[POE_SUBMIT] ❌ Futronic scanner but only ZKTeco templates');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -576,7 +576,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       if (scanner == 'zkteco' &&
           !(hasZkLeft || hasZkRight) &&
           (hasFutLeft || hasFutRight)) {
-        print('[POE_SUBMIT] ❌ ZKTeco scanner but only Futronic templates');
+        debugPrint('[POE_SUBMIT] ❌ ZKTeco scanner but only Futronic templates');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -598,7 +598,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       }
 
       if (template == null || template.isEmpty) {
-        print('[POE_SUBMIT] ❌ No templates available');
+        debugPrint('[POE_SUBMIT] ❌ No templates available');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -629,32 +629,32 @@ class _POESubmitPageState extends State<POESubmitPage> {
           guidance = 'Place RIGHT thumb on ZKTeco scanner for verification...';
       }
 
-      print('[POE_SUBMIT] Guidance: $guidance');
+      debugPrint('[POE_SUBMIT] Guidance: $guidance');
       _showProgressDialog(guidance);
 
       // Perform fingerprint verification - EXACT SAME AS CLOCK_IN_PAGE
       try {
         bool match = false;
-        print('[POE_SUBMIT] Starting verification with scanner: $scanner');
+        debugPrint('[POE_SUBMIT] Starting verification with scanner: $scanner');
 
         if (scanner == 'zkteco') {
           // EXACT SAME AS CLOCK_IN_PAGE
-          print(
+          debugPrint(
               '[POE_SUBMIT] ZKTeco verification - Template length: ${template.length}');
           match = await _fingerprintService.verify('left', template) ||
               await _fingerprintService.verify('right', template);
-          print('[POE_SUBMIT] ZKTeco verification result: $match');
+          debugPrint('[POE_SUBMIT] ZKTeco verification result: $match');
         } else if (scanner == 'futronic') {
           // EXACT SAME AS CLOCK_IN_PAGE
           try {
-            print('[POE_SUBMIT] Attempting Futronic verification');
+            debugPrint('[POE_SUBMIT] Attempting Futronic verification');
             final leftTemplate = templates['futronic_left_template'];
             final rightTemplate = templates['futronic_right_template'];
             final hint = (leftTemplate != null && leftTemplate.isNotEmpty)
                 ? 'left'
                 : 'right';
 
-            print(
+            debugPrint(
                 '[POE_SUBMIT] Futronic verification - Left template length: ${leftTemplate?.length ?? 0}, Right template length: ${rightTemplate?.length ?? 0}, Hint: $hint');
 
             match = await _futronicService.verifyBoth(
@@ -662,9 +662,9 @@ class _POESubmitPageState extends State<POESubmitPage> {
               leftTemplate: leftTemplate,
               rightTemplate: rightTemplate,
             );
-            print('[POE_SUBMIT] Futronic verification result: $match');
+            debugPrint('[POE_SUBMIT] Futronic verification result: $match');
           } catch (futronicError) {
-            print('[POE_SUBMIT] Futronic verification error: $futronicError');
+            debugPrint('[POE_SUBMIT] Futronic verification error: $futronicError');
             _hideProgressDialog();
 
             // Provide specific error messages for common Futronic issues - EXACT SAME AS CLOCK_IN_PAGE
@@ -694,7 +694,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         } else {
           // No scanner detected - EXACT SAME AS CLOCK_IN_PAGE
           _hideProgressDialog();
-          print('[POE_SUBMIT] ❌ No scanner detected');
+          debugPrint('[POE_SUBMIT] ❌ No scanner detected');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -706,11 +706,11 @@ class _POESubmitPageState extends State<POESubmitPage> {
         }
 
         _hideProgressDialog();
-        print('[POE_SUBMIT] Final verification result: $match');
+        debugPrint('[POE_SUBMIT] Final verification result: $match');
 
         return match;
       } catch (e) {
-        print('[POE_SUBMIT] Verification error: $e');
+        debugPrint('[POE_SUBMIT] Verification error: $e');
         _hideProgressDialog();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -721,7 +721,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         return false;
       }
     } catch (e) {
-      print('[POE_SUBMIT] Fingerprint verification error: $e');
+      debugPrint('[POE_SUBMIT] Fingerprint verification error: $e');
       _hideProgressDialog();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -735,23 +735,23 @@ class _POESubmitPageState extends State<POESubmitPage> {
 
   // Scanner detection methods - EXACT SAME AS CLOCK_IN_PAGE
   Future<String> _detectScanner() async {
-    print('[POE_SUBMIT] Starting scanner detection...');
+    debugPrint('[POE_SUBMIT] Starting scanner detection...');
 
     // Try ZKTeco first
     try {
-      print('[POE_SUBMIT] Trying ZKTeco scanner...');
+      debugPrint('[POE_SUBMIT] Trying ZKTeco scanner...');
       final isZkConnected = await _fingerprintService.isSensorConnected();
-      print('[POE_SUBMIT] ZKTeco result: $isZkConnected');
+      debugPrint('[POE_SUBMIT] ZKTeco result: $isZkConnected');
       if (isZkConnected) {
-        print('[POE_SUBMIT] ✅ ZKTeco scanner detected!');
+        debugPrint('[POE_SUBMIT] ✅ ZKTeco scanner detected!');
         return 'zkteco';
       }
     } catch (e) {
-      print('[POE_SUBMIT] ZKTeco detection failed: $e');
+      debugPrint('[POE_SUBMIT] ZKTeco detection failed: $e');
     }
 
     // Enhanced Futronic detection with retry
-    print('[POE_SUBMIT] ZKTeco not found, trying Futronic...');
+    debugPrint('[POE_SUBMIT] ZKTeco not found, trying Futronic...');
     return await _detectFutronicWithRetry();
   }
 
@@ -759,35 +759,35 @@ class _POESubmitPageState extends State<POESubmitPage> {
     const maxAttempts = 3;
     const delays = [500, 1000, 2000]; // Progressive delays
 
-    print('[POE_SUBMIT] Starting Futronic detection with retry...');
+    debugPrint('[POE_SUBMIT] Starting Futronic detection with retry...');
 
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        print('[POE_SUBMIT] Futronic attempt $attempt/$maxAttempts...');
+        debugPrint('[POE_SUBMIT] Futronic attempt $attempt/$maxAttempts...');
         final isFutronicConnected =
             await _futronicService.isFutronicConnected();
-        print(
+        debugPrint(
             '[POE_SUBMIT] Futronic attempt $attempt result: $isFutronicConnected');
 
         if (isFutronicConnected) {
-          print('[POE_SUBMIT] ✅ Futronic detected on attempt $attempt!');
+          debugPrint('[POE_SUBMIT] ✅ Futronic detected on attempt $attempt!');
           return 'futronic';
         }
 
         // Wait before next attempt (except on last)
         if (attempt < maxAttempts) {
-          print('[POE_SUBMIT] Waiting before next attempt...');
+          debugPrint('[POE_SUBMIT] Waiting before next attempt...');
           await Future.delayed(Duration(milliseconds: delays[attempt - 1]));
         }
       } catch (e) {
-        print('[POE_SUBMIT] Futronic attempt $attempt failed: $e');
+        debugPrint('[POE_SUBMIT] Futronic attempt $attempt failed: $e');
         if (attempt < maxAttempts) {
           await Future.delayed(const Duration(milliseconds: 1000));
         }
       }
     }
 
-    print('[POE_SUBMIT] ❌ No Futronic scanner detected after all attempts');
+    debugPrint('[POE_SUBMIT] ❌ No Futronic scanner detected after all attempts');
     return 'none';
   }
 
@@ -864,7 +864,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         desiredAccuracy: LocationAccuracy.high,
       );
 
-      print(
+      debugPrint(
           '[POE_SUBMIT] Location: ${position.latitude}, ${position.longitude} (accuracy: ${position.accuracy}m)');
 
       // Convert signature to base64
@@ -982,7 +982,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
             'HTTP error: Receipt ${receiptResponse.statusCode}, Form ${formResponse.statusCode}');
       }
     } catch (e) {
-      print('Error submitting POE collection: $e');
+      debugPrint('Error submitting POE collection: $e');
       setState(() {
         poeSubmitted = false; // Allow retry
       });
@@ -1145,7 +1145,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
   // Geofencing methods - same as clock_in_page.dart
   Future<bool> _checkLocationAndRadius() async {
     try {
-      print('[POE_GEOFENCE] Checking location permissions...');
+      debugPrint('[POE_GEOFENCE] Checking location permissions...');
 
       // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -1193,15 +1193,15 @@ class _POESubmitPageState extends State<POESubmitPage> {
       }
 
       // Get current position
-      print('[POE_GEOFENCE] Getting current position...');
+      debugPrint('[POE_GEOFENCE] Getting current position...');
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: const Duration(seconds: 10),
       );
 
-      print(
+      debugPrint(
           '[POE_GEOFENCE] Current position: ${position.latitude}, ${position.longitude}');
-      print('[POE_GEOFENCE] Accuracy: ${position.accuracy} meters');
+      debugPrint('[POE_GEOFENCE] Accuracy: ${position.accuracy} meters');
 
       // Check if within site radius (300 meters)
       return await _isWithinSiteRadius(
@@ -1211,7 +1211,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         position.accuracy,
       );
     } catch (e) {
-      print('[POE_GEOFENCE] Error checking location: $e');
+      debugPrint('[POE_GEOFENCE] Error checking location: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1228,7 +1228,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       double userLon, double userAccuracy) async {
     if (userAccuracy > 50) {
       // Accuracy threshold for 300 meter radius
-      print(
+      debugPrint(
           '[POE_GEOFENCE] Geolocation accuracy too low: $userAccuracy meters');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1248,9 +1248,9 @@ class _POESubmitPageState extends State<POESubmitPage> {
 
       final classes = await db.query('class');
       final sites = await db.query('sites');
-      print('[POE_GEOFENCE] Class table contents: $classes');
-      print('[POE_GEOFENCE] Sites table contents: $sites');
-      print(
+      debugPrint('[POE_GEOFENCE] Class table contents: $classes');
+      debugPrint('[POE_GEOFENCE] Sites table contents: $sites');
+      debugPrint(
           '[POE_GEOFENCE] Querying coordinates for classID: $classID (type: ${classID.runtimeType})');
 
       final result = await db.rawQuery(
@@ -1260,7 +1260,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
 
       if (result.isEmpty) {
         if (classes.isEmpty) {
-          print('[POE_GEOFENCE] Class table is empty');
+          debugPrint('[POE_GEOFENCE] Class table is empty');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -1268,7 +1268,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
             );
           }
         } else if (sites.isEmpty) {
-          print('[POE_GEOFENCE] Sites table is empty');
+          debugPrint('[POE_GEOFENCE] Sites table is empty');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -1276,7 +1276,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
             );
           }
         } else {
-          print(
+          debugPrint(
               '[POE_GEOFENCE] No matching class or site found for classID: $classID');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -1293,7 +1293,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       final siteLon = double.tryParse(result.first['longitude'].toString());
 
       if (siteLat == null || siteLon == null) {
-        print(
+        debugPrint(
             '[POE_GEOFENCE] Invalid site coordinates for classID: $classID, lat: ${result.first['latitude']}, lon: ${result.first['longitude']}');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1306,10 +1306,10 @@ class _POESubmitPageState extends State<POESubmitPage> {
 
       final distance = _calculateDistance(userLat, userLon, siteLat, siteLon);
 
-      print(
+      debugPrint(
           '[POE_GEOFENCE] Distance to site for classID $classID: ${distance.toStringAsFixed(2)} meters');
-      print('[POE_GEOFENCE] Site coordinates: $siteLat, $siteLon');
-      print('[POE_GEOFENCE] User coordinates: $userLat, $userLon');
+      debugPrint('[POE_GEOFENCE] Site coordinates: $siteLat, $siteLon');
+      debugPrint('[POE_GEOFENCE] User coordinates: $userLat, $userLon');
 
       if (distance > 50) {
         // 50 meters radius
@@ -1326,10 +1326,10 @@ class _POESubmitPageState extends State<POESubmitPage> {
         return false;
       }
 
-      print('[POE_GEOFENCE] ✅ Within 50 meter radius - POE collection allowed');
+      debugPrint('[POE_GEOFENCE] ✅ Within 50 meter radius - POE collection allowed');
       return true;
     } catch (e, stackTrace) {
-      print(
+      debugPrint(
           '[POE_GEOFENCE] Error checking site radius for classID $classID: $e\nStack trace: $stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

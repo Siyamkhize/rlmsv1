@@ -3,9 +3,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import 'config.dart';
-import 'PotholeChecklistPage.dart';
-import 'database_helper.dart';
-import 'utils/scanner_pdf_resolver.dart';
 
 // arl: ARPL Assessor Marking Page
 class ArplAssessorMarkingPage extends StatelessWidget {
@@ -478,7 +475,7 @@ class ArplPOETab extends StatefulWidget {
 
 class _ArplPOETabState extends State<ArplPOETab> {
   late Future<Map<String, dynamic>> _poeData;
-  String _responseMessage = '';
+  final String _responseMessage = '';
 
   @override
   void initState() {
@@ -498,11 +495,11 @@ class _ArplPOETabState extends State<ArplPOETab> {
         'learnerId': learnerId,
       });
 
-      print('[ArplPOETab] Fetching POE from: $url');
+      debugPrint('[ArplPOETab] Fetching POE from: $url');
       final response = await http.get(Uri.parse(url));
 
-      print('[ArplPOETab] POE Response Status: ${response.statusCode}');
-      print('[ArplPOETab] POE Response Body: ${response.body}');
+      debugPrint('[ArplPOETab] POE Response Status: ${response.statusCode}');
+      debugPrint('[ArplPOETab] POE Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -511,7 +508,7 @@ class _ArplPOETabState extends State<ArplPOETab> {
             'Failed to load POE data. Server error: ${response.statusCode}');
       }
     } catch (e) {
-      print('[ArplPOETab] Error fetching POE: $e');
+      debugPrint('[ArplPOETab] Error fetching POE: $e');
       throw Exception('Failed to load POE data. Error: $e');
     }
   }
@@ -651,7 +648,7 @@ class _ArplPOETabState extends State<ArplPOETab> {
     // Defensive: some backends place remedial items inside the main buckets
     // (e.g. type == SummativeRemedial but stored under 'summative').
     // Split them out here so the UI always shows Remedial sections when present.
-    bool _isRemedial(dynamic ex, String kind) {
+    bool isRemedial(dynamic ex, String kind) {
       final t = (ex is Map ? (ex['type'] ?? ex['assessment_type']) : null)
           ?.toString()
           .toLowerCase()
@@ -667,19 +664,19 @@ class _ArplPOETabState extends State<ArplPOETab> {
 
     if (formative.isNotEmpty) {
       final moved =
-          formative.where((ex) => _isRemedial(ex, 'formative')).toList();
+          formative.where((ex) => isRemedial(ex, 'formative')).toList();
       if (moved.isNotEmpty) {
         formative =
-            formative.where((ex) => !_isRemedial(ex, 'formative')).toList();
+            formative.where((ex) => !isRemedial(ex, 'formative')).toList();
         formativeRemedial = [...formativeRemedial, ...moved];
       }
     }
     if (summative.isNotEmpty) {
       final moved =
-          summative.where((ex) => _isRemedial(ex, 'summative')).toList();
+          summative.where((ex) => isRemedial(ex, 'summative')).toList();
       if (moved.isNotEmpty) {
         summative =
-            summative.where((ex) => !_isRemedial(ex, 'summative')).toList();
+            summative.where((ex) => !isRemedial(ex, 'summative')).toList();
         summativeRemedial = [...summativeRemedial, ...moved];
       }
     }
@@ -902,7 +899,7 @@ class _ArplPOETabState extends State<ArplPOETab> {
                 if (filePath != null && filePath.toString().isNotEmpty)
                   ListTile(
                     leading: const Icon(Icons.file_present),
-                    title: Text('View File'),
+                    title: const Text('View File'),
                     onTap: () async {
                       // Placeholder: In future, view file
                       ScaffoldMessenger.of(context).showSnackBar(

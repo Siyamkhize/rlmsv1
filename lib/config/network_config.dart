@@ -12,6 +12,7 @@
 /// - File uploads: 60s (network-dependent transfers)
 /// - Lightweight reads: 20s (simple queries)
 /// - Default fallback: 25s
+library;
 
 class NetworkConfig {
   // Timeout values (in seconds)

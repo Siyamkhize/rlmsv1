@@ -65,10 +65,10 @@ class _POETabContentState extends State<POETabContent> {
 
       if (response.statusCode == 200) {
         final decodedResponse = json.decode(response.body);
-        print('Decoded Response: $decodedResponse');
+        debugPrint('Decoded Response: $decodedResponse');
 
         // Debug print to check the response structure
-        print('Pathways Data: ${decodedResponse['pathways']}');
+        debugPrint('Pathways Data: ${decodedResponse['pathways']}');
 
         if (decodedResponse['pathways'] != null) {
           setState(() {

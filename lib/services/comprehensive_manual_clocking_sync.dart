@@ -36,13 +36,13 @@ class ComprehensiveManualClockingSync {
   /// Sync all unsynced manual clock-ins to server (with queuing to prevent flooding)
   /// Returns: {success, syncedCount, failedCount, details}
   Future<Map<String, dynamic>> syncAllUnsyncedClockIns({int? maxRecords}) async {
-    print('[COMPREHENSIVE_SYNC] ═══════════════════════════════════════');
-    print('[COMPREHENSIVE_SYNC] Starting comprehensive clock-in sync');
-    print('[COMPREHENSIVE_SYNC] ═══════════════════════════════════════');
+    debugPrint('[COMPREHENSIVE_SYNC] ═══════════════════════════════════════');
+    debugPrint('[COMPREHENSIVE_SYNC] Starting comprehensive clock-in sync');
+    debugPrint('[COMPREHENSIVE_SYNC] ═══════════════════════════════════════');
 
     // Prevent concurrent sync operations
     if (_isSyncing) {
-      print('[COMPREHENSIVE_SYNC] ⚠️  Sync already in progress, skipping');
+      debugPrint('[COMPREHENSIVE_SYNC] ⚠️  Sync already in progress, skipping');
       return {
         'success': false,
         'message': 'Sync already in progress',
@@ -56,8 +56,8 @@ class ComprehensiveManualClockingSync {
       final timeSinceFailure = DateTime.now().difference(_lastFailureTime!);
       if (timeSinceFailure < COOLDOWN_PERIOD) {
         final remainingCooldown = COOLDOWN_PERIOD - timeSinceFailure;
-        print('[COMPREHENSIVE_SYNC] 🛑 Circuit breaker active - too many failures');
-        print('[COMPREHENSIVE_SYNC] ⏰ Cooldown: ${remainingCooldown.inMinutes} minutes ${remainingCooldown.inSeconds % 60} seconds remaining');
+        debugPrint('[COMPREHENSIVE_SYNC] 🛑 Circuit breaker active - too many failures');
+        debugPrint('[COMPREHENSIVE_SYNC] ⏰ Cooldown: ${remainingCooldown.inMinutes} minutes ${remainingCooldown.inSeconds % 60} seconds remaining');
         return {
           'success': false,
           'message': 'Cooling down after failures. Wait ${remainingCooldown.inMinutes}m ${remainingCooldown.inSeconds % 60}s',
@@ -67,7 +67,7 @@ class ComprehensiveManualClockingSync {
         };
       } else {
         // Cooldown period over, reset counters
-        print('[COMPREHENSIVE_SYNC] ✅ Cooldown period expired, resetting failure counters');
+        debugPrint('[COMPREHENSIVE_SYNC] ✅ Cooldown period expired, resetting failure counters');
         _consecutiveFailures = 0;
         _lastFailureTime = null;
       }
@@ -90,7 +90,7 @@ class ComprehensiveManualClockingSync {
       );
 
       if (unsyncedClockIns.isEmpty) {
-        print('[COMPREHENSIVE_SYNC] ✅ No unsynced records found');
+        debugPrint('[COMPREHENSIVE_SYNC] ✅ No unsynced records found');
         _isSyncing = false;
         return {
           'success': true,
@@ -100,9 +100,9 @@ class ComprehensiveManualClockingSync {
         };
       }
 
-      print('[COMPREHENSIVE_SYNC] Found ${unsyncedClockIns.length} unsynced clock-ins');
-      print('[COMPREHENSIVE_SYNC] Processing batch of ${unsyncedClockIns.length} records');
-      print('[COMPREHENSIVE_SYNC] Rate limit: ${DELAY_BETWEEN_RECORDS.inMilliseconds}ms between records');
+      debugPrint('[COMPREHENSIVE_SYNC] Found ${unsyncedClockIns.length} unsynced clock-ins');
+      debugPrint('[COMPREHENSIVE_SYNC] Processing batch of ${unsyncedClockIns.length} records');
+      debugPrint('[COMPREHENSIVE_SYNC] Rate limit: ${DELAY_BETWEEN_RECORDS.inMilliseconds}ms between records');
 
       int successCount = 0;
       int failCount = 0;
@@ -115,10 +115,10 @@ class ComprehensiveManualClockingSync {
         final clockInTime = clockIn['clock_in_time'] as String?;
         final clockOutTime = clockIn['clock_out_time'] as String?;
 
-        print('[COMPREHENSIVE_SYNC] ─────────────────────────────────────');
-        print('[COMPREHENSIVE_SYNC] Syncing: Learner $learnerID, Date: $clockDate');
-        print('[COMPREHENSIVE_SYNC]   Clock-in:  ${clockInTime ?? 'null'}');
-        print('[COMPREHENSIVE_SYNC]   Clock-out: ${clockOutTime ?? 'null'}');
+        debugPrint('[COMPREHENSIVE_SYNC] ─────────────────────────────────────');
+        debugPrint('[COMPREHENSIVE_SYNC] Syncing: Learner $learnerID, Date: $clockDate');
+        debugPrint('[COMPREHENSIVE_SYNC]   Clock-in:  ${clockInTime ?? 'null'}');
+        debugPrint('[COMPREHENSIVE_SYNC]   Clock-out: ${clockOutTime ?? 'null'}');
 
         // Attempt sync with exponential backoff retry
         bool recordSynced = false;
@@ -132,7 +132,7 @@ class ComprehensiveManualClockingSync {
                 ? MAX_RETRY_DELAY.inSeconds 
                 : delaySeconds);
             
-            print('[COMPREHENSIVE_SYNC] 🔄 Retry attempt ${attempt + 1}/$MAX_RETRIES_PER_RECORD after ${retryDelay.inSeconds}s...');
+            debugPrint('[COMPREHENSIVE_SYNC] 🔄 Retry attempt ${attempt + 1}/$MAX_RETRIES_PER_RECORD after ${retryDelay.inSeconds}s...');
             await Future.delayed(retryDelay);
           }
 
@@ -146,7 +146,7 @@ class ComprehensiveManualClockingSync {
           );
 
           if (evidence.isEmpty) {
-            print('[COMPREHENSIVE_SYNC] ⚠️  No evidence found, skipping');
+            debugPrint('[COMPREHENSIVE_SYNC] ⚠️  No evidence found, skipping');
             failCount++;
             syncResults.add({
               'learnerID': learnerID,
@@ -170,7 +170,7 @@ class ComprehensiveManualClockingSync {
             );
 
             if (!uploadResult['success']) {
-              print('[COMPREHENSIVE_SYNC] ❌ Image upload failed: ${uploadResult['error']}');
+              debugPrint('[COMPREHENSIVE_SYNC] ❌ Image upload failed: ${uploadResult['error']}');
               failCount++;
               syncResults.add({
                 'learnerID': learnerID,
@@ -192,7 +192,7 @@ class ComprehensiveManualClockingSync {
             );
 
             if (!clockInResult['success']) {
-              print('[COMPREHENSIVE_SYNC] ❌ Clock-in save failed: ${clockInResult['error']}');
+              debugPrint('[COMPREHENSIVE_SYNC] ❌ Clock-in save failed: ${clockInResult['error']}');
               failCount++;
               syncResults.add({
                 'learnerID': learnerID,
@@ -215,7 +215,7 @@ class ComprehensiveManualClockingSync {
             );
 
             if (!uploadResult['success']) {
-              print('[COMPREHENSIVE_SYNC] ⚠️  Clock-out image upload failed: ${uploadResult['error']}');
+              debugPrint('[COMPREHENSIVE_SYNC] ⚠️  Clock-out image upload failed: ${uploadResult['error']}');
               // Don't fail the whole record, clock-in is already done
             } else {
               // Step 4: Save clock-out record
@@ -229,7 +229,7 @@ class ComprehensiveManualClockingSync {
               );
 
               if (!clockOutResult['success']) {
-                print('[COMPREHENSIVE_SYNC] ⚠️  Clock-out save failed: ${clockOutResult['error']}');
+                debugPrint('[COMPREHENSIVE_SYNC] ⚠️  Clock-out save failed: ${clockOutResult['error']}');
               }
             }
           }
@@ -256,17 +256,17 @@ class ComprehensiveManualClockingSync {
             'success': true,
           });
 
-          print('[COMPREHENSIVE_SYNC] ✅ Successfully synced learner $learnerID');
+          debugPrint('[COMPREHENSIVE_SYNC] ✅ Successfully synced learner $learnerID');
           recordSynced = true;
           _consecutiveFailures = 0; // Reset failure counter on success
           break; // Exit retry loop on success
         } catch (e) {
           lastError = e.toString();
-          print('[COMPREHENSIVE_SYNC] ❌ Attempt ${attempt + 1} failed: $e');
+          debugPrint('[COMPREHENSIVE_SYNC] ❌ Attempt ${attempt + 1} failed: $e');
           
           // Check if this is a rate limit or auth error (don't retry these immediately)
           if (lastError.contains('429') || lastError.contains('Too many requests')) {
-            print('[COMPREHENSIVE_SYNC] 🛑 Rate limit hit - stopping batch');
+            debugPrint('[COMPREHENSIVE_SYNC] 🛑 Rate limit hit - stopping batch');
             failCount++;
             syncResults.add({
               'learnerID': learnerID,
@@ -280,7 +280,7 @@ class ComprehensiveManualClockingSync {
           }
           
           if (lastError.contains('401') || lastError.contains('Authentication')) {
-            print('[COMPREHENSIVE_SYNC] 🔐 Authentication failed - need re-login');
+            debugPrint('[COMPREHENSIVE_SYNC] 🔐 Authentication failed - need re-login');
             failCount++;
             syncResults.add({
               'learnerID': learnerID,
@@ -294,7 +294,7 @@ class ComprehensiveManualClockingSync {
           // For other errors, continue retry loop
           if (attempt == MAX_RETRIES_PER_RECORD - 1) {
             // Final attempt failed
-            print('[COMPREHENSIVE_SYNC] ❌ All retry attempts exhausted for learner $learnerID');
+            debugPrint('[COMPREHENSIVE_SYNC] ❌ All retry attempts exhausted for learner $learnerID');
             failCount++;
             syncResults.add({
               'learnerID': learnerID,
@@ -320,7 +320,7 @@ class ComprehensiveManualClockingSync {
 
         // RATE LIMITING: Add delay between records to prevent server flooding
         if (unsyncedClockIns.indexOf(clockIn) < unsyncedClockIns.length - 1) {
-          print('[COMPREHENSIVE_SYNC] ⏱️  Waiting ${DELAY_BETWEEN_RECORDS.inMilliseconds}ms before next record...');
+          debugPrint('[COMPREHENSIVE_SYNC] ⏱️  Waiting ${DELAY_BETWEEN_RECORDS.inMilliseconds}ms before next record...');
           await Future.delayed(DELAY_BETWEEN_RECORDS);
         }
       }
@@ -328,15 +328,15 @@ class ComprehensiveManualClockingSync {
       // Check if more records remain
       final remainingCount = await getUnsyncedCount();
       
-      print('[COMPREHENSIVE_SYNC] ═══════════════════════════════════════');
-      print('[COMPREHENSIVE_SYNC] Sync complete:');
-      print('[COMPREHENSIVE_SYNC]   ✅ Success: $successCount');
-      print('[COMPREHENSIVE_SYNC]   ❌ Failed:  $failCount');
+      debugPrint('[COMPREHENSIVE_SYNC] ═══════════════════════════════════════');
+      debugPrint('[COMPREHENSIVE_SYNC] Sync complete:');
+      debugPrint('[COMPREHENSIVE_SYNC]   ✅ Success: $successCount');
+      debugPrint('[COMPREHENSIVE_SYNC]   ❌ Failed:  $failCount');
       if (remainingCount > 0) {
-        print('[COMPREHENSIVE_SYNC]   ⏳ Remaining: $remainingCount records');
-        print('[COMPREHENSIVE_SYNC]   💡 Tip: Call sync again to process next batch');
+        debugPrint('[COMPREHENSIVE_SYNC]   ⏳ Remaining: $remainingCount records');
+        debugPrint('[COMPREHENSIVE_SYNC]   💡 Tip: Call sync again to process next batch');
       }
-      print('[COMPREHENSIVE_SYNC] ═══════════════════════════════════════');
+      debugPrint('[COMPREHENSIVE_SYNC] ═══════════════════════════════════════');
 
       _isSyncing = false;
 
@@ -349,7 +349,7 @@ class ComprehensiveManualClockingSync {
         'details': syncResults,
       };
     } catch (e) {
-      print('[COMPREHENSIVE_SYNC] ❌ Fatal error during sync: $e');
+      debugPrint('[COMPREHENSIVE_SYNC] ❌ Fatal error during sync: $e');
       _isSyncing = false;
       return {
         'success': false,
@@ -386,7 +386,7 @@ class ComprehensiveManualClockingSync {
 
       final url = Uri.parse(AppConfig.buildUrl('save_manual_clocking_images.php'));
       
-      print('[COMPREHENSIVE_SYNC] Uploading clock-in images to: $url');
+      debugPrint('[COMPREHENSIVE_SYNC] Uploading clock-in images to: $url');
 
       final response = await http.post(
         url,
@@ -404,16 +404,16 @@ class ComprehensiveManualClockingSync {
         }),
       ).timeout(const Duration(seconds: 30));
 
-      print('[COMPREHENSIVE_SYNC] Upload response status: ${response.statusCode}');
+      debugPrint('[COMPREHENSIVE_SYNC] Upload response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final result = json.decode(response.body);
         
         if (result['success'] == true) {
           final files = result['files'] as Map<String, dynamic>;
-          print('[COMPREHENSIVE_SYNC] ✅ Images uploaded successfully');
-          print('[COMPREHENSIVE_SYNC]   Face: ${files['face_in']}');
-          print('[COMPREHENSIVE_SYNC]   Signature: ${files['signature_in']}');
+          debugPrint('[COMPREHENSIVE_SYNC] ✅ Images uploaded successfully');
+          debugPrint('[COMPREHENSIVE_SYNC]   Face: ${files['face_in']}');
+          debugPrint('[COMPREHENSIVE_SYNC]   Signature: ${files['signature_in']}');
           
           return {
             'success': true,
@@ -427,7 +427,7 @@ class ComprehensiveManualClockingSync {
         throw Exception('HTTP ${response.statusCode}: ${response.body}');
       }
     } catch (e) {
-      print('[COMPREHENSIVE_SYNC] ❌ Image upload error: $e');
+      debugPrint('[COMPREHENSIVE_SYNC] ❌ Image upload error: $e');
       return {
         'success': false,
         'error': e.toString(),
@@ -515,7 +515,7 @@ class ComprehensiveManualClockingSync {
 
       final url = Uri.parse(AppConfig.buildUrl('save_manual_clockin.php'));
 
-      print('[COMPREHENSIVE_SYNC] Saving clock-in record to: $url');
+      debugPrint('[COMPREHENSIVE_SYNC] Saving clock-in record to: $url');
 
       final response = await http.post(
         url,
@@ -533,13 +533,13 @@ class ComprehensiveManualClockingSync {
         }),
       ).timeout(const Duration(seconds: 30));
 
-      print('[COMPREHENSIVE_SYNC] Clock-in save response: ${response.statusCode}');
+      debugPrint('[COMPREHENSIVE_SYNC] Clock-in save response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final result = json.decode(response.body);
         
         if (result['success'] == true) {
-          print('[COMPREHENSIVE_SYNC] ✅ Clock-in record saved');
+          debugPrint('[COMPREHENSIVE_SYNC] ✅ Clock-in record saved');
           return {'success': true};
         } else {
           throw Exception(result['message'] ?? 'Save failed');
@@ -548,7 +548,7 @@ class ComprehensiveManualClockingSync {
         throw Exception('HTTP ${response.statusCode}: ${response.body}');
       }
     } catch (e) {
-      print('[COMPREHENSIVE_SYNC] ❌ Clock-in save error: $e');
+      debugPrint('[COMPREHENSIVE_SYNC] ❌ Clock-in save error: $e');
       return {
         'success': false,
         'error': e.toString(),
@@ -593,7 +593,7 @@ class ComprehensiveManualClockingSync {
         final result = json.decode(response.body);
         
         if (result['success'] == true) {
-          print('[COMPREHENSIVE_SYNC] ✅ Clock-out record saved');
+          debugPrint('[COMPREHENSIVE_SYNC] ✅ Clock-out record saved');
           return {'success': true};
         } else {
           throw Exception(result['message'] ?? 'Save failed');
@@ -621,7 +621,7 @@ class ComprehensiveManualClockingSync {
       
       return result.first['count'] as int;
     } catch (e) {
-      print('[COMPREHENSIVE_SYNC] Error getting unsynced count: $e');
+      debugPrint('[COMPREHENSIVE_SYNC] Error getting unsynced count: $e');
       return 0;
     }
   }

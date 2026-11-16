@@ -52,7 +52,7 @@ class _SiteAdminAttendancePageState extends State<SiteAdminAttendancePage> {
         }
       }
     } catch (e) {
-      print('Error loading attendance: $e');
+      debugPrint('Error loading attendance: $e');
       setState(() => isLoading = false);
     }
   }

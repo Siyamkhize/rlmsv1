@@ -65,7 +65,7 @@ class _FinanceRegisterHistoryState extends State<FinanceRegisterHistory> {
         });
       }
     } catch (e) {
-      print('Error fetching registers: $e');
+      debugPrint('Error fetching registers: $e');
       setState(() {
         registers = [];
         isLoading = false;

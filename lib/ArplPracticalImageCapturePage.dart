@@ -13,13 +13,13 @@ class ArplPracticalImageCapturePage extends StatefulWidget {
   final String userId;
 
   const ArplPracticalImageCapturePage({
-    Key? key,
+    super.key,
     required this.learnerID,
     required this.classID,
     required this.ofoNumber,
     required this.role,
     required this.userId,
-  }) : super(key: key);
+  });
 
   @override
   _ArplPracticalImageCapturePageState createState() =>
@@ -86,7 +86,7 @@ class _ArplPracticalImageCapturePageState
         }
       }
     } catch (e) {
-      print('[PRACTICAL_IMAGES] Error loading images: $e');
+      debugPrint('[PRACTICAL_IMAGES] Error loading images: $e');
     } finally {
       setState(() => _isLoading = false);
     }

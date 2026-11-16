@@ -145,7 +145,7 @@ class _LogisticsPOELearnersPageState extends State<LogisticsPOELearnersPage> {
         }
       }
     } catch (e) {
-      print('Error checking POE status for $idNumber: $e');
+      debugPrint('Error checking POE status for $idNumber: $e');
     }
 
     return 'Not Submitted';

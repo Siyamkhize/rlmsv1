@@ -1,7 +1,4 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'config.dart';
 
 class ARPLAssessorPage extends StatefulWidget {
   final String learnerID;
@@ -380,7 +377,7 @@ class _ARPLAssessorPageState extends State<ARPLAssessorPage> {
               decoration: BoxDecoration(
                 color: Colors.grey[100],
                 borderRadius: BorderRadius.circular(8),
-                border: Border(
+                border: const Border(
                   left: BorderSide(color: Colors.deepPurple, width: 4),
                 ),
               ),

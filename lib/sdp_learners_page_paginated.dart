@@ -172,7 +172,7 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
       final uri = Uri.parse('https://rlms.rlms.co.za/mobile/get_sdp_learners_paginated.php')
           .replace(queryParameters: queryParams);
 
-      print('Fetching learners from: $uri');
+      debugPrint('Fetching learners from: $uri');
 
       final response = await http.get(uri).timeout(
         const Duration(seconds: 15),
@@ -181,7 +181,7 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
         },
       );
 
-      print('API Response status: ${response.statusCode}');
+      debugPrint('API Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
@@ -217,7 +217,7 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
             _isLoadingMore = false;
           });
 
-          print('Loaded ${learnersData.length} learners (page $_currentPage of $_totalPages)');
+          debugPrint('Loaded ${learnersData.length} learners (page $_currentPage of $_totalPages)');
         } else {
           throw Exception(jsonData['message'] ?? 'Failed to load learners');
         }
@@ -225,7 +225,7 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
         throw Exception('Server returned status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching from API: $e');
+      debugPrint('Error fetching from API: $e');
       if (!append) {
         // Fallback to local database only on initial load
         await _fetchLearnersFromDatabase();
@@ -253,7 +253,7 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
         _isLoading = false;
         _isLoadingMore = false;
       });
-      print('Loaded ${_learners.length} learners from local database');
+      debugPrint('Loaded ${_learners.length} learners from local database');
     } catch (e) {
       setState(() {
         _errorMessage = 'Unable to load learners: $e';
@@ -375,7 +375,7 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
         }
       }
     } catch (e) {
-      print('Smart search autocomplete error: $e');
+      debugPrint('Smart search autocomplete error: $e');
       if (mounted) {
         setState(() {
           _searchSuggestions.clear();

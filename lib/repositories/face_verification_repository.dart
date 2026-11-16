@@ -59,7 +59,7 @@ class FaceVerificationRepository {
   /// - enrolled_at: Enrollment timestamp (if enrolled)
   Future<Map<String, dynamic>> checkFaceEnrolled(int learnerId) async {
     try {
-      print(
+      debugPrint(
           '🔷 FaceVerificationRepository: Checking enrollment for learner $learnerId');
 
       final url = AppConfig.buildUrl('check_face_enrollment.php');
@@ -69,11 +69,11 @@ class FaceVerificationRepository {
         body: json.encode({'learner_id': learnerId}),
       );
 
-      print('🔷 Check enrollment response status: ${response.statusCode}');
+      debugPrint('🔷 Check enrollment response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = _parseJsonBody(response.body, 'check enrollment');
-        print('🔷 Enrollment status: ${data['enrolled']}');
+        debugPrint('🔷 Enrollment status: ${data['enrolled']}');
         return data;
       } else {
         return {
@@ -83,8 +83,8 @@ class FaceVerificationRepository {
         };
       }
     } catch (e, stackTrace) {
-      print('❌ Error checking face enrollment: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('❌ Error checking face enrollment: $e');
+      debugPrint('Stack trace: $stackTrace');
       return {
         'success': false,
         'enrolled': false,
@@ -113,7 +113,7 @@ class FaceVerificationRepository {
     required bool consentGiven,
   }) async {
     try {
-      print(
+      debugPrint(
           '🔷 FaceVerificationRepository: Enrolling face for learner $learnerId');
 
       final url = AppConfig.buildUrl('enrol_learner_face.php');
@@ -128,11 +128,11 @@ class FaceVerificationRepository {
         }),
       );
 
-      print('🔷 Enrollment response status: ${response.statusCode}');
+      debugPrint('🔷 Enrollment response status: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 400) {
         final data = _parseJsonBody(response.body, 'enrollment');
-        print('🔷 Enrollment response: $data');
+        debugPrint('🔷 Enrollment response: $data');
         return data;
       } else {
         return {
@@ -141,8 +141,8 @@ class FaceVerificationRepository {
         };
       }
     } catch (e, stackTrace) {
-      print('❌ Error enrolling face: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('❌ Error enrolling face: $e');
+      debugPrint('Stack trace: $stackTrace');
       return {
         'success': false,
         'message': 'Network error: $e',
@@ -176,7 +176,7 @@ class FaceVerificationRepository {
     String? deviceInfo,
   }) async {
     try {
-      print(
+      debugPrint(
           '🔷 FaceVerificationRepository: Verifying face for learner $learnerId');
 
       final url = AppConfig.buildUrl('verify_learner_face.php');
@@ -193,11 +193,11 @@ class FaceVerificationRepository {
         }),
       );
 
-      print('🔷 Verification response status: ${response.statusCode}');
+      debugPrint('🔷 Verification response status: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 400) {
         final data = _parseJsonBody(response.body, 'verification');
-        print('🔷 Verification response: $data');
+        debugPrint('🔷 Verification response: $data');
         return data;
       } else {
         return {
@@ -207,8 +207,8 @@ class FaceVerificationRepository {
         };
       }
     } catch (e, stackTrace) {
-      print('❌ Error verifying face: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('❌ Error verifying face: $e');
+      debugPrint('Stack trace: $stackTrace');
       return {
         'success': false,
         'verified': false,
@@ -238,7 +238,7 @@ class FaceVerificationRepository {
   /// - message: Success or error message
   Future<Map<String, dynamic>> deleteFaceEnrollment(int learnerId) async {
     try {
-      print(
+      debugPrint(
           '🔷 FaceVerificationRepository: Deleting face enrollment for learner $learnerId');
 
       final url = AppConfig.buildUrl('delete_face_enrollment.php');
@@ -248,11 +248,11 @@ class FaceVerificationRepository {
         body: json.encode({'learner_id': learnerId}),
       );
 
-      print('🔷 Delete enrollment response status: ${response.statusCode}');
+      debugPrint('🔷 Delete enrollment response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = _parseJsonBody(response.body, 'delete enrollment');
-        print('🔷 Delete enrollment response: $data');
+        debugPrint('🔷 Delete enrollment response: $data');
         return data;
       } else {
         return {
@@ -261,8 +261,8 @@ class FaceVerificationRepository {
         };
       }
     } catch (e, stackTrace) {
-      print('❌ Error deleting face enrollment: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('❌ Error deleting face enrollment: $e');
+      debugPrint('Stack trace: $stackTrace');
       return {
         'success': false,
         'message': 'Network error: $e',

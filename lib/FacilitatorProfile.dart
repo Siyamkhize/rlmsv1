@@ -1164,7 +1164,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                                 const SizedBox(height: 4),
                                 if (isClockedIn) ...[
                                   Text(
-                                    'Clock In: ${attendance!['clock_in_time']}',
+                                    'Clock In: ${attendance['clock_in_time']}',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: Colors.grey[700],
