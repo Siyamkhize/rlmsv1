@@ -155,9 +155,13 @@ jobs:
             });
       
       - name: ❌ Fail if quality gates not met
-        if: steps.analyze.outputs.has_errors == 'true' || steps.test.outputs.test_result != '0' || steps.coverage.outputs.coverage_pass == 'false'
+        if: steps.analyze.outputs.has_errors == 'true' || steps.test.outputs.test_result != '0' || steps.coverage.outputs.coverage_pass == 'false' || steps.security.outputs.security_issues != '0'
         run: |
-          echo "Quality gates not met!"
+          echo "❌ Quality gates not met!"
+          echo "Static Analysis Errors: ${{ steps.analyze.outputs.has_errors }}"
+          echo "Test Result: ${{ steps.test.outputs.test_result }}"
+          echo "Coverage Pass: ${{ steps.coverage.outputs.coverage_pass }}"
+          echo "Security Issues: ${{ steps.security.outputs.security_issues }}"
           exit 1
       
       - name: ✅ Quality gates passed

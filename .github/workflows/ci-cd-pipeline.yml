@@ -18,7 +18,7 @@ env:
   JAVA_VERSION: '17'
 
 jobs:
-  # Job 1: Code Quality & Security Analysis
+  # Job 1: Code Quality & Security Analysis (BLOCKING - Must Pass)
   security-and-quality:
     name: Security & Quality Checks
     runs-on: ubuntu-latest
@@ -42,8 +42,20 @@ jobs:
           flutter pub get
           flutter pub upgrade
       
-      - name: 🔍 Run Flutter analyze
-        run: flutter analyze > analysis.log 2>&1 || true
+      - name: 🔍 Run Flutter analyze (MUST PASS - No Errors)
+        run: |
+          flutter analyze > analysis.log 2>&1
+          if grep -q "error -" analysis.log; then
+            echo "❌ Flutter analysis found errors!"
+            cat analysis.log | grep "error -"
+            exit 1
+          fi
+          echo "✅ Flutter analysis passed"
+      
+      - name: 🔒 Run Custom Security Audit (BLOCKING)
+        run: |
+          chmod +x scripts/security-audit.sh
+          bash scripts/security-audit.sh
       
       - name: 📊 SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
@@ -56,20 +68,27 @@ jobs:
             -Dsonar.organization=siyamkhize
             -Dsonar.branch.name=${{ github.ref_name }}
       
-      - name: 🔒 Run Snyk Security Scan
-        uses: snyk/actions/setup@master
-      
-      - name: 🐛 Snyk Code Test
-        run: snyk code test --severity-threshold=high
+      - name: 🔐 Snyk Code Test (BLOCKING - Must Pass)
+        run: |
+          snyk code test --severity-threshold=high --json > snyk-code.json || SNYK_EXIT=$?
+          if [ ! -z "$SNYK_EXIT" ] && [ $SNYK_EXIT -ne 0 ]; then
+            echo "❌ Snyk found HIGH or CRITICAL vulnerabilities!"
+            cat snyk-code.json
+            exit 1
+          fi
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        continue-on-error: true
       
-      - name: 📦 Snyk Dependency Test
-        run: snyk test --severity-threshold=high --json > snyk-report.json
+      - name: 📦 Snyk Dependency Test (BLOCKING - Must Pass)
+        run: |
+          snyk test --severity-threshold=high --json > snyk-report.json || SNYK_EXIT=$?
+          if [ ! -z "$SNYK_EXIT" ] && [ $SNYK_EXIT -ne 0 ]; then
+            echo "❌ Snyk found HIGH or CRITICAL dependency vulnerabilities!"
+            cat snyk-report.json
+            exit 1
+          fi
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        continue-on-error: true
       
       - name: 🔐 Snyk Monitor
         run: snyk monitor --project-name=rlmsv1
