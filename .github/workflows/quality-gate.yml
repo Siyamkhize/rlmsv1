@@ -1,0 +1,166 @@
+name: Quality Gate Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - staging
+
+jobs:
+  quality-check:
+    name: Quality Gate Verification
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🔧 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+      
+      - name: 📦 Install dependencies
+        run: flutter pub get
+      
+      - name: 🔍 Run static analysis
+        id: analyze
+        run: |
+          flutter analyze > analysis-output.txt 2>&1 || true
+          if grep -q "error" analysis-output.txt; then
+            echo "has_errors=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_errors=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: 🧪 Run tests
+        id: test
+        run: |
+          flutter test --coverage --reporter=expanded > test-output.txt 2>&1
+          echo "test_result=$?" >> $GITHUB_OUTPUT
+      
+      - name: 📊 Check code coverage
+        id: coverage
+        run: |
+          if [ -f "coverage/lcov.info" ]; then
+            sudo apt-get update && sudo apt-get install -y lcov
+            COVERAGE=$(lcov --summary coverage/lcov.info 2>&1 | grep "lines" | awk '{print $2}' | sed 's/%//')
+            echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+            
+            if (( $(echo "$COVERAGE < 70" | bc -l) )); then
+              echo "coverage_pass=false" >> $GITHUB_OUTPUT
+            else
+              echo "coverage_pass=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "coverage=0" >> $GITHUB_OUTPUT
+            echo "coverage_pass=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: 📊 SonarQube Quality Gate
+        id: sonarqube
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        continue-on-error: true
+      
+      - name: ⏳ Wait for SonarQube Quality Gate
+        id: sonarqube-quality-gate
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        continue-on-error: true
+      
+      - name: 🔒 Security check
+        id: security
+        run: |
+          # Check for common security issues
+          SECURITY_ISSUES=0
+          
+          # Check for hardcoded secrets
+          if grep -rn "password.*=.*['\"]" lib/ --include="*.dart"; then
+            echo "⚠️ Found potential hardcoded passwords"
+            SECURITY_ISSUES=$((SECURITY_ISSUES + 1))
+          fi
+          
+          # Check for API keys
+          if grep -rn "api.*key.*=.*['\"]" lib/ --include="*.dart"; then
+            echo "⚠️ Found potential hardcoded API keys"
+            SECURITY_ISSUES=$((SECURITY_ISSUES + 1))
+          fi
+          
+          # Check for insecure HTTP
+          if grep -rn "http://" lib/ --include="*.dart" | grep -v "localhost" | grep -v "127.0.0.1"; then
+            echo "⚠️ Found insecure HTTP connections"
+            SECURITY_ISSUES=$((SECURITY_ISSUES + 1))
+          fi
+          
+          echo "security_issues=$SECURITY_ISSUES" >> $GITHUB_OUTPUT
+      
+      - name: 📝 Generate quality report
+        run: |
+          cat > quality-report.md << EOF
+          # Quality Gate Report
+          
+          ## PR Details
+          - **PR:** #${{ github.event.pull_request.number }}
+          - **Branch:** ${{ github.head_ref }}
+          - **Author:** @${{ github.actor }}
+          
+          ## Quality Metrics
+          
+          ### Static Analysis
+          - Status: ${{ steps.analyze.outputs.has_errors == 'false' && '✅ PASSED' || '❌ FAILED' }}
+          
+          ### Tests
+          - Status: ${{ steps.test.outputs.test_result == '0' && '✅ PASSED' || '❌ FAILED' }}
+          
+          ### Code Coverage
+          - Coverage: ${{ steps.coverage.outputs.coverage }}%
+          - Threshold: 70%
+          - Status: ${{ steps.coverage.outputs.coverage_pass == 'true' && '✅ PASSED' || '❌ FAILED' }}
+          
+          ### SonarQube Quality Gate
+          - Status: ${{ steps.sonarqube-quality-gate.outputs.quality-gate-status || 'N/A' }}
+          
+          ### Security Check
+          - Issues Found: ${{ steps.security.outputs.security_issues }}
+          - Status: ${{ steps.security.outputs.security_issues == '0' && '✅ PASSED' || '⚠️ WARNING' }}
+          
+          ## Overall Result
+          ${{ (steps.analyze.outputs.has_errors == 'false' && steps.test.outputs.test_result == '0' && steps.coverage.outputs.coverage_pass == 'true') && '✅ All quality gates passed! Ready to merge.' || '❌ Some quality gates failed. Please review and fix issues before merging.' }}
+          
+          ---
+          *Generated by Quality Gate Check*
+          EOF
+      
+      - name: 💬 Comment PR with quality report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('quality-report.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+      
+      - name: ❌ Fail if quality gates not met
+        if: steps.analyze.outputs.has_errors == 'true' || steps.test.outputs.test_result != '0' || steps.coverage.outputs.coverage_pass == 'false'
+        run: |
+          echo "Quality gates not met!"
+          exit 1
+      
+      - name: ✅ Quality gates passed
+        if: steps.analyze.outputs.has_errors == 'false' && steps.test.outputs.test_result == '0' && steps.coverage.outputs.coverage_pass == 'true'
+        run: |
+          echo "All quality gates passed! ✅"

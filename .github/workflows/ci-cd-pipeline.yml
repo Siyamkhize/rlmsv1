@@ -1,0 +1,324 @@
+name: CI/CD Pipeline with Security & Quality Checks
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - staging
+  pull_request:
+    branches:
+      - main
+      - develop
+      - staging
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: '3.24.0'
+  JAVA_VERSION: '17'
+
+jobs:
+  # Job 1: Code Quality & Security Analysis
+  security-and-quality:
+    name: Security & Quality Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for SonarQube
+      
+      - name: 🔧 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+      
+      - name: 📦 Install dependencies
+        run: |
+          flutter pub get
+          flutter pub upgrade
+      
+      - name: 🔍 Run Flutter analyze
+        run: flutter analyze > analysis.log 2>&1 || true
+      
+      - name: 📊 SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=rlmsv1
+            -Dsonar.organization=siyamkhize
+            -Dsonar.branch.name=${{ github.ref_name }}
+      
+      - name: 🔒 Run Snyk Security Scan
+        uses: snyk/actions/setup@master
+      
+      - name: 🐛 Snyk Code Test
+        run: snyk code test --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true
+      
+      - name: 📦 Snyk Dependency Test
+        run: snyk test --severity-threshold=high --json > snyk-report.json
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true
+      
+      - name: 🔐 Snyk Monitor
+        run: snyk monitor --project-name=rlmsv1
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true
+      
+      - name: 📤 Upload Snyk Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: snyk-security-report
+          path: snyk-report.json
+      
+      - name: 📤 Upload Analysis Log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flutter-analysis-log
+          path: analysis.log
+
+  # Job 2: Unit & Widget Tests
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: security-and-quality
+    timeout-minutes: 20
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+      
+      - name: 📦 Install dependencies
+        run: flutter pub get
+      
+      - name: 🧪 Run all tests with coverage
+        run: |
+          flutter test --coverage --reporter=expanded
+      
+      - name: 📊 Generate coverage report
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lcov
+          genhtml coverage/lcov.info -o coverage/html
+      
+      - name: 📈 Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: unittests
+          name: codecov-rlmsv1
+      
+      - name: 📤 Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+      
+      - name: 💬 Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: romeovs/lcov-reporter-action@v0.3.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          lcov-file: ./coverage/lcov.info
+
+  # Job 3: Build Android APK
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
+    timeout-minutes: 30
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'gradle'
+      
+      - name: 🔧 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+      
+      - name: 📦 Install dependencies
+        run: flutter pub get
+      
+      - name: 🔨 Build APK (Staging)
+        if: github.ref == 'refs/heads/staging'
+        run: |
+          flutter build apk --release --flavor staging -t lib/main.dart
+      
+      - name: 🔨 Build APK (Production)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          flutter build apk --release --flavor production -t lib/main.dart
+      
+      - name: 📤 Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk-${{ github.ref_name }}
+          path: build/app/outputs/flutter-apk/*.apk
+      
+      - name: 🔐 Sign APK
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "Signing APK for production release"
+          # Add APK signing steps here
+
+  # Job 4: Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build-android
+    if: github.ref == 'refs/heads/staging'
+    environment:
+      name: staging
+      url: https://staging.rlms.example.com
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 📥 Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: android-apk-staging
+      
+      - name: 🚀 Deploy to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_STAGING_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIALS }}
+          groups: testers
+          file: app-staging-release.apk
+          releaseNotes: |
+            Staging build from commit: ${{ github.sha }}
+            Branch: ${{ github.ref_name }}
+      
+      - name: 📢 Notify Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Staging deployment ${{ job.status }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Job 5: Deploy to Production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-android
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://rlms.example.com
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 📥 Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: android-apk-main
+      
+      - name: 🚀 Deploy to Google Play
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_CREDENTIALS }}
+          packageName: com.rlms.app
+          releaseFiles: app-production-release.apk
+          track: internal
+          status: completed
+      
+      - name: 🚀 Deploy to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_PRODUCTION_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIALS }}
+          groups: production-testers
+          file: app-production-release.apk
+          releaseNotes: |
+            Production build from commit: ${{ github.sha }}
+            Release: ${{ github.ref_name }}
+      
+      - name: 📢 Notify Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Production deployment ${{ job.status }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      
+      - name: 🏷️ Create Release
+        if: success()
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Release v${{ github.run_number }}
+          body: |
+            Production release from main branch
+            Commit: ${{ github.sha }}
+          draft: false
+          prerelease: false
+
+  # Job 6: Post-deployment verification
+  verify-deployment:
+    name: Verify Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always() && (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🧪 Run smoke tests
+        run: |
+          echo "Running smoke tests..."
+          # Add smoke test commands here
+      
+      - name: 📊 Generate deployment report
+        run: |
+          echo "# Deployment Report" > deployment-report.md
+          echo "Date: $(date)" >> deployment-report.md
+          echo "Commit: ${{ github.sha }}" >> deployment-report.md
+          echo "Branch: ${{ github.ref_name }}" >> deployment-report.md
+          echo "Status: Success ✅" >> deployment-report.md
+      
+      - name: 📤 Upload deployment report
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-report
+          path: deployment-report.md

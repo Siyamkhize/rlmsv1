@@ -1,0 +1,122 @@
+name: Nightly Security Scan
+
+on:
+  schedule:
+    # Run every day at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  security-audit:
+    name: Comprehensive Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🔧 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+      
+      - name: 📦 Install dependencies
+        run: flutter pub get
+      
+      - name: 🔒 Snyk Full Scan
+        uses: snyk/actions/setup@master
+      
+      - name: 🐛 Snyk Code Scan
+        run: |
+          snyk code test --sarif > snyk-code.sarif || true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      
+      - name: 📦 Snyk Open Source Scan
+        run: |
+          snyk test --sarif > snyk-opensource.sarif || true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      
+      - name: 🔐 Snyk Container Scan
+        run: |
+          snyk container test --sarif > snyk-container.sarif || true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true
+      
+      - name: 📤 Upload Snyk Results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-code.sarif
+        continue-on-error: true
+      
+      - name: 🔍 OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'rlmsv1'
+          path: '.'
+          format: 'ALL'
+        continue-on-error: true
+      
+      - name: 📤 Upload OWASP Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-dependency-check-report
+          path: reports/
+      
+      - name: 📊 Generate Security Summary
+        run: |
+          cat > security-summary.md << 'EOF'
+          # Nightly Security Scan Summary
+          
+          **Date:** $(date)
+          **Repository:** ${{ github.repository }}
+          **Branch:** ${{ github.ref_name }}
+          
+          ## Scans Performed
+          - ✅ Snyk Code Analysis
+          - ✅ Snyk Open Source Vulnerabilities
+          - ✅ OWASP Dependency Check
+          
+          ## Reports
+          All detailed reports are available in the workflow artifacts.
+          
+          ## Recommendations
+          1. Review all HIGH and CRITICAL vulnerabilities immediately
+          2. Update dependencies with known security issues
+          3. Review and address code quality findings
+          4. Ensure all security patches are applied
+          
+          EOF
+      
+      - name: 📧 Send Security Report Email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: '🚨 Security Vulnerabilities Detected in RLMS'
+          body: file://security-summary.md
+          to: ${{ secrets.SECURITY_EMAIL }}
+          from: GitHub Actions
+      
+      - name: 📢 Notify Slack on Critical Issues
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              text: '🚨 Critical security vulnerabilities detected in RLMS!',
+              attachments: [{
+                color: 'danger',
+                text: 'Check the workflow for details'
+              }]
+            }
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}

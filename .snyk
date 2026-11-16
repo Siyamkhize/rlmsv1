@@ -1,0 +1,36 @@
+# Snyk (https://snyk.io) policy file
+
+version: v1.25.0
+
+# Ignore specific vulnerabilities (add as needed)
+ignore: {}
+
+# Patch vulnerabilities
+patch: {}
+
+# Language settings
+language-settings:
+  dart:
+    # Ignore test files from security scanning
+    exclude:
+      - test/**
+      - '**/*_test.dart'
+      - '**/test_*.dart'
+
+# Severity threshold
+threshold: high
+
+# Organization settings
+org: siyamkhize
+
+# Project settings
+project-name: rlmsv1
+
+# Fail on issues
+failOn: upgradable
+
+# Monitor project
+monitor: true
+
+# Auto-remediation
+auto-remediate: true
