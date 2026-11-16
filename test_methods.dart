@@ -1,23 +1,23 @@
-// Quick test to verify methods exist
+import 'package:flutter/foundation.dart';\n// Quick test to verify methods exist
 import 'lib/database_helper.dart';
 
 void main() async {
   final db = DatabaseHelper();
   
   // Test 1: getUnsyncedPOE
-  print('Testing getUnsyncedPOE...');
+  debugPrint('Testing getUnsyncedPOE...');
   final unsynced = await db.getUnsyncedPOE(123);
-  print('✓ getUnsyncedPOE works: ${unsynced.length} records');
+  debugPrint('✓ getUnsyncedPOE works: ${unsynced.length} records');
   
   // Test 2: saveLearnerPathwaysCache
-  print('Testing saveLearnerPathwaysCache...');
+  debugPrint('Testing saveLearnerPathwaysCache...');
   await db.saveLearnerPathwaysCache(123, {'test': 'data'});
-  print('✓ saveLearnerPathwaysCache works');
+  debugPrint('✓ saveLearnerPathwaysCache works');
   
   // Test 3: getLearnerPathwaysCache
-  print('Testing getLearnerPathwaysCache...');
+  debugPrint('Testing getLearnerPathwaysCache...');
   final cache = await db.getLearnerPathwaysCache(123);
-  print('✓ getLearnerPathwaysCache works: ${cache != null}');
+  debugPrint('✓ getLearnerPathwaysCache works: ${cache != null}');
   
-  print('\n✅ All methods exist and are callable!');
+  debugPrint('\n✅ All methods exist and are callable!');
 }

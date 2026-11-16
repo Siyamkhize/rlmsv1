@@ -551,7 +551,7 @@ class _SmartFramedCameraCaptureState extends State<SmartFramedCameraCapture> {
 
     canvas.drawRect(
       watermarkRect,
-      Paint()..color = Colors.black.withOpacity(0.7),
+      Paint()..color = Colors.black.withValues(alpha: 0.7),
     );
 
     // Prepare text

@@ -1,37 +1,43 @@
 {
-  "batch": 1,
-  "status": "COMPLETED",
+  "batch": 2,
+  "status": "IN_PROGRESS",
   "timestamp": "2025-01-21",
   "initial_issues": 7162,
-  "final_issues": 2089,
-  "total_fixed": 5073,
-  "reduction_percentage": 71,
-  "issues_fixed": {
-    "avoid_print": 5283,
-    "prefer_const_constructors": "mostly fixed via dart fix",
-    "prefer_final_fields": "mostly fixed via dart fix",
-    "use_super_parameters": "mostly fixed via dart fix",
-    "curly_braces_in_flow_control_structures": 35,
-    "unused_import": "fixed via dart fix",
-    "unnecessary_import": "fixed via dart fix",
-    "duplicate_import": "fixed via dart fix",
-    "prefer_adjacent_string_concatenation": "fixed via dart fix",
-    "unnecessary_brace_in_string_interps": "fixed via dart fix",
-    "unnecessary_null_comparison": "fixed via dart fix",
-    "unnecessary_string_interpolations": "fixed via dart fix"
+  "batch_1_final": 2089,
+  "current_issues": 1817,
+  "total_fixed": 5345,
+  "batch_2_fixed": 272,
+  "reduction_percentage": 75,
+  "issues_fixed_batch_2": {
+    "curly_braces_in_flow_control_structures": 29,
+    "deprecated_member_use_withOpacity": 175,
+    "deprecated_member_use_dataRowHeight": 2,
+    "avoid_print_in_tests": 66
   },
   "remaining_issues": {
     "use_build_context_synchronously": 790,
-    "deprecated_member_use": 211,
+    "deprecated_member_use": 34,
     "library_private_types_in_public_api": 114,
-    "avoid_print": 96,
     "file_names": 35,
-    "curly_braces_in_flow_control_structures": 29,
     "non_constant_identifier_names": 25,
     "constant_identifier_names": 19,
-    "prefer_interpolation_to_compose_strings": 5
+    "other": "~800"
   },
-  "files_modified": "~179 Dart files in lib directory + 72 files via dart fix",
-  "git_commit": "b2e8cce",
-  "next_steps": "Remaining issues require manual intervention:\n- use_build_context_synchronously: requires careful context.mounted checks\n- deprecated_member_use: needs Flutter API updates\n- library_private_types_in_public_api: architectural changes\n- file_names: file renaming with import updates"
+  "files_modified_batch_2": [
+    "lib/ArplAssessorPage.dart",
+    "lib/AssessorPage.dart",
+    "lib/clock_in_page.dart",
+    "lib/database_helper.dart",
+    "lib/DetailsPage.dart",
+    "lib/DetailsPage_server.dart",
+    "lib/poe_submit.dart",
+    "lib/POECollectionPage.dart",
+    "35 files with withOpacity fixes",
+    "test_database_fix.dart",
+    "test_enhanced_clocking_days.dart",
+    "test_methods.dart",
+    "test_overflow_and_name_format_fix.dart",
+    "test_smart_search_id_extraction.dart"
+  ],
+  "next_steps": "Continue with remaining deprecated_member_use issues (WillPopScope, desiredAccuracy, timeLimit), then tackle use_build_context_synchronously (790 issues)"
 }

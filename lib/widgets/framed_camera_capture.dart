@@ -160,7 +160,7 @@ class _FramedCameraCaptureState extends State<FramedCameraCapture> {
 
     canvas.drawRect(
       watermarkRect,
-      Paint()..color = Colors.black.withOpacity(0.7),
+      Paint()..color = Colors.black.withValues(alpha: 0.7),
     );
 
     // Prepare text
@@ -298,7 +298,7 @@ class _FramedCameraCaptureState extends State<FramedCameraCapture> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
+                      color: Colors.black.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(

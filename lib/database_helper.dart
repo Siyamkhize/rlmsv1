@@ -207,7 +207,8 @@ class DatabaseHelper {
             'user_latitude': attendance['user_latitude'].toString(),
             'user_longitude': attendance['user_longitude'].toString(),
             'user_accuracy': attendance['user_accuracy'].toString(),
-            'device_epoch': (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString(),
+            'device_epoch':
+                (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString(),
             'is_offline_sync': 'true', // Syncing offline record to server
           },
         ),
@@ -245,7 +246,8 @@ class DatabaseHelper {
             'user_latitude': attendance['user_latitude'].toString(),
             'user_longitude': attendance['user_longitude'].toString(),
             'user_accuracy': attendance['user_accuracy'].toString(),
-            'device_epoch': (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString(),
+            'device_epoch':
+                (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString(),
             'is_offline_sync': 'true', // Syncing offline record to server
           },
         ),
@@ -284,7 +286,8 @@ class DatabaseHelper {
       final db = await database;
       final today = DateTime.now().toIso8601String().split('T')[0];
 
-      debugPrint('[CLEANUP_DUPLICATES] Starting duplicate cleanup for date: $today');
+      debugPrint(
+          '[CLEANUP_DUPLICATES] Starting duplicate cleanup for date: $today');
 
       // Find all duplicate records (same learner, same date)
       final duplicates = await db.rawQuery('''
@@ -1308,8 +1311,7 @@ class DatabaseHelper {
             ON offline_sessions(expires_at)
           ''');
 
-          debugPrint(
-              '[DB] ✅ Created offline_sessions table with indexes');
+          debugPrint('[DB] ✅ Created offline_sessions table with indexes');
         } catch (e) {
           debugPrint('[DB] ❌ Error creating offline_sessions table: $e');
         }
@@ -1322,7 +1324,8 @@ class DatabaseHelper {
 
         try {
           // Check if columns exist
-          final columns = await db.rawQuery("PRAGMA table_info('learnerdetails')");
+          final columns =
+              await db.rawQuery("PRAGMA table_info('learnerdetails')");
           final existingColumns =
               columns.map((c) => c['name']?.toString().toLowerCase()).toSet();
 
@@ -1382,7 +1385,8 @@ class DatabaseHelper {
             debugPrint('[DB] ℹ️ manual_clocking_evidence table already exists');
           }
         } catch (e) {
-          debugPrint('[DB] ❌ Error creating manual_clocking_evidence table: $e');
+          debugPrint(
+              '[DB] ❌ Error creating manual_clocking_evidence table: $e');
         }
       }
     }, onCreate: (db, dbVersion) async {
@@ -2223,14 +2227,14 @@ updated_at TIMESTAMP
     try {
       // Check if province table exists first
       final tableExists = await db.rawQuery(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='province'"
-      );
-      
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='province'");
+
       if (tableExists.isEmpty) {
-        debugPrint('[DB_SEED] ⚠ Province table does not exist yet, skipping location seed');
+        debugPrint(
+            '[DB_SEED] ⚠ Province table does not exist yet, skipping location seed');
         return;
       }
-      
+
       // Check if provinces already exist
       final existingProvinces = await db.query('province', limit: 1);
       if (existingProvinces.isNotEmpty) {
@@ -2916,7 +2920,8 @@ updated_at TIMESTAMP
           debugPrint('Error updating sync status: $e');
         }
       }
-      debugPrint('[SYNC] Successfully synced ${syncedLearners.length} learners');
+      debugPrint(
+          '[SYNC] Successfully synced ${syncedLearners.length} learners');
     }
   }
 
@@ -3524,16 +3529,18 @@ updated_at TIMESTAMP
 
   /// Insert manual clock-in (signature + geofence) offline
   /// Saves to: manual_clocking + manual_clocking_evidence tables
-  /// 
+  ///
   /// IMPORTANT: signature_in and face_in should be BASE64 strings for offline storage
   /// These will be uploaded to server during sync and converted to filenames
-  Future<void> insertManualClockInOffline(Map<String, dynamic> clockInData) async {
+  Future<void> insertManualClockInOffline(
+      Map<String, dynamic> clockInData) async {
     final db = await database;
 
     final clockDate = clockInData['clock_date'];
     final learnerID = clockInData['LearnerID'];
 
-    debugPrint('[MANUAL_CLOCKING] Saving offline clock-in for learner $learnerID on $clockDate');
+    debugPrint(
+        '[MANUAL_CLOCKING] Saving offline clock-in for learner $learnerID on $clockDate');
 
     // Check if record already exists
     final existing = await db.query(
@@ -3552,7 +3559,8 @@ updated_at TIMESTAMP
         'is_manual_attendance': 1,
         'synced': 0,
       });
-      debugPrint('[MANUAL_CLOCKING] ✅ Inserted offline clock-in for learner $learnerID');
+      debugPrint(
+          '[MANUAL_CLOCKING] ✅ Inserted offline clock-in for learner $learnerID');
     } else {
       await db.update(
         'manual_clocking',
@@ -3564,11 +3572,13 @@ updated_at TIMESTAMP
         where: 'LearnerID = ? AND clock_date = ?',
         whereArgs: [learnerID, clockDate],
       );
-      debugPrint('[MANUAL_CLOCKING] ✅ Updated offline clock-in for learner $learnerID');
+      debugPrint(
+          '[MANUAL_CLOCKING] ✅ Updated offline clock-in for learner $learnerID');
     }
 
     // 2. Insert/Update manual_clocking_evidence table (STORE BASE64 IMAGES)
-    if (clockInData.containsKey('signature_in') || clockInData.containsKey('face_in')) {
+    if (clockInData.containsKey('signature_in') ||
+        clockInData.containsKey('face_in')) {
       final evidenceExists = await db.query(
         'manual_clocking_evidence',
         where: 'LearnerID = ? AND clock_date = ?',
@@ -3580,9 +3590,9 @@ updated_at TIMESTAMP
       final evidenceData = {
         'LearnerID': learnerID,
         'clock_date': clockDate,
-        if (clockInData.containsKey('signature_in')) 
+        if (clockInData.containsKey('signature_in'))
           'signature_in': clockInData['signature_in'], // Base64 string
-        if (clockInData.containsKey('face_in')) 
+        if (clockInData.containsKey('face_in'))
           'face_in': clockInData['face_in'], // Base64 string
         'synced': 0,
         'created_at': DateTime.now().toIso8601String(),
@@ -3591,7 +3601,8 @@ updated_at TIMESTAMP
 
       if (evidenceExists.isEmpty) {
         await db.insert('manual_clocking_evidence', evidenceData);
-        debugPrint('[MANUAL_CLOCKING] ✅ Inserted evidence (base64 images) for learner $learnerID');
+        debugPrint(
+            '[MANUAL_CLOCKING] ✅ Inserted evidence (base64 images) for learner $learnerID');
       } else {
         await db.update(
           'manual_clocking_evidence',
@@ -3599,32 +3610,37 @@ updated_at TIMESTAMP
           where: 'LearnerID = ? AND clock_date = ?',
           whereArgs: [learnerID, clockDate],
         );
-        debugPrint('[MANUAL_CLOCKING] ✅ Updated evidence (base64 images) for learner $learnerID');
+        debugPrint(
+            '[MANUAL_CLOCKING] ✅ Updated evidence (base64 images) for learner $learnerID');
       }
-      
+
       // DEBUG: Log image sizes
       if (clockInData.containsKey('signature_in')) {
         final sigSize = (clockInData['signature_in'] as String).length;
-        debugPrint('[MANUAL_CLOCKING] Signature image size: ${(sigSize / 1024).toStringAsFixed(1)} KB');
+        debugPrint(
+            '[MANUAL_CLOCKING] Signature image size: ${(sigSize / 1024).toStringAsFixed(1)} KB');
       }
       if (clockInData.containsKey('face_in')) {
         final faceSize = (clockInData['face_in'] as String).length;
-        debugPrint('[MANUAL_CLOCKING] Face image size: ${(faceSize / 1024).toStringAsFixed(1)} KB');
+        debugPrint(
+            '[MANUAL_CLOCKING] Face image size: ${(faceSize / 1024).toStringAsFixed(1)} KB');
       }
     }
   }
 
   /// Update manual clock-out (signature + geofence) offline
   /// Updates: manual_clocking + manual_clocking_evidence tables
-  /// 
+  ///
   /// IMPORTANT: signature_out and face_out should be BASE64 strings for offline storage
-  Future<void> updateManualClockOutOffline(Map<String, dynamic> clockOutData) async {
+  Future<void> updateManualClockOutOffline(
+      Map<String, dynamic> clockOutData) async {
     final db = await database;
 
     final clockDate = clockOutData['clock_date'];
     final learnerID = clockOutData['LearnerID'];
 
-    debugPrint('[MANUAL_CLOCKING] Saving offline clock-out for learner $learnerID on $clockDate');
+    debugPrint(
+        '[MANUAL_CLOCKING] Saving offline clock-out for learner $learnerID on $clockDate');
 
     // 1. Update manual_clocking table
     await db.update(
@@ -3637,14 +3653,16 @@ updated_at TIMESTAMP
       where: 'LearnerID = ? AND clock_date = ?',
       whereArgs: [learnerID, clockDate],
     );
-    debugPrint('[MANUAL_CLOCKING] ✅ Updated offline clock-out for learner $learnerID');
+    debugPrint(
+        '[MANUAL_CLOCKING] ✅ Updated offline clock-out for learner $learnerID');
 
     // 2. Update manual_clocking_evidence table (STORE BASE64 IMAGES)
-    if (clockOutData.containsKey('signature_out') || clockOutData.containsKey('face_out')) {
+    if (clockOutData.containsKey('signature_out') ||
+        clockOutData.containsKey('face_out')) {
       final evidenceData = <String, dynamic>{
-        if (clockOutData.containsKey('signature_out')) 
+        if (clockOutData.containsKey('signature_out'))
           'signature_out': clockOutData['signature_out'], // Base64 string
-        if (clockOutData.containsKey('face_out')) 
+        if (clockOutData.containsKey('face_out'))
           'face_out': clockOutData['face_out'], // Base64 string
         'synced': 0,
         'updated_at': DateTime.now().toIso8601String(),
@@ -3656,16 +3674,19 @@ updated_at TIMESTAMP
         where: 'LearnerID = ? AND clock_date = ?',
         whereArgs: [learnerID, clockDate],
       );
-      debugPrint('[MANUAL_CLOCKING] ✅ Updated offline clock-out evidence (base64 images) for learner $learnerID');
-      
+      debugPrint(
+          '[MANUAL_CLOCKING] ✅ Updated offline clock-out evidence (base64 images) for learner $learnerID');
+
       // DEBUG: Log image sizes
       if (clockOutData.containsKey('signature_out')) {
         final sigSize = (clockOutData['signature_out'] as String).length;
-        debugPrint('[MANUAL_CLOCKING] Signature image size: ${(sigSize / 1024).toStringAsFixed(1)} KB');
+        debugPrint(
+            '[MANUAL_CLOCKING] Signature image size: ${(sigSize / 1024).toStringAsFixed(1)} KB');
       }
       if (clockOutData.containsKey('face_out')) {
         final faceSize = (clockOutData['face_out'] as String).length;
-        debugPrint('[MANUAL_CLOCKING] Face image size: ${(faceSize / 1024).toStringAsFixed(1)} KB');
+        debugPrint(
+            '[MANUAL_CLOCKING] Face image size: ${(faceSize / 1024).toStringAsFixed(1)} KB');
       }
     }
   }
@@ -3710,7 +3731,8 @@ updated_at TIMESTAMP
       debugPrint('Learner Clock Out Data Updated: $clockOutData');
     } else {
       // If no clock-in data exists, log and handle this scenario
-      debugPrint('No matching clock-in data found for this learner on this date.');
+      debugPrint(
+          'No matching clock-in data found for this learner on this date.');
     }
   }
 
@@ -3785,7 +3807,7 @@ updated_at TIMESTAMP
     if (result.isNotEmpty) {
       final user = result.first;
       final storedPassword = user['password'] as String?;
-      
+
       if (storedPassword == null || storedPassword.isEmpty) {
         debugPrint("No password set for SDP user");
         return null;
@@ -3793,7 +3815,7 @@ updated_at TIMESTAMP
 
       // Check if password is hashed (bcrypt hashes start with $2)
       final isHashed = storedPassword.startsWith('\$2');
-      
+
       // Verify the password
       bool passwordMatches = false;
       if (isHashed) {
@@ -3802,9 +3824,10 @@ updated_at TIMESTAMP
       } else {
         // Direct comparison for plain text passwords (not recommended, but handle it)
         passwordMatches = password == storedPassword;
-        debugPrint("⚠️ WARNING: Password is stored in plain text for SDP user $trimmedEmail");
+        debugPrint(
+            "⚠️ WARNING: Password is stored in plain text for SDP user $trimmedEmail");
       }
-      
+
       if (passwordMatches) {
         return user;
       } else {
@@ -3820,7 +3843,7 @@ updated_at TIMESTAMP
   Future<Map<String, dynamic>?> getFacilitator(
       String email, String password) async {
     final db = await database;
-    
+
     // Trim email to remove whitespace
     final trimmedEmail = email.trim();
 
@@ -3836,7 +3859,7 @@ updated_at TIMESTAMP
     if (result.isNotEmpty) {
       final facilitator = result.first;
       final storedPassword = facilitator['password'] as String?;
-      
+
       if (storedPassword == null || storedPassword.isEmpty) {
         debugPrint("No password set for facilitator user");
         return null;
@@ -3844,7 +3867,7 @@ updated_at TIMESTAMP
 
       // Check if password is hashed (bcrypt hashes start with $2)
       final isHashed = storedPassword.startsWith('\$2');
-      
+
       // Verify the password
       bool passwordMatches = false;
       if (isHashed) {
@@ -3853,9 +3876,10 @@ updated_at TIMESTAMP
       } else {
         // Direct comparison for plain text passwords (not recommended, but handle it)
         passwordMatches = password == storedPassword;
-        debugPrint("⚠ WARNING: Password is stored in plain text for facilitator $trimmedEmail");
+        debugPrint(
+            "⚠ WARNING: Password is stored in plain text for facilitator $trimmedEmail");
       }
-      
+
       if (passwordMatches) {
         return facilitator;
       } else {
@@ -3902,7 +3926,7 @@ updated_at TIMESTAMP
   //end
 
   // ==================== OFFLINE SESSION TOKEN METHODS ====================
-  
+
   /// Generate a cryptographically secure 64-character hex token
   Future<String> _generateSecureToken() async {
     final random = math.Random.secure();
@@ -3939,16 +3963,17 @@ updated_at TIMESTAMP
   Future<String?> createOfflineToken(String email) async {
     try {
       final db = await database;
-      
+
       // Generate secure token
       final token = await _generateSecureToken();
       final tokenHash = _hashToken(token);
       final deviceId = await _getDeviceId();
-      
+
       // Calculate expiry (7 days from now)
       final now = DateTime.now();
-      final expiresAt = now.add(const Duration(days: AppConfig.OFFLINE_SESSION_EXPIRY_DAYS));
-      
+      final expiresAt =
+          now.add(const Duration(days: AppConfig.OFFLINE_SESSION_EXPIRY_DAYS));
+
       // Insert or replace the session
       await db.insert(
         'offline_sessions',
@@ -3962,9 +3987,11 @@ updated_at TIMESTAMP
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
-      
-      debugPrint('[OFFLINE_TOKEN_SECURITY] Token created for $email on device $deviceId, expires ${expiresAt.toIso8601String()}');
-      debugPrint('[OFFLINE_TOKEN] ✅ Created offline session for $email (expires: ${expiresAt.toIso8601String()})');
+
+      debugPrint(
+          '[OFFLINE_TOKEN_SECURITY] Token created for $email on device $deviceId, expires ${expiresAt.toIso8601String()}');
+      debugPrint(
+          '[OFFLINE_TOKEN] ✅ Created offline session for $email (expires: ${expiresAt.toIso8601String()})');
       return token;
     } catch (e) {
       debugPrint('[OFFLINE_TOKEN_SECURITY] Token creation FAILED: $e');
@@ -3979,62 +4006,73 @@ updated_at TIMESTAMP
   Future<bool> validateOfflineToken(String email, String token) async {
     try {
       final db = await database;
-      
+
       // Query the session
       final result = await db.query(
         'offline_sessions',
         where: 'user_email = ?',
         whereArgs: [email],
       );
-      
+
       if (result.isEmpty) {
-        debugPrint('[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token not found for $email');
+        debugPrint(
+            '[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token not found for $email');
         debugPrint('[OFFLINE_TOKEN] ❌ No session found for $email');
         return false;
       }
-      
+
       final session = result.first;
       final storedHash = session['token_hash'] as String;
       final expiresAtStr = session['expires_at'] as String;
       final expiresAt = DateTime.parse(expiresAtStr);
       final now = DateTime.now();
-      
+
       // Check device binding
       final storedDeviceId = session['device_id'] as String?;
       final currentDeviceId = await _getDeviceId();
-      if (storedDeviceId != null && storedDeviceId != currentDeviceId && storedDeviceId != 'unknown_device') {
-        debugPrint('[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: device_id mismatch for $email (stored: $storedDeviceId, current: $currentDeviceId)');
-        await db.delete('offline_sessions', where: 'user_email = ?', whereArgs: [email]);
+      if (storedDeviceId != null &&
+          storedDeviceId != currentDeviceId &&
+          storedDeviceId != 'unknown_device') {
+        debugPrint(
+            '[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: device_id mismatch for $email (stored: $storedDeviceId, current: $currentDeviceId)');
+        await db.delete('offline_sessions',
+            where: 'user_email = ?', whereArgs: [email]);
         return false;
       }
-      
+
       // Check if token matches
       final providedHash = _hashToken(token);
       if (providedHash != storedHash) {
-        debugPrint('[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token hash mismatch for $email');
-        await db.delete('offline_sessions', where: 'user_email = ?', whereArgs: [email]);
+        debugPrint(
+            '[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token hash mismatch for $email');
+        await db.delete('offline_sessions',
+            where: 'user_email = ?', whereArgs: [email]);
         return false;
       }
-      
+
       // Check if expired
       if (now.isAfter(expiresAt)) {
-        debugPrint('[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token expired for $email at $expiresAtStr');
-        await db.delete('offline_sessions', where: 'user_email = ?', whereArgs: [email]);
+        debugPrint(
+            '[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token expired for $email at $expiresAtStr');
+        await db.delete('offline_sessions',
+            where: 'user_email = ?', whereArgs: [email]);
         return false;
       }
-      
+
       // Check if we should refresh (within last day)
       final hoursUntilExpiry = expiresAt.difference(now).inHours;
       Map<String, dynamic> updateData = {
         'last_activity_at': now.toIso8601String(),
       };
-      
+
       if (AppConfig.OFFLINE_TOKEN_REFRESH_ENABLED && hoursUntilExpiry < 24) {
-        final newExpiresAt = now.add(const Duration(days: AppConfig.OFFLINE_SESSION_EXPIRY_DAYS));
+        final newExpiresAt = now
+            .add(const Duration(days: AppConfig.OFFLINE_SESSION_EXPIRY_DAYS));
         updateData['expires_at'] = newExpiresAt.toIso8601String();
-        debugPrint('[OFFLINE_TOKEN] 🔄 Token refreshed for $email (new expiry: ${newExpiresAt.toIso8601String()})');
+        debugPrint(
+            '[OFFLINE_TOKEN] 🔄 Token refreshed for $email (new expiry: ${newExpiresAt.toIso8601String()})');
       }
-      
+
       // Update last activity and possibly expiry
       await db.update(
         'offline_sessions',
@@ -4042,7 +4080,7 @@ updated_at TIMESTAMP
         where: 'user_email = ?',
         whereArgs: [email],
       );
-      
+
       debugPrint('[OFFLINE_TOKEN_SECURITY] Token validated for $email');
       debugPrint('[OFFLINE_TOKEN] ✅ Token validated for $email');
       return true;
@@ -4057,30 +4095,31 @@ updated_at TIMESTAMP
   Future<Map<String, dynamic>?> loadOfflineSession(String email) async {
     try {
       final db = await database;
-      
+
       final result = await db.query(
         'offline_sessions',
         where: 'user_email = ?',
         whereArgs: [email],
       );
-      
+
       if (result.isEmpty) {
         debugPrint('[OFFLINE_TOKEN] No session found for $email');
         return null;
       }
-      
+
       final session = result.first;
       final expiresAtStr = session['expires_at'] as String;
       final expiresAt = DateTime.parse(expiresAtStr);
       final now = DateTime.now();
-      
+
       // Check if expired
       if (now.isAfter(expiresAt)) {
         debugPrint('[OFFLINE_TOKEN] Session expired for $email');
-        await db.delete('offline_sessions', where: 'user_email = ?', whereArgs: [email]);
+        await db.delete('offline_sessions',
+            where: 'user_email = ?', whereArgs: [email]);
         return null;
       }
-      
+
       debugPrint('[OFFLINE_TOKEN] ✅ Loaded session for $email');
       return session;
     } catch (e) {
@@ -4525,7 +4564,8 @@ updated_at TIMESTAMP
       whereArgs: [learnerID],
     );
 
-    debugPrint('Updated learner $learnerID profile_image with path: $imagePath');
+    debugPrint(
+        'Updated learner $learnerID profile_image with path: $imagePath');
   }
 
   /// Function to update the image path in the database
@@ -5333,7 +5373,8 @@ updated_at TIMESTAMP
           "No existing document found for learnerID=$learnerID, type=$type, unitStandard=$unitStandard");
       return null;
     } catch (e, stackTrace) {
-      debugPrint("Error finding existing document: $e\nStackTrace: $stackTrace");
+      debugPrint(
+          "Error finding existing document: $e\nStackTrace: $stackTrace");
       return null;
     }
   }
@@ -5546,9 +5587,11 @@ updated_at TIMESTAMP
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 
-      debugPrint("[OFFLINE_CACHE] Saved pathways cache for learnerID=$learnerID");
+      debugPrint(
+          "[OFFLINE_CACHE] Saved pathways cache for learnerID=$learnerID");
     } catch (e, stackTrace) {
-      debugPrint("Error saving learner pathways cache: $e\nStackTrace: $stackTrace");
+      debugPrint(
+          "Error saving learner pathways cache: $e\nStackTrace: $stackTrace");
       rethrow;
     }
   }
@@ -6165,7 +6208,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         whereArgs: [classID, 0], // 0 means unsynced
       );
 
-      debugPrint('Found ${learners.length} unsynced learners for class $classID');
+      debugPrint(
+          'Found ${learners.length} unsynced learners for class $classID');
 
       // For each learner, fetch their bank details
       List<Map<String, dynamic>> learnersWithBankDetails = [];
@@ -6620,7 +6664,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         );
         debugPrint(
             '[DB] Updated existing learner with ID: $learnerId (same project)');
-        debugPrint('Updated existing learner with ID: $learnerId (same project)');
+        debugPrint(
+            'Updated existing learner with ID: $learnerId (same project)');
       } else {
         // Insert new learner (either new or duplicate in different project)
         learnerOnlyData['synced'] = 0; // Ensure synced is 0 for new entries
@@ -7353,20 +7398,21 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     }
   }
 
-  Future<void> syncUnsyncedLearnerProfiles({int batchSize = 5, int maxToSync = 20}) async {
+  Future<void> syncUnsyncedLearnerProfiles(
+      {int batchSize = 5, int maxToSync = 20}) async {
     try {
       debugPrint(
           '[SYNC-LEARNER-PROFILE] Starting lazy sync of unsynced learner profiles (batch: $batchSize, max: $maxToSync)');
 
       final db = await database;
-      
+
       // LAZY LOADING: Only fetch a limited number at a time
       final unsyncedLearners = await db.query(
         'learnerdetails',
         where: 'synced = ?',
         whereArgs: [0],
-        limit: maxToSync,  // Limit to prevent loading thousands of records
-        orderBy: 'LearnerID ASC',  // Consistent ordering
+        limit: maxToSync, // Limit to prevent loading thousands of records
+        orderBy: 'LearnerID ASC', // Consistent ordering
       );
 
       if (unsyncedLearners.isEmpty) {
@@ -7395,11 +7441,11 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
       int syncedCount = 0;
       int batchCount = 0;
-      
+
       // QUEUING: Process in small batches with delays between batches
       for (var i = 0; i < unsyncedLearners.length; i++) {
         var learner = unsyncedLearners[i];
-        
+
         try {
           final learnerId = learner['LearnerID'].toString();
 
@@ -7515,11 +7561,12 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           debugPrint(
               '[SYNC-LEARNER-PROFILE] Error syncing learner profile: $e');
         }
-        
+
         // BATCH QUEUING: Add delay after each batch
         batchCount++;
         if (batchCount >= batchSize && i < unsyncedLearners.length - 1) {
-          debugPrint('[SYNC-LEARNER-PROFILE] Batch complete ($batchCount records), waiting 500ms before next batch...');
+          debugPrint(
+              '[SYNC-LEARNER-PROFILE] Batch complete ($batchCount records), waiting 500ms before next batch...');
           await Future.delayed(const Duration(milliseconds: 500));
           batchCount = 0;
         } else if (i < unsyncedLearners.length - 1) {
@@ -7530,11 +7577,12 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
       debugPrint(
           '[SYNC-LEARNER-PROFILE] Successfully synced $syncedCount/${unsyncedLearners.length} learner profiles');
-      
-      // If we synced all records in this batch and reached the limit, 
+
+      // If we synced all records in this batch and reached the limit,
       // there might be more unsynced records
       if (unsyncedLearners.length == maxToSync && syncedCount > 0) {
-        debugPrint('[SYNC-LEARNER-PROFILE] More unsynced records may exist. Run sync again to continue.');
+        debugPrint(
+            '[SYNC-LEARNER-PROFILE] More unsynced records may exist. Run sync again to continue.');
       }
     } catch (e) {
       debugPrint(
@@ -7705,7 +7753,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       int learnerId) async {
     final db = await database;
 
-    debugPrint('[DB_DEBUG] getFingerprintsComprehensive for learner $learnerId');
+    debugPrint(
+        '[DB_DEBUG] getFingerprintsComprehensive for learner $learnerId');
 
     // Query ALL columns to see what data exists
     final result = await db.query(
@@ -7746,8 +7795,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
             } else if (leftTemplate == null) {
               // If no specific hand specified, use as left template
               leftTemplate = valueStr;
-            } else
+            } else {
               rightTemplate ??= valueStr;
+            }
           }
         }
       });
@@ -7837,7 +7887,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
         if (allData.isNotEmpty) {
           final allRow = allData.first;
-          debugPrint('[DB_DEBUG] All available columns for learner $learnerId:');
+          debugPrint(
+              '[DB_DEBUG] All available columns for learner $learnerId:');
           allRow.forEach((key, value) {
             if (key.toLowerCase().contains('template') ||
                 key.toLowerCase().contains('finger')) {
@@ -8901,7 +8952,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
         // Log any errors but don't stop the overall sync
         if (syncErrors.isNotEmpty) {
-          debugPrint('Sync errors for learner $learnerId: ${syncErrors.join(', ')}');
+          debugPrint(
+              'Sync errors for learner $learnerId: ${syncErrors.join(', ')}');
         }
       }
 
@@ -9017,7 +9069,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         whereArgs: [learnerID],
       );
 
-      debugPrint('Learner information updated locally for learner ID: $learnerID');
+      debugPrint(
+          'Learner information updated locally for learner ID: $learnerID');
       debugPrint('Updated fields: ${updateData.keys.toList()}');
     } catch (e) {
       debugPrint('Error updating learner information locally: $e');
@@ -9470,7 +9523,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
             List<dynamic> unitStandards = jsonDecode(unitStandardsJson);
             enrichedRow['unit_standards_list'] = unitStandards;
 
-            debugPrint('✅ Parsed ${unitStandards.length} unit standards from JSON');
+            debugPrint(
+                '✅ Parsed ${unitStandards.length} unit standards from JSON');
 
             // Process each unit standard to ensure proper format
             List<Map<String, dynamic>> formattedUnitStandards = [];

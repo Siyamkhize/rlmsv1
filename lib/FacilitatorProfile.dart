@@ -739,7 +739,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
               width: 140,
               height: 140,
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(70),
               ),
               child: const Center(
@@ -1040,7 +1040,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.1),
+                      color: Colors.grey.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
@@ -1116,9 +1116,9 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                       decoration: BoxDecoration(
                         color: isClockedIn
                             ? (isClockedOut
-                                ? Colors.grey.withOpacity(0.1)
-                                : Colors.green.withOpacity(0.1))
-                            : Colors.orange.withOpacity(0.1),
+                                ? Colors.grey.withValues(alpha: 0.1)
+                                : Colors.green.withValues(alpha: 0.1))
+                            : Colors.orange.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: isClockedIn
@@ -1335,8 +1335,8 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: hasFingerprints
-                              ? Colors.green.withOpacity(0.1)
-                              : Colors.orange.withOpacity(0.1),
+                              ? Colors.green.withValues(alpha: 0.1)
+                              : Colors.orange.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color:
@@ -1395,7 +1395,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.1),
+                      color: Colors.grey.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
@@ -1599,7 +1599,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               spreadRadius: 2,
               blurRadius: 8),
         ],
@@ -1685,7 +1685,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               spreadRadius: 2,
               blurRadius: 8),
         ],

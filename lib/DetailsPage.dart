@@ -237,7 +237,8 @@ class _POETabContentState extends State<POETabContent> {
         );
       }
 
-      debugPrint('[POE_SYNC] Complete: $successCount synced, $failCount failed');
+      debugPrint(
+          '[POE_SYNC] Complete: $successCount synced, $failCount failed');
     } catch (e) {
       debugPrint('[POE_SYNC] Error during sync: $e');
     } finally {
@@ -448,7 +449,8 @@ class _POETabContentState extends State<POETabContent> {
       debugPrint(
           'Manual mark all formative complete: $markedCount questions linked to document: $existingDocumentPath');
     } catch (e, stackTrace) {
-      debugPrint('Error in _manualMarkAllFormative: $e\nStackTrace: $stackTrace');
+      debugPrint(
+          'Error in _manualMarkAllFormative: $e\nStackTrace: $stackTrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -706,7 +708,8 @@ class _POETabContentState extends State<POETabContent> {
       debugPrint(
           'Manual mark all summative complete: $markedCount questions linked to document: $existingDocumentPath');
     } catch (e, stackTrace) {
-      debugPrint('Error in _manualMarkAllSummative: $e\nStackTrace: $stackTrace');
+      debugPrint(
+          'Error in _manualMarkAllSummative: $e\nStackTrace: $stackTrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -935,13 +938,15 @@ class _POETabContentState extends State<POETabContent> {
     debugPrint(
         '[FETCH] Starting fetchLearnerData for learnerID=${widget.learnerID}');
     bool isConnected = await _checkConnectivity();
-    debugPrint('[FETCH] Connectivity check: ${isConnected ? "ONLINE" : "OFFLINE"}');
+    debugPrint(
+        '[FETCH] Connectivity check: ${isConnected ? "ONLINE" : "OFFLINE"}');
 
     if (isConnected) {
       debugPrint('[FETCH] Attempting online fetch...');
       bool onlineSuccess = await fetchOnlineLearnerData();
       if (onlineSuccess) {
-        debugPrint('[FETCH] ✅ Online fetch successful, checking upload status...');
+        debugPrint(
+            '[FETCH] ✅ Online fetch successful, checking upload status...');
         await checkUploadedStatus();
       } else {
         // If online fetch failed with a specific error (like "No data found"),
@@ -1266,8 +1271,10 @@ class _POETabContentState extends State<POETabContent> {
             (qualData['unitstandards'] as Map)
                 .forEach((unitStandardName, unitData) {
               debugPrint('    Unit Standard: $unitStandardName');
-              debugPrint('      Formative: ${unitData['formative']?.length ?? 0}');
-              debugPrint('      Summative: ${unitData['summative']?.length ?? 0}');
+              debugPrint(
+                  '      Formative: ${unitData['formative']?.length ?? 0}');
+              debugPrint(
+                  '      Summative: ${unitData['summative']?.length ?? 0}');
               debugPrint('      Logbook: ${unitData['logbook']?.length ?? 0}');
             });
           });
@@ -1349,7 +1356,8 @@ class _POETabContentState extends State<POETabContent> {
             setState(() {
               errorMessage = decodedResponse['error'];
             });
-            debugPrint('checkUploadedStatus Error: ${decodedResponse['error']}');
+            debugPrint(
+                'checkUploadedStatus Error: ${decodedResponse['error']}');
           } else {
             // Get local status first to preserve locally-saved records
             final dbHelper = DatabaseHelper();
@@ -1722,7 +1730,8 @@ class _POETabContentState extends State<POETabContent> {
             String formativeKey = seq['key']!.toString();
             if (!(uploadedExercises[formativeKey] ?? false)) {
               allFormativeCompleted = false;
-              debugPrint('DEBUG: Formative exercise not completed: $formativeKey');
+              debugPrint(
+                  'DEBUG: Formative exercise not completed: $formativeKey');
               break;
             }
           }
@@ -1886,18 +1895,20 @@ class _POETabContentState extends State<POETabContent> {
         if (hasFutLeft && hasFutRight) {
           guidance =
               'Place either thumb on Futronic scanner for verification...';
-        } else if (hasFutLeft)
+        } else if (hasFutLeft) {
           guidance = 'Place LEFT thumb on Futronic scanner for verification...';
-        else if (hasFutRight)
+        } else if (hasFutRight) {
           guidance =
               'Place RIGHT thumb on Futronic scanner for verification...';
+        }
       } else if (scanner == 'zkteco') {
         if (hasZkLeft && hasZkRight) {
           guidance = 'Place either thumb on ZKTeco scanner for verification...';
-        } else if (hasZkLeft)
+        } else if (hasZkLeft) {
           guidance = 'Place LEFT thumb on ZKTeco scanner for verification...';
-        else if (hasZkRight)
+        } else if (hasZkRight) {
           guidance = 'Place RIGHT thumb on ZKTeco scanner for verification...';
+        }
       }
 
       // Show progress dialog
@@ -2209,7 +2220,8 @@ class _POETabContentState extends State<POETabContent> {
         }
       } else {
         if (assessmentType != 'LogBook') {
-          debugPrint('Error: Gallery selection not supported for $assessmentType');
+          debugPrint(
+              'Error: Gallery selection not supported for $assessmentType');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text(
@@ -2393,7 +2405,8 @@ class _POETabContentState extends State<POETabContent> {
   // New method for handling formative camera - scans all formative questions
   Future<void> _openFormativeCamera(BuildContext context,
       List<dynamic> formativeQuestions, String unitStandard) async {
-    debugPrint('DEBUG: _openFormativeCamera called for unitStandard: $unitStandard');
+    debugPrint(
+        'DEBUG: _openFormativeCamera called for unitStandard: $unitStandard');
     debugPrint('DEBUG: formativeQuestions count: ${formativeQuestions.length}');
 
     // Check if all formative questions are already completed
@@ -2436,7 +2449,8 @@ class _POETabContentState extends State<POETabContent> {
         break;
       } else {
         // Check if previous unit standard is completed
-        debugPrint('DEBUG: Not first unit standard, checking _isExerciseAllowed');
+        debugPrint(
+            'DEBUG: Not first unit standard, checking _isExerciseAllowed');
         if (!_isExerciseAllowed('Formative', exercise, unitStandard)) {
           debugPrint('DEBUG: Exercise not allowed: $exercise');
           allAllowed = false;
@@ -2549,7 +2563,8 @@ class _POETabContentState extends State<POETabContent> {
         }
 
         if (!file.path.toLowerCase().endsWith('.pdf')) {
-          debugPrint('Error: Expected PDF file for Formative, got ${file.path}');
+          debugPrint(
+              'Error: Expected PDF file for Formative, got ${file.path}');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text(
@@ -2682,7 +2697,8 @@ class _POETabContentState extends State<POETabContent> {
               ),
             );
           } else {
-            debugPrint('❌ Server error for formative upload: ${decoded['message']}');
+            debugPrint(
+                '❌ Server error for formative upload: ${decoded['message']}');
             // Save locally for all exercises
             for (var item in formativeQuestions) {
               final exercise = item['exercise']?.toString() ?? 'N/A';
@@ -2982,7 +2998,8 @@ class _POETabContentState extends State<POETabContent> {
         }
 
         if (!file.path.toLowerCase().endsWith('.pdf')) {
-          debugPrint('Error: Expected PDF file for Summative, got ${file.path}');
+          debugPrint(
+              'Error: Expected PDF file for Summative, got ${file.path}');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text(
@@ -3115,7 +3132,8 @@ class _POETabContentState extends State<POETabContent> {
               ),
             );
           } else {
-            debugPrint('❌ Server error for summative upload: ${decoded['message']}');
+            debugPrint(
+                '❌ Server error for summative upload: ${decoded['message']}');
             // Save locally for all exercises
             for (var item in summativeQuestions) {
               final exercise = item['exercise']?.toString() ?? 'N/A';
@@ -3380,7 +3398,8 @@ class _POETabContentState extends State<POETabContent> {
                 backgroundColor: Colors.green,
               ),
             );
-            debugPrint('[REMEDIAL] $remedialType uploaded to server successfully');
+            debugPrint(
+                '[REMEDIAL] $remedialType uploaded to server successfully');
           } else {
             debugPrint('[REMEDIAL] Server error: ${decoded['message']}');
             await _saveLocally(document, remedialType, exercise, null,
@@ -3410,7 +3429,8 @@ class _POETabContentState extends State<POETabContent> {
 
   Future<void> _openLogBookCamera(BuildContext context,
       List<dynamic> logBookItems, String unitStandard) async {
-    debugPrint('DEBUG: _openLogBookCamera called for unitStandard: $unitStandard');
+    debugPrint(
+        'DEBUG: _openLogBookCamera called for unitStandard: $unitStandard');
     debugPrint('DEBUG: logBookItems count: ${logBookItems.length}');
 
     // Check if all logbook items are already completed
@@ -3667,7 +3687,8 @@ class _POETabContentState extends State<POETabContent> {
               ),
             );
           } else {
-            debugPrint('❌ Server error for logbook upload: ${decoded['message']}');
+            debugPrint(
+                '❌ Server error for logbook upload: ${decoded['message']}');
             // Save locally for all exercises
             for (var item in logBookItems) {
               final exercise = item['exercise']?.toString() ?? 'N/A';
@@ -4157,8 +4178,10 @@ class _POETabContentState extends State<POETabContent> {
                     final logbook = unitEntry.value['logbook'] ?? [];
 
                     debugPrint('[DEBUG] Unit Standard: ${unitEntry.key}');
-                    debugPrint('[DEBUG]   Formative count: ${formative.length}');
-                    debugPrint('[DEBUG]   Summative count: ${summative.length}');
+                    debugPrint(
+                        '[DEBUG]   Formative count: ${formative.length}');
+                    debugPrint(
+                        '[DEBUG]   Summative count: ${summative.length}');
                     debugPrint('[DEBUG]   LogBook count: ${logbook.length}');
 
                     return ExpansionTile(

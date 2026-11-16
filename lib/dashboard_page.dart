@@ -1964,7 +1964,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 15,
                         offset: const Offset(0, 5),
                       ),
@@ -2056,7 +2056,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             child: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF4CAF50).withOpacity(0.1),
+                                color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Column(
@@ -2098,7 +2098,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             child: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFEF5350).withOpacity(0.1),
+                                color: const Color(0xFFEF5350).withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Column(
@@ -2320,7 +2320,7 @@ class _DashboardPageState extends State<DashboardPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -2483,7 +2483,7 @@ class _DashboardPageState extends State<DashboardPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 15,
             offset: const Offset(0, -2),
           ),
@@ -2647,7 +2647,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
+                              color: Colors.black.withValues(alpha: 0.2),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
@@ -2888,10 +2888,10 @@ class _DashboardPageState extends State<DashboardPage> {
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFF4CAF50).withOpacity(0.1),
+                color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: const Color(0xFF4CAF50).withOpacity(0.3),
+                  color: const Color(0xFF4CAF50).withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -2939,7 +2939,7 @@ class _DashboardPageState extends State<DashboardPage> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           decoration: BoxDecoration(
             color: isActive
-                ? const Color(0xFF5B9BD5).withOpacity(0.1)
+                ? const Color(0xFF5B9BD5).withValues(alpha: 0.1)
                 : Colors.transparent,
             border: Border(
               left: BorderSide(
@@ -2988,7 +2988,7 @@ class _DashboardPageState extends State<DashboardPage> {
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
           color: isActive
-              ? const Color(0xFF5B9BD5).withOpacity(0.1)
+              ? const Color(0xFF5B9BD5).withValues(alpha: 0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),

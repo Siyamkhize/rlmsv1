@@ -545,7 +545,8 @@ class _ClockInPageState extends State<ClockInPage>
     try {
       // Cancel any ongoing operations to free up the sensor
       await _fingerprintService.cancelEnrollment().catchError((e) {
-        debugPrint('[INIT] Cancel enrollment error (expected on first run): $e');
+        debugPrint(
+            '[INIT] Cancel enrollment error (expected on first run): $e');
       });
 
       await Future.delayed(const Duration(milliseconds: 500));
@@ -808,7 +809,8 @@ class _ClockInPageState extends State<ClockInPage>
 
             // Check if online - if so, try immediate sync first
             final connectivityCheck = await _checkConnectivity();
-            debugPrint('[CLOCK_IN] Connectivity check result: $connectivityCheck');
+            debugPrint(
+                '[CLOCK_IN] Connectivity check result: $connectivityCheck');
             debugPrint('[CLOCK_IN] _isConnected state: $_isConnected');
 
             if (connectivityCheck) {
@@ -816,7 +818,8 @@ class _ClockInPageState extends State<ClockInPage>
                   '[CLOCK_IN] ========== ONLINE MODE - SYNCING TO SERVER ==========');
               try {
                 synced = await syncSingleClockIn(attendance);
-                debugPrint('[CLOCK_IN] ========== SYNC RESULT: $synced ==========');
+                debugPrint(
+                    '[CLOCK_IN] ========== SYNC RESULT: $synced ==========');
               } catch (e) {
                 debugPrint('[CLOCK_IN] ========== SYNC FAILED: $e ==========');
                 synced = false;
@@ -863,7 +866,7 @@ class _ClockInPageState extends State<ClockInPage>
             initMonitoring(int.parse(learnerId));
 
             if (!mounted) return;
-            
+
             // Show appropriate message
             if (synced) {
               debugPrint('[CLOCK_IN] ✅ Clock-in synced to server successfully');
@@ -927,7 +930,8 @@ class _ClockInPageState extends State<ClockInPage>
               }
 
               // GEOFENCING CHECK: Verify user is within 50 meters before allowing clock-out
-              debugPrint('[CLOCK_OUT] Fingerprint matched - checking geofence...');
+              debugPrint(
+                  '[CLOCK_OUT] Fingerprint matched - checking geofence...');
               bool withinRadius = await _checkLocationAndRadius();
 
               if (!withinRadius) {
@@ -953,7 +957,8 @@ class _ClockInPageState extends State<ClockInPage>
                   timeLimit: const Duration(seconds: 20), // Increased timeout
                 );
               } catch (e) {
-                debugPrint('[CLOCK_OUT] High accuracy failed, trying cached: $e');
+                debugPrint(
+                    '[CLOCK_OUT] High accuracy failed, trying cached: $e');
                 position = await Geolocator.getLastKnownPosition();
                 if (position != null) {
                   final age = DateTime.now().difference(position.timestamp);
@@ -1405,7 +1410,8 @@ class _ClockInPageState extends State<ClockInPage>
       );
 
       if (learnerResult.isEmpty) {
-        debugPrint('[ATTENDANCE_BREAKDOWN] Learner not found in local database');
+        debugPrint(
+            '[ATTENDANCE_BREAKDOWN] Learner not found in local database');
         return _getFallbackAttendanceBreakdown(learnerId, monthStr);
       }
 
@@ -1715,7 +1721,8 @@ class _ClockInPageState extends State<ClockInPage>
 
   Future<bool> _checkLocationAndRadius() async {
     try {
-      debugPrint('[GEOFENCE] Acquiring secure GPS position (foreground stream)...');
+      debugPrint(
+          '[GEOFENCE] Acquiring secure GPS position (foreground stream)...');
       final secure = await SecureLocationService.getSecurePosition();
       final position = secure.position;
 
@@ -1842,7 +1849,8 @@ class _ClockInPageState extends State<ClockInPage>
           '[GEOFENCE] Distance to site for classID $classID: ${distance.toStringAsFixed(2)} meters');
       debugPrint('[GEOFENCE] Site coordinates: $siteLat, $siteLon');
       debugPrint('[GEOFENCE] User coordinates: $userLat, $userLon');
-      debugPrint('[GEOFENCE] User accuracy: ${userAccuracy.toStringAsFixed(1)}m');
+      debugPrint(
+          '[GEOFENCE] User accuracy: ${userAccuracy.toStringAsFixed(1)}m');
 
       // Dynamic geofence radius with 60m cap: min(50m + accuracy, 60m)
       final baseRadius = 50.0;
@@ -1853,7 +1861,8 @@ class _ClockInPageState extends State<ClockInPage>
           : calculatedRadius;
 
       debugPrint('[GEOFENCE] Base radius: ${baseRadius}m');
-      debugPrint('[GEOFENCE] GPS accuracy: ${userAccuracy.toStringAsFixed(1)}m');
+      debugPrint(
+          '[GEOFENCE] GPS accuracy: ${userAccuracy.toStringAsFixed(1)}m');
       debugPrint(
           '[GEOFENCE] Calculated radius: ${calculatedRadius.toStringAsFixed(1)}m (${baseRadius}m + ${userAccuracy.toStringAsFixed(1)}m)');
       debugPrint(
@@ -1964,7 +1973,7 @@ class _ClockInPageState extends State<ClockInPage>
 
       if (!mounted) return;
       if (!context.mounted) return;
-      
+
       if (learner == null) {
         FingerprintErrorHandler.showError(
           context,
@@ -2572,7 +2581,8 @@ class _ClockInPageState extends State<ClockInPage>
       // User cancelled or time is wrong - block clock-in
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Clock-in cancelled: Device time must be corrected first'),
+          content:
+              Text('Clock-in cancelled: Device time must be corrected first'),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
         ),
@@ -2621,14 +2631,16 @@ class _ClockInPageState extends State<ClockInPage>
         learnerId,
         await _getLearnerForValidation(learnerId),
       );
-      debugPrint('[CLOCK_IN] SIMPLIFIED: Bank details check result: $strictBankOk');
+      debugPrint(
+          '[CLOCK_IN] SIMPLIFIED: Bank details check result: $strictBankOk');
 
       // CRASH FIX: Don't block flow based on bank check result
       // The bank details dialog will handle missing data if needed
       debugPrint(
           '[CLOCK_IN] SIMPLIFIED: Bank details check completed - continuing flow');
     } catch (e) {
-      debugPrint('[CLOCK_IN] SIMPLIFIED: ERROR in bank details check (ignored): $e');
+      debugPrint(
+          '[CLOCK_IN] SIMPLIFIED: ERROR in bank details check (ignored): $e');
       // Continue with flow - don't let bank details check block clock-in
     }
 
@@ -2660,14 +2672,16 @@ class _ClockInPageState extends State<ClockInPage>
     }
 
     // ===== NOW CHECK SCANNER (AFTER ALL MANDATORY CHECKS) =====
-    debugPrint('[CLOCK_IN] All mandatory checks complete. Now detecting scanner...');
+    debugPrint(
+        '[CLOCK_IN] All mandatory checks complete. Now detecting scanner...');
     final scanner = await _detectScanner();
 
     if (!mounted) return;
     if (!context.mounted) return;
-    
+
     if (scanner == 'none') {
-      debugPrint('[CLOCK_IN] No scanner detected - showing backup method dialog');
+      debugPrint(
+          '[CLOCK_IN] No scanner detected - showing backup method dialog');
       final useBackup = await _showBackupMethodDialog();
       if (!mounted) return;
       if (!context.mounted) return;
@@ -2812,17 +2826,19 @@ class _ClockInPageState extends State<ClockInPage>
     if (scanner == 'futronic') {
       if (hasFutLeft && hasFutRight) {
         guidance = 'Place either thumb on Futronic scanner for clock-in...';
-      } else if (hasFutLeft)
+      } else if (hasFutLeft) {
         guidance = 'Place LEFT thumb on Futronic scanner for clock-in...';
-      else if (hasFutRight)
+      } else if (hasFutRight) {
         guidance = 'Place RIGHT thumb on Futronic scanner for clock-in...';
+      }
     } else if (scanner == 'zkteco') {
       if (hasZkLeft && hasZkRight) {
         guidance = 'Place either thumb on ZKTeco scanner for clock-in...';
-      } else if (hasZkLeft)
+      } else if (hasZkLeft) {
         guidance = 'Place LEFT thumb on ZKTeco scanner for clock-in...';
-      else if (hasZkRight)
+      } else if (hasZkRight) {
         guidance = 'Place RIGHT thumb on ZKTeco scanner for clock-in...';
+      }
     }
     _showProgressDialog(guidance);
 
@@ -2920,7 +2936,8 @@ class _ClockInPageState extends State<ClockInPage>
           return;
         }
 
-        debugPrint('[CLOCK_IN] ✅ Geofence check passed - proceeding with clock-in');
+        debugPrint(
+            '[CLOCK_IN] ✅ Geofence check passed - proceeding with clock-in');
 
         final now = _getCurrentTimeString();
         final date = _getCurrentDateString();
@@ -2999,7 +3016,8 @@ class _ClockInPageState extends State<ClockInPage>
         debugPrint('[CLOCK_IN] Final sync result: $synced');
 
         if (synced) {
-          debugPrint('[CLOCK_IN] Sync SUCCESS - saving to local DB with synced=1');
+          debugPrint(
+              '[CLOCK_IN] Sync SUCCESS - saving to local DB with synced=1');
           // Sync successful - save to local database with synced=1
           final dbData = {
             'LearnerID': learnerId,
@@ -3023,7 +3041,8 @@ class _ClockInPageState extends State<ClockInPage>
                 backgroundColor: Colors.blue),
           );
         } else {
-          debugPrint('[CLOCK_IN] Sync FAILED - saving to local DB with synced=0');
+          debugPrint(
+              '[CLOCK_IN] Sync FAILED - saving to local DB with synced=0');
           // Sync failed - save to local database with synced=0 for later sync
           final dbData = {
             'LearnerID': learnerId,
@@ -3194,7 +3213,8 @@ class _ClockInPageState extends State<ClockInPage>
       return false;
     }
 
-    debugPrint('[PROFILE_CHECK] SIMPLIFIED: Checking bank details completeness...');
+    debugPrint(
+        '[PROFILE_CHECK] SIMPLIFIED: Checking bank details completeness...');
     try {
       // CRASH FIX: Check mounted state before bank details check
       if (!mounted) {
@@ -3326,7 +3346,8 @@ class _ClockInPageState extends State<ClockInPage>
         return true;
       }
 
-      debugPrint('[BANK_CAPTURE] SIMPLIFIED: Showing missing bank details snackbar');
+      debugPrint(
+          '[BANK_CAPTURE] SIMPLIFIED: Showing missing bank details snackbar');
       try {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -3363,7 +3384,8 @@ class _ClockInPageState extends State<ClockInPage>
           '[BANK_CAPTURE] SIMPLIFIED: Bank details flow completed - returning true');
       return true;
     } catch (e) {
-      debugPrint('[BANK_CAPTURE] SIMPLIFIED: ERROR in bank details function: $e');
+      debugPrint(
+          '[BANK_CAPTURE] SIMPLIFIED: ERROR in bank details function: $e');
       // Always return true to prevent blocking the flow
       return true;
     }
@@ -3443,7 +3465,8 @@ class _ClockInPageState extends State<ClockInPage>
   Future<Map<String, dynamic>?> _checkOnlineBankDetails(
       String learnerId) async {
     try {
-      debugPrint('[ONLINE_BANK] Checking online database for learner: $learnerId');
+      debugPrint(
+          '[ONLINE_BANK] Checking online database for learner: $learnerId');
 
       final url = Uri.parse(AppConfig.checkBankDetailsUrl);
       final response = await http.post(
@@ -3492,7 +3515,8 @@ class _ClockInPageState extends State<ClockInPage>
   Future<bool> _showBankDetailsCaptureDialog(
       String learnerId, Map<String, dynamic> existingBank) async {
     debugPrint('[BANK_DIALOG] ========== STARTING BANK DIALOG ==========');
-    debugPrint('[BANK_DIALOG] Starting bank details dialog for learner: $learnerId');
+    debugPrint(
+        '[BANK_DIALOG] Starting bank details dialog for learner: $learnerId');
     debugPrint('[BANK_DIALOG] Existing bank data: $existingBank');
     debugPrint('[BANK_DIALOG] Widget mounted status: $mounted');
     debugPrint('[BANK_DIALOG] Context hashCode: ${context.hashCode}');
@@ -3514,7 +3538,8 @@ class _ClockInPageState extends State<ClockInPage>
           '[BANK_DIALOG] Updated branch code from bank selection: "${branchCodeController.text}"');
     }
 
-    debugPrint('[BANK_DIALOG] About to call showDialog - context mounted: $mounted');
+    debugPrint(
+        '[BANK_DIALOG] About to call showDialog - context mounted: $mounted');
     debugPrint('[BANK_DIALOG] Context widget: ${context.widget.runtimeType}');
 
     Map<String, String>? submittedBankData;
@@ -3744,7 +3769,8 @@ class _ClockInPageState extends State<ClockInPage>
                       } catch (e) {
                         debugPrint(
                             '[BANK_DIALOG] CRITICAL ERROR closing dialog: $e');
-                        debugPrint('[BANK_DIALOG] Error type: ${e.runtimeType}');
+                        debugPrint(
+                            '[BANK_DIALOG] Error type: ${e.runtimeType}');
                         debugPrint(
                             '[BANK_DIALOG] Stack trace: ${StackTrace.current}');
 
@@ -3890,7 +3916,8 @@ class _ClockInPageState extends State<ClockInPage>
 
   Future<bool> _upsertLearnerBankDetailsLocal(
       String learnerId, Map<String, dynamic> bankData) async {
-    debugPrint('[BANK_SAVE] ========== STARTING BANK SAVE OPERATION ==========');
+    debugPrint(
+        '[BANK_SAVE] ========== STARTING BANK SAVE OPERATION ==========');
     debugPrint('[BANK_SAVE] Starting save for learner: $learnerId');
     debugPrint('[BANK_SAVE] Bank data: $bankData');
     debugPrint('[BANK_SAVE] Widget mounted: $mounted');
@@ -3969,7 +3996,8 @@ class _ClockInPageState extends State<ClockInPage>
               )
               .timeout(const Duration(seconds: 10));
 
-          debugPrint('[BANK_SAVE] Online response status: ${response.statusCode}');
+          debugPrint(
+              '[BANK_SAVE] Online response status: ${response.statusCode}');
           debugPrint('[BANK_SAVE] Online response body: ${response.body}');
 
           if (response.statusCode == 200) {
@@ -3977,7 +4005,8 @@ class _ClockInPageState extends State<ClockInPage>
             debugPrint('[BANK_SAVE] Online response data: $responseData');
 
             if (responseData['success'] == true) {
-              debugPrint('[BANK_SAVE] Online save successful, marking as synced...');
+              debugPrint(
+                  '[BANK_SAVE] Online save successful, marking as synced...');
               // Mark as synced if online save was successful
               await db.update(
                 'bankdetails',
@@ -5083,17 +5112,19 @@ class _ClockInPageState extends State<ClockInPage>
     if (scanner == 'futronic') {
       if (hasFutLeft && hasFutRight) {
         guidance = 'Place either thumb on Futronic scanner for clock-out...';
-      } else if (hasFutLeft)
+      } else if (hasFutLeft) {
         guidance = 'Place LEFT thumb on Futronic scanner for clock-out...';
-      else if (hasFutRight)
+      } else if (hasFutRight) {
         guidance = 'Place RIGHT thumb on Futronic scanner for clock-out...';
+      }
     } else if (scanner == 'zkteco') {
       if (hasZkLeft && hasZkRight) {
         guidance = 'Place either thumb on ZKTeco scanner for clock-out...';
-      } else if (hasZkLeft)
+      } else if (hasZkLeft) {
         guidance = 'Place LEFT thumb on ZKTeco scanner for clock-out...';
-      else if (hasZkRight)
+      } else if (hasZkRight) {
         guidance = 'Place RIGHT thumb on ZKTeco scanner for clock-out...';
+      }
     }
     _showProgressDialog(guidance);
 
@@ -5243,7 +5274,8 @@ class _ClockInPageState extends State<ClockInPage>
 
         // Check if online - if so, try immediate sync first
         if (_isConnected) {
-          debugPrint('[CLOCK_OUT] Online - attempting immediate server sync...');
+          debugPrint(
+              '[CLOCK_OUT] Online - attempting immediate server sync...');
           try {
             synced = await syncSingleClockOut(attendance);
             debugPrint('[CLOCK_OUT] Immediate sync result: $synced');
@@ -5271,7 +5303,8 @@ class _ClockInPageState extends State<ClockInPage>
         debugPrint('[CLOCK_OUT] Final sync result: $synced');
 
         if (synced) {
-          debugPrint('[CLOCK_OUT] Sync SUCCESS - updating local DB with synced=1');
+          debugPrint(
+              '[CLOCK_OUT] Sync SUCCESS - updating local DB with synced=1');
           // Sync successful - update local database with synced=1
           final updatedAttendance = {
             'clock_out_time': now,
@@ -5289,7 +5322,8 @@ class _ClockInPageState extends State<ClockInPage>
                 backgroundColor: Colors.blue),
           );
         } else {
-          debugPrint('[CLOCK_OUT] Sync FAILED - updating local DB with synced=0');
+          debugPrint(
+              '[CLOCK_OUT] Sync FAILED - updating local DB with synced=0');
           // Sync failed - update local database with synced=0 for later sync
           final updatedAttendance = {
             'clock_out_time': now,
@@ -5372,7 +5406,8 @@ class _ClockInPageState extends State<ClockInPage>
       debugPrint('[INIT] Offline records sync completed');
     } else {
       // Offline mode: Load only from local database
-      debugPrint('[INIT] Offline mode - loading learners from local database only');
+      debugPrint(
+          '[INIT] Offline mode - loading learners from local database only');
     }
 
     await _loadLearnersFromLocalDatabase();
@@ -5523,12 +5558,14 @@ class _ClockInPageState extends State<ClockInPage>
         }
         return;
       } catch (e) {
-        debugPrint('[SYNC] Bulk sync failed: $e, falling back to individual sync');
+        debugPrint(
+            '[SYNC] Bulk sync failed: $e, falling back to individual sync');
         // Fall through to individual sync if bulk fails
       }
     }
 
-    debugPrint('[SYNC] Using INDIVIDUAL sync for ${offlineRecords.length} records');
+    debugPrint(
+        '[SYNC] Using INDIVIDUAL sync for ${offlineRecords.length} records');
 
     int successCount = 0;
     int failureCount = 0;
@@ -6086,8 +6123,8 @@ class _ClockInPageState extends State<ClockInPage>
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: _isConnected
-                    ? Colors.green.withOpacity(0.1)
-                    : Colors.red.withOpacity(0.1),
+                    ? Colors.green.withValues(alpha: 0.1)
+                    : Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: _isConnected ? Colors.green : Colors.red,
@@ -6315,14 +6352,14 @@ class _ClockInPageState extends State<ClockInPage>
                           horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: _currentGpsAccuracy == null
-                            ? Colors.grey.withOpacity(0.1)
+                            ? Colors.grey.withValues(alpha: 0.1)
                             : (!_isWithinRange && _siteLat != null
-                                ? Colors.red.withOpacity(0.1)
+                                ? Colors.red.withValues(alpha: 0.1)
                                 : (_currentGpsAccuracy! <= 25
-                                    ? Colors.green.withOpacity(0.1)
+                                    ? Colors.green.withValues(alpha: 0.1)
                                     : (_currentGpsAccuracy! <= 60
-                                        ? Colors.orange.withOpacity(0.1)
-                                        : Colors.red.withOpacity(0.1)))),
+                                        ? Colors.orange.withValues(alpha: 0.1)
+                                        : Colors.red.withValues(alpha: 0.1)))),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: _currentGpsAccuracy == null
@@ -6391,8 +6428,8 @@ class _ClockInPageState extends State<ClockInPage>
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
                           color: _isSensorConnected
-                              ? Colors.green.withOpacity(0.1)
-                              : Colors.red.withOpacity(0.1),
+                              ? Colors.green.withValues(alpha: 0.1)
+                              : Colors.red.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color:
@@ -6466,7 +6503,7 @@ class _ClockInPageState extends State<ClockInPage>
                           margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.1),
+                            color: Colors.orange.withValues(alpha: 0.1),
                             border: Border.all(color: Colors.orange),
                             borderRadius: BorderRadius.circular(8),
                           ),

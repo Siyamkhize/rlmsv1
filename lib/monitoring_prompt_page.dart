@@ -299,7 +299,7 @@ class _MonitoringPromptPageState extends State<MonitoringPromptPage>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 32, vertical: 16),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.white, width: 2),
                     ),
@@ -377,7 +377,7 @@ class _MonitoringPromptPageState extends State<MonitoringPromptPage>
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Row(

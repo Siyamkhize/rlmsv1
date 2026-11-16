@@ -615,18 +615,20 @@ class _POESubmitPageState extends State<POESubmitPage> {
         if (hasFutLeft && hasFutRight) {
           guidance =
               'Place either thumb on Futronic scanner for verification...';
-        } else if (hasFutLeft)
+        } else if (hasFutLeft) {
           guidance = 'Place LEFT thumb on Futronic scanner for verification...';
-        else if (hasFutRight)
+        } else if (hasFutRight) {
           guidance =
               'Place RIGHT thumb on Futronic scanner for verification...';
+        }
       } else if (scanner == 'zkteco') {
         if (hasZkLeft && hasZkRight) {
           guidance = 'Place either thumb on ZKTeco scanner for verification...';
-        } else if (hasZkLeft)
+        } else if (hasZkLeft) {
           guidance = 'Place LEFT thumb on ZKTeco scanner for verification...';
-        else if (hasZkRight)
+        } else if (hasZkRight) {
           guidance = 'Place RIGHT thumb on ZKTeco scanner for verification...';
+        }
       }
 
       debugPrint('[POE_SUBMIT] Guidance: $guidance');
@@ -664,7 +666,8 @@ class _POESubmitPageState extends State<POESubmitPage> {
             );
             debugPrint('[POE_SUBMIT] Futronic verification result: $match');
           } catch (futronicError) {
-            debugPrint('[POE_SUBMIT] Futronic verification error: $futronicError');
+            debugPrint(
+                '[POE_SUBMIT] Futronic verification error: $futronicError');
             _hideProgressDialog();
 
             // Provide specific error messages for common Futronic issues - EXACT SAME AS CLOCK_IN_PAGE
@@ -787,7 +790,8 @@ class _POESubmitPageState extends State<POESubmitPage> {
       }
     }
 
-    debugPrint('[POE_SUBMIT] ❌ No Futronic scanner detected after all attempts');
+    debugPrint(
+        '[POE_SUBMIT] ❌ No Futronic scanner detected after all attempts');
     return 'none';
   }
 
@@ -1326,7 +1330,8 @@ class _POESubmitPageState extends State<POESubmitPage> {
         return false;
       }
 
-      debugPrint('[POE_GEOFENCE] ✅ Within 50 meter radius - POE collection allowed');
+      debugPrint(
+          '[POE_GEOFENCE] ✅ Within 50 meter radius - POE collection allowed');
       return true;
     } catch (e, stackTrace) {
       debugPrint(

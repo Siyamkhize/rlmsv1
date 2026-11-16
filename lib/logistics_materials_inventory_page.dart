@@ -268,7 +268,7 @@ class _LogisticsMaterialsInventoryPageState
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: _getMaterialTypeColor(mat).withOpacity(0.2),
+                            color: _getMaterialTypeColor(mat).withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: _getMaterialTypeColor(mat),

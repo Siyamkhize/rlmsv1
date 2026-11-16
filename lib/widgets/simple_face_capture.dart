@@ -811,14 +811,14 @@ class _SimpleFaceCaptureState extends State<SimpleFaceCapture>
                                 boxShadow: _qualityColor == Colors.green
                                     ? [
                                         BoxShadow(
-                                          color: Colors.green.withOpacity(0.55),
+                                          color: Colors.green.withValues(alpha: 0.55),
                                           blurRadius: 22,
                                           spreadRadius: 3,
                                         ),
                                       ]
                                     : [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(0.18),
+                                          color: Colors.black.withValues(alpha: 0.18),
                                           blurRadius: 10,
                                           spreadRadius: 1,
                                         ),
@@ -850,7 +850,7 @@ class _SimpleFaceCaptureState extends State<SimpleFaceCapture>
                                           _alignmentHint,
                                           style: TextStyle(
                                             color:
-                                                Colors.white.withOpacity(0.95),
+                                                Colors.white.withValues(alpha: 0.95),
                                             fontSize: 13.5,
                                             height: 1.2,
                                           ),
@@ -880,10 +880,10 @@ class _SimpleFaceCaptureState extends State<SimpleFaceCapture>
                                       vertical: 10,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.75),
+                                      color: Colors.black.withValues(alpha: 0.75),
                                       borderRadius: BorderRadius.circular(24),
                                       border: Border.all(
-                                        color: Colors.white.withOpacity(0.3),
+                                        color: Colors.white.withValues(alpha: 0.3),
                                         width: 1.5,
                                       ),
                                     ),
@@ -914,7 +914,7 @@ class _SimpleFaceCaptureState extends State<SimpleFaceCapture>
                                         Icon(
                                           Icons.flip_camera_android,
                                           color: _isSwitchingCamera
-                                              ? Colors.white.withOpacity(0.5)
+                                              ? Colors.white.withValues(alpha: 0.5)
                                               : Colors.white,
                                           size: 22,
                                         ),
@@ -1033,7 +1033,7 @@ class FaceGuidePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final isAligned = qualityColor == Colors.green;
 
-    final bgPaint = Paint()..color = Colors.black.withOpacity(0.35);
+    final bgPaint = Paint()..color = Colors.black.withValues(alpha: 0.35);
     final outerPath = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
     final ovalPath = Path()..addOval(ovalRect);
@@ -1044,18 +1044,18 @@ class FaceGuidePainter extends CustomPainter {
       final glowOuter = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 26
-        ..color = Colors.green.withOpacity(0.22);
+        ..color = Colors.green.withValues(alpha: 0.22);
       final glowMid = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 16
-        ..color = Colors.greenAccent.withOpacity(0.35);
+        ..color = Colors.greenAccent.withValues(alpha: 0.35);
       canvas.drawOval(ovalRect.inflate(10), glowOuter);
       canvas.drawOval(ovalRect.inflate(5), glowMid);
     } else {
       final glowPaint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 12
-        ..color = qualityColor.withOpacity(0.28);
+        ..color = qualityColor.withValues(alpha: 0.28);
       canvas.drawOval(ovalRect, glowPaint);
     }
 
@@ -1125,7 +1125,7 @@ class FaceGuidePainter extends CustomPainter {
         final glowBox = Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 8
-          ..color = Colors.greenAccent.withOpacity(0.25);
+          ..color = Colors.greenAccent.withValues(alpha: 0.25);
         canvas.drawRect(rect.inflate(3), glowBox);
       }
     }

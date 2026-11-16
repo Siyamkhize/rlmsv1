@@ -167,7 +167,8 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {
-        debugPrint('❌ No internet connection. Attempting local database fetch...');
+        debugPrint(
+            '❌ No internet connection. Attempting local database fetch...');
         await fetchLearnerss(widget.classID);
         return;
       }
@@ -583,7 +584,8 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('Building POE Collection Table with ${learners.length} learners');
+    debugPrint(
+        'Building POE Collection Table with ${learners.length} learners');
     debugPrint('Qualification Name in UI: $qualification_name');
     return Scaffold(
       appBar: AppBar(
@@ -1624,7 +1626,8 @@ class _POECollectionPageState extends State<POECollectionPage> {
       if (scanner == 'futronic' &&
           !(hasFutLeft || hasFutRight) &&
           (hasZkLeft || hasZkRight)) {
-        debugPrint('[POE_COLLECT] ❌ Futronic scanner but only ZKTeco templates');
+        debugPrint(
+            '[POE_COLLECT] ❌ Futronic scanner but only ZKTeco templates');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -1637,7 +1640,8 @@ class _POECollectionPageState extends State<POECollectionPage> {
       if (scanner == 'zkteco' &&
           !(hasZkLeft || hasZkRight) &&
           (hasFutLeft || hasFutRight)) {
-        debugPrint('[POE_COLLECT] ❌ ZKTeco scanner but only Futronic templates');
+        debugPrint(
+            '[POE_COLLECT] ❌ ZKTeco scanner but only Futronic templates');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -1676,18 +1680,20 @@ class _POECollectionPageState extends State<POECollectionPage> {
         if (hasFutLeft && hasFutRight) {
           guidance =
               'Place either thumb on Futronic scanner for verification...';
-        } else if (hasFutLeft)
+        } else if (hasFutLeft) {
           guidance = 'Place LEFT thumb on Futronic scanner for verification...';
-        else if (hasFutRight)
+        } else if (hasFutRight) {
           guidance =
               'Place RIGHT thumb on Futronic scanner for verification...';
+        }
       } else if (scanner == 'zkteco') {
         if (hasZkLeft && hasZkRight) {
           guidance = 'Place either thumb on ZKTeco scanner for verification...';
-        } else if (hasZkLeft)
+        } else if (hasZkLeft) {
           guidance = 'Place LEFT thumb on ZKTeco scanner for verification...';
-        else if (hasZkRight)
+        } else if (hasZkRight) {
           guidance = 'Place RIGHT thumb on ZKTeco scanner for verification...';
+        }
       }
 
       debugPrint('[POE_COLLECT] Guidance: $guidance');
@@ -1696,7 +1702,8 @@ class _POECollectionPageState extends State<POECollectionPage> {
       // Perform fingerprint verification
       try {
         bool match = false;
-        debugPrint('[POE_COLLECT] Starting verification with scanner: $scanner');
+        debugPrint(
+            '[POE_COLLECT] Starting verification with scanner: $scanner');
 
         if (scanner == 'zkteco') {
           debugPrint(
@@ -1723,7 +1730,8 @@ class _POECollectionPageState extends State<POECollectionPage> {
             );
             debugPrint('[POE_COLLECT] Futronic verification result: $match');
           } catch (futronicError) {
-            debugPrint('[POE_COLLECT] Futronic verification error: $futronicError');
+            debugPrint(
+                '[POE_COLLECT] Futronic verification error: $futronicError');
             _hideProgressDialog(context);
 
             // Provide specific error messages for common Futronic issues
@@ -1846,7 +1854,8 @@ class _POECollectionPageState extends State<POECollectionPage> {
       }
     }
 
-    debugPrint('[POE_COLLECT] ❌ No Futronic scanner detected after all attempts');
+    debugPrint(
+        '[POE_COLLECT] ❌ No Futronic scanner detected after all attempts');
     return 'none';
   }
 

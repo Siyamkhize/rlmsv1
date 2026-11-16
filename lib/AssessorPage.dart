@@ -258,7 +258,7 @@ class _AssessorPageState extends State<AssessorPage> {
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.1),
+          backgroundColor: color.withValues(alpha: 0.1),
           child: Icon(icon, color: color),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -695,10 +695,10 @@ class _AssessmentPreparationPageState extends State<AssessmentPreparationPage> {
                         padding: const EdgeInsets.all(12),
                         margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          color: Colors.indigo.withOpacity(0.1),
+                          color: Colors.indigo.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
-                          border:
-                              Border.all(color: Colors.indigo.withOpacity(0.3)),
+                          border: Border.all(
+                              color: Colors.indigo.withValues(alpha: 0.3)),
                         ),
                         child: Text(
                           'Candidate: ${selectedLearner['Name']} ${selectedLearner['Surname']}',
@@ -1847,7 +1847,8 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
 
       debugPrint('[ClassDetailsPage] Response Status: ${response.statusCode}');
       debugPrint('[ClassDetailsPage] Response Headers: ${response.headers}');
-      debugPrint('[ClassDetailsPage] Response Body Length: ${response.body.length}');
+      debugPrint(
+          '[ClassDetailsPage] Response Body Length: ${response.body.length}');
       debugPrint(
           '[ClassDetailsPage] Response Body (get_learners): ${response.body}');
 
@@ -1889,7 +1890,8 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
                 debugPrint('POE Data for learner $learnerId: $poeData');
               } catch (e) {
                 learner['poeData'] = {'pathways': {}};
-                debugPrint('Failed to parse POE JSON for learner $learnerId: $e');
+                debugPrint(
+                    'Failed to parse POE JSON for learner $learnerId: $e');
               }
             }
           } else {
@@ -3287,7 +3289,8 @@ class _POETabState extends State<POETab> {
                 'DEBUG Pothole: No checklist on server - ${data['message'] ?? 'Unknown error'}');
           }
         } else {
-          debugPrint('DEBUG Pothole: Server returned status ${response.statusCode}');
+          debugPrint(
+              'DEBUG Pothole: Server returned status ${response.statusCode}');
         }
       } catch (e) {
         debugPrint('DEBUG Pothole: Error checking server: $e');
@@ -3366,7 +3369,8 @@ class _POETabState extends State<POETab> {
         ),
       );
     } else {
-      debugPrint('DEBUG: No action taken - type=$type, has data=${data != null}');
+      debugPrint(
+          'DEBUG: No action taken - type=$type, has data=${data != null}');
       debugPrint(
           'DEBUG: Expected document_path or checklist_items but got: ${data?.keys}');
     }
@@ -3529,7 +3533,8 @@ class _POETabState extends State<POETab> {
       final url = AppConfig.buildUrl('save_comment.php');
 
       debugPrint('[POETab] Saving comment to: $url');
-      debugPrint('[POETab] Assessment type: $assessmentType, isUpdate: $isUpdate');
+      debugPrint(
+          '[POETab] Assessment type: $assessmentType, isUpdate: $isUpdate');
 
       final response = await http.post(
         Uri.parse(url),
@@ -4604,10 +4609,10 @@ class _AssessmentReviewPageState extends State<AssessmentReviewPage> {
                         padding: const EdgeInsets.all(12),
                         margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          color: Colors.indigo.withOpacity(0.1),
+                          color: Colors.indigo.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
-                          border:
-                              Border.all(color: Colors.indigo.withOpacity(0.3)),
+                          border: Border.all(
+                              color: Colors.indigo.withValues(alpha: 0.3)),
                         ),
                         child: Text(
                           'Candidate: ${selectedLearner['Name']} ${selectedLearner['Surname']}',
@@ -5245,7 +5250,8 @@ class _AssessmentReviewDetailPageState
       scrollDirection: Axis.horizontal,
       child: DataTable(
         columnSpacing: 20,
-        dataRowHeight: 150,
+        dataRowMinHeight: 150,
+        dataRowMaxHeight: 150,
         columns: const [
           DataColumn(label: Text('Review Dimension')),
           DataColumn(
@@ -5636,9 +5642,11 @@ class _AppealFormDetailPageState extends State<AppealFormDetailPage> {
       setState(() {
         if (field == 'assessment') {
           _assessmentDate = picked;
-        } else if (field == 'candidate')
+        } else if (field == 'candidate') {
           _candidateDate = picked;
-        else if (field == 'assessor') _assessorDate = picked;
+        } else if (field == 'assessor') {
+          _assessorDate = picked;
+        }
       });
     }
   }
@@ -5768,7 +5776,8 @@ class _AppealFormDetailPageState extends State<AppealFormDetailPage> {
           body: jsonEncode(payload),
         );
 
-        debugPrint('Raw server response: ${response.body}'); // Debug raw response
+        debugPrint(
+            'Raw server response: ${response.body}'); // Debug raw response
 
         if (response.statusCode == 200) {
           try {
@@ -7572,7 +7581,8 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('DEBUG ViewPage: checklistData keys: ${widget.checklistData.keys}');
+    debugPrint(
+        'DEBUG ViewPage: checklistData keys: ${widget.checklistData.keys}');
     debugPrint(
         'DEBUG ViewPage: learner_name: ${widget.checklistData['learner_name']}');
     debugPrint(
@@ -9121,10 +9131,10 @@ class _ARPLEvidenceChecklistPageState extends State<ARPLEvidenceChecklistPage> {
                       padding: const EdgeInsets.all(16),
                       margin: const EdgeInsets.only(bottom: 24),
                       decoration: BoxDecoration(
-                        color: Colors.indigo.withOpacity(0.1),
+                        color: Colors.indigo.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
-                        border:
-                            Border.all(color: Colors.indigo.withOpacity(0.3)),
+                        border: Border.all(
+                            color: Colors.indigo.withValues(alpha: 0.3)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -9267,7 +9277,7 @@ class DualSignaturePad extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.indigo.withOpacity(0.2)),
+        border: Border.all(color: Colors.indigo.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -9856,10 +9866,10 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                           padding: const EdgeInsets.all(12),
                           margin: const EdgeInsets.only(bottom: 16),
                           decoration: BoxDecoration(
-                            color: Colors.indigo.withOpacity(0.1),
+                            color: Colors.indigo.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                                color: Colors.indigo.withOpacity(0.3)),
+                                color: Colors.indigo.withValues(alpha: 0.3)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -9967,9 +9977,9 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.1),
+              color: Colors.amber.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.amber.withOpacity(0.3)),
+              border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
             ),
             child: const Row(
               children: [
@@ -10022,9 +10032,9 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.05),
+              color: Colors.green.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.green.withOpacity(0.2)),
+              border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
             ),
             child: CheckboxListTile(
               title: const Text(
@@ -10099,7 +10109,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
             children: [
               TableRow(
                 decoration:
-                    BoxDecoration(color: Colors.indigo.withOpacity(0.08)),
+                    BoxDecoration(color: Colors.indigo.withValues(alpha: 0.08)),
                 children: const [
                   TableCell(
                     verticalAlignment: TableCellVerticalAlignment.middle,
@@ -10237,7 +10247,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                 border: Border.all(color: Colors.grey[200]!),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withValues(alpha: 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -10252,7 +10262,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                     children: [
                       CircleAvatar(
                         radius: 12,
-                        backgroundColor: Colors.indigo.withOpacity(0.1),
+                        backgroundColor: Colors.indigo.withValues(alpha: 0.1),
                         child: Text('${index + 1}',
                             style: const TextStyle(
                                 fontSize: 12,
@@ -10447,7 +10457,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         border: Border.all(color: Colors.grey[200]!),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -10459,7 +10469,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.05),
+              color: color.withValues(alpha: 0.05),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(12)),
             ),
@@ -10684,10 +10694,10 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
                       padding: const EdgeInsets.all(16),
                       margin: const EdgeInsets.only(bottom: 24),
                       decoration: BoxDecoration(
-                        color: Colors.indigo.withOpacity(0.1),
+                        color: Colors.indigo.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
-                        border:
-                            Border.all(color: Colors.indigo.withOpacity(0.3)),
+                        border: Border.all(
+                            color: Colors.indigo.withValues(alpha: 0.3)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

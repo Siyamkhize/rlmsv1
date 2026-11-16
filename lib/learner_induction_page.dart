@@ -1178,7 +1178,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
                                 return DataRow(
                                   color: isSearchedLearner
                                       ? WidgetStateProperty.all(
-                                          Colors.teal.withOpacity(0.2))
+                                          Colors.teal.withValues(alpha: 0.2))
                                       : null,
                                   cells: [
                                     DataCell(
@@ -1302,7 +1302,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
         ),
         if (_isVerifying)
           Container(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
             child: Center(
               child: AlertDialog(
                 content: Row(

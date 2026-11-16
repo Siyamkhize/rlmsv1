@@ -1188,7 +1188,7 @@ class _LoginPageState extends State<LoginPage> {
             child: CustomPaint(
               size: const Size(120, 120),
               painter: _CurvedLinesPainter(
-                color: const Color(0xFFD5EDFF).withOpacity(0.6),
+                color: const Color(0xFFD5EDFF).withValues(alpha: 0.6),
               ),
             ),
           ),
@@ -1198,7 +1198,7 @@ class _LoginPageState extends State<LoginPage> {
             child: CustomPaint(
               size: const Size(100, 100),
               painter: _CurvedLinesPainter(
-                color: const Color(0xFFD5EDFF).withOpacity(0.5),
+                color: const Color(0xFFD5EDFF).withValues(alpha: 0.5),
                 reverse: true,
               ),
             ),
@@ -1357,7 +1357,7 @@ class _LoginPageState extends State<LoginPage> {
                                   boxShadow: [
                                     BoxShadow(
                                       color: const Color(0xFF5BA4DE)
-                                          .withOpacity(0.25),
+                                          .withValues(alpha: 0.25),
                                       blurRadius: 16,
                                       offset: const Offset(0, 8),
                                     ),
@@ -1484,7 +1484,7 @@ class _LoginPageState extends State<LoginPage> {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.025),
+            color: Colors.black.withValues(alpha: 0.025),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),

@@ -608,7 +608,7 @@ class _ArplCompetencyScalePageState extends State<ArplCompetencyScalePage>
                                 ),
                                 color: rating == level
                                     ? _getLevelColor(level)
-                                        .withOpacity(0.2)
+                                        .withValues(alpha: 0.2)
                                     : Colors.transparent,
                               ),
                               child: Center(

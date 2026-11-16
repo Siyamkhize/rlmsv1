@@ -558,7 +558,7 @@ class _SimpleFaceCaptureState extends State<SimpleFaceCapture> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            color: _qualityColor.withOpacity(0.2),
+            color: _qualityColor.withValues(alpha: 0.2),
             child: Column(
               children: [
                 Row(
@@ -587,7 +587,7 @@ class _SimpleFaceCaptureState extends State<SimpleFaceCapture> {
                 Text(
                   _alignmentHint,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: _qualityColor.withOpacity(0.9)),
+                  style: TextStyle(color: _qualityColor.withValues(alpha: 0.9)),
                 ),
               ],
             ),
@@ -673,7 +673,7 @@ class _SimpleFaceCaptureState extends State<SimpleFaceCapture> {
                                 vertical: 10,
                               ),
                               decoration: BoxDecoration(
-                                color: _qualityColor.withOpacity(0.92),
+                                color: _qualityColor.withValues(alpha: 0.92),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Row(
@@ -699,7 +699,7 @@ class _SimpleFaceCaptureState extends State<SimpleFaceCapture> {
                                           _alignmentHint,
                                           style: TextStyle(
                                             color:
-                                                Colors.white.withOpacity(0.95),
+                                                Colors.white.withValues(alpha: 0.95),
                                             fontSize: 13,
                                           ),
                                         ),
@@ -802,7 +802,7 @@ class FaceGuidePainter extends CustomPainter {
     final glowPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = isAligned ? 16 : 10
-      ..color = qualityColor.withOpacity(0.28);
+      ..color = qualityColor.withValues(alpha: 0.28);
 
     final guidePaint = Paint()
       ..style = PaintingStyle.stroke
@@ -812,7 +812,7 @@ class FaceGuidePainter extends CustomPainter {
     final crossPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5
-      ..color = qualityColor.withOpacity(0.5);
+      ..color = qualityColor.withValues(alpha: 0.5);
 
     canvas.drawOval(ovalRect, glowPaint);
     canvas.drawOval(ovalRect, guidePaint);

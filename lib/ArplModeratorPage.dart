@@ -243,7 +243,7 @@ class _ArplModeratorPageState extends State<ArplModeratorPage> {
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.1),
+          backgroundColor: color.withValues(alpha: 0.1),
           child: Icon(icon, color: color),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -515,7 +515,7 @@ class _ArplModeratorPageState extends State<ArplModeratorPage> {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: color.withOpacity(0.1),
+                  backgroundColor: color.withValues(alpha: 0.1),
                   child: Icon(icon, color: color),
                 ),
                 const SizedBox(width: 12),
@@ -551,10 +551,10 @@ class _ArplModeratorPageState extends State<ArplModeratorPage> {
   }) {
     return Card(
       elevation: 3,
-      color: color.withOpacity(0.05),
+      color: color.withValues(alpha: 0.05),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: color.withOpacity(0.3)),
+        side: BorderSide(color: color.withValues(alpha: 0.3)),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
@@ -851,7 +851,7 @@ class _ArplModeratorClassDetailsPageState
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            color: const Color(0xFF6A1B9A).withOpacity(0.06),
+            color: const Color(0xFF6A1B9A).withValues(alpha: 0.06),
             child: const Row(
               children: [
                 Icon(Icons.gavel, color: Color(0xFF6A1B9A)),
@@ -1131,7 +1131,7 @@ class _ModeratorPracticalImagesSelectionPageState
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
-            color: const Color(0xFF6A1B9A).withOpacity(0.1),
+            color: const Color(0xFF6A1B9A).withValues(alpha: 0.1),
             child: const Row(
               children: [
                 Icon(Icons.photo_camera, color: Color(0xFF6A1B9A)),

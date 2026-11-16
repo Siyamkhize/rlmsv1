@@ -1938,7 +1938,7 @@ class _AdminPageState extends State<AdminPage> {
                                 ),
                                 onTap: () =>
                                     _selectSearchSuggestion(suggestion),
-                                hoverColor: Colors.blue.withOpacity(0.1),
+                                hoverColor: Colors.blue.withValues(alpha: 0.1),
                               );
                             },
                           ),

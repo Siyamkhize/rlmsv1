@@ -756,7 +756,7 @@ class _SdpLearnersPageState extends State<SdpLearnersPage> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.1),
+                            color: Colors.blue.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: const Text(
@@ -856,7 +856,7 @@ class _SdpLearnersPageState extends State<SdpLearnersPage> {
                         _isOnlineMode ? 'Online' : 'Offline',
                         style: const TextStyle(fontSize: 12),
                       ),
-                      backgroundColor: Colors.white.withOpacity(0.9),
+                      backgroundColor: Colors.white.withValues(alpha: 0.9),
                     ),
                     if (_isOnlineMode && _searchQuery.isNotEmpty) ...[
                       const SizedBox(width: 4),
@@ -865,7 +865,7 @@ class _SdpLearnersPageState extends State<SdpLearnersPage> {
                             size: 14, color: Colors.blue),
                         label:
                             const Text('Smart', style: TextStyle(fontSize: 10)),
-                        backgroundColor: Colors.blue.withOpacity(0.1),
+                        backgroundColor: Colors.blue.withValues(alpha: 0.1),
                       ),
                     ],
                     if (_isSyncing) ...[
@@ -970,7 +970,7 @@ class _SdpLearnersPageState extends State<SdpLearnersPage> {
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -991,7 +991,7 @@ class _SdpLearnersPageState extends State<SdpLearnersPage> {
                             style: const TextStyle(fontSize: 14),
                           ),
                           onTap: () => _selectSearchSuggestion(suggestion),
-                          hoverColor: Colors.blue.withOpacity(0.1),
+                          hoverColor: Colors.blue.withValues(alpha: 0.1),
                         );
                       },
                     ),

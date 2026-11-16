@@ -1330,7 +1330,7 @@ class _InductionPageState extends State<InductionPage> {
         ),
         if (_isVerifying)
           Container(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
             child: Center(
               child: AlertDialog(
                 content: Row(

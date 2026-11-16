@@ -1,27 +1,27 @@
-// Test script for enhanced clocking days functionality
+import 'package:flutter/foundation.dart';\n// Test script for enhanced clocking days functionality
 // This is a standalone test to verify the server API works
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 void main() async {
-  print('=== Testing Enhanced Clocking Days Count ===\n');
+  debugPrint('=== Testing Enhanced Clocking Days Count ===\n');
 
   // Test configuration
   const String baseUrl = 'https://rlms.rlms.co.za/mobile';
   const String testLearnerId = '1'; // Change this to a valid learner ID
 
   // Test 1: Get clocking days without including today
-  print('Test 1: Get clocking days (excluding today)');
+  debugPrint('Test 1: Get clocking days (excluding today)');
   await testClockingDaysCount(baseUrl, testLearnerId, false);
 
-  print('\n${'=' * 50}\n');
+  debugPrint('\n${'=' * 50}\n');
 
   // Test 2: Get clocking days including today
-  print('Test 2: Get clocking days (including today)');
+  debugPrint('Test 2: Get clocking days (including today)');
   await testClockingDaysCount(baseUrl, testLearnerId, true);
 
-  print('\n=== Test Complete ===');
+  debugPrint('\n=== Test Complete ===');
 }
 
 Future<void> testClockingDaysCount(
@@ -33,12 +33,12 @@ Future<void> testClockingDaysCount(
       'include_today': includeToday.toString(),
     });
 
-    print('Request URL: $uri');
+    debugPrint('Request URL: $uri');
 
     final response = await http.get(uri).timeout(const Duration(seconds: 10));
 
-    print('Status Code: ${response.statusCode}');
-    print('Response Body: ${response.body}');
+    debugPrint('Status Code: ${response.statusCode}');
+    debugPrint('Response Body: ${response.body}');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -47,21 +47,21 @@ Future<void> testClockingDaysCount(
         final workingDays = data['data']['working_days'];
         final month = data['data']['month'];
 
-        print('✅ SUCCESS:');
-        print('  - Learner ID: $learnerId');
-        print('  - Month: $month');
-        print('  - Clocking Days: $clockingDays');
-        print('  - Working Days: $workingDays');
-        print('  - Include Today: $includeToday');
-        print('  - Message: ${data['message']}');
+        debugPrint('✅ SUCCESS:');
+        debugPrint('  - Learner ID: $learnerId');
+        debugPrint('  - Month: $month');
+        debugPrint('  - Clocking Days: $clockingDays');
+        debugPrint('  - Working Days: $workingDays');
+        debugPrint('  - Include Today: $includeToday');
+        debugPrint('  - Message: ${data['message']}');
       } else {
-        print('❌ API Error: ${data['error']}');
+        debugPrint('❌ API Error: ${data['error']}');
       }
     } else {
-      print('❌ HTTP Error: ${response.statusCode}');
-      print('Response: ${response.body}');
+      debugPrint('❌ HTTP Error: ${response.statusCode}');
+      debugPrint('Response: ${response.body}');
     }
   } catch (e) {
-    print('❌ Exception: $e');
+    debugPrint('❌ Exception: $e');
   }
 }

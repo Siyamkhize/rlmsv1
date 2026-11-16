@@ -744,7 +744,7 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF6A1B9A).withOpacity(0.08),
+              color: const Color(0xFF6A1B9A).withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFF6A1B9A)),
             ),
@@ -785,7 +785,7 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
                   const SizedBox(height: 4),
                   Container(
                     padding: const EdgeInsets.all(8),
-                    color: Colors.green.withOpacity(0.1),
+                    color: Colors.green.withValues(alpha: 0.1),
                     child: Text(
                       '✅ Judgement submitted on ${_moderatorDecisionDate!.toLocal()}',
                       style: const TextStyle(color: Colors.green),
@@ -840,7 +840,7 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,
           foregroundColor: const Color(0xFF6A1B9A),
-          side: BorderSide(color: const Color(0xFF6A1B9A).withOpacity(0.4)),
+          side: BorderSide(color: const Color(0xFF6A1B9A).withValues(alpha: 0.4)),
           padding: const EdgeInsets.all(12),
         ),
         onPressed: () => _tabController!.animateTo(tabIndex),
@@ -875,7 +875,7 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
           Container(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
             decoration: BoxDecoration(
-              color: (accent ?? Colors.grey).withOpacity(0.1),
+              color: (accent ?? Colors.grey).withValues(alpha: 0.1),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(12)),
               border: Border(
@@ -927,7 +927,7 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF6A1B9A).withOpacity(0.05),
+        color: const Color(0xFF6A1B9A).withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF6A1B9A), width: 2),
       ),
@@ -1138,7 +1138,7 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: _competencyColor(item.competencyScaleId)
-                                .withOpacity(0.15),
+                                .withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(_competencyLabel(item.competencyScaleId),
@@ -1210,7 +1210,7 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
                                   horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: _competencyColor(item.competencyScaleId)
-                                    .withOpacity(0.15),
+                                    .withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -1448,8 +1448,8 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: percent >= 50
-                    ? Colors.green.withOpacity(0.1)
-                    : Colors.red.withOpacity(0.1),
+                    ? Colors.green.withValues(alpha: 0.1)
+                    : Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text('${percent.toStringAsFixed(0)}%',
@@ -1523,8 +1523,8 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
                                   horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
                                 color: r.recommendationId >= 2
-                                    ? Colors.green.withOpacity(0.15)
-                                    : Colors.red.withOpacity(0.15),
+                                    ? Colors.green.withValues(alpha: 0.15)
+                                    : Colors.red.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(recLabel,
@@ -1699,7 +1699,7 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFF6A1B9A).withOpacity(0.06),
+              color: const Color(0xFF6A1B9A).withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: const Color(0xFF6A1B9A), width: 2),
             ),
@@ -1817,7 +1817,7 @@ class _ArplToolkitModerationPageState extends State<ArplToolkitModerationPage>
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: selected ? color.withOpacity(0.1) : Colors.white,
+          color: selected ? color.withValues(alpha: 0.1) : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: selected ? color : Colors.grey.shade300,

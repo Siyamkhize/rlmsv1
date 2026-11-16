@@ -360,7 +360,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
                   }
 
                   return Card(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     child: Padding(
                       padding: const EdgeInsets.all(12.0),
                       child: Row(
@@ -384,7 +384,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
                                       ? 'Attempts: $scanAttempts/2 • Cooldown active'
                                       : 'Scans: $scanCount/3 • Attempts: $scanAttempts/2',
                                   style: TextStyle(
-                                    color: statusColor.withOpacity(0.8),
+                                    color: statusColor.withValues(alpha: 0.8),
                                     fontSize: 12,
                                   ),
                                 ),
