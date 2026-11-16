@@ -4512,7 +4512,6 @@ class ClassInfoPage extends StatelessWidget {
         mode: LaunchMode.externalApplication,
       );
       print('launchUrl result: $launched');
-      if (!mounted) return;
       if (!context.mounted) return;
       if (!launched) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -4521,7 +4520,6 @@ class ClassInfoPage extends StatelessWidget {
       }
     } catch (e) {
       print('Error launching URL: $e');
-      if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error launching URL: $e')),

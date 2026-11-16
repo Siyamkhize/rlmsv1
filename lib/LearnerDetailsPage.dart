@@ -4169,8 +4169,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                           '[DB_SYNC] ✅ In-memory learnerData refreshed with $fieldName: ${learnerData![fieldName]}');
                     }
 
-                    if (!mounted) return false;
-                    if (!context.mounted) return false;
+                    if (!mounted) return;
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('$fieldName saved locally')),
                     );
@@ -4188,8 +4188,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                         '[SIG_SAVE] Marked witness signature as already saved');
                   }
 
-                  if (!mounted) return false;
-                  if (!context.mounted) return false;
+                  if (!mounted) return;
+                  if (!context.mounted) return;
                   Navigator.pop(context);
                 }
               } else {
@@ -4288,15 +4288,15 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                         '[DB_SYNC] ✅ In-memory learnerData refreshed with $fieldName: ${learnerData![fieldName]}');
                   }
 
-                  if (!mounted) return false;
-                  if (!context.mounted) return false;
+                  if (!mounted) return;
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('$fieldName saved locally')),
                   );
                 }
                 saved = true;
-                if (!mounted) return false;
-                if (!context.mounted) return false;
+                if (!mounted) return;
+                if (!context.mounted) return;
                 Navigator.pop(context);
               }
             },
@@ -4548,7 +4548,6 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
             duration: const Duration(seconds: 2),
           ),
         );
-        }
       } else {
         print('No image captured - user cancelled');
       }
@@ -4634,7 +4633,6 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                 duration: const Duration(seconds: 2),
               ),
             );
-            }
           } else {
             throw Exception('Selected image file is empty');
           }
