@@ -69,13 +69,16 @@ jobs:
           path: reports/
       
       - name: 📊 Generate Security Summary
+        env:
+          REPO_NAME: ${{ github.repository }}
+          BRANCH_NAME: ${{ github.ref_name }}
         run: |
-          cat > security-summary.md << 'EOF'
+          cat > security-summary.md << EOF
           # Nightly Security Scan Summary
           
           **Date:** $(date)
-          **Repository:** ${{ github.repository }}
-          **Branch:** ${{ github.ref_name }}
+          **Repository:** ${REPO_NAME}
+          **Branch:** ${BRANCH_NAME}
           
           ## Scans Performed
           - ✅ Snyk Code Analysis
