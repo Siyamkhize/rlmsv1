@@ -59,12 +59,13 @@ jobs:
       
       - name: 📊 SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
+        continue-on-error: true  # Temporarily non-blocking until SonarCloud project is created
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
           args: >
-            -Dsonar.projectKey=rlmsv1
+            -Dsonar.projectKey=Siyamkhize_rlmsv1
             -Dsonar.organization=siyamkhize
             -Dsonar.branch.name=${{ github.ref_name }}
       
