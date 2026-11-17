@@ -386,7 +386,7 @@ class DatabaseHelper {
       'Title': _sanitizeString(rawData['Title']),
       'Name': _sanitizeRequiredString(rawData['Name'], 'Unknown'),
       'Surname': _sanitizeRequiredString(rawData['Surname'], 'Unknown'),
-      'IDNumber': _sanitizeRequiredString(rawData['IDNumber'], 'Unknown'),
+      'idNumber': _sanitizeRequiredString(rawData['idNumber'], 'Unknown'),
       'DateOfBirth': _sanitizeDate(rawData['DateOfBirth']),
       'PhoneNumber': _sanitizeString(rawData['PhoneNumber']),
       'Email': _sanitizeString(rawData['Email']),
@@ -1434,7 +1434,7 @@ class DatabaseHelper {
               Title VARCHAR(50) NOT NULL,
               Name VARCHAR(100) NOT NULL,
               Surname VARCHAR(100) NOT NULL,
-              IDNumber VARCHAR(20) NOT NULL,
+              idNumber VARCHAR(20) NOT NULL,
               DateOfBirth DATE NOT NULL,
               PhoneNumber VARCHAR(20),
               Email VARCHAR(100),
@@ -2576,7 +2576,7 @@ updated_at TIMESTAMP
               'Title': 'Mr',
               'Name': 'Test',
               'Surname': 'Learner',
-              'IDNumber': '0000000000000',
+              'idNumber': '0000000000000',
               'DateOfBirth': '1990-01-01',
               'PhoneNumber': '000-000-0000',
               'Email': 'test.learner@offline.local',
@@ -2649,7 +2649,7 @@ updated_at TIMESTAMP
               'Title': i % 2 == 0 ? 'Mr' : 'Ms',
               'Name': 'TestLearner$learnerNum',
               'Surname': 'Class$classID',
-              'IDNumber':
+              'idNumber':
                   (1990000000000 + learnerId).toString().padLeft(13, '0'),
               'DateOfBirth':
                   '199${(i % 10).toString()}-${((i % 12) + 1).toString().padLeft(2, '0')}-15',
@@ -2906,7 +2906,7 @@ updated_at TIMESTAMP
           'bank': bankDetails.isNotEmpty ? Map.from(bankDetails.first) : null,
         });
       } catch (e) {
-        debugPrint('Error preparing learner ${learner['IDNumber']}: $e');
+        debugPrint('Error preparing learner ${learner['idNumber']}: $e');
       }
     }
     final responseData = await _sendAllDataToBackend(allDataToSync);
@@ -2915,7 +2915,7 @@ updated_at TIMESTAMP
       for (var syncedLearner in syncedLearners) {
         try {
           await updateSyncedStatus(
-              syncedLearner['IDNumber'], syncedLearner['LearnerID']);
+              syncedLearner['idNumber'], syncedLearner['LearnerID']);
         } catch (e) {
           debugPrint('Error updating sync status: $e');
         }
@@ -3028,9 +3028,9 @@ updated_at TIMESTAMP
             (mappedData['Surname']?.toString().trim().isNotEmpty ?? false)
                 ? mappedData['Surname']
                 : 'N/A';
-        mappedData['IDNumber'] =
-            (mappedData['IDNumber']?.toString().trim().isNotEmpty ?? false)
-                ? mappedData['IDNumber']
+        mappedData['idNumber'] =
+            (mappedData['idNumber']?.toString().trim().isNotEmpty ?? false)
+                ? mappedData['idNumber']
                 : 'UNKNOWN';
         mappedData['DateOfBirth'] =
             (mappedData['DateOfBirth']?.toString().trim().isNotEmpty ?? false)
@@ -3060,7 +3060,7 @@ updated_at TIMESTAMP
         'Title': learnerData['Title'] ?? 'N/A',
         'Name': learnerData['Name'] ?? '',
         'Surname': learnerData['Surname'] ?? '',
-        'IDNumber': learnerData['IDNumber'] ?? '',
+        'idNumber': learnerData['idNumber'] ?? '',
         'DateOfBirth': learnerData['DateOfBirth'] ?? '1900-01-01',
         'PhoneNumber': learnerData['PhoneNumber'] ?? '',
         'Email': learnerData['Email'] ?? '',
@@ -3234,7 +3234,7 @@ updated_at TIMESTAMP
       l.LearnerID, 
       l.Name, 
       l.Surname,
-      l.IDNumber,
+      l.idNumber,
       l.zkteco_left_template,
       l.zkteco_right_template,
       l.futronic_left_template,
@@ -3281,7 +3281,7 @@ updated_at TIMESTAMP
       l.LearnerID, 
       l.Name, 
       l.Surname,
-      l.IDNumber,
+      l.idNumber,
       l.zkteco_left_template,
       l.zkteco_right_template,
       l.futronic_left_template,
@@ -3331,7 +3331,7 @@ updated_at TIMESTAMP
       l.LearnerID, 
       l.Name, 
       l.Surname,
-      l.IDNumber
+      l.idNumber
     FROM learnerdetails l
     WHERE CAST(l.classID AS TEXT) = ?
     AND l.LearnerID NOT IN (
@@ -4767,7 +4767,7 @@ updated_at TIMESTAMP
     );
   }
 
-  Future<void> insertPathway_selection(
+  Future<void> insertPathwaySelection(
       Map<String, dynamic> pathwaySelectiondata) async {
     final db = await database;
     await db.insert(
@@ -4787,7 +4787,7 @@ updated_at TIMESTAMP
     );
   }
 
-  Future<void> insertQualification_selection(
+  Future<void> insertQualificationSelection(
       Map<String, dynamic> qualificationSelectiondata) async {
     final db = await database;
     await db.insert(
@@ -4797,7 +4797,7 @@ updated_at TIMESTAMP
     );
   }
 
-  Future<void> insertQualification_pathway(
+  Future<void> insertQualificationPathway(
       Map<String, dynamic> qualificationPathwaydata) async {
     final db = await database;
     await db.insert(
@@ -4826,7 +4826,7 @@ updated_at TIMESTAMP
     );
   }
 
-  Future<void> insertUnit_standard_selection(
+  Future<void> insertUnitStandardSelection(
       Map<String, dynamic> unitStandardSelectiondata) async {
     final db = await database;
     await db.insert(
@@ -5635,10 +5635,10 @@ updated_at TIMESTAMP
   
    SELECT 
     ld.LearnerID,
-    ld.IDNumber,
+    ld.idNumber,
     ld.PhoneNumber,
     CONCAT(ld.Name, ' ', ld.Surname) AS full_name,
-    ld.IDNumber AS LearnerIDNumber,
+    ld.idNumber AS LearnerIDNumber,
     p.Project_name,
     COALESCE(JSON_UNQUOTE(JSON_EXTRACT(p.project_pathway, '\$[0].name')), 'Unknown') AS pathway_name,
     COALESCE(JSON_UNQUOTE(JSON_EXTRACT(p.project_pathway, '\$[0].qual_types[0].qualification.name')), 'Unknown') AS qualification_name,
@@ -5652,7 +5652,7 @@ JOIN project p ON site.project_id = p.project_id
 LEFT JOIN sdp s ON p.sdp_name = s.sdp_name
 JOIN facilitator f ON c.classID = f.classID
 JOIN learner_clocking lc ON lc.LearnerID = ld.LearnerID
-LEFT JOIN material_receipt_form mr ON mr.student_id_number = ld.IDNumber AND mr.class_name = c.className
+LEFT JOIN material_receipt_form mr ON mr.student_id_number = ld.idNumber AND mr.class_name = c.className
 WHERE ld.classID = ?
   AND f.role = 'Facilitator'
   AND lc.clock_in_time IS NOT NULL
@@ -5665,7 +5665,7 @@ WHERE ld.classID = ?
     AND NOT EXISTS (
       SELECT 1
       FROM material_receipt_form mrf
-      WHERE mrf.student_id_number = ld.IDNumber 
+      WHERE mrf.student_id_number = ld.idNumber 
         AND mrf.class_name = c.className 
         AND mrf.description = ?
     )
@@ -5843,10 +5843,10 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   final String tableLearnerDetails = 'learnerdetails'; // Define table name
 
-  Future<int> markAsSynced(String IDNumber) async {
+  Future<int> markAsSynced(String idNumber) async {
     final db = await database;
     return await db.update(tableLearnerDetails, {'synced': 1},
-        where: 'IDNumber = ?', whereArgs: [IDNumber]);
+        where: 'idNumber = ?', whereArgs: [idNumber]);
   }
 
   Future<List<Map<String, dynamic>>> fetchLearnerDocuments(
@@ -6143,14 +6143,14 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   Future<void> updateSyncedStatus(String idNumber, int serverLearnerId) async {
     final db = await database;
     try {
-      // Query LearnerID based on IDNumber
+      // Query LearnerID based on idNumber
       final learnerResult = await db.query(
         'learnerdetails',
-        where: 'IDNumber = ?',
+        where: 'idNumber = ?',
         whereArgs: [idNumber],
       );
       if (learnerResult.isEmpty) {
-        debugPrint('No learner found with IDNumber: $idNumber');
+        debugPrint('No learner found with idNumber: $idNumber');
         return;
       }
       int localLearnerId = learnerResult.first['LearnerID'] as int;
@@ -6159,7 +6159,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       await db.update(
         'learnerdetails',
         {'LearnerID': serverLearnerId, 'synced': 1},
-        where: 'IDNumber = ?',
+        where: 'idNumber = ?',
         whereArgs: [idNumber],
       );
 
@@ -6172,7 +6172,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       );
 
       debugPrint(
-          'Synced status updated for learner ID: $serverLearnerId (IDNumber: $idNumber)');
+          'Synced status updated for learner ID: $serverLearnerId (idNumber: $idNumber)');
     } catch (e) {
       debugPrint('Error updating synced status: $e');
       rethrow;
@@ -6308,14 +6308,14 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     try {
       final result = await db.query(
         'learnerdetails',
-        where: 'IDNumber = ?',
+        where: 'idNumber = ?',
         whereArgs: [idNumber],
       );
       return result.isNotEmpty
           ? Map<String, dynamic>.from(result.first)
           : null; // Create mutable copy
     } catch (e) {
-      debugPrint('Error fetching learner by IDNumber: $e');
+      debugPrint('Error fetching learner by idNumber: $e');
       return null;
     }
   }
@@ -6460,7 +6460,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         });
       } catch (e) {
         debugPrint(
-            'Error preparing learner data for IDNumber ${learner['IDNumber']}: $e');
+            'Error preparing learner data for idNumber ${learner['idNumber']}: $e');
       }
     }
 
@@ -6480,7 +6480,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       // Update local database with server IDs
       for (var syncedLearner in syncedLearners) {
         try {
-          String idNumber = syncedLearner['IDNumber'];
+          String idNumber = syncedLearner['idNumber'];
           int serverLearnerId = syncedLearner['LearnerID'];
 
           await updateSyncedStatus(idNumber, serverLearnerId);
@@ -6503,7 +6503,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           debugPrint('Successfully processed sync for learner: $idNumber');
         } catch (e) {
           debugPrint(
-              'Error processing synced learner ${syncedLearner['IDNumber']}: $e');
+              'Error processing synced learner ${syncedLearner['idNumber']}: $e');
         }
       }
 
@@ -6613,7 +6613,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         }
       }
 
-      // Check if learner already exists by IDNumber AND project_id
+      // Check if learner already exists by idNumber AND project_id
       List<Map<String, dynamic>> existingLearner = [];
       if (projectId != null) {
         // Check for duplicate in same project
@@ -6622,19 +6622,19 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           FROM learnerdetails ld
           JOIN class c ON ld.classID = c.classID
           JOIN sites s ON c.siteID = s.siteID
-          WHERE ld.IDNumber = ? AND s.project_id = ?
-        ''', [learnerData['IDNumber'], projectId]);
+          WHERE ld.idNumber = ? AND s.project_id = ?
+        ''', [learnerData['idNumber'], projectId]);
 
         debugPrint(
-            '[DB] Checking for duplicate: IDNumber=${learnerData['IDNumber']}, project_id=$projectId');
+            '[DB] Checking for duplicate: idNumber=${learnerData['idNumber']}, project_id=$projectId');
         debugPrint(
             '[DB] Found ${existingLearner.length} existing learner(s) in same project');
       } else {
         // Fallback to old behavior if project_id not found
         existingLearner = await txn.query(
           'learnerdetails',
-          where: 'IDNumber = ?',
-          whereArgs: [learnerData['IDNumber']],
+          where: 'idNumber = ?',
+          whereArgs: [learnerData['idNumber']],
         );
         debugPrint('[DB] No project_id found, using old duplicate check');
       }
@@ -6772,17 +6772,17 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         FROM learnerdetails ld
         JOIN class c ON ld.classID = c.classID
         JOIN sites s ON c.siteID = s.siteID
-        WHERE ld.IDNumber = ? AND s.project_id = ?
+        WHERE ld.idNumber = ? AND s.project_id = ?
       ''', [idNumber, projectId]);
 
       if (existingLearner.isNotEmpty) {
         debugPrint(
-            '[DB] Learner with IDNumber $idNumber exists in project $projectId');
+            '[DB] Learner with idNumber $idNumber exists in project $projectId');
         return existingLearner.first;
       }
 
       debugPrint(
-          '[DB] Learner with IDNumber $idNumber does NOT exist in project $projectId');
+          '[DB] Learner with idNumber $idNumber does NOT exist in project $projectId');
       return null;
     } catch (e) {
       debugPrint('[DB] Error checking learner duplicate: $e');
@@ -7176,7 +7176,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
             // List of all fields we want to merge
             final fieldsToMerge = [
-              'Title', 'Name', 'Surname', 'IDNumber', 'DateOfBirth',
+              'Title', 'Name', 'Surname', 'idNumber', 'DateOfBirth',
               'PhoneNumber', 'Email', 'Age', 'Gender', 'Race',
               'Language', 'Disability', 'AddressLine1', 'AddressLine2',
               'AddressLine3', 'PostalCode', 'KinName', 'KinRelation',
@@ -7457,7 +7457,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
             'Title',
             'Name',
             'Surname',
-            'IDNumber',
+            'idNumber',
             'DateOfBirth',
             'PhoneNumber',
             'Email',
@@ -7595,7 +7595,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     final db = await database;
     try {
       final result = await db.rawQuery('''
-        SELECT l.LearnerID, l.Name, l.Surname, l.IDNumber, ic.clock_in_time, ic.clock_out_time, ic.contact_time
+        SELECT l.LearnerID, l.Name, l.Surname, l.idNumber, ic.clock_in_time, ic.clock_out_time, ic.contact_time
         FROM learnerdetails l
         LEFT JOIN (
           SELECT LearnerID, clock_date, 
@@ -9455,7 +9455,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         l.LearnerID,
         l.Name,
         l.Surname,
-        l.IDNumber,
+        l.idNumber,
         l.classID,
         c.className,
         site.siteID,

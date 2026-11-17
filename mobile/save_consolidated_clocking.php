@@ -9,6 +9,8 @@
  * 
  * CRITICAL: Uses tap-time generated idempotency keys for proper offline sync
  */
+ // Set timezone to South Africa (SAST = UTC+2) - CRITICAL for date/time consistency
+date_default_timezone_set('Africa/Johannesburg');
 
 // SECURITY: Enforce strict resource limits
 ini_set('memory_limit', '128M');        // Limit memory usage

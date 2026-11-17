@@ -1,6 +1,8 @@
 <?php
 /**
  * Shared helpers for manual clocking evidence (face photo + signature).
+ * LAST UPDATED: 2026/11/03
+ * 
  * Put this file in the same folder as save_manual_clockin.php,
  * save_manual_clockout.php and save_manual_clocking_images.php.
  */

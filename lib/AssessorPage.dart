@@ -18,11 +18,11 @@ import 'config.dart';
 import 'utils/scanner_pdf_resolver.dart';
 
 class AssessorPage extends StatefulWidget {
-  final String facilitator_id;
+  final String facilitatorId;
   final String? forcePathwayType;
 
   const AssessorPage(
-      {super.key, required this.facilitator_id, this.forcePathwayType});
+      {super.key, required this.facilitatorId, this.forcePathwayType});
 
   @override
   _AssessorPageState createState() => _AssessorPageState();
@@ -42,13 +42,13 @@ class _AssessorPageState extends State<AssessorPage> {
       _pathwayType = widget.forcePathwayType;
       debugPrint('[AssessorPage] Set _pathwayType to: $_pathwayType');
     }
-    _classes = fetchClasses(widget.facilitator_id);
+    _classes = fetchClasses(widget.facilitatorId);
   }
 
   Future<List<dynamic>> fetchClasses(String facilitatorId) async {
     try {
       final url = AppConfig.buildUrl('get_classes.php', queryParams: {
-        'facilitator_id': facilitatorId,
+        'facilitatorId': facilitatorId,
       });
 
       debugPrint('[AssessorPage] Fetching classes from: $url');
@@ -134,22 +134,22 @@ class _AssessorPageState extends State<AssessorPage> {
           return _buildARPLDashboard();
         case 11:
           return AssessmentPreparationPage(
-              facilitatorId: widget.facilitator_id, isARPL: true);
+              facilitatorId: widget.facilitatorId, isARPL: true);
         case 12:
-          return AssessmentPlanPage(facilitatorId: widget.facilitator_id);
+          return AssessmentPlanPage(facilitatorId: widget.facilitatorId);
         case 13:
           return AssessorReportPage(
-              facilitatorId: widget.facilitator_id, isARPL: true);
+              facilitatorId: widget.facilitatorId, isARPL: true);
         case 14:
           return AssessmentReviewPage(
-              facilitatorId: widget.facilitator_id, isARPL: true);
+              facilitatorId: widget.facilitatorId, isARPL: true);
         case 20:
-          return ARPLAssessorReviewPage(facilitatorId: widget.facilitator_id);
+          return ARPLAssessorReviewPage(facilitatorId: widget.facilitatorId);
         case 21:
-          return ARPLAppendixHPage(facilitatorId: widget.facilitator_id);
+          return ARPLAppendixHPage(facilitatorId: widget.facilitatorId);
         case 22:
           return ARPLEvidenceChecklistPage(
-              facilitatorId: widget.facilitator_id);
+              facilitatorId: widget.facilitatorId);
         default:
           return _buildARPLDashboard();
       }
@@ -160,23 +160,23 @@ class _AssessorPageState extends State<AssessorPage> {
       case 0:
         return _buildClassesContent();
       case 1:
-        return AssessmentPreparationPage(facilitatorId: widget.facilitator_id);
+        return AssessmentPreparationPage(facilitatorId: widget.facilitatorId);
       case 2:
-        return AssessmentPlanPage(facilitatorId: widget.facilitator_id);
+        return AssessmentPlanPage(facilitatorId: widget.facilitatorId);
       case 3:
-        return AssessorReportPage(facilitatorId: widget.facilitator_id);
+        return AssessorReportPage(facilitatorId: widget.facilitatorId);
       case 4:
-        return _buildAssessorFeedback(facilitatorId: widget.facilitator_id);
+        return _buildAssessorFeedback(facilitatorId: widget.facilitatorId);
       case 5:
-        return AssessmentReviewPage(facilitatorId: widget.facilitator_id);
+        return AssessmentReviewPage(facilitatorId: widget.facilitatorId);
       case 6:
-        return AppealFormPage(facilitatorId: widget.facilitator_id);
+        return AppealFormPage(facilitatorId: widget.facilitatorId);
       case 7:
         return NonComplianceAndFeedbackPage(
-            facilitatorId: widget.facilitator_id, learnerId: 'LEARNER_ID');
+            facilitatorId: widget.facilitatorId, learnerId: 'LEARNER_ID');
       case 8:
         return PotholeChecklistClassListPage(
-            facilitatorId: widget.facilitator_id);
+            facilitatorId: widget.facilitatorId);
       default:
         return _buildClassesContent();
     }
@@ -275,7 +275,7 @@ class _AssessorPageState extends State<AssessorPage> {
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Text(
-            'Facilitator ID: ${widget.facilitator_id}',
+            'Facilitator ID: ${widget.facilitatorId}',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
@@ -581,7 +581,7 @@ class _AssessmentPreparationPageState extends State<AssessmentPreparationPage> {
       final facilitatorClasses = await db.query(
         'facilitator',
         columns: ['classID'],
-        where: 'facilitator_id = ?',
+        where: 'facilitatorId = ?',
         whereArgs: [widget.facilitatorId],
       );
 
@@ -618,7 +618,7 @@ class _AssessmentPreparationPageState extends State<AssessmentPreparationPage> {
     if (learnerId == null) return [];
     try {
       String url =
-          '${AppConfig.baseUrl}/get_assessment_preparation.php?facilitator_id=$facilitatorId&learner_id=$learnerId';
+          '${AppConfig.baseUrl}/get_assessment_preparation.php?facilitatorId=$facilitatorId&learner_id=$learnerId';
 
       final response = await http.get(Uri.parse(url));
 
@@ -911,7 +911,7 @@ class _UnitStandardDetailPageState extends State<UnitStandardDetailPage> {
 
         final payload = {
           'unitstandard_id': widget.unitStandardId,
-          'facilitator_id': widget.facilitatorId,
+          'facilitatorId': widget.facilitatorId,
           'prep_table': prepTable,
         };
 
@@ -1116,7 +1116,7 @@ class _AssessmentPlanPageState extends State<AssessmentPlanPage> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://rlms.rlms.co.za/mobile/get_assessment_preparation.php?facilitator_id=$facilitatorId'),
+            'https://rlms.rlms.co.za/mobile/get_assessment_preparation.php?facilitatorId=$facilitatorId'),
       );
 
       if (response.statusCode == 200) {
@@ -1312,7 +1312,7 @@ class _AssessmentPlanDetailPageState extends State<AssessmentPlanDetailPage> {
 
       try {
         final payload = {
-          'facilitator_id': widget.facilitatorId,
+          'facilitatorId': widget.facilitatorId,
           'unitstandard_id': widget.unitStandardId,
           'assessment_date': _assessmentDate?.toIso8601String().split('T')[0],
           'start_date': _startDate?.toIso8601String().split('T')[0],
@@ -1622,7 +1622,7 @@ class _AssessorReportPageState extends State<AssessorReportPage> {
       final facilitatorClasses = await db.query(
         'facilitator',
         columns: ['classID'],
-        where: 'facilitator_id = ?',
+        where: 'facilitatorId = ?',
         whereArgs: [widget.facilitatorId],
       );
 
@@ -1670,7 +1670,7 @@ class _AssessorReportPageState extends State<AssessorReportPage> {
 
     try {
       String url =
-          '${AppConfig.baseUrl}/generate_assessor_report.php?facilitator_id=${widget.facilitatorId}';
+          '${AppConfig.baseUrl}/generate_assessor_report.php?facilitatorId=${widget.facilitatorId}';
       if (_selectedLearnerId != null) {
         url += '&learner_id=$_selectedLearnerId';
       }
@@ -2266,7 +2266,7 @@ class _PotholeChecklistTabState extends State<PotholeChecklistTab> {
   Future<void> _populateAssessor(String facilitatorId) async {
     try {
       final response = await http.get(Uri.parse(
-          'https://rlms.rlms.co.za/mobile/fetch_facilitator_details.php?facilitator_id=$facilitatorId'));
+          'https://rlms.rlms.co.za/mobile/fetch_facilitator_details.php?facilitatorId=$facilitatorId'));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final String first = data['firstName']?.toString() ?? '';
@@ -4207,7 +4207,7 @@ Widget _buildAssessorFeedback({required String facilitatorId}) {
   Future<List<dynamic>> fetchClasses(String facilitatorId) async {
     try {
       final url = AppConfig.buildUrl('get_classes.php', queryParams: {
-        'facilitator_id': facilitatorId,
+        'facilitatorId': facilitatorId,
       });
 
       debugPrint('[AssessorFeedback] Fetching classes from: $url');
@@ -4495,7 +4495,7 @@ class _AssessmentReviewPageState extends State<AssessmentReviewPage> {
       final facilitatorClasses = await db.query(
         'facilitator',
         columns: ['classID'],
-        where: 'facilitator_id = ?',
+        where: 'facilitatorId = ?',
         whereArgs: [widget.facilitatorId],
       );
 
@@ -4532,7 +4532,7 @@ class _AssessmentReviewPageState extends State<AssessmentReviewPage> {
     if (learnerId == null) return [];
     try {
       String url =
-          '${AppConfig.baseUrl}/get_assessment_preparation.php?facilitator_id=$facilitatorId&learner_id=$learnerId';
+          '${AppConfig.baseUrl}/get_assessment_preparation.php?facilitatorId=$facilitatorId&learner_id=$learnerId';
 
       final response = await http.get(Uri.parse(url));
 
@@ -4852,7 +4852,7 @@ class _AssessmentReviewDetailPageState
   Future<String> _fetchClassId(String facilitatorId) async {
     final response = await http.get(
       Uri.parse(
-          'https://rlms.rlms.co.za/mobile/fetch_class_id.php?facilitator_id=$facilitatorId'),
+          'https://rlms.rlms.co.za/mobile/fetch_class_id.php?facilitatorId=$facilitatorId'),
       headers: {'Content-Type': 'application/json'},
     );
 
@@ -4891,7 +4891,7 @@ class _AssessmentReviewDetailPageState
       String facilitatorId) async {
     final response = await http.get(
       Uri.parse(
-          'https://rlms.rlms.co.za/mobile/fetch_facilitator_details.php?facilitator_id=$facilitatorId'),
+          'https://rlms.rlms.co.za/mobile/fetch_facilitator_details.php?facilitatorId=$facilitatorId'),
       headers: {'Content-Type': 'application/json'},
     );
 
@@ -4986,7 +4986,7 @@ class _AssessmentReviewDetailPageState
       try {
         final payload = {
           'unitstandard_id': widget.unitStandardId,
-          'facilitator_id': widget.facilitatorId,
+          'facilitatorId': widget.facilitatorId,
           'learner_id': _selectedLearnerId,
           'learner_name': _learnerNameController.text,
           'assessor_name': _assessorNameController.text,
@@ -5440,7 +5440,7 @@ class _AppealFormPageState extends State<AppealFormPage> {
     try {
       final response = await http.get(
         Uri.parse(
-            'https://rlms.rlms.co.za/mobile/get_assessment_preparation.php?facilitator_id=$facilitatorId'),
+            'https://rlms.rlms.co.za/mobile/get_assessment_preparation.php?facilitatorId=$facilitatorId'),
       );
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
@@ -5735,7 +5735,7 @@ class _AppealFormDetailPageState extends State<AppealFormDetailPage> {
       try {
         final payload = {
           'unitstandard_id': widget.unitStandardId,
-          'facilitator_id': widget.facilitatorId,
+          'facilitatorId': widget.facilitatorId,
           'appeal_details': {
             'title': _titleController.text,
             'nqf_level': _nqfLevelController.text,
@@ -6158,7 +6158,7 @@ class _NonComplianceAndFeedbackPageState
       }
 
       final payload = {
-        'facilitator_id': widget.facilitatorId,
+        'facilitatorId': widget.facilitatorId,
         'learner_id': widget.learnerId,
         'candidate_name': _candidateNameController.text,
         'id_number': _idNumberController.text,
@@ -6482,7 +6482,7 @@ class _PotholeChecklistClassListPageState
     extends State<PotholeChecklistClassListPage> {
   Future<List<dynamic>> _fetchClasses(String facilitatorId) async {
     final url = AppConfig.buildUrl('get_classes.php', queryParams: {
-      'facilitator_id': facilitatorId,
+      'facilitatorId': facilitatorId,
     });
 
     debugPrint('[PotholeChecklistClassList] Fetching classes from: $url');
@@ -9058,7 +9058,7 @@ class _ARPLEvidenceChecklistPageState extends State<ARPLEvidenceChecklistPage> {
       final facilitatorClasses = await db.query(
         'facilitator',
         columns: ['classID'],
-        where: 'facilitator_id = ?',
+        where: 'facilitatorId = ?',
         whereArgs: [widget.facilitatorId],
       );
 
@@ -9803,7 +9803,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
       final facilitatorClasses = await db.query(
         'facilitator',
         columns: ['classID'],
-        where: 'facilitator_id = ?',
+        where: 'facilitatorId = ?',
         whereArgs: [widget.facilitatorId],
       );
 
@@ -10536,7 +10536,7 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
       final facilitatorClasses = await db.query(
         'facilitator',
         columns: ['classID'],
-        where: 'facilitator_id = ?',
+        where: 'facilitatorId = ?',
         whereArgs: [widget.facilitatorId],
       );
 

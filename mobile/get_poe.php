@@ -1,18 +1,9 @@
 <?php
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
-require_once __DIR__ . '/connection.php';
-
-// SECURITY: Require authentication
-require_once __DIR__ . '/require_auth.php';
-$user = requireAuth($conn);
-$authenticated_user_id = $user['user_id'];
-$authenticated_role = $user['user_role'];
-
-// SECURITY: Apply rate limiting
-applyRateLimit($conn, 'get_poe', 60);
+include('../connection.php');
 
 // Debug: Log $_GET and $_POST to inspect parameters
 file_put_contents('../debug.log', "GET: " . print_r($_GET, true) . "\nPOST: " . print_r($_POST, true) . "\n", FILE_APPEND);

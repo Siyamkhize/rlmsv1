@@ -368,7 +368,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $stmt_learners->close();
                     }
                 } else {
-                    echo json_encode(['success' => false, 'message' => 'Invalid password for facilitator.']);
+                    echo json_encode(['success' => false, 'message' => 'Invalid email or password for facilitator.']);
                 }
             } else {
                 // Check for account_user table (web application users) - trim whitespace

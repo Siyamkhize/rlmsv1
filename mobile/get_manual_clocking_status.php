@@ -4,6 +4,8 @@
  * 
  * Fetches ALL learners in a class with their clocking status for a specific date
  * Used by signature_geofence_clock_in_page to show all learners with status
+ * 
+ * LAST UPDATED: 2026/11/03 - No changes (Flutter side updated for cross-device sync)
  */
 
 header('Content-Type: application/json');
@@ -50,7 +52,7 @@ try {
     while ($row = $result->fetch_assoc()) {
         $data[] = [
             'LearnerID' => $row['LearnerID'],
-            'learner_id' => $row['LearnerID'],  // Flutter expects lowercase
+            'learner_id' => $row['LearnerID'],  // Flutter expects lowercase with underscore
             'Name' => $row['Name'],
             'Surname' => $row['Surname'],
             'IDNumber' => $row['IDNumber'],
@@ -68,13 +70,13 @@ try {
     $stmt->close();
     
     echo json_encode([
-        'success' => true,  // Flutter expects 'success' not 'status'
+        'success' => true,      // Flutter expects 'success' boolean field
         'status' => 'success',
         'clock_date' => $clockDate,
         'classID' => $classID,
         'count' => count($data),
-        'records' => $data,  // Flutter expects 'records' not 'data'
-        'data' => $data      // Keep 'data' for backward compatibility
+        'records' => $data,     // Flutter expects 'records' array
+        'data' => $data         // Keep 'data' for backward compatibility
     ]);
     
 } catch (Exception $e) {

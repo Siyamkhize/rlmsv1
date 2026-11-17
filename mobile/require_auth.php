@@ -23,18 +23,44 @@ if (!defined('SECURITY_FUNCTIONS_LOADED')) {
  * @throws Exception if authentication fails
  */
 function requireAuth($conn, $required_role = null) {
-    // Get all headers (case-insensitive)
-    $headers = array_change_key_case(getallheaders(), CASE_LOWER);
+    // Try multiple methods to get Authorization header (server configuration dependent)
+    $authHeader = '';
     
-    // Check for Authorization header
-    $authHeader = $headers['authorization'] ?? '';
+    // Method 1: getallheaders() (works on Apache with mod_php)
+    if (function_exists('getallheaders')) {
+        $headers = array_change_key_case(getallheaders(), CASE_LOWER);
+        $authHeader = $headers['authorization'] ?? '';
+    }
+    
+    // Method 2: $_SERVER['HTTP_AUTHORIZATION'] (works on most servers)
+    if (empty($authHeader) && isset($_SERVER['HTTP_AUTHORIZATION'])) {
+        $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
+    }
+    
+    // Method 3: REDIRECT_HTTP_AUTHORIZATION (if .htaccess rewrites are used)
+    if (empty($authHeader) && isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $authHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+    }
+    
+    // Method 4: apache_request_headers() fallback
+    if (empty($authHeader) && function_exists('apache_request_headers')) {
+        $headers = array_change_key_case(apache_request_headers(), CASE_LOWER);
+        $authHeader = $headers['authorization'] ?? '';
+    }
     
     if (empty($authHeader)) {
         http_response_code(401);
         echo json_encode([
             'success' => false,
             'message' => 'Authorization required',
-            'error_code' => 'MISSING_AUTH_HEADER'
+            'error_code' => 'MISSING_AUTH_HEADER',
+            'debug' => [
+                'getallheaders_available' => function_exists('getallheaders'),
+                'apache_request_headers_available' => function_exists('apache_request_headers'),
+                'http_authorization_set' => isset($_SERVER['HTTP_AUTHORIZATION']),
+                'redirect_http_authorization_set' => isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']),
+                'php_sapi' => php_sapi_name()
+            ]
         ]);
         log_security_event('unauthorized_access', 'No authorization header', [
             'ip' => get_client_ip(),

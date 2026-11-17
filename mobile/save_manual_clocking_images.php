@@ -8,43 +8,114 @@
  * ALL-OR-NOTHING: both the face photo and the signature are required.
  * Everything is decoded and validated BEFORE anything is written, and any
  * file written is deleted again if a later step fails.
+ * 
+ * LAST UPDATED: 2026/11/03 - Added better error handling for HTTP 500 diagnosis
  */
 
 header('Content-Type: application/json');
-require_once 'connection.php';
-require_once 'require_auth.php';
-require_once 'security_functions.php';
 
-// Do not print PHP warnings into the JSON response
+// Enable comprehensive error logging
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../../logs/php_errors.log');
+
+// Catch ALL errors and return them as JSON
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+});
+
+// Log the request
+error_log("[SAVE_CLOCKING_IMAGES] ========== NEW REQUEST ==========");
+error_log("[SAVE_CLOCKING_IMAGES] Time: " . date('Y-m-d H:i:s'));
+error_log("[SAVE_CLOCKING_IMAGES] Method: " . ($_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN'));
+error_log("[SAVE_CLOCKING_IMAGES] Content-Length: " . ($_SERVER['CONTENT_LENGTH'] ?? '0'));
+
+try {
+    error_log("[SAVE_CLOCKING_IMAGES] Including connection.php");
+    require_once 'connection.php';
+    error_log("[SAVE_CLOCKING_IMAGES] ✅ connection.php loaded");
+    
+    error_log("[SAVE_CLOCKING_IMAGES] Including require_auth.php");
+    require_once 'require_auth.php';
+    error_log("[SAVE_CLOCKING_IMAGES] ✅ require_auth.php loaded");
+    
+    error_log("[SAVE_CLOCKING_IMAGES] Including security_functions.php");
+    require_once 'security_functions.php';
+    error_log("[SAVE_CLOCKING_IMAGES] ✅ security_functions.php loaded");
+} catch (Throwable $e) {
+    error_log("[SAVE_CLOCKING_IMAGES] ❌ FATAL: Failed to load required files: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Server configuration error',
+        'debug' => 'Failed to load: ' . $e->getMessage()
+    ]);
+    exit;
+}
 
 // SECURITY: Require authentication
 try {
+    error_log("[SAVE_CLOCKING_IMAGES] Calling requireAuth()");
     $user = requireAuth($conn);
     error_log("[SAVE_CLOCKING_IMAGES] ✅ Authentication successful - User ID: " . $user['user_id']);
 } catch (Exception $e) {
     error_log("[SAVE_CLOCKING_IMAGES] ❌ Authentication failed: " . $e->getMessage());
-    throw $e;
+    error_log("[SAVE_CLOCKING_IMAGES] ❌ Stack trace: " . $e->getTraceAsString());
+    
+    // Return HTTP 401 for authentication failures (not 500)
+    http_response_code(401);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Authentication required',
+        'message' => 'Your session has expired. Please log in again.',
+        'auth_error' => true
+    ]);
+    
+    if (isset($conn)) {
+        $conn->close();
+    }
+    exit;
 }
 
 // SECURITY: Apply rate limiting (10 image uploads per minute)
 try {
-    applyRateLimit($conn, 'save_clocking_images');
-    error_log("[SAVE_CLOCKING_IMAGES] ✅ Rate limit check passed");
+    error_log("[SAVE_CLOCKING_IMAGES] Calling applyRateLimit()");
+    if (function_exists('applyRateLimit')) {
+        applyRateLimit($conn, 'save_clocking_images', 10);
+        error_log("[SAVE_CLOCKING_IMAGES] ✅ Rate limit check passed");
+    } else {
+        error_log("[SAVE_CLOCKING_IMAGES] ⚠️  applyRateLimit() not available, skipping");
+    }
 } catch (Exception $e) {
     error_log("[SAVE_CLOCKING_IMAGES] ❌ Rate limit exceeded: " . $e->getMessage());
-    throw $e;
+    
+    // Return HTTP 429 for rate limit errors (not 500)
+    http_response_code(429);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Rate limit exceeded',
+        'message' => 'Too many requests. Please wait a moment and try again.',
+        'rate_limit_error' => true
+    ]);
+    
+    if (isset($conn)) {
+        $conn->close();
+    }
+    exit;
 }
 
 $written = []; // full paths of files written during this request (for cleanup)
 
 try {
     // Get JSON input
-    $input = json_decode(file_get_contents('php://input'), true);
+    $rawInput = file_get_contents('php://input');
+    error_log("[SAVE_CLOCKING_IMAGES] Raw input size: " . strlen($rawInput) . " bytes");
+    
+    $input = json_decode($rawInput, true);
 
     if (!$input || !is_array($input)) {
+        error_log("[SAVE_CLOCKING_IMAGES] ❌ Invalid JSON input");
         throw new Exception('Invalid JSON input');
     }
 
@@ -56,6 +127,11 @@ try {
     // Image data
     $faceImageBase64 = isset($input['face_image']) ? $input['face_image'] : null;
     $signatureBase64 = isset($input['signature_image']) ? $input['signature_image'] : null;
+
+    // Log image sizes
+    error_log("[SAVE_CLOCKING_IMAGES] Learner: $learnerID, Date: $clockDate, Type: $type");
+    error_log("[SAVE_CLOCKING_IMAGES] Face image length: " . (is_string($faceImageBase64) ? strlen($faceImageBase64) : 'null'));
+    error_log("[SAVE_CLOCKING_IMAGES] Signature length: " . (is_string($signatureBase64) ? strlen($signatureBase64) : 'null'));
 
     // Timestamp for watermark
     $timestamp = isset($input['timestamp']) ? $input['timestamp'] : date('Y-m-d H:i:s');
@@ -81,50 +157,13 @@ try {
         throw new Exception('Signature is required');
     }
 
-    // Check if images already uploaded for this clocking event (idempotency)
-    // Using manual_clocking_evidence table
-    $existingCheck = $conn->prepare("
-        SELECT face_in, signature_in 
-        FROM manual_clocking_evidence 
-        WHERE LearnerID = ? AND clock_date = ?
-        LIMIT 1
-    ");
-    
-    if (!$existingCheck) {
-        error_log("[SAVE_CLOCKING_IMAGES] ❌ Failed to prepare idempotency check: " . $conn->error);
-        throw new Exception('Database error: ' . $conn->error);
-    }
-    
-    $existingCheck->bind_param("is", $learnerID, $clockDate);
-    $existingCheck->execute();
-    $existingResult = $existingCheck->get_result();
+    // Define directories BEFORE processing
+    $baseDir       = __DIR__; // This is the mobile folder
+    $facesDir      = $baseDir . '/manual_clocking_evidence/faces';
+    $signaturesDir = $baseDir . '/manual_clocking_evidence/signatures';
 
-    if ($existingResult->num_rows > 0) {
-        $existing = $existingResult->fetch_assoc();
-        
-        // Verify files still exist on disk
-        $faceFile = $facesDir . '/' . $existing['face_in'];
-        $sigFile = $signaturesDir . '/' . $existing['signature_in'];
-        
-        if (file_exists($faceFile) && file_exists($sigFile)) {
-            // Return existing filenames (idempotent response)
-            http_response_code(200);
-            echo json_encode([
-                'success' => true,
-                'message' => 'Images already uploaded (idempotent response)',
-                'files' => [
-                    'face_' . $type => $existing['face_in'],
-                    'signature_' . $type => $existing['signature_in'],
-                ],
-                'learner_id' => $learnerID,
-                'clock_date' => $clockDate,
-                'type' => $type,
-                'idempotent' => true,
-            ]);
-            exit;
-        }
-        // If files missing on disk, continue with upload (re-upload lost files)
-    }
+    // NOTE: Idempotency check removed - this endpoint is for initial image upload only
+    // The clock-in/clock-out endpoints handle idempotency via idempotency_keys table
 
     // ------------------------------------------------------------------
     // STEP 1: decode and validate BOTH images before writing anything
@@ -157,9 +196,7 @@ try {
     // ------------------------------------------------------------------
     // STEP 2: prepare folders
     // ------------------------------------------------------------------
-    $baseDir       = __DIR__; // This is the mobile folder
-    $facesDir      = $baseDir . '/manual_clocking_evidence/faces';
-    $signaturesDir = $baseDir . '/manual_clocking_evidence/signatures';
+    // Directories already defined above before idempotency check
 
     if (!file_exists($facesDir) && !mkdir($facesDir, 0755, true)) {
         imagedestroy($faceImage);
@@ -258,6 +295,11 @@ try {
     ]);
 
 } catch (Exception $e) {
+    // Log the error with full details
+    error_log("[SAVE_CLOCKING_IMAGES] ❌ Exception: " . $e->getMessage());
+    error_log("[SAVE_CLOCKING_IMAGES] ❌ File: " . $e->getFile() . " Line: " . $e->getLine());
+    error_log("[SAVE_CLOCKING_IMAGES] ❌ Stack trace: " . $e->getTraceAsString());
+    
     // Remove anything already written so no half-saved evidence is left behind
     foreach ($written as $f) {
         @unlink($f);

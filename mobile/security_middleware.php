@@ -25,16 +25,18 @@ if (file_exists(__DIR__ . '/request_logger.php')) {
     require_once __DIR__ . '/request_logger.php';
 }
 
-// Security headers
-header('X-Content-Type-Options: nosniff');
-header('X-Frame-Options: DENY');
-header('X-XSS-Protection: 1; mode=block');
-header('Referrer-Policy: strict-origin-when-cross-origin');
-
-// CORS headers - configure based on your needs
-header('Access-Control-Allow-Origin: *');  // Change to specific domain in production
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token');
+// Security headers - only set if headers haven't been sent yet
+if (!headers_sent()) {
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: DENY');
+    header('X-XSS-Protection: 1; mode=block');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    
+    // CORS headers - configure based on your needs
+    header('Access-Control-Allow-Origin: *');  // Change to specific domain in production
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token');
+}
 
 /**
  * Apply rate limiting with standard limits

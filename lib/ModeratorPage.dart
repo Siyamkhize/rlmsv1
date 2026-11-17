@@ -9,9 +9,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'config.dart';
 
 class ModeratorPage extends StatefulWidget {
-  final String facilitator_id;
+  final String facilitatorId;
 
-  const ModeratorPage({super.key, required this.facilitator_id});
+  const ModeratorPage({super.key, required this.facilitatorId});
 
   @override
   _ModeratorPageState createState() => _ModeratorPageState();
@@ -24,14 +24,14 @@ class _ModeratorPageState extends State<ModeratorPage> {
   @override
   void initState() {
     super.initState();
-    _classes = fetchClasses(widget.facilitator_id);
+    _classes = fetchClasses(widget.facilitatorId);
   }
 
   Future<List<dynamic>> fetchClasses(String facilitatorId) async {
     try {
       final response = await http.get(
         Uri.parse(AppConfig.buildUrl(
-            'get_classes.php?facilitator_id=$facilitatorId')),
+            'get_classes.php?facilitatorId=$facilitatorId')),
       );
 
       debugPrint('Response Body (get_classes): ${response.body}');
@@ -58,14 +58,14 @@ class _ModeratorPageState extends State<ModeratorPage> {
       case 0:
         return _buildClassesContent();
       case 1:
-        return ModerationFeedbackPage(facilitatorId: widget.facilitator_id);
+        return ModerationFeedbackPage(facilitatorId: widget.facilitatorId);
       case 2:
-        return ModerationReportPage(facilitatorId: widget.facilitator_id);
+        return ModerationReportPage(facilitatorId: widget.facilitatorId);
       case 3:
         return ModeratorPotholeChecklistPage(
-            facilitatorId: widget.facilitator_id);
+            facilitatorId: widget.facilitatorId);
       case 4:
-        return ModerationSamplingPage(facilitatorId: widget.facilitator_id);
+        return ModerationSamplingPage(facilitatorId: widget.facilitatorId);
       default:
         return _buildClassesContent();
     }
@@ -78,7 +78,7 @@ class _ModeratorPageState extends State<ModeratorPage> {
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Text(
-            'Moderator ID: ${widget.facilitator_id}',
+            'Moderator ID: ${widget.facilitatorId}',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
@@ -130,7 +130,7 @@ class _ModeratorPageState extends State<ModeratorPage> {
                                   MaterialPageRoute(
                                     builder: (context) => ClassDetailsPage(
                                         classId: classId,
-                                        moderatorId: widget.facilitator_id),
+                                        moderatorId: widget.facilitatorId),
                                   ),
                                 );
                               },
@@ -2523,7 +2523,7 @@ class _ModerationFeedbackPageState extends State<ModerationFeedbackPage> {
     try {
       final response = await http.get(
         Uri.parse(AppConfig.buildUrl(
-            'get_classes_by_facilitator.php?facilitator_id=$facilitatorId')),
+            'get_classes_by_facilitator.php?facilitatorId=$facilitatorId')),
       );
 
       if (response.statusCode == 200) {
@@ -2721,7 +2721,7 @@ class _ModerationReportPageState extends State<ModerationReportPage> {
   Future<List<dynamic>> fetchModerationReport() async {
     final response = await http.get(
       Uri.parse(AppConfig.buildUrl(
-          'get_classes.php?facilitator_id=${widget.facilitatorId}')),
+          'get_classes.php?facilitatorId=${widget.facilitatorId}')),
     );
 
     if (response.statusCode == 200) {

@@ -6,7 +6,8 @@
  * Used to display learners who have submitted face photos and signatures
  * Joins with learnerdetails to get Name and Surname
  */
-
+// Set timezone to South Africa (SAST = UTC+2) - CRITICAL for date/time consistency
+date_default_timezone_set('Africa/Johannesburg');
 header('Content-Type: application/json');
 require_once 'connection.php';
 require_once '../security_functions.php';

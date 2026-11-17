@@ -447,7 +447,7 @@ function getSETAForms($seta_name, $pathway_name = '') {
             return [
                 'Learnership-Agreement-v130314',
                 'Learnership-Application-Form-v01',
-                'Learner_Contract_of_Employment_Template',
+                'Cleaned_Updated_Agreement_jcp',  // ✅ Updated from Learner_Contract_of_Employment_Template
                 'DoL EEA1 Form'
             ];
         } else {

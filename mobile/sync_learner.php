@@ -2,16 +2,6 @@
 include 'connection.php';
 
 header('Content-Type: application/json');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-
-// SECURITY: Require authentication
-require_once __DIR__ . '/require_auth.php';
-$user = requireAuth($conn);
-$authenticated_user_id = $user['user_id'];
-$authenticated_role = $user['user_role'];
-
-// SECURITY: Apply rate limiting (sync can be heavy, limit to 30/min)
-applyRateLimit($conn, 'sync_learner', 30);
 
 /**
  * Strip device-specific path prefixes from image paths.

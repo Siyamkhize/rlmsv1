@@ -26,7 +26,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
   String practitionerFullName = '';
   String practitionerID = '';
   String className = '';
-  String qualification_name = '';
+  String qualificationName = '';
   List learners = [];
   List<SignatureController> signatureControllers = [];
   String selectedDescription = 'Select';
@@ -623,7 +623,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             signatureControllers.add(SignatureController());
             return {
               'ClassName': learner['className'] ?? '',
-              'qualification_name': learner['qualification_name'] ?? '',
+              'qualificationName': learner['qualificationName'] ?? '',
               'FacilitatorFullName': learner['FacilitatorFullName'] ?? '',
             };
           }).toList();
@@ -632,7 +632,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             practitionerFullName = learners[0]['FacilitatorFullName'] ?? '';
             practitionerID = data[0]['IDNumber'] ?? '';
             className = learners[0]['ClassName'] ?? '';
-            qualification_name = learners[0]['qualification_name'] ?? '';
+            qualificationName = learners[0]['qualificationName'] ?? '';
           }
         });
       } else {
@@ -661,7 +661,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             signatureControllers.add(SignatureController());
             return {
               'ClassName': learner['ClassName'] ?? 'Unknown',
-              'qualification_name': learner['qualification_name'] ?? 'Unknown',
+              'qualificationName': learner['qualificationName'] ?? 'Unknown',
               'FacilitatorFullName':
                   learner['FacilitatorFullName'] ?? 'Unknown',
             };
@@ -670,7 +670,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
           if (learners.isNotEmpty) {
             practitionerFullName = learners[0]['FacilitatorFullName'] ?? '';
             className = learners[0]['ClassName'] ?? '';
-            qualification_name = learners[0]['qualification_name'] ?? '';
+            qualificationName = learners[0]['qualificationName'] ?? '';
           }
         });
       } else {
@@ -735,7 +735,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
                 ),
                 Expanded(
                   child: _buildInfoDetail(
-                      'Qualification', qualification_name, Icons.school),
+                      'Qualification', qualificationName, Icons.school),
                 ),
               ],
             ),
@@ -1441,7 +1441,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    qualification_name,
+                    qualificationName,
                     style: const TextStyle(fontSize: 14),
                   ),
                 ),
@@ -1861,7 +1861,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
                 _buildPreviewRow('Quantity:', quantity.toString()),
               ],
 
-              _buildPreviewRow('Qualification:', qualification_name),
+              _buildPreviewRow('Qualification:', qualificationName),
 
               const SizedBox(height: 16),
               Container(
@@ -2067,7 +2067,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             debugPrint('   - ClassID: ${widget.classID}');
             debugPrint('   - Facilitator: $practitionerFullName');
             debugPrint('   - Representative: $representativeName');
-            debugPrint('   - Qualification: $qualification_name');
+            debugPrint('   - Qualification: $qualificationName');
 
             // Create form data for this unit standard
             final formData = {
@@ -2077,7 +2077,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
               'description': 'Learning Material', // Main category
               'subDescription': usName, // Specific unit standard name
               'quantity': quantity,
-              'qualificationName': qualification_name,
+              'qualificationName': qualificationName,
               'facilitatorSignature': base64Encode(facilitatorSignature!),
               'representativeSignature': base64Encode(representativeSignature!),
             };
@@ -2135,7 +2135,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             debugPrint('   - ClassID: ${widget.classID}');
             debugPrint('   - Facilitator: $practitionerFullName');
             debugPrint('   - Representative: $representativeName');
-            debugPrint('   - Qualification: $qualification_name');
+            debugPrint('   - Qualification: $qualificationName');
 
             // Create form data for this learner guide
             final formDataLG = {
@@ -2145,7 +2145,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
               'description': 'Learning Material', // Main category
               'subDescription': lgName, // Specific learner guide name
               'quantity': quantityLG,
-              'qualificationName': qualification_name,
+              'qualificationName': qualificationName,
               'facilitatorSignature': base64Encode(facilitatorSignature!),
               'representativeSignature': base64Encode(representativeSignature!),
             };
@@ -2209,7 +2209,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             debugPrint('   - ClassID: ${widget.classID}');
             debugPrint('   - Facilitator: $practitionerFullName');
             debugPrint('   - Representative: $representativeName');
-            debugPrint('   - Qualification: $qualification_name');
+            debugPrint('   - Qualification: $qualificationName');
 
             // Create form data for this formative
             final formDataFORM = {
@@ -2219,7 +2219,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
               'description': 'Learning Material', // Main category
               'subDescription': formName, // Specific formative name
               'quantity': quantityFORM,
-              'qualificationName': qualification_name,
+              'qualificationName': qualificationName,
               'facilitatorSignature': base64Encode(facilitatorSignature!),
               'representativeSignature': base64Encode(representativeSignature!),
             };
@@ -2283,7 +2283,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             debugPrint('   - ClassID: ${widget.classID}');
             debugPrint('   - Facilitator: $practitionerFullName');
             debugPrint('   - Representative: $representativeName');
-            debugPrint('   - Qualification: $qualification_name');
+            debugPrint('   - Qualification: $qualificationName');
 
             // Create form data for this summative
             final formDataSUM = {
@@ -2293,7 +2293,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
               'description': 'Learning Material', // Main category
               'subDescription': sumName, // Specific summative name
               'quantity': quantitySUM,
-              'qualificationName': qualification_name,
+              'qualificationName': qualificationName,
               'facilitatorSignature': base64Encode(facilitatorSignature!),
               'representativeSignature': base64Encode(representativeSignature!),
             };
@@ -2401,7 +2401,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
         'description': finalDescription,
         'subDescription': finalSubDescription,
         'quantity': quantity,
-        'qualificationName': qualification_name,
+        'qualificationName': qualificationName,
         'facilitatorSignature': base64Encode(facilitatorSignature!),
         'representativeSignature': base64Encode(representativeSignature!),
       };

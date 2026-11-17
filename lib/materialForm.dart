@@ -25,7 +25,7 @@ class _MaterialFormState extends State<MaterialForm> {
   String practitionerFullName = '';
   String practitionerID = '';
   String className = '';
-  String qualification_name = '';
+  String qualificationName = '';
   List learners = [];
   List<SignatureController> signatureControllers = [];
   String selectedDescription = 'Select';
@@ -134,8 +134,8 @@ class _MaterialFormState extends State<MaterialForm> {
 
       if (qualResults.isNotEmpty) {
         setState(() {
-          qualification_name = qualResults.first['name']?.toString() ?? '';
-          qualification = qualification_name;
+          qualificationName = qualResults.first['name']?.toString() ?? '';
+          qualification = qualificationName;
         });
       }
     } catch (e) {
@@ -717,7 +717,7 @@ class _MaterialFormState extends State<MaterialForm> {
             signatureControllers.add(SignatureController());
             return {
               'ClassName': learner['className'] ?? '',
-              'qualification_name': learner['qualification_name'] ?? '',
+              'qualificationName': learner['qualificationName'] ?? '',
               'FacilitatorFullName': learner['FacilitatorFullName'] ?? '',
             };
           }).toList();
@@ -727,7 +727,7 @@ class _MaterialFormState extends State<MaterialForm> {
             practitionerFullName = learners[0]['FacilitatorFullName'] ?? '';
             practitionerID = data[0]['IDNumber'] ?? '';
             className = learners[0]['ClassName'] ?? '';
-            qualification_name = learners[0]['qualification_name'] ?? '';
+            qualificationName = learners[0]['qualificationName'] ?? '';
           }
         });
       } else {
@@ -755,7 +755,7 @@ class _MaterialFormState extends State<MaterialForm> {
             signatureControllers.add(SignatureController());
             return {
               'ClassName': learner['ClassName'] ?? 'Unknown',
-              'qualification_name': learner['qualification_name'] ?? 'Unknown',
+              'qualificationName': learner['qualificationName'] ?? 'Unknown',
               'FacilitatorFullName':
                   learner['FacilitatorFullName'] ?? 'Unknown',
             };
@@ -764,7 +764,7 @@ class _MaterialFormState extends State<MaterialForm> {
           if (learners.isNotEmpty) {
             practitionerFullName = learners[0]['FacilitatorFullName'] ?? '';
             className = learners[0]['ClassName'] ?? '';
-            qualification_name = learners[0]['qualification_name'] ?? '';
+            qualificationName = learners[0]['qualificationName'] ?? '';
           }
         });
       } else {
@@ -1629,7 +1629,7 @@ class _MaterialFormState extends State<MaterialForm> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    qualification_name,
+                    qualificationName,
                     style: const TextStyle(fontSize: 14),
                   ),
                 ),
@@ -1701,12 +1701,12 @@ class _MaterialFormState extends State<MaterialForm> {
       return;
     }
 
-    if (qualification_name.isEmpty) {
+    if (qualificationName.isEmpty) {
       // Try to use 'qualification' as fallback
       if (qualification.isNotEmpty) {
-        qualification_name = qualification;
+        qualificationName = qualification;
       } else {
-        qualification_name = 'Unknown Qualification';
+        qualificationName = 'Unknown Qualification';
       }
     }
 
@@ -1779,7 +1779,7 @@ class _MaterialFormState extends State<MaterialForm> {
             debugPrint('   - ClassID: ${widget.classID}');
             debugPrint('   - Facilitator: $practitionerFullName');
             debugPrint('   - Representative: $representativeName');
-            debugPrint('   - Qualification: $qualification_name');
+            debugPrint('   - Qualification: $qualificationName');
 
             // Create form data for this unit standard
             final formData = {
@@ -1789,7 +1789,7 @@ class _MaterialFormState extends State<MaterialForm> {
               'description': 'Learning Material', // Main category
               'subDescription': usName, // Specific unit standard name
               'quantity': quantity,
-              'qualificationName': qualification_name,
+              'qualificationName': qualificationName,
               'facilitatorSignature': base64Encode(facilitatorSignature!),
               'representativeSignature': base64Encode(representativeSignature!),
             };
@@ -1841,7 +1841,7 @@ class _MaterialFormState extends State<MaterialForm> {
             debugPrint('   - ClassID: ${widget.classID}');
             debugPrint('   - Facilitator: $practitionerFullName');
             debugPrint('   - Representative: $representativeName');
-            debugPrint('   - Qualification: $qualification_name');
+            debugPrint('   - Qualification: $qualificationName');
 
             // Create form data for this learner guide
             final formDataLG = {
@@ -1851,7 +1851,7 @@ class _MaterialFormState extends State<MaterialForm> {
               'description': 'Learning Material', // Main category
               'subDescription': lgName, // Specific learner guide name
               'quantity': quantityLG,
-              'qualificationName': qualification_name,
+              'qualificationName': qualificationName,
               'facilitatorSignature': base64Encode(facilitatorSignature!),
               'representativeSignature': base64Encode(representativeSignature!),
             };
@@ -1905,7 +1905,7 @@ class _MaterialFormState extends State<MaterialForm> {
             debugPrint('   - ClassID: ${widget.classID}');
             debugPrint('   - Facilitator: $practitionerFullName');
             debugPrint('   - Representative: $representativeName');
-            debugPrint('   - Qualification: $qualification_name');
+            debugPrint('   - Qualification: $qualificationName');
 
             // Create form data for this formative
             final formDataFORM = {
@@ -1915,7 +1915,7 @@ class _MaterialFormState extends State<MaterialForm> {
               'description': 'Learning Material', // Main category
               'subDescription': formName, // Specific formative name
               'quantity': quantityFORM,
-              'qualificationName': qualification_name,
+              'qualificationName': qualificationName,
               'facilitatorSignature': base64Encode(facilitatorSignature!),
               'representativeSignature': base64Encode(representativeSignature!),
             };
@@ -1969,7 +1969,7 @@ class _MaterialFormState extends State<MaterialForm> {
             debugPrint('   - ClassID: ${widget.classID}');
             debugPrint('   - Facilitator: $practitionerFullName');
             debugPrint('   - Representative: $representativeName');
-            debugPrint('   - Qualification: $qualification_name');
+            debugPrint('   - Qualification: $qualificationName');
 
             // Create form data for this summative
             final formDataSUM = {
@@ -1979,7 +1979,7 @@ class _MaterialFormState extends State<MaterialForm> {
               'description': 'Learning Material', // Main category
               'subDescription': sumName, // Specific summative name
               'quantity': quantitySUM,
-              'qualificationName': qualification_name,
+              'qualificationName': qualificationName,
               'facilitatorSignature': base64Encode(facilitatorSignature!),
               'representativeSignature': base64Encode(representativeSignature!),
             };
@@ -2079,7 +2079,7 @@ class _MaterialFormState extends State<MaterialForm> {
         'description': finalDescription,
         'subDescription': finalSubDescription,
         'quantity': quantity,
-        'qualificationName': qualification_name,
+        'qualificationName': qualificationName,
         'facilitatorSignature': base64Encode(facilitatorSignature!),
         'representativeSignature': base64Encode(representativeSignature!),
       };

@@ -83,10 +83,15 @@ try {
         }
     }
     
+    // Force documents to be an object even when empty (important for Flutter parsing)
+    if (empty($documents)) {
+        $documents = new stdClass(); // Empty object {} instead of empty array []
+    }
+    
     echo json_encode([
         'success' => true,
         'documents' => $documents,
-        'total_documents' => count($documents),
+        'total_documents' => count((array)$documents),
         'learner_id' => $learner_id,
         'timestamp' => date('Y-m-d H:i:s')
     ]);

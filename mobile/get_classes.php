@@ -1,20 +1,8 @@
 <?php
 include('connection.php');
-require_once __DIR__ . '/require_auth.php';
-
 header('Content-Type: application/json');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
 error_reporting(0); // Hide warnings
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-
-// SECURITY: Require authentication
-/** @var mysqli $conn */
-$user = requireAuth($conn);
-$authenticated_user_id = $user['user_id'];
-$authenticated_role = $user['user_role'];
-
-// SECURITY: Apply rate limiting
-applyRateLimit($conn, 'get_classes', 60);
 
 if (!isset($_GET['facilitator_id'])) {
     echo json_encode(["error" => "facilitator_id is required"]);

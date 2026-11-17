@@ -1,10 +1,20 @@
 <?php
 /**
  * Face Enrollment Endpoint (Multi-Camera Support)
- * 
+ *
  * Receives face embedding(s) from the mobile app and stores them for a learner.
  * Supports both single and multi-camera enrollment (front/back).
- * 
+ *
+ * Duplicate protection:
+ *   - Same learner, same camera, enrolled twice: blocked unless
+ *     "allow_reenroll": true is passed, in which case the existing active
+ *     row for that camera is updated in place rather than duplicated.
+ *   - Different learner enrolling with a face that closely matches another
+ *     learner's already-enrolled face: always blocked (see
+ *     findDuplicateEnrollment() in face_recognition_config.php), regardless
+ *     of allow_reenroll. This is what stops Learner B from later being able
+ *     to verify successfully as Learner A.
+ *
  * Expected POST payload (Single camera - backward compatible):
  * {
  *   "learner_id": 12345,
@@ -13,7 +23,7 @@
  *   "consent_given": true,
  *   "camera_facing": "back"  // optional, defaults to "back"
  * }
- * 
+ *
  * OR (Multi-camera - new format):
  * {
  *   "learner_id": 12345,
@@ -65,25 +75,25 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 try {
     // Get POST data
     $input = json_decode(file_get_contents('php://input'), true);
-    
+
     if (json_last_error() !== JSON_ERROR_NONE) {
         throw new Exception('Invalid JSON input: ' . json_last_error_msg());
     }
-    
+
     // Determine format: single embedding or multi-camera embeddings
     $isSingleFormat = isset($input['embedding']);
     $isMultiFormat = isset($input['embeddings']) && is_array($input['embeddings']);
-    
+
     if (!isset($input['learner_id']) || (!$isSingleFormat && !$isMultiFormat)) {
         throw new Exception('Missing required fields: learner_id and (embedding OR embeddings) are required');
     }
-    
+
     $learner_id = intval($input['learner_id']);
     $allow_reenroll = isset($input['allow_reenroll']) ? (bool)$input['allow_reenroll'] : false;
-    
+
     // Convert single format to multi format for unified processing
     $embeddings_to_process = [];
-    
+
     if ($isSingleFormat) {
         // Single camera format (backward compatible)
         $embeddings_to_process[] = [
@@ -95,7 +105,7 @@ try {
     } else {
         // Multi-camera format
         $consent_given = isset($input['consent_given']) ? (bool)$input['consent_given'] : false;
-        
+
         foreach ($input['embeddings'] as $emb) {
             $embeddings_to_process[] = [
                 'embedding' => $emb['embedding'] ?? null,
@@ -105,38 +115,38 @@ try {
             ];
         }
     }
-    
+
     // Validate learner_id
     if ($learner_id <= 0) {
         throw new Exception('Invalid learner_id');
     }
-    
+
     // Validate embeddings array
     if (empty($embeddings_to_process)) {
         throw new Exception('No embeddings provided');
     }
-    
+
     // Check if learner exists
     $stmt = $conn->prepare("SELECT LearnerID FROM learnerdetails WHERE LearnerID = ?");
     $stmt->bind_param('i', $learner_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows === 0) {
         throw new Exception('Learner not found: ' . $learner_id);
     }
     $stmt->close();
-    
+
     // Process each embedding
     $enrolled_count = 0;
     $results = [];
-    
+
     foreach ($embeddings_to_process as $emb_data) {
         $embedding = $emb_data['embedding'];
         $quality_score = $emb_data['quality_score'];
         $camera_facing = $emb_data['camera_facing'];
         $consent_given = $emb_data['consent_given'];
-        
+
         // Validate camera_facing
         if (!in_array($camera_facing, ['front', 'back'])) {
             $results[] = [
@@ -146,7 +156,7 @@ try {
             ];
             continue;
         }
-        
+
         // Validate consent
         if (!$consent_given) {
             $results[] = [
@@ -156,7 +166,7 @@ try {
             ];
             continue;
         }
-        
+
         // Validate embedding
         $validated_embedding = validateEmbedding($embedding);
         if ($validated_embedding === false) {
@@ -167,7 +177,7 @@ try {
             ];
             continue;
         }
-        
+
         // Validate quality score
         if ($quality_score !== null && $quality_score < MIN_ENROLLMENT_QUALITY) {
             $results[] = [
@@ -177,10 +187,47 @@ try {
             ];
             continue;
         }
-        
+
+        // ------------------------------------------------------------------
+        // Cross-learner duplicate check: does this face already belong to a
+        // DIFFERENT, already-enrolled learner? Runs before touching this
+        // learner's own rows, and applies whether or not allow_reenroll is
+        // set — re-enrolling yourself should never let a face that matches
+        // someone else through.
+        // ------------------------------------------------------------------
+        try {
+            $duplicate = findDuplicateEnrollment($conn, $validated_embedding, $learner_id);
+        } catch (Exception $dupEx) {
+            error_log('[FACE_ENROLL] Duplicate check failed: ' . $dupEx->getMessage());
+            $results[] = [
+                'camera' => $camera_facing,
+                'success' => false,
+                'message' => 'Could not complete enrollment, please try again'
+            ];
+            continue;
+        }
+
+        if ($duplicate !== null) {
+            // Full details (which learner, which score) stay server-side only.
+            error_log(sprintf(
+                '[FACE_ENROLL] Blocked possible duplicate: learner %d face matches learner %d (camera %s, score %s, enrollment id %d)',
+                $learner_id,
+                $duplicate['learner_id'],
+                $duplicate['camera_facing'],
+                $duplicate['score'],
+                $duplicate['enrollment_id']
+            ));
+            $results[] = [
+                'camera' => $camera_facing,
+                'success' => false,
+                'message' => 'This face appears to already be enrolled to another learner. Please contact a facilitator.'
+            ];
+            continue;
+        }
+
         // Convert embedding to JSON for storage
         $embedding_json = json_encode($validated_embedding);
-        
+
         // Check if learner already has an active enrollment for this camera
         $stmt = $conn->prepare("SELECT id FROM learner_face WHERE learner_id = ? AND camera_facing = ? AND active = 1");
         if (!$stmt) {
@@ -202,7 +249,7 @@ try {
             continue;
         }
         $result = $stmt->get_result();
-        
+
         if ($result->num_rows > 0) {
             $existing_row = $result->fetch_assoc();
             $existing_id = $existing_row['id'];
@@ -343,21 +390,21 @@ try {
             $stmt->close();
         }
     }
-    
+
     // Return appropriate response
     if ($enrolled_count === 0) {
         throw new Exception('No embeddings were successfully enrolled');
     }
-    
+
     $response = [
         'success' => true,
         'message' => $enrolled_count === 1 ? 'Face enrolled successfully' : "$enrolled_count faces enrolled successfully",
         'enrolled_count' => $enrolled_count,
         'results' => $results
     ];
-    
+
     echo json_encode($response);
-    
+
 } catch (Exception $e) {
     http_response_code(400);
     echo json_encode([

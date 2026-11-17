@@ -75,13 +75,11 @@ function bindStatementParams(mysqli_stmt $statement, string $types, array $param
  * @param mysqli      $mysqli
  * @param int|null    $sdpId
  * @param string|null $sdpName
- * @param int         $page
- * @param int         $pageSize
  *
  * @return array
  * @throws Exception
  */
-function fetchLearnersBySdp(mysqli $mysqli, ?int $sdpId, ?string $sdpName, int $page = 1, int $pageSize = 30): array
+function fetchLearnersBySdp(mysqli $mysqli, ?int $sdpId, ?string $sdpName): array
 {
     $conditions = [];
     $params = [];
@@ -109,38 +107,6 @@ function fetchLearnersBySdp(mysqli $mysqli, ?int $sdpId, ?string $sdpName, int $
 
     $whereClause = implode(' OR ', $wrappedConditions);
 
-    // Get total count for pagination
-    $countSql = "
-        SELECT COUNT(*) as total
-        FROM learnerdetails l
-        LEFT JOIN class c ON l.classID = c.classID
-        LEFT JOIN sites site ON c.siteID = site.siteID
-        LEFT JOIN sdp s ON site.sdp_id = s.sdp_id
-        WHERE $whereClause
-    ";
-
-    $countStmt = $mysqli->prepare($countSql);
-    if (!$countStmt) {
-        throw new Exception('Failed to prepare count statement: ' . $mysqli->error);
-    }
-
-    bindStatementParams($countStmt, $types, $params);
-    
-    if (!$countStmt->execute()) {
-        $error = $countStmt->error;
-        $countStmt->close();
-        throw new Exception('Failed to execute count query: ' . $error);
-    }
-
-    $countResult = $countStmt->get_result();
-    $totalCount = $countResult->fetch_assoc()['total'];
-    $countStmt->close();
-
-    // Calculate pagination
-    $offset = ($page - 1) * $pageSize;
-    $totalPages = ceil($totalCount / $pageSize);
-    $hasMore = ($offset + $pageSize) < $totalCount;
-
     $sql = "
         SELECT 
             l.LearnerID,
@@ -162,18 +128,12 @@ function fetchLearnersBySdp(mysqli $mysqli, ?int $sdpId, ?string $sdpName, int $
             c.className ASC,
             l.Surname ASC,
             l.Name ASC
-        LIMIT ? OFFSET ?
     ";
 
     $statement = $mysqli->prepare($sql);
     if (!$statement) {
         throw new Exception('Failed to prepare statement: ' . $mysqli->error);
     }
-
-    // Add pagination parameters
-    $params[] = $pageSize;
-    $params[] = $offset;
-    $types .= 'ii';
 
     bindStatementParams($statement, $types, $params);
 
@@ -192,16 +152,7 @@ function fetchLearnersBySdp(mysqli $mysqli, ?int $sdpId, ?string $sdpName, int $
 
     $statement->close();
 
-    return [
-        'data' => $learners,
-        'pagination' => [
-            'page' => $page,
-            'pageSize' => $pageSize,
-            'total' => $totalCount,
-            'totalPages' => $totalPages,
-            'hasMore' => $hasMore
-        ]
-    ];
+    return $learners;
 }
 
 try {
@@ -216,13 +167,9 @@ try {
 
     $sdpId = isset($_GET['sdp_id']) ? (int) $_GET['sdp_id'] : null;
     $sdpName = isset($_GET['sdp_name']) ? trim($_GET['sdp_name']) : null;
-    $page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
-    $pageSize = isset($_GET['pageSize']) ? min(100, max(1, (int) $_GET['pageSize'])) : 30;
 
     $mysqli = resolveDatabaseConnection();
-    $result = fetchLearnersBySdp($mysqli, $sdpId, $sdpName, $page, $pageSize);
-    $learners = $result['data'];
-    $pagination = $result['pagination'];
+    $learners = fetchLearnersBySdp($mysqli, $sdpId, $sdpName);
 
     $sdpMeta = null;
     if (!empty($learners)) {
@@ -247,8 +194,7 @@ try {
             'sdp_name' => $sdpName,
         ],
         'sdp' => $sdpMeta,
-        'total' => $pagination['total'],
-        'pagination' => $pagination,
+        'total' => count($learners),
         'data' => $learners,
     ]);
 } catch (InvalidArgumentException $invalidArgumentException) {

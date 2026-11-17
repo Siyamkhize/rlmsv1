@@ -5,128 +5,27 @@
  * Optimized for rural connectivity - reduces multiple individual requests to 1 batch
  * Uses same security and idempotency as individual clocking
  */
+ 
+ // Set timezone to South Africa (SAST = UTC+2) - CRITICAL for date/time consistency
+date_default_timezone_set('Africa/Johannesburg');
 
-// Set execution timeout for large batch processing on 2G connections
-set_time_limit(180); // 3 minutes - see IMAGE_UPLOAD_AUDIT.md
-
-// Verify the timeout was actually applied (set_time_limit is ignored in safe mode / FastCGI)
-$actual = ini_get('max_execution_time');
-if ($actual != 180 && $actual != 0) {
-    error_log("WARNING: set_time_limit(180) was ignored. Max execution time is still {$actual}s. Large batches may timeout.");
-}
-
-// SECURITY: Disable detailed error output to clients
-error_reporting(E_ALL);
-ini_set('display_errors', 0);
-ini_set('log_errors', 1);
+require_once('connection.php');
+require_once('require_auth.php');
+require_once('idempotency_helpers.php');
 
 header('Content-Type: application/json');
 header('X-Powered-By: RLMSS-Batch-Clocking/1.0');
 
-// Validate request method first
+// Validate request method
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Method not allowed'
-    ]);
+    echo json_encode(['error' => 'Method not allowed', 'allowed' => 'POST']);
     exit;
 }
 
-// Load connection.php
-try {
-    if (!file_exists(__DIR__ . '/connection.php')) {
-        error_log("[BATCH_CLOCKING] CRITICAL: connection.php not found at: " . __DIR__ . '/connection.php');
-        throw new Exception("Database configuration error");
-    }
-    
-    require_once('connection.php');
-    
-    // Test database connection
-    if (!isset($conn) || !($conn instanceof mysqli)) {
-        error_log("[BATCH_CLOCKING] CRITICAL: Database connection not available");
-        throw new Exception("Database connection error");
-    }
-    
-    if ($conn->connect_error) {
-        error_log("[BATCH_CLOCKING] CRITICAL: Database connection failed: " . $conn->connect_error);
-        throw new Exception("Database connection error");
-    }
-    
-} catch (Exception $e) {
-    http_response_code(503);
-    echo json_encode([
-        'success' => false,
-        'error' => 'An internal error occurred. Please try again.'
-    ]);
-    exit;
-}
-
-// Load require_auth.php and authenticate immediately
-try {
-    if (!file_exists(__DIR__ . '/require_auth.php')) {
-        error_log("[BATCH_CLOCKING] CRITICAL: require_auth.php not found at: " . __DIR__ . '/require_auth.php');
-        throw new Exception("Authentication system error");
-    }
-    
-    require_once('require_auth.php');
-    
-} catch (Exception $e) {
-    http_response_code(503);
-    echo json_encode([
-        'success' => false,
-        'error' => 'An internal error occurred. Please try again.'
-    ]);
-    exit;
-}
-
-// SECURITY: Authenticate user immediately after loading auth library
-// This ensures authentication always runs if the library loads successfully
-try {
-    $user = requireAuth($conn);
-    
-    if (!$user || !isset($user['user_id']) || empty($user['user_id'])) {
-        error_log("[BATCH_CLOCKING] Authentication failed - invalid user data");
-        throw new Exception("Authentication required");
-    }
-    
-    $userId = $user['user_id'];
-    
-} catch (Exception $e) {
-    http_response_code(401);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Authentication failed. Please login again.'
-    ]);
-    exit;
-}
-
-// Load idempotency_helpers.php after authentication
-try {
-    if (!file_exists(__DIR__ . '/idempotency_helpers.php')) {
-        error_log("[BATCH_CLOCKING] CRITICAL: idempotency_helpers.php not found at: " . __DIR__ . '/idempotency_helpers.php');
-        throw new Exception("Request handling system error");
-    }
-    
-    require_once('idempotency_helpers.php');
-    
-    // Check if required functions exist
-    $requiredFunctions = ['idem_begin', 'idem_finish', 'idem_abort'];
-    foreach ($requiredFunctions as $func) {
-        if (!function_exists($func)) {
-            error_log("[BATCH_CLOCKING] CRITICAL: Missing idempotency function: $func");
-            throw new Exception("Request handling system error");
-        }
-    }
-    
-} catch (Exception $e) {
-    http_response_code(503);
-    echo json_encode([
-        'success' => false,
-        'error' => 'An internal error occurred. Please try again.'
-    ]);
-    exit;
-}
+// Get authenticated user
+$user = requireAuth($conn);
+$userId = $user['user_id'];
 
 try {
     // Get JSON input

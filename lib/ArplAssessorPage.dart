@@ -23,9 +23,9 @@ import 'ArplToolkitRouter.dart';
 import 'arpl_assessor_clocking_page.dart';
 
 class ArplAssessorPage extends StatefulWidget {
-  final String facilitator_id;
+  final String facilitatorId;
 
-  const ArplAssessorPage({super.key, required this.facilitator_id});
+  const ArplAssessorPage({super.key, required this.facilitatorId});
 
   @override
   _ArplAssessorPageState createState() => _ArplAssessorPageState();
@@ -41,9 +41,9 @@ class _ArplAssessorPageState extends State<ArplAssessorPage> {
   void initState() {
     super.initState();
     debugPrint('[ArplAssessorPage] ===== INITIALIZATION =====');
-    debugPrint('[ArplAssessorPage] Facilitator ID: ${widget.facilitator_id}');
+    debugPrint('[ArplAssessorPage] Facilitator ID: ${widget.facilitatorId}');
     debugPrint('[ArplAssessorPage] Starting fetchClasses...');
-    _classes = fetchClasses(widget.facilitator_id);
+    _classes = fetchClasses(widget.facilitatorId);
   }
 
   Future<String> _getFacilitatorName() async {
@@ -52,7 +52,7 @@ class _ArplAssessorPageState extends State<ArplAssessorPage> {
       final result = await db.query(
         'facilitator',
         where: 'facilitator_id = ?',
-        whereArgs: [widget.facilitator_id],
+        whereArgs: [widget.facilitatorId],
         limit: 1,
       );
 
@@ -179,34 +179,33 @@ class _ArplAssessorPageState extends State<ArplAssessorPage> {
           return _buildARPLDashboard();
         case 11:
           return AssessmentPreparationPage(
-              facilitatorId: widget.facilitator_id, isARPL: true);
+              facilitatorId: widget.facilitatorId, isARPL: true);
         case 12:
-          return AssessmentPlanPage(facilitatorId: widget.facilitator_id);
+          return AssessmentPlanPage(facilitatorId: widget.facilitatorId);
         case 13:
           return AssessorReportPage(
-              facilitatorId: widget.facilitator_id, isARPL: true);
+              facilitatorId: widget.facilitatorId, isARPL: true);
         case 14:
           return AssessmentReviewPage(
-              facilitatorId: widget.facilitator_id, isARPL: true);
+              facilitatorId: widget.facilitatorId, isARPL: true);
         case 20:
-          return ARPLAssessorReviewPage(facilitatorId: widget.facilitator_id);
+          return ARPLAssessorReviewPage(facilitatorId: widget.facilitatorId);
         case 21:
           return ARPLAppendixHPage(
-              facilitatorId: widget.facilitator_id, ofoNumber: _ofoNumber);
+              facilitatorId: widget.facilitatorId, ofoNumber: _ofoNumber);
         case 22:
-          return ARPLEvidenceChecklistPage(
-              facilitatorId: widget.facilitator_id);
+          return ARPLEvidenceChecklistPage(facilitatorId: widget.facilitatorId);
         case 23:
-          return RemedialsPage(facilitatorId: widget.facilitator_id);
+          return RemedialsPage(facilitatorId: widget.facilitatorId);
         case 24:
-          return ViewCompleteToolkitPage(facilitatorId: widget.facilitator_id);
+          return ViewCompleteToolkitPage(facilitatorId: widget.facilitatorId);
         case 25:
           return FutureBuilder(
             future: _getFacilitatorName(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 return ArplAssessorClockingPage(
-                  facilitatorId: widget.facilitator_id,
+                  facilitatorId: widget.facilitatorId,
                   facilitatorName: snapshot.data as String,
                 );
               }
@@ -223,23 +222,23 @@ class _ArplAssessorPageState extends State<ArplAssessorPage> {
       case 0:
         return _buildClassesContent();
       case 1:
-        return AssessmentPreparationPage(facilitatorId: widget.facilitator_id);
+        return AssessmentPreparationPage(facilitatorId: widget.facilitatorId);
       case 2:
-        return AssessmentPlanPage(facilitatorId: widget.facilitator_id);
+        return AssessmentPlanPage(facilitatorId: widget.facilitatorId);
       case 3:
-        return AssessorReportPage(facilitatorId: widget.facilitator_id);
+        return AssessorReportPage(facilitatorId: widget.facilitatorId);
       case 4:
-        return _buildAssessorFeedback(facilitatorId: widget.facilitator_id);
+        return _buildAssessorFeedback(facilitatorId: widget.facilitatorId);
       case 5:
-        return AssessmentReviewPage(facilitatorId: widget.facilitator_id);
+        return AssessmentReviewPage(facilitatorId: widget.facilitatorId);
       case 6:
-        return AppealFormPage(facilitatorId: widget.facilitator_id);
+        return AppealFormPage(facilitatorId: widget.facilitatorId);
       case 7:
         return NonComplianceAndFeedbackPage(
-            facilitatorId: widget.facilitator_id, learnerId: 'LEARNER_ID');
+            facilitatorId: widget.facilitatorId, learnerId: 'LEARNER_ID');
       case 8:
         return PotholeChecklistClassListPage(
-            facilitatorId: widget.facilitator_id);
+            facilitatorId: widget.facilitatorId);
       default:
         return _buildClassesContent();
     }
@@ -338,7 +337,7 @@ class _ArplAssessorPageState extends State<ArplAssessorPage> {
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Text(
-            'Facilitator ID: ${widget.facilitator_id}',
+            'Facilitator ID: ${widget.facilitatorId}',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),

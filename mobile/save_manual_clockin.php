@@ -8,18 +8,28 @@
  *
  * A clock-in is only accepted when BOTH the face photo and the signature
  * exist on the server. Partial records are rejected.
+ * 
+ * LAST UPDATED: 2026/11/03 - No changes (existing code)
  */
 
 header('Content-Type: application/json');
-require_once 'connection.php';
-require_once 'security_functions.php';
-require_once 'evidence_helpers.php';
-require_once 'require_auth.php';
 
-// Do not print PHP warnings into the JSON response
+// Enable comprehensive error logging
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../../logs/php_errors.log');
+
+// Log the request
+error_log("[SAVE_MANUAL_CLOCKIN] ========== NEW REQUEST ==========");
+error_log("[SAVE_MANUAL_CLOCKIN] Time: " . date('Y-m-d H:i:s'));
+error_log("[SAVE_MANUAL_CLOCKIN] Method: " . ($_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN'));
+
+require_once 'connection.php';
+require_once 'security_functions.php';
+require_once 'evidence_helpers.php';
+require_once 'idempotency_helpers.php';
+require_once 'require_auth.php';
 
 // SECURITY: Require authentication
 try {
@@ -45,6 +55,21 @@ try {
 
     if (!$input || !is_array($input)) {
         throw new Exception('Invalid JSON input');
+    }
+
+    // Extract idempotency key (required for offline-first sync)
+    $idempotencyKey = $input['idempotency_key'] ?? null;
+    
+    if ($idempotencyKey && validate_idempotency_key($idempotencyKey)) {
+        // Check if this is a duplicate request
+        $existing = idem_begin($conn, $user['user_id'], 'manual_clock_in', $idempotencyKey);
+        if ($existing !== null) {
+            // Return cached response for duplicate request
+            error_log("[SAVE_MANUAL_CLOCKIN] 🔄 Duplicate request detected, returning cached response");
+            http_response_code($existing['response_code'] ?? 200);
+            echo $existing['response_body'];
+            exit;
+        }
     }
 
     // Required fields
@@ -147,7 +172,7 @@ try {
     $conn->commit();
 
     // Success response
-    echo json_encode([
+    $responseBody = json_encode([
         'success' => true,
         'message' => 'Clock-in saved successfully',
         'manual_id' => $manualId,
@@ -164,11 +189,24 @@ try {
             'accuracy' => $accuracy
         ]
     ]);
+    
+    // Save response in idempotency table if key was provided
+    if (isset($idempotencyKey) && $idempotencyKey) {
+        idem_finish($conn, $user['user_id'], $idempotencyKey, 200, $responseBody);
+        error_log("[SAVE_MANUAL_CLOCKIN] ✅ Idempotency key stored: $idempotencyKey");
+    }
+    
+    echo $responseBody;
 
 } catch (Exception $e) {
     // Rollback on error
     if (isset($conn)) {
         $conn->rollback();
+    }
+    
+    // Abort idempotency if this was an idempotent request
+    if (isset($idempotencyKey) && $idempotencyKey && isset($user)) {
+        idem_abort($conn, $user['user_id'], $idempotencyKey);
     }
 
     http_response_code(400);

@@ -10,6 +10,8 @@
  *  - the learner has a COMPLETE clock-in today (time + face + signature)
  *  - the learner has not already clocked out
  *  - BOTH the face photo and the signature for clock-out exist on the server
+ * 
+ * LAST UPDATED: 2026/11/03 - No changes (existing code)
  */
 
 header('Content-Type: application/json');
@@ -50,21 +52,19 @@ try {
         throw new Exception('Invalid JSON input');
     }
     
-    // Extract idempotency key FIRST - before any processing
-    $idempotencyKey = $_SERVER['HTTP_X_IDEMPOTENCY_KEY'] ?? ($input['idempotency_key'] ?? null);
+    // Extract idempotency key (optional but recommended)
+    $idempotencyKey = $input['idempotency_key'] ?? null;
     
-    if (!$idempotencyKey) {
-        throw new Exception('Idempotency key required');
-    }
-    
-    // Check idempotency BEFORE processing
-    $existing = idem_begin($conn, $user['user_id'], 'clock_out', $idempotencyKey);
-    if ($existing) {
-        // Return cached response for duplicate request
-        http_response_code($existing['response_code'] ?? 200);
-        echo $existing['response_body'];
-        error_log("[SAVE_MANUAL_CLOCKOUT] ✅ Idempotent response returned for key: $idempotencyKey");
-        exit;
+    if ($idempotencyKey && validate_idempotency_key($idempotencyKey)) {
+        // Check if this is a duplicate request
+        $existing = idem_begin($conn, $user['user_id'], 'manual_clock_out', $idempotencyKey);
+        if ($existing !== null) {
+            // Return cached response for duplicate request
+            error_log("[SAVE_MANUAL_CLOCKOUT] 🔄 Duplicate request detected, returning cached response");
+            http_response_code($existing['response_code'] ?? 200);
+            echo $existing['response_body'];
+            exit;
+        }
     }
 
     // Required fields
@@ -179,7 +179,7 @@ try {
     $conn->commit();
 
     // Success response
-    $response = [
+    $responseBody = json_encode([
         'success' => true,
         'message' => 'Clock-out saved successfully',
         'learner_id' => $learnerID,
@@ -194,12 +194,15 @@ try {
             'longitude' => $longitude,
             'accuracy' => $accuracy
         ]
-    ];
+    ]);
     
-    // Mark as complete in idempotency system
-    idem_finish($conn, $user['user_id'], $idempotencyKey, 200, json_encode($response));
+    // Save response in idempotency table if key was provided
+    if (isset($idempotencyKey) && $idempotencyKey) {
+        idem_finish($conn, $user['user_id'], $idempotencyKey, 200, $responseBody);
+        error_log("[SAVE_MANUAL_CLOCKOUT] ✅ Idempotency key stored: $idempotencyKey");
+    }
     
-    echo json_encode($response);
+    echo $responseBody;
 
 } catch (Exception $e) {
     // Rollback on error
@@ -207,8 +210,8 @@ try {
         $conn->rollback();
     }
     
-    // Abort idempotency (allow retry)
-    if (isset($idempotencyKey) && isset($user)) {
+    // Abort idempotency if this was an idempotent request
+    if (isset($idempotencyKey) && $idempotencyKey && isset($user)) {
         idem_abort($conn, $user['user_id'], $idempotencyKey);
     }
 

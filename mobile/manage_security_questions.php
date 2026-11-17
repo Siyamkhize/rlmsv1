@@ -24,16 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
-require_once __DIR__ . 'connection.php';
+require_once __DIR__ . '/connection.php';
 
-// Read action from GET, POST, or JSON body
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
-
-// If action not found, try reading from JSON body
-if (empty($action)) {
-    $input = json_decode(file_get_contents('php://input'), true);
-    $action = $input['action'] ?? '';
-}
 
 try {
     switch ($action) {

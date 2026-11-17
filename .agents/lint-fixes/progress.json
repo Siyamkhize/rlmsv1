@@ -1,43 +1,78 @@
 {
-  "batch": 2,
+  "batch": 3,
   "status": "IN_PROGRESS",
   "timestamp": "2025-01-21",
   "initial_issues": 7162,
-  "batch_1_final": 2089,
-  "current_issues": 1817,
-  "total_fixed": 5345,
-  "batch_2_fixed": 272,
-  "reduction_percentage": 75,
-  "issues_fixed_batch_2": {
-    "curly_braces_in_flow_control_structures": 29,
-    "deprecated_member_use_withOpacity": 175,
-    "deprecated_member_use_dataRowHeight": 2,
-    "avoid_print_in_tests": 66
+  "batch_1_result": 2089,
+  "batch_2_result": 1817,
+  "batch_3_result": 1808,
+  "total_fixed": 5354,
+  "overall_reduction_percentage": 74.8,
+  "issues_fixed_summary": {
+    "batch_1": {
+      "avoid_print": 5283,
+      "curly_braces_in_flow_control_structures": 35,
+      "prefer_const_constructors": "auto-fixed via dart fix",
+      "other_auto_fixes": "~755 via dart fix"
+    },
+    "batch_2": {
+      "curly_braces_in_flow_control_structures": 29,
+      "deprecated_member_use_withOpacity": 175,
+      "deprecated_member_use_dataRowHeight": 2,
+      "avoid_print_in_tests": 66,
+      "total": 272
+    },
+    "batch_3": {
+      "prefer_interpolation_to_compose_strings": 5,
+      "syntax_errors": 1,
+      "total": 6
+    }
   },
-  "remaining_issues": {
+  "remaining_issues_breakdown": {
     "use_build_context_synchronously": 790,
-    "deprecated_member_use": 34,
     "library_private_types_in_public_api": 114,
+    "deprecated_member_use": 36,
     "file_names": 35,
     "non_constant_identifier_names": 25,
     "constant_identifier_names": 19,
-    "other": "~800"
+    "other": 789
   },
-  "files_modified_batch_2": [
-    "lib/ArplAssessorPage.dart",
-    "lib/AssessorPage.dart",
-    "lib/clock_in_page.dart",
-    "lib/database_helper.dart",
-    "lib/DetailsPage.dart",
-    "lib/DetailsPage_server.dart",
-    "lib/poe_submit.dart",
-    "lib/POECollectionPage.dart",
-    "35 files with withOpacity fixes",
-    "test_database_fix.dart",
-    "test_enhanced_clocking_days.dart",
-    "test_methods.dart",
-    "test_overflow_and_name_format_fix.dart",
-    "test_smart_search_id_extraction.dart"
+  "commits": [
+    "b2e8cce - Batch 1: 5073 issues fixed (71% reduction)",
+    "172520b - Batch 2: 272 issues fixed (curly braces, withOpacity, test prints)",
+    "9b1f1bf - Batch 3: 6 issues fixed (string interpolation, syntax)"
   ],
-  "next_steps": "Continue with remaining deprecated_member_use issues (WillPopScope, desiredAccuracy, timeLimit), then tackle use_build_context_synchronously (790 issues)"
+  "files_modified_all_batches": "~185 Dart files across lib/ and test directories",
+  "analysis": {
+    "quick_wins_completed": true,
+    "auto_fixable_completed": true,
+    "remaining_complexity": "HIGH - Remaining issues require manual intervention per instance",
+    "blocking_issues": {
+      "use_build_context_synchronously": {
+        "count": 790,
+        "effort": "HIGH - Each requires analyzing async flow and adding context.mounted checks",
+        "top_files": [
+          "DetailsPage.dart (131 issues)",
+          "DetailsPage_server.dart (107 issues)",
+          "AssessorPage.dart (67 issues)",
+          "POECollectionPage.dart (34 issues)",
+          "fingerprint_induction.dart (32 issues)",
+          "learner_induction_page.dart (32 issues)"
+        ]
+      },
+      "library_private_types_in_public_api": {
+        "count": 114,
+        "effort": "MEDIUM - Architectural decision: make types public or restructure"
+      },
+      "deprecated_member_use": {
+        "count": 36,
+        "effort": "LOW-MEDIUM - Update to newer Flutter APIs"
+      },
+      "file_names": {
+        "count": 35,
+        "effort": "MEDIUM - Requires file renaming + import updates"
+      }
+    }
+  },
+  "recommendation": "Continue with focused batches on use_build_context_synchronously, targeting high-impact files first. Consider automating pattern detection for common async/context patterns."
 }

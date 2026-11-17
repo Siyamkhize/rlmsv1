@@ -1,6 +1,7 @@
 <?php
 /**
  * Idempotency helpers for offline-first mobile synchronization
+ * LAST UPDATED: 2026/11/03
  * 
  * These functions implement proper idempotency handling for mobile apps that
  * generate keys at tap time and replay them after network connectivity returns.

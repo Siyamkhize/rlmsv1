@@ -43,7 +43,7 @@ Future<bool> syncSingleClockIn(Map<String, dynamic> attendance) async {
 
       // Prepare payload exactly like LearnerListPage.dart
       final payload = {
-        'LearnerID': attendance['LearnerID'],
+        'learnerId': attendance['learnerId'],
         'clock_in': '1',
         'signature': '', // Empty signature for now
         'user_latitude': attendance['user_latitude'] ?? '0.0',
@@ -153,7 +153,7 @@ Future<bool> syncSingleClockOut(Map<String, dynamic> attendance) async {
 
       // Prepare payload exactly like LearnerListPage.dart
       final payload = {
-        'LearnerID': attendance['LearnerID'],
+        'learnerId': attendance['learnerId'],
         'clock_out': '1',
         'signature': '', // Empty signature for now
         'user_latitude': attendance['user_latitude'] ?? '0.0',
@@ -326,14 +326,14 @@ class SyncService extends ChangeNotifier {
     }
 
     try {
-      await _syncQualification_selection();
+      await _syncQualificationSelection();
       debugPrint('[SYNC] ✅ Qualification selection sync complete');
     } catch (e) {
       debugPrint('[SYNC] ❌ Qualification selection sync failed: $e');
     }
 
     try {
-      await _syncQualification_pathway();
+      await _syncQualificationPathway();
       debugPrint('[SYNC] ✅ Qualification pathway sync complete');
     } catch (e) {
       debugPrint('[SYNC] ❌ Qualification pathway sync failed: $e');
@@ -354,7 +354,7 @@ class SyncService extends ChangeNotifier {
     }
 
     try {
-      await _syncUnit_standard_selection();
+      await _syncUnitStandardSelection();
       debugPrint('[SYNC] ✅ Unit standard selection sync complete');
     } catch (e) {
       debugPrint('[SYNC] ❌ Unit standard selection sync failed: $e');
@@ -439,7 +439,7 @@ class SyncService extends ChangeNotifier {
     }
 
     try {
-      await sync_inductionClocking();
+      await syncInductionClocking();
       debugPrint('[SYNC] ✅ Sync induction clocking complete');
     } catch (e) {
       debugPrint('[SYNC] ❌ Sync induction clocking failed: $e');
@@ -523,12 +523,12 @@ class SyncService extends ChangeNotifier {
 
         final db = await _dbHelper.database;
 
-        // Create a mapping of IDNumber to server LearnerID for existing records
+        // Create a mapping of IDNumber to server learnerId for existing records
         Map<String, int> idNumberToServerId = {};
         for (var learner in learners) {
-          if (learner['IDNumber'] != null && learner['LearnerID'] != null) {
+          if (learner['IDNumber'] != null && learner['learnerId'] != null) {
             idNumberToServerId[learner['IDNumber'].toString()] =
-                learner['LearnerID'] as int;
+                learner['learnerId'] as int;
           }
         }
 
@@ -538,7 +538,7 @@ class SyncService extends ChangeNotifier {
 
         for (var existingLearner in existingLearners) {
           String idNumber = existingLearner['IDNumber']?.toString() ?? '';
-          int localId = existingLearner['LearnerID'] as int;
+          int localId = existingLearner['learnerId'] as int;
 
           if (idNumberToServerId.containsKey(idNumber)) {
             int serverId = idNumberToServerId[idNumber]!;
@@ -577,7 +577,7 @@ class SyncService extends ChangeNotifier {
           Map<String, dynamic>? bankDetails;
           if (learner['BankName'] != null || learner['BankAccount'] != null) {
             bankDetails = {
-              'LearnerID': learner['LearnerID'],
+              'learnerId': learner['learnerId'],
               'BankName': learner['BankName'] ?? '',
               'bankType': learner['bankType'] ?? '',
               'BankAccount': learner['BankAccount'] ?? '',
@@ -607,7 +607,7 @@ class SyncService extends ChangeNotifier {
             }
 
             debugPrint(
-                "Successfully synced learner with IDNumber: ${learner['IDNumber']}, Server ID: ${learner['LearnerID']}");
+                "Successfully synced learner with IDNumber: ${learner['IDNumber']}, Server ID: ${learner['learnerId']}");
           } catch (e) {
             if (e.toString().contains('NOT NULL constraint failed')) {
               debugPrint(
@@ -645,8 +645,8 @@ class SyncService extends ChangeNotifier {
 
         await db.update(
           'learner_clocking',
-          {'LearnerID': newId},
-          where: 'LearnerID = ?',
+          {'learnerId': newId},
+          where: 'learnerId = ?',
           whereArgs: [oldId],
         );
         debugPrint("Updated learner_clocking: $oldId -> $newId");
@@ -659,8 +659,8 @@ class SyncService extends ChangeNotifier {
 
         await db.update(
           'bankdetails',
-          {'LearnerID': newId},
-          where: 'LearnerID = ?',
+          {'learnerId': newId},
+          where: 'learnerId = ?',
           whereArgs: [oldId],
         );
         debugPrint("Updated bankdetails: $oldId -> $newId");
@@ -673,8 +673,8 @@ class SyncService extends ChangeNotifier {
 
         await db.update(
           'poe',
-          {'learnerID': newId},
-          where: 'learnerID = ?',
+          {'learnerId': newId},
+          where: 'learnerId = ?',
           whereArgs: [oldId],
         );
         debugPrint("Updated poe: $oldId -> $newId");
@@ -863,7 +863,7 @@ class SyncService extends ChangeNotifier {
             final raw = clocking as Map<String, dynamic>;
             var mappedClocking = <String, dynamic>{
               'clocking_id': raw['clocking_id'],
-              'LearnerID': raw['LearnerID'] ?? raw['learner_id'],
+              'learnerId': raw['learnerId'] ?? raw['learner_id'],
               'clock_date': raw['clock_date'],
               'clock_in_time': raw['clock_in_time'],
               'clock_out_time': raw['clock_out_time'],
@@ -877,7 +877,7 @@ class SyncService extends ChangeNotifier {
 
             // Validate required fields
             if (mappedClocking['clocking_id'] == null ||
-                mappedClocking['LearnerID'] == null ||
+                mappedClocking['learnerId'] == null ||
                 mappedClocking['clock_date'] == null ||
                 mappedClocking['clock_in_time'] == null) {
               debugPrint("Skipping invalid record: $mappedClocking");
@@ -900,9 +900,9 @@ class SyncService extends ChangeNotifier {
               // This guarantees max ONE local record per learner per date.
               final existingRecords = await db.query(
                 'learner_clocking',
-                where: 'LearnerID = ? AND clock_date = ?',
+                where: 'learnerId = ? AND clock_date = ?',
                 whereArgs: [
-                  mappedClocking['LearnerID'],
+                  mappedClocking['learnerId'],
                   mappedClocking['clock_date'],
                 ],
               );
@@ -911,7 +911,7 @@ class SyncService extends ChangeNotifier {
                 // NEVER overwrite local records - local is source of truth.
                 // Also, do NOT create a second record for the same learner/date.
                 debugPrint(
-                    "⏭️ PRESERVING local record for ${mappedClocking['LearnerID']} (clock_date=${mappedClocking['clock_date']}) - not inserting duplicate for day");
+                    "⏭️ PRESERVING local record for ${mappedClocking['learnerId']} (clock_date=${mappedClocking['clock_date']}) - not inserting duplicate for day");
                 skippedCount++;
               } else {
                 // Insert new record from server (no existing record for that learner/date)
@@ -921,7 +921,7 @@ class SyncService extends ChangeNotifier {
                   conflictAlgorithm: ConflictAlgorithm.replace,
                 );
                 debugPrint(
-                    "✅ Inserted new server record for ${mappedClocking['LearnerID']}");
+                    "✅ Inserted new server record for ${mappedClocking['learnerId']}");
                 insertedCount++;
               }
             } catch (e) {
@@ -998,7 +998,7 @@ class SyncService extends ChangeNotifier {
       const maxRetries = 3;
       for (var clockingData in clockingDataList) {
         final clockingId = clockingData['clocking_id'];
-        final LearnerID = clockingData['LearnerID'];
+        final learnerId = clockingData['learnerId'];
         final clockInTime = clockingData['clock_in_time'];
         final clockOutTime = clockingData['clock_out_time'];
         final contactTime = clockingData['contact_time'];
@@ -1020,7 +1020,7 @@ class SyncService extends ChangeNotifier {
 
             // Add fields
             request.fields['clocking_id'] = clockingId.toString();
-            request.fields['LearnerID'] = LearnerID.toString();
+            request.fields['learnerId'] = learnerId.toString();
             request.fields['clock_in_time'] = clockInTime ?? '';
             request.fields['clock_out_time'] = clockOutTime ?? '';
             request.fields['contact_time'] = contactTime ?? '';
@@ -1409,8 +1409,8 @@ class SyncService extends ChangeNotifier {
         while (attempts < maxRetries && !synced) {
           try {
             // Validate required fields
-            if (!localData.containsKey('LearnerID') ||
-                localData['LearnerID'] == null ||
+            if (!localData.containsKey('learnerId') ||
+                localData['learnerId'] == null ||
                 !localData.containsKey('clock_in_time') ||
                 localData['clock_in_time'] == null ||
                 !localData.containsKey('clocking_id') ||
@@ -1613,10 +1613,10 @@ class SyncService extends ChangeNotifier {
 
         final db = await _dbHelper.database;
 
-        for (var pathway_selectionData in pathwaySelectionlist) {
+        for (var pathwaySelectionData in pathwaySelectionlist) {
           await db.insert(
             'pathway_selection',
-            pathway_selectionData,
+            pathwaySelectionData,
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
         }
@@ -1674,7 +1674,7 @@ class SyncService extends ChangeNotifier {
     }
   }
 
-  Future<void> _syncQualification_selection() async {
+  Future<void> _syncQualificationSelection() async {
     try {
       final response =
           await http.get(Uri.parse(AppConfig.syncQualificationSelectionUrl));
@@ -1699,10 +1699,10 @@ class SyncService extends ChangeNotifier {
 
         final db = await _dbHelper.database;
 
-        for (var qualification_selectionData in qualificationSelectionlist) {
+        for (var qualificationSelectionData in qualificationSelectionlist) {
           await db.insert(
             'qualification_selection',
-            qualification_selectionData,
+            qualificationSelectionData,
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
         }
@@ -1717,7 +1717,7 @@ class SyncService extends ChangeNotifier {
     }
   }
 
-  Future<void> _syncQualification_pathway() async {
+  Future<void> _syncQualificationPathway() async {
     try {
       final response =
           await http.get(Uri.parse(AppConfig.syncQualificationPathwayUrl));
@@ -1742,10 +1742,10 @@ class SyncService extends ChangeNotifier {
 
         final db = await _dbHelper.database;
 
-        for (var qualification_pathwayData in qualificationPathwaylist) {
+        for (var qualificationPathwayData in qualificationPathwaylist) {
           await db.insert(
             'qualification_pathway',
-            qualification_pathwayData,
+            qualificationPathwayData,
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
         }
@@ -1846,7 +1846,7 @@ class SyncService extends ChangeNotifier {
     }
   }
 
-  Future<void> _syncUnit_standard_selection() async {
+  Future<void> _syncUnitStandardSelection() async {
     try {
       final response =
           await http.get(Uri.parse(AppConfig.syncUnitStandardSelectionUrl));
@@ -2433,7 +2433,7 @@ class SyncService extends ChangeNotifier {
                           material['quantity'] ?? 0, // Default value if missing
                       'received': material['received'] ??
                           'Unknown', // Default value if missing
-                      'LearnerID': material['LearnerID'] ??
+                      'learnerId': material['learnerId'] ??
                           'Unknown', // Default value if missing
                       'Description': material['Description'] ??
                           'Unknown', // Default value if missing
@@ -2451,7 +2451,7 @@ class SyncService extends ChangeNotifier {
                         .replace, // Or ConflictAlgorithm.ignore
                   );
                   debugPrint(
-                      'Inserted material: ${material['LearnerID']}'); // Log inserted material
+                      'Inserted material: ${material['learnerId']}'); // Log inserted material
                 } catch (e) {
                   debugPrint('Error inserting material: $e');
                 }
@@ -2635,7 +2635,7 @@ class SyncService extends ChangeNotifier {
       var request = http.MultipartRequest('POST', url);
 
       // Validate required fields
-      String? learnerId = poe['learnerID']?.toString();
+      String? learnerId = poe['learnerId']?.toString();
       if (learnerId == null ||
           learnerId.isEmpty ||
           poe['exercise'] == null ||
@@ -2656,7 +2656,7 @@ class SyncService extends ChangeNotifier {
       }
 
       // Add fields
-      request.fields['learnerID'] = learnerId;
+      request.fields['learnerId'] = learnerId;
       request.fields['exercise'] = poe['exercise'].toString();
       request.fields['type'] = poe['type'].toString();
       request.fields['submitted_at'] = poe['submitted_at'].toString();
@@ -2668,7 +2668,7 @@ class SyncService extends ChangeNotifier {
         contentType: MediaType('application', 'pdf'),
       ));
 
-      debugPrint("Uploading POE PDF for LearnerID: $learnerId...");
+      debugPrint("Uploading POE PDF for learnerId: $learnerId...");
 
       // Retry logic
       int maxRetries = 3;
@@ -2696,9 +2696,9 @@ class SyncService extends ChangeNotifier {
         } catch (e) {
           retryCount++;
           debugPrint(
-              "Retry $retryCount/$maxRetries for LearnerID: $learnerId, Error: $e");
+              "Retry $retryCount/$maxRetries for learnerId: $learnerId, Error: $e");
           if (retryCount == maxRetries) {
-            debugPrint("Max retries reached for LearnerID: $learnerId");
+            debugPrint("Max retries reached for learnerId: $learnerId");
           }
           await Future.delayed(const Duration(seconds: 5));
         }
@@ -2776,19 +2776,19 @@ class SyncService extends ChangeNotifier {
     }
   }
 
-  Future<void> _markAsSynced(String learnerID) async {
+  Future<void> _markAsSynced(String learnerId) async {
     if (kDebugMode) {
-      debugPrint('DEBUG: Marking learner $learnerID as synced');
+      debugPrint('DEBUG: Marking learner $learnerId as synced');
     }
     final db = await _dbHelper.database;
     final updatedRows = await db.update(
       'learnerdetails',
       {'synced': 1},
-      where: 'LearnerID = ?',
-      whereArgs: [learnerID],
+      where: 'learnerId = ?',
+      whereArgs: [learnerId],
     );
     if (kDebugMode) {
-      debugPrint('DEBUG: Updated $updatedRows rows for LearnerID $learnerID');
+      debugPrint('DEBUG: Updated $updatedRows rows for learnerId $learnerId');
     }
   }
 
@@ -2815,10 +2815,10 @@ class SyncService extends ChangeNotifier {
 
       for (var learner in unsyncedLearners) {
         try {
-          String? learnerID = learner['LearnerID']?.toString();
-          if (learnerID == null || learnerID.isEmpty) {
+          String? learnerId = learner['learnerId']?.toString();
+          if (learnerId == null || learnerId.isEmpty) {
             errors.add(
-                'Skipping learner due to missing LearnerID: ${learner['Name'] ?? 'Unknown'}');
+                'Skipping learner due to missing learnerId: ${learner['Name'] ?? 'Unknown'}');
             if (kDebugMode) {
               debugPrint('DEBUG: ${errors.last}');
             }
@@ -2836,7 +2836,7 @@ class SyncService extends ChangeNotifier {
           }
 
           if (kDebugMode) {
-            debugPrint('DEBUG: Sending request for learner $learnerID');
+            debugPrint('DEBUG: Sending request for learner $learnerId');
           }
 
           var request = http.MultipartRequest(
@@ -2865,7 +2865,7 @@ class SyncService extends ChangeNotifier {
           }
 
           // Always include required fields
-          request.fields['LearnerID'] = learnerID;
+          request.fields['learnerId'] = learnerId;
           request.fields['IDNumber'] = idNumber;
           request.fields['synced'] = '1';
 
@@ -2922,13 +2922,13 @@ class SyncService extends ChangeNotifier {
           }
 
           debugPrint(
-              'DEBUG: Final request fields for learner $learnerID (${request.fields.length} fields): ${request.fields}');
+              'DEBUG: Final request fields for learner $learnerId (${request.fields.length} fields): ${request.fields}');
 
           // Add file uploads if they exist
           if (learner['profile_image'] != null &&
               File(learner['profile_image'].toString()).existsSync()) {
             debugPrint(
-                'DEBUG: Adding profile_image for $learnerID: ${learner['profile_image']}');
+                'DEBUG: Adding profile_image for $learnerId: ${learner['profile_image']}');
             request.files.add(await http.MultipartFile.fromPath(
               'profile_image',
               learner['profile_image'].toString(),
@@ -2938,7 +2938,7 @@ class SyncService extends ChangeNotifier {
           if (learner['signature'] != null &&
               File(learner['signature'].toString()).existsSync()) {
             debugPrint(
-                'DEBUG: Adding signature for $learnerID: ${learner['signature']}');
+                'DEBUG: Adding signature for $learnerId: ${learner['signature']}');
             request.files.add(await http.MultipartFile.fromPath(
               'signature',
               learner['signature'].toString(),
@@ -2948,7 +2948,7 @@ class SyncService extends ChangeNotifier {
           if (learner['witness_signature'] != null &&
               File(learner['witness_signature'].toString()).existsSync()) {
             debugPrint(
-                'DEBUG: Adding witness_signature for $learnerID: ${learner['witness_signature']}');
+                'DEBUG: Adding witness_signature for $learnerId: ${learner['witness_signature']}');
             request.files.add(await http.MultipartFile.fromPath(
               'witness_signature',
               learner['witness_signature'].toString(),
@@ -2958,7 +2958,7 @@ class SyncService extends ChangeNotifier {
           var response = await request.send().timeout(
             const Duration(seconds: 120),
             onTimeout: () {
-              errors.add('Request timed out for LearnerID $learnerID');
+              errors.add('Request timed out for learnerId $learnerId');
               if (kDebugMode) {
                 debugPrint('DEBUG: ${errors.last}');
               }
@@ -2967,19 +2967,19 @@ class SyncService extends ChangeNotifier {
           );
 
           if (kDebugMode) {
-            debugPrint('DEBUG: Response status for $learnerID: ${response.statusCode}');
+            debugPrint('DEBUG: Response status for $learnerId: ${response.statusCode}');
             debugPrint('DEBUG: Response headers: ${response.headers}');
           }
 
           String responseBody = await response.stream.bytesToString();
           
           if (kDebugMode) {
-            debugPrint('DEBUG: Raw response body for $learnerID: "$responseBody"');
+            debugPrint('DEBUG: Raw response body for $learnerId: "$responseBody"');
           }
 
           if (response.statusCode != 200) {
             errors.add(
-                'Server error for LearnerID $learnerID: Status ${response.statusCode}, Response: $responseBody');
+                'Server error for learnerId $learnerId: Status ${response.statusCode}, Response: $responseBody');
             if (kDebugMode) {
               debugPrint('DEBUG: ${errors.last}');
             }
@@ -2987,7 +2987,7 @@ class SyncService extends ChangeNotifier {
           }
 
           if (responseBody.isEmpty) {
-            errors.add('Empty server response for LearnerID $learnerID');
+            errors.add('Empty server response for learnerId $learnerId');
             if (kDebugMode) {
               debugPrint('DEBUG: ${errors.last}');
             }
@@ -2997,28 +2997,28 @@ class SyncService extends ChangeNotifier {
           try {
             Map<String, dynamic> jsonResponse = jsonDecode(responseBody);
             if (jsonResponse['success'] == true) {
-              await _markAsSynced(learnerID);
+              await _markAsSynced(learnerId);
               syncedCount++;
               if (kDebugMode) {
-                debugPrint('DEBUG: Successfully synced learner $learnerID');
+                debugPrint('DEBUG: Successfully synced learner $learnerId');
               }
             } else {
               errors.add(
-                  'Server error for LearnerID $learnerID: ${jsonResponse['error'] ?? 'Unknown server error'}');
+                  'Server error for learnerId $learnerId: ${jsonResponse['error'] ?? 'Unknown server error'}');
               if (kDebugMode) {
                 debugPrint('DEBUG: ${errors.last}');
               }
             }
           } catch (e) {
             errors.add(
-                'Failed to parse server response for LearnerID $learnerID: $e. Response: $responseBody');
+                'Failed to parse server response for learnerId $learnerId: $e. Response: $responseBody');
             if (kDebugMode) {
               debugPrint('DEBUG: ${errors.last}');
             }
           }
         } catch (e) {
           errors.add(
-              'Error syncing LearnerID ${learner['LearnerID'] ?? 'unknown'}: $e - Data: $learner');
+              'Error syncing learnerId ${learner['learnerId'] ?? 'unknown'}: $e - Data: $learner');
           if (kDebugMode) {
             debugPrint('DEBUG: ${errors.last}');
           }
@@ -3222,7 +3222,7 @@ class SyncService extends ChangeNotifier {
     }
   }
 
-  Future<void> sync_inductionClocking() async {
+  Future<void> syncInductionClocking() async {
     final db = await _dbHelper.database;
 
     isSyncing = true;
@@ -3247,7 +3247,7 @@ class SyncService extends ChangeNotifier {
       const maxRetries = 3;
       for (var clockingData in clockingDataList) {
         final clockingId = clockingData['clocking_id'];
-        final LearnerID = clockingData['LearnerID'];
+        final learnerId = clockingData['learnerId'];
         final clockInTime = clockingData['clock_in_time'];
         final clockOutTime = clockingData['clock_out_time'];
         final contactTime = clockingData['contact_time'];
@@ -3270,7 +3270,7 @@ class SyncService extends ChangeNotifier {
 
             // Add fields
             request.fields['clocking_id'] = clockingId.toString();
-            request.fields['LearnerID'] = LearnerID.toString();
+            request.fields['learnerId'] = learnerId.toString();
             request.fields['clock_in_time'] = clockInTime ?? '';
             request.fields['clock_out_time'] = clockOutTime ?? '';
             request.fields['contact_time'] = contactTime ?? '';
@@ -3434,7 +3434,7 @@ class SyncService extends ChangeNotifier {
             // Map JSON keys to match table schema if needed
             var mappedClocking = {
               'clocking_id': clocking['clocking_id'],
-              'LearnerID': clocking['LearnerID'] ??
+              'learnerId': clocking['learnerId'] ??
                   clocking['learner_id'], // Handle key mismatch
               'clock_date': clocking['clock_date'],
               'clock_in_time': clocking['clock_in_time'],
@@ -3449,7 +3449,7 @@ class SyncService extends ChangeNotifier {
 
             // Validate required fields
             if (mappedClocking['clocking_id'] == null ||
-                mappedClocking['LearnerID'] == null ||
+                mappedClocking['learnerId'] == null ||
                 mappedClocking['clock_date'] == null ||
                 mappedClocking['clock_in_time'] == null) {
               debugPrint("Skipping invalid record: $mappedClocking");
@@ -3462,9 +3462,9 @@ class SyncService extends ChangeNotifier {
               final db = await _dbHelper.database;
               final existingRecords = await db.query(
                 'induction_clocking',
-                where: 'LearnerID = ? AND clock_date = ?',
+                where: 'learnerId = ? AND clock_date = ?',
                 whereArgs: [
-                  mappedClocking['LearnerID'],
+                  mappedClocking['learnerId'],
                   mappedClocking['clock_date']
                 ],
               );
@@ -3480,7 +3480,7 @@ class SyncService extends ChangeNotifier {
                   // Server has clock-out but we have local clock-in without clock-out
                   // This might be auto-generated - DON'T overwrite
                   debugPrint(
-                      "PRESERVING local clock-in state for ${mappedClocking['LearnerID']} - server has auto clock-out");
+                      "PRESERVING local clock-in state for ${mappedClocking['learnerId']} - server has auto clock-out");
                   continue;
                 }
 
@@ -3488,19 +3488,19 @@ class SyncService extends ChangeNotifier {
                 await db.update(
                   'induction_clocking',
                   mappedClocking,
-                  where: 'LearnerID = ? AND clock_date = ?',
+                  where: 'learnerId = ? AND clock_date = ?',
                   whereArgs: [
-                    mappedClocking['LearnerID'],
+                    mappedClocking['learnerId'],
                     mappedClocking['clock_date']
                   ],
                 );
                 debugPrint(
-                    "Updated existing record for ${mappedClocking['LearnerID']}");
+                    "Updated existing record for ${mappedClocking['learnerId']}");
               } else {
                 // Insert new record
                 await _dbHelper.insertData(
                     'induction_clocking', mappedClocking);
-                debugPrint("Inserted new record for ${mappedClocking['LearnerID']}");
+                debugPrint("Inserted new record for ${mappedClocking['learnerId']}");
               }
             } catch (e) {
               debugPrint("Error merging record $mappedClocking: $e");

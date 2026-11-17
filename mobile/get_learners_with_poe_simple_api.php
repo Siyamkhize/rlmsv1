@@ -21,14 +21,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// DATABASE CONNECTION - Use secure config file
-require_once __DIR__ . '/config.php';
-// $conn is now available from config.php
+// DATABASE CONNECTION - EMBEDDED (no external files)
+$servername = "localhost";
+$username = "rlmsrlmsco_ezxcmacd_rlms";
+$password = "aV~4RP=_G{Uxm-Mp";
+$dbname = "rlmsrlmsco_ezxcmacd_rlms";
 
 try {
-    if (!isset($conn) || $conn->connect_error) {
-        throw new Exception("Database connection not available");
+    $conn = new mysqli($servername, $username, $password, $dbname);
+    
+    if ($conn->connect_error) {
+        throw new Exception("Connection failed: " . $conn->connect_error);
     }
+    
+    $conn->set_charset("utf8");
     
 } catch (Exception $e) {
     http_response_code(500);

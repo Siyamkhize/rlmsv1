@@ -7,9 +7,9 @@ import 'ModeratorPage.dart';
 import 'ArplPracticalImageCapturePage.dart';
 
 class ArplModeratorPage extends StatefulWidget {
-  final String facilitator_id;
+  final String facilitatorId;
 
-  const ArplModeratorPage({super.key, required this.facilitator_id});
+  const ArplModeratorPage({super.key, required this.facilitatorId});
 
   @override
   _ArplModeratorPageState createState() => _ArplModeratorPageState();
@@ -25,15 +25,15 @@ class _ArplModeratorPageState extends State<ArplModeratorPage> {
   void initState() {
     super.initState();
     debugPrint('[ArplModeratorPage] ===== INITIALIZATION =====');
-    debugPrint('[ArplModeratorPage] Facilitator ID: ${widget.facilitator_id}');
+    debugPrint('[ArplModeratorPage] Facilitator ID: ${widget.facilitatorId}');
     debugPrint('[ArplModeratorPage] Starting fetchClasses...');
-    _classes = fetchClasses(widget.facilitator_id);
+    _classes = fetchClasses(widget.facilitatorId);
   }
 
   Future<List<dynamic>> fetchClasses(String facilitatorId) async {
     try {
       final url = AppConfig.buildUrl('get_classes.php', queryParams: {
-        'facilitator_id': facilitatorId,
+        'facilitatorId': facilitatorId,
       });
 
       debugPrint('[ArplModeratorPage] Fetching classes from: $url');
@@ -125,14 +125,14 @@ class _ArplModeratorPageState extends State<ArplModeratorPage> {
         case 10:
           return _buildARPLDashboard();
         case 11:
-          return ModerationFeedbackPage(facilitatorId: widget.facilitator_id);
+          return ModerationFeedbackPage(facilitatorId: widget.facilitatorId);
         case 12:
-          return ModerationReportPage(facilitatorId: widget.facilitator_id);
+          return ModerationReportPage(facilitatorId: widget.facilitatorId);
         case 13:
-          return ModerationSamplingPage(facilitatorId: widget.facilitator_id);
+          return ModerationSamplingPage(facilitatorId: widget.facilitatorId);
         case 14:
           return ModeratorPracticalImagesSelectionPage(
-              facilitatorId: widget.facilitator_id);
+              facilitatorId: widget.facilitatorId);
         case 20:
           return _buildAppealManagementContent();
         case 21:
@@ -148,14 +148,14 @@ class _ArplModeratorPageState extends State<ArplModeratorPage> {
       case 0:
         return _buildClassesContent();
       case 1:
-        return ModerationFeedbackPage(facilitatorId: widget.facilitator_id);
+        return ModerationFeedbackPage(facilitatorId: widget.facilitatorId);
       case 2:
-        return ModerationReportPage(facilitatorId: widget.facilitator_id);
+        return ModerationReportPage(facilitatorId: widget.facilitatorId);
       case 3:
         return ModeratorPracticalImagesSelectionPage(
-            facilitatorId: widget.facilitator_id);
+            facilitatorId: widget.facilitatorId);
       case 4:
-        return ModerationSamplingPage(facilitatorId: widget.facilitator_id);
+        return ModerationSamplingPage(facilitatorId: widget.facilitatorId);
       default:
         return _buildClassesContent();
     }
@@ -260,7 +260,7 @@ class _ArplModeratorPageState extends State<ArplModeratorPage> {
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Text(
-            'Moderator ID: ${widget.facilitator_id}',
+            'Moderator ID: ${widget.facilitatorId}',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
@@ -313,7 +313,7 @@ class _ArplModeratorPageState extends State<ArplModeratorPage> {
                                     builder: (context) =>
                                         ArplModeratorClassDetailsPage(
                                       classId: classId,
-                                      moderatorId: widget.facilitator_id,
+                                      moderatorId: widget.facilitatorId,
                                     ),
                                   ),
                                 );
@@ -1045,7 +1045,7 @@ class _ModeratorPracticalImagesSelectionPageState
   Future<List<dynamic>> _fetchClasses() async {
     try {
       final url = AppConfig.buildUrl('get_classes.php', queryParams: {
-        'facilitator_id': widget.facilitatorId,
+        'facilitatorId': widget.facilitatorId,
       });
       final response = await http.get(Uri.parse(url));
 

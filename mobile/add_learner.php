@@ -1,21 +1,10 @@
 <?php
-/**
- * Add Learner Endpoint - SECURED
- * 
- * Security Features:
- * - Bearer token authentication required
- * - Rate limiting: 30 requests per minute
- * - Input validation and sanitization
- * - SQL injection protection via prepared statements
- * - Duplicate detection by IDNumber + classID + project
- * 
- * @security CRITICAL - Authentication required
- */
-
-require_once 'require_auth.php';
 include 'connection.php';
 
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 // Enhanced error logging
 error_reporting(E_ALL);
@@ -33,13 +22,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Method not allowed']);
     exit;
 }
-
-// SECURITY: Require authentication
-$user = requireAuth($conn);
-$debug_log[] = "Authenticated user: {$user['user_id']} ({$user['user_role']})";
-
-// SECURITY: Apply rate limiting (30 requests per minute)
-applyRateLimit($conn, 'add_learner');
 
 /**
  * Strip device-specific path prefixes from image paths.
@@ -80,50 +62,15 @@ try {
         $debug_log[] = "Local ID: " . $input['local_id'];
     }
 
-    // SECURITY: Validate required fields
+    // Validate required fields
     $requiredFields = ['Name', 'Surname', 'IDNumber', 'classID'];
-    validateRequired($requiredFields, $input);
-    
-    // SECURITY: Sanitize and validate inputs
-    $input['Name'] = sanitize_input($input['Name']);
-    $input['Surname'] = sanitize_input($input['Surname']);
-    $input['IDNumber'] = sanitize_input($input['IDNumber']);
-    
-    // Validate ID Number format
-    if (!validate_sa_id($input['IDNumber'])) {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Invalid South African ID number format',
-            'debug' => $debug_log
-        ]);
-        exit;
+    foreach ($requiredFields as $field) {
+        if (!isset($input[$field]) || empty($input[$field])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => "Missing required field: $field", 'debug' => $debug_log]);
+            exit;
+        }
     }
-    
-    // Validate classID is integer
-    $classID_validated = validate_int($input['classID'], 1);
-    if ($classID_validated === false) {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Invalid classID format',
-            'debug' => $debug_log
-        ]);
-        exit;
-    }
-    
-    // Validate email if provided
-    if (!empty($input['Email']) && !validate_email($input['Email'])) {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'message' => 'Invalid email format',
-            'debug' => $debug_log
-        ]);
-        exit;
-    }
-    
-    $debug_log[] = "Input validation passed";
 
     // Get project_id from classID (via class -> sites join)
     $projectStmt = $conn->prepare("
@@ -233,9 +180,6 @@ try {
             'KinName' => $input['KinName'] ?? '',
             'KinRelation' => $input['KinRelation'] ?? '',
             'KinContact' => $input['KinContact'] ?? '',
-            'Province' => $input['Province'] ?? '',
-            'District' => $input['District'] ?? '',
-            'Municipality' => $input['Municipality'] ?? '',
             'SchoolName' => $input['SchoolName'] ?? '',
             'SchoolCompletion' => $input['SchoolCompletion'] ?? '',
             'SchoolLocation' => $input['SchoolLocation'] ?? '',
@@ -341,9 +285,6 @@ try {
             'KinName' => $input['KinName'] ?? '',
             'KinRelation' => $input['KinRelation'] ?? '',
             'KinContact' => $input['KinContact'] ?? '',
-            'Province' => $input['Province'] ?? '',
-            'District' => $input['District'] ?? '',
-            'Municipality' => $input['Municipality'] ?? '',
             'SchoolName' => $input['SchoolName'] ?? '',
             'SchoolCompletion' => $input['SchoolCompletion'] ?? '',
             'SchoolLocation' => $input['SchoolLocation'] ?? '',

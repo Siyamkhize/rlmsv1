@@ -1,31 +1,35 @@
 <?php
-/**
- * Save Learner Signature Endpoint - SECURED
- * 
- * Security Features:
- * - Bearer token authentication required
- * - Rate limiting: 20 uploads per minute
- * - File type validation (PNG images only)
- * - File size validation (max 2MB)
- * - MIME type verification
- * - Learner existence check
- * - SQL injection protection
- * 
- * Handles both 'signature' and 'witness_signature' fields
- * 
- * @security CRITICAL - Authentication required
- */
-
-require_once 'require_auth.php';
 require_once 'connection.php';
 
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-// SECURITY: Require authentication
-$user = requireAuth($conn);
+// ENHANCED DEBUG: Log all incoming data to file
+$debug_log = 'signature_upload_debug.log';
+$debug_data = [
+    'timestamp' => date('Y-m-d H:i:s'),
+    'POST' => $_POST,
+    'FILES' => $_FILES,
+    'SERVER' => [
+        'REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'],
+        'CONTENT_TYPE' => $_SERVER['CONTENT_TYPE'] ?? 'not set',
+        'CONTENT_LENGTH' => $_SERVER['CONTENT_LENGTH'] ?? 'not set',
+    ]
+];
+file_put_contents($debug_log, "=== NEW REQUEST ===\n" . print_r($debug_data, true) . "\n\n", FILE_APPEND);
 
-// SECURITY: Apply rate limiting (20 uploads per minute)
-applyRateLimit($conn, 'save_signature');
+// DEBUG: Log all incoming data
+error_log("=== SIGNATURE UPLOAD REQUEST ===");
+error_log("POST data: " . print_r($_POST, true));
+error_log("FILES data: " . print_r($_FILES, true));
+error_log("================================");
+
+// Use the connection from connection.php (already defined as $conn)
+
 
 // Determine which signature field is present
 $field_name = '';
@@ -33,100 +37,95 @@ $signature = null;
 if (isset($_FILES['signature'])) {
     $field_name = 'signature';
     $signature = $_FILES['signature'];
+    file_put_contents('signature_upload_debug.log', "Field detected: signature\n", FILE_APPEND);
 } elseif (isset($_FILES['witness_signature'])) {
     $field_name = 'witness_signature';
     $signature = $_FILES['witness_signature'];
+    file_put_contents('signature_upload_debug.log', "Field detected: witness_signature\n", FILE_APPEND);
 }
 
-if (!$signature || !isset($_POST['learner_id'])) {
-    sendError('Missing signature file or learner_id', 400, 'MISSING_REQUIRED_FIELDS');
-}
-
-// SECURITY: Validate learner_id is integer
-$learner_id = validate_int($_POST['learner_id'], 1);
-if ($learner_id === false) {
-    sendError('Invalid learner_id format', 400, 'INVALID_PARAMETER');
-}
-
-// SECURITY: Comprehensive file upload validation for PNG signatures
-$validation = validate_file_upload($signature, [
-    'allowed_extensions' => ['png'],
-    'allowed_mime_types' => ['image/png'],
-    'max_size' => 2 * 1024 * 1024,  // 2MB (signatures should be smaller)
-    'allow_svg' => false
-]);
-
-if (!$validation['valid']) {
-    sendError($validation['error'], 400, 'INVALID_FILE_UPLOAD');
-}
-
-// SECURITY: Verify learner exists
-$check_query = "SELECT LearnerID FROM learnerdetails WHERE LearnerID = ?";
-$check_stmt = $conn->prepare($check_query);
-$check_stmt->bind_param("i", $learner_id);
-$check_stmt->execute();
-$check_result = $check_stmt->get_result();
-
-if ($check_result->num_rows === 0) {
-    $check_stmt->close();
-    sendError('Learner not found', 404, 'LEARNER_NOT_FOUND');
-}
-$check_stmt->close();
-
-// Ensure upload directory exists with secure permissions
-$upload_dir = 'signatures/';
-if (!is_dir($upload_dir)) {
-    mkdir($upload_dir, 0755, true);
-}
-
-// Generate simple filename: signature_LEARNERID.png or witness_signature_LEARNERID.png
-$file_name = $field_name . '_' . $learner_id . '.png';
-$file_path = $upload_dir . $file_name;
-
-// Move uploaded file
-if (move_uploaded_file($signature['tmp_name'], $file_path)) {
-    // Set secure file permissions
-    chmod($file_path, 0644);
-    // Set secure file permissions
-    chmod($file_path, 0644);
+if ($signature && isset($_POST['learner_id'])) {
+    file_put_contents('signature_upload_debug.log', "Inside main IF block - learner_id: {$_POST['learner_id']}, field: $field_name\n", FILE_APPEND);
     
-    // Update database - column name matches field name
-    $column = $field_name === 'signature' ? 'signature' : 'witness_signature';
-    $sql = "UPDATE learnerdetails SET $column = ? WHERE LearnerID = ?";
-    $stmt = $conn->prepare($sql);
+    $learner_id = trim($_POST['learner_id']); // Trim to avoid whitespace issues
+    error_log("Received learner_id: $learner_id, field_name: $field_name");
 
-    if ($stmt === false) {
-        // Clean up uploaded file on error
-        @unlink($file_path);
-        sendError('Database prepare failed: ' . $conn->error, 500, 'DATABASE_ERROR');
+    // Validate learner_id exists
+    $check_query = "SELECT LearnerID FROM learnerdetails WHERE LearnerID = ?";
+    $check_stmt = $conn->prepare($check_query);
+    $check_stmt->bind_param("i", $learner_id);
+    $check_stmt->execute();
+    $check_result = $check_stmt->get_result();
+    if ($check_result->num_rows === 0) {
+        error_log("No learner found with LearnerID: $learner_id");
+        echo json_encode(['success' => false, 'message' => 'No learner found with LearnerID: ' . $learner_id]);
+        $check_stmt->close();
+        $conn->close();
+        exit();
+    }
+    $check_stmt->close();
+
+    // Ensure upload directory exists
+    $upload_dir = 'signatures/';
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0775, true);
     }
 
-    $stmt->bind_param("si", $file_name, $learner_id);
+    // Generate simple filename: signature_LEARNERID.png or witness_signature_LEARNERID.png
+    $file_name = $field_name . '_' . $learner_id . '.png';
+    $file_path = $upload_dir . $file_name;
 
-    if ($stmt->execute()) {
-        // Log security event
-        log_security_event('signature_uploaded', "$field_name uploaded successfully", [
-            'user_id' => $user['user_id'],
-            'learner_id' => $learner_id,
-            'field_name' => $field_name,
-            'filename' => $file_name
-        ]);
+    if ($signature['error'] !== UPLOAD_ERR_OK) {
+        error_log("File upload error for $field_name: " . $signature['error']);
+        echo json_encode(['success' => false, 'message' => 'File upload error: ' . $signature['error']]);
+        $conn->close();
+        exit();
+    }
+
+    if (move_uploaded_file($signature['tmp_name'], $file_path)) {
+        file_put_contents('signature_upload_debug.log', "File moved successfully to: $file_path\n", FILE_APPEND);
         
-        sendSuccess([
-            'filename' => $file_name,
-            'field_name' => $field_name,
-            'learner_id' => $learner_id
-        ], "$field_name saved successfully");
-    } else {
-        // Clean up uploaded file on database error
-        @unlink($file_path);
-        sendError('Database execute failed: ' . $stmt->error, 500, 'DATABASE_ERROR');
-    }
+        // Update database - ALWAYS update, overwrite old signature
+        $column = $field_name === 'signature' ? 'signature' : 'witness_signature';
+        file_put_contents('signature_upload_debug.log', "About to UPDATE column: $column with value: $file_name for learner: $learner_id\n", FILE_APPEND);
+        
+        $sql = "UPDATE learnerdetails SET $column = ? WHERE LearnerID = ?";
+        $stmt = $conn->prepare($sql);
 
-    $stmt->close();
+        if ($stmt === false) {
+            file_put_contents('signature_upload_debug.log', "FAILED to prepare statement: " . $conn->error . "\n", FILE_APPEND);
+            error_log("Failed to prepare statement: " . $conn->error);
+            echo json_encode(['success' => false, 'message' => 'Failed to prepare statement: ' . $conn->error]);
+            $conn->close();
+            exit();
+        }
+
+        file_put_contents('signature_upload_debug.log', "Statement prepared successfully\n", FILE_APPEND);
+        $stmt->bind_param("si", $file_name, $learner_id);
+        file_put_contents('signature_upload_debug.log', "Parameters bound\n", FILE_APPEND);
+
+        if ($stmt->execute()) {
+            file_put_contents('signature_upload_debug.log', "✅ UPDATE executed successfully! Affected rows: " . $stmt->affected_rows . "\n", FILE_APPEND);
+            error_log("Signature saved for learner_id: $learner_id, column: $column, file: $file_name");
+            echo json_encode(['success' => true, 'message' => "$field_name saved successfully", 'filename' => $file_name]);
+        } else {
+            file_put_contents('signature_upload_debug.log', "❌ UPDATE execution FAILED: " . $stmt->error . "\n", FILE_APPEND);
+            error_log("Failed to execute statement: " . $stmt->error);
+            echo json_encode(['success' => false, 'message' => 'Failed to execute statement: ' . $stmt->error]);
+        }
+
+        $stmt->close();
+    } else {
+        error_log("Failed to move uploaded file to $file_path");
+        echo json_encode(['success' => false, 'message' => 'Failed to save signature. Error code: ' . $signature['error']]);
+    }
 } else {
-    sendError('Failed to save signature file', 500, 'FILE_SAVE_ERROR');
+    error_log("Invalid request: signature or learner_id missing");
+    echo json_encode(['success' => false, 'message' => 'Invalid request: signature or learner_id missing']);
 }
 
 $conn->close();
+
+// Log completion
+file_put_contents('signature_upload_debug.log', "=== REQUEST COMPLETED ===\n\n", FILE_APPEND);
 ?>

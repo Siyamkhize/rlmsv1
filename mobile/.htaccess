@@ -1,16 +1,18 @@
 # ==================================================
-# .htaccess Configuration - XAMPP & Production Compatible
-# Simplified version without PHP settings that cause errors
+# .htaccess - PRODUCTION SECURE - XAMPP Compatible
 # ==================================================
 
-# Prevent Directory Browsing
-Options -Indexes
+# Disable directory browsing (security)
+Options -Indexes -ExecCGI -Includes
+AddDefaultCharset UTF-8
+
+# Disable server signature (hide Apache version)
+ServerSignature Off
 
 # ==================================================
-# FORCE HTTPS (Production Only - Disabled for local)
+# FORCE HTTPS - PRODUCTION ONLY
 # ==================================================
-
-# Uncomment these lines ONLY on production server after SSL is installed
+# UNCOMMENT ON LIVE SERVER AFTER SSL CERTIFICATE IS INSTALLED
 # <IfModule mod_rewrite.c>
 #     RewriteEngine On
 #     RewriteCond %{HTTPS} off
@@ -18,84 +20,146 @@ Options -Indexes
 # </IfModule>
 
 # ==================================================
-# SECURITY - Protect Sensitive Files
+# AUTHORIZATION HEADER FIX (Bearer tokens - REQUIRED)
 # ==================================================
-
-# Block access to database connection file
-<Files "connection.php">
-    Require all denied
-</Files>
-
-# Block access to config files
-<Files "config.php">
-    Require all denied
-</Files>
-
-# Block access to .env files
-<Files ".env">
-    Require all denied
-</Files>
-
-# Block backup files
-<FilesMatch "\.(bak|backup|old|orig|save|swp|sql|log)$">
-    Require all denied
-</FilesMatch>
-
-# ==================================================
-# ALLOW ACCESS - PHP & Assets
-# ==================================================
-
-# Allow PHP files (authentication handled in PHP code)
-<FilesMatch "\.php$">
-    Require all granted
-</FilesMatch>
-
-# Allow static files
-<FilesMatch "\.(jpg|jpeg|png|gif|svg|css|js|ico|woff|woff2|ttf|eot|pdf|html|htm)$">
-    Require all granted
-</FilesMatch>
-
-# ==================================================
-# SECURITY HEADERS (Optional - may not work on all servers)
-# ==================================================
-
-<IfModule mod_headers.c>
-    # Prevent clickjacking
-    Header set X-Frame-Options "SAMEORIGIN"
+<IfModule mod_rewrite.c>
+    RewriteEngine On
     
-    # Prevent MIME sniffing
-    Header set X-Content-Type-Options "nosniff"
-    
-    # XSS Protection
-    Header set X-XSS-Protection "1; mode=block"
-    
-    # Remove server info
-    Header unset X-Powered-By
+    # Pass Authorization header to PHP (critical for token auth)
+    RewriteCond %{HTTP:Authorization} ^(.*)
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
+</IfModule>
+
+# Alternative method for CGI/FastCGI environments
+<IfModule mod_setenvif.c>
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 </IfModule>
 
 # ==================================================
-# UTF-8 ENCODING
+# SECURITY - BLOCK SENSITIVE FILES (CRITICAL)
 # ==================================================
 
-AddDefaultCharset UTF-8
+# Block database connection & config files
+<FilesMatch "(?i)^(connection\.php|config\.php|auth.*\.php|security.*\.php|\.env.*|\.htaccess.*|\.htpasswd.*)$">
+    Require all denied
+</FilesMatch>
+
+# Block package manager files (contain dependency versions)
+<FilesMatch "(?i)^(composer\.(json|lock)|package(-lock)?\.json|yarn\.lock)$">
+    Require all denied
+</FilesMatch>
+
+# Block backup / log / database dump files
+<FilesMatch "(?i)\.(bak|backup|old|orig|save|swp|tmp|sql|log|ini|conf|sh|bash|inc|dist|dump|gz|tar|zip|rar)$">
+    Require all denied
+</FilesMatch>
+
+# Block hidden files and folders (.git, .svn, .env, etc.)
+# Exception: Allow .well-known (required for Let's Encrypt SSL)
+<IfModule mod_rewrite.c>
+    RewriteCond %{REQUEST_URI} !^/\.well-known/ [NC]
+    RewriteRule (^|/)\.(?!well-known) - [F]
+</IfModule>
+
+# Block dangerous double extensions (shell.php.jpg, malware.php.txt, etc.)
+<FilesMatch "(?i)\.(php\d?|phtml|phar|shtml|cgi|pl|py|jsp|asp|aspx)\.(jpg|jpeg|png|gif|txt|pdf|doc|docx|xls|xlsx|zip|rar|bak|sql|log|ini|inc|dist|old|backup)$">
+    Require all denied
+</FilesMatch>
+
+# Block direct access to PHP include files (typically named with .inc.php)
+<FilesMatch "(?i)\.inc\.php$">
+    Require all denied
+</FilesMatch>
 
 # ==================================================
-# NOTES FOR PRODUCTION
+# ALLOWED FILE ACCESS - WHITELIST APPROACH
 # ==================================================
-# 
-# 1. ENABLE HTTPS REDIRECT:
-#    - Uncomment the RewriteEngine section above after SSL is installed
-# 
-# 2. SET FILE PERMISSIONS:
-#    sudo chown -R www-data:www-data /var/www/html/
-#    sudo chmod 644 /var/www/html/.htaccess
-#    sudo chmod 644 /var/www/html/*.php
-#    sudo chmod 600 /var/www/html/connection.php
-#    sudo chmod 755 /var/www/html/mobile/signatures/
-# 
-# 3. ENABLE APACHE MODULES:
-#    sudo a2enmod rewrite
-#    sudo a2enmod headers
-#    sudo systemctl restart apache2
-#
 
+# Allow ONLY legitimate PHP API endpoints (strict whitelist)
+<FilesMatch "(?i)^[a-z0-9_-]+\.php$">
+    Require all granted
+</FilesMatch>
+
+# Allow safe static assets only (NO HTML, SVG, XML to prevent XSS)
+<FilesMatch "(?i)\.(jpe?g|png|gif|webp|css|js|ico|woff2?|ttf|eot|pdf)$">
+    Require all granted
+</FilesMatch>
+
+# Explicitly DENY HTML, SVG, XML (can contain JavaScript/XSS)
+<FilesMatch "(?i)\.(html?|svg|xml|xsl|xsd)$">
+    Require all denied
+</FilesMatch>
+
+# ==================================================
+# SECURITY HEADERS (CRITICAL FOR PRODUCTION)
+# ==================================================
+
+<IfModule mod_headers.c>
+    # Prevent clickjacking attacks
+    Header always set X-Frame-Options "DENY"
+    
+    # Prevent MIME type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # Enable XSS protection (legacy browsers)
+    Header always set X-XSS-Protection "1; mode=block"
+    
+    # Control referrer information
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Content Security Policy (strict - prevents inline scripts)
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none';"
+    
+    # Permissions Policy (formerly Feature-Policy)
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    
+    # Hide server info (remove X-Powered-By header)
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
+    
+    # Strict Transport Security (UNCOMMENT AFTER SSL IS ACTIVE)
+    # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+</IfModule>
+
+# ==================================================
+# BLOCK COMMON ATTACK PATTERNS
+# ==================================================
+
+# Block requests with suspicious query strings
+<IfModule mod_rewrite.c>
+    # Block SQL injection attempts
+    RewriteCond %{QUERY_STRING} (union.*select|insert.*into|delete.*from|drop.*table) [NC,OR]
+    
+    # Block file inclusion attacks
+    RewriteCond %{QUERY_STRING} (\.\.\/|\.\.\\|etc\/passwd|boot\.ini) [NC,OR]
+    
+    # Block script injection
+    RewriteCond %{QUERY_STRING} (<script|<iframe|<object|<embed|javascript:) [NC,OR]
+    
+    # Block base64 encoded attacks
+    RewriteCond %{QUERY_STRING} base64_encode.*\( [NC,OR]
+    
+    # Block PHP global variable manipulation
+    RewriteCond %{QUERY_STRING} (globals|encode|config|localhost|loopback) [NC]
+    
+    # Return 403 Forbidden for blocked patterns
+    RewriteRule .* - [F,L]
+</IfModule>
+
+# ==================================================
+# DISABLE PHP EXECUTION IN UPLOAD DIRECTORIES
+# ==================================================
+
+# Disable PHP execution in evidence/upload folders
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+
+# Block PHP execution via file handler
+<FilesMatch "\.php$">
+    # Allow PHP only in root mobile directory, not subdirectories
+    # This is overridden in subdirectories below
+</FilesMatch>

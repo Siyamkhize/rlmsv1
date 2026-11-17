@@ -27,7 +27,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
   List<Map<String, dynamic>> learners = [];
   String selectedItem = 'Select';
   String practitionerFullName = 'Unknown Facilitator';
-  String qualification_name = 'No qualification assigned';
+  String qualificationName = 'No qualification assigned';
   String className = 'N/A';
   String dateAORCreated = DateTime.now().toString().split(' ')[0];
   String selectedDescription = 'POE Submission';
@@ -119,10 +119,10 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
       if (qualResults.isNotEmpty) {
         setState(() {
-          qualification_name = qualResults.first['name']?.toString() ??
+          qualificationName = qualResults.first['name']?.toString() ??
               'No qualification assigned';
         });
-        debugPrint('✅ Set qualification_name: $qualification_name');
+        debugPrint('✅ Set qualificationName: $qualificationName');
       }
     } catch (e) {
       debugPrint('❌ Error fetching qualification name: $e');
@@ -586,7 +586,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
   Widget build(BuildContext context) {
     debugPrint(
         'Building POE Collection Table with ${learners.length} learners');
-    debugPrint('Qualification Name in UI: $qualification_name');
+    debugPrint('Qualification Name in UI: $qualificationName');
     return Scaffold(
       appBar: AppBar(
         title: const Text('POE Collection'),
@@ -886,7 +886,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
             ),
             const SizedBox(height: 8.0),
             Text(
-              'Qualification: $qualification_name',
+              'Qualification: $qualificationName',
               style: const TextStyle(fontSize: 14),
               textAlign: TextAlign.center,
             ),
