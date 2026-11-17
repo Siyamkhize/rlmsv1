@@ -371,6 +371,7 @@ class _LearnerMaterialSelectionPageState
 
             // Reload materials to show updated status
             await _loadReceivedMaterials();
+          if (!context.mounted) return;
           }
         } else {
           throw Exception(result['error'] ?? 'Update failed');

@@ -7068,6 +7068,8 @@ class _PotholeChecklistLearnerListPageState
       var response = await request.send();
       var responseData = await response.stream.bytesToString();
 
+if (!context.mounted) return;
+
       debugPrint('Response status: ${response.statusCode}');
       debugPrint('Response data: $responseData');
 
@@ -8484,6 +8486,7 @@ class _PotholeChecklistScannedViewPageState
 
         // Open the local file
         final result = await OpenFile.open(file.path);
+        if (!context.mounted) return;
         debugPrint('DEBUG: OpenFile result: ${result.message}');
 
         if (result.type != ResultType.done) {
@@ -10639,6 +10642,7 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
           _siteId!.isEmpty ||
           _projectId!.isEmpty) {
         await _fetchTraceabilityData(_selectedLearnerId!);
+      if (!context.mounted) return;
       }
       if (_classId == null ||
           _siteId == null ||

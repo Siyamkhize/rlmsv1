@@ -1043,6 +1043,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
   // Show confirmation dialog after successful fingerprint verification
   Future<void> _showSubmitConfirmationDialog() async {
     final confirmed = await showDialog<bool>(
+      if (!context.mounted) return;
       context: context,
       barrierDismissible: false, // Prevent dismissing by tapping outside
       builder: (context) => AlertDialog(

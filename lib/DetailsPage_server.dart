@@ -252,6 +252,7 @@ class _POETabContentState extends State<POETabContent> {
   Future<void> _manualMarkAsUploaded(String type, String exercise) async {
     // Show confirmation dialog
     bool confirmed = await showDialog<bool>(
+          if (!context.mounted) return;
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
@@ -351,6 +352,7 @@ class _POETabContentState extends State<POETabContent> {
 
     // Show confirmation dialog
     bool confirmed = await showDialog<bool>(
+          if (!context.mounted) return;
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
@@ -479,6 +481,7 @@ class _POETabContentState extends State<POETabContent> {
 
     // Show confirmation dialog
     bool confirmed = await showDialog<bool>(
+          if (!context.mounted) return;
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
@@ -613,6 +616,7 @@ class _POETabContentState extends State<POETabContent> {
 
     // Show confirmation dialog
     bool confirmed = await showDialog<bool>(
+          if (!context.mounted) return;
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(

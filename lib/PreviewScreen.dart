@@ -26,6 +26,7 @@ class _CroppingPageState extends State<CroppingPage> {
       // Load the input image
       File inputImage = File(widget.imagePath);
       Uint8List imageBytes = await inputImage.readAsBytes();
+      if (!context.mounted) return;
       img.Image image = img.decodeImage(imageBytes)!; // Decode the image bytes
 
       // Get screen dimensions

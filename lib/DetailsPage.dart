@@ -253,6 +253,7 @@ class _POETabContentState extends State<POETabContent> {
       String type, String exercise, String unitStandard) async {
     // Show confirmation dialog
     bool confirmed = await showDialog<bool>(
+          if (!context.mounted) return;
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
@@ -357,6 +358,7 @@ class _POETabContentState extends State<POETabContent> {
 
     // Show confirmation dialog
     bool confirmed = await showDialog<bool>(
+          if (!context.mounted) return;
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
@@ -488,6 +490,7 @@ class _POETabContentState extends State<POETabContent> {
 
     // Show confirmation dialog
     bool confirmed = await showDialog<bool>(
+          if (!context.mounted) return;
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
@@ -621,6 +624,7 @@ class _POETabContentState extends State<POETabContent> {
 
     // Show confirmation dialog
     bool confirmed = await showDialog<bool>(
+          if (!context.mounted) return;
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(

@@ -979,6 +979,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             if (mounted) {
               if (!context.mounted) return;
               final setupNow = await showDialog<bool>(
+                if (!context.mounted) return;
                 context: context,
                 barrierDismissible: false,
                 builder: (dialogContext) {
@@ -1146,6 +1147,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             if (mounted) {
               if (!context.mounted) return;
               final setupNow = await showDialog<bool>(
+                if (!context.mounted) return;
                 context: context,
                 barrierDismissible: false,
                 builder: (dialogContext) {
@@ -1532,6 +1534,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                     ],
                   ),
                 );
+              if (!context.mounted) return;
               }),
             ],
           ),
@@ -1973,6 +1976,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
     final TextEditingController idController = TextEditingController();
 
     final confirmed = await showDialog<bool>(
+      if (!context.mounted) return;
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
@@ -2095,6 +2099,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             TextButton(
               onPressed: () {
                 _signatureController.clear();
+              if (!context.mounted) return;
               },
               child: const Text('Clear'),
             ),
@@ -3184,6 +3189,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
     // Show prompt dialog
     final shouldSetup = await showDialog<bool>(
+      if (!context.mounted) return;
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
@@ -3330,6 +3336,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       final TextEditingController answerController = TextEditingController();
 
       final verified = await showDialog<bool>(
+        if (!context.mounted) return;
         context: context,
         barrierDismissible: false,
         builder: (dialogContext) {
@@ -3472,6 +3479,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
     try {
       // Show enrollment dialog
       final shouldEnroll = await showDialog<bool>(
+        if (!context.mounted) return;
         context: context,
         barrierDismissible: false,
         builder: (dialogContext) {
@@ -3891,6 +3899,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
           // Show confirmation dialog
           final confirmed = await showDialog<bool>(
+            if (!context.mounted) return;
             context: context,
             barrierDismissible: false,
             builder: (context) => AlertDialog(

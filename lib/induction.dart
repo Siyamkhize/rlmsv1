@@ -412,6 +412,7 @@ class _InductionPageState extends State<InductionPage> {
     });
 
     bool confirmed = await showDialog<bool>(
+          if (!context.mounted) return;
           context: context,
           barrierDismissible: false,
           builder: (context) => AlertDialog(
@@ -533,6 +534,8 @@ class _InductionPageState extends State<InductionPage> {
           )
           .timeout(const Duration(seconds: 10));
 
+if (!context.mounted) return;
+
       debugPrint(
           'Raw server response (status ${response.statusCode}): "${response.body}"');
 
@@ -643,6 +646,8 @@ class _InductionPageState extends State<InductionPage> {
             body: payload,
           )
           .timeout(const Duration(seconds: 30));
+
+if (!context.mounted) return;
 
       debugPrint(
           'Raw server response (status ${response.statusCode}): "${response.body}"');

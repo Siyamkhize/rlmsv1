@@ -142,6 +142,7 @@ class _ArplPracticalImageCapturePageState
     final TextEditingController captionController = TextEditingController();
 
     await showDialog(
+      if (!context.mounted) return;
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Add Caption'),

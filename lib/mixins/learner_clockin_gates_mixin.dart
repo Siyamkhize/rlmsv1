@@ -41,6 +41,7 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
     }
 
     final shouldOpenProfile = await showDialog<bool>(
+      if (!context.mounted) return;
       context: context,
       builder: (dialogContext) {
         return AlertDialog(

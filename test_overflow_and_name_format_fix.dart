@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart';\nvoid main() {
+import 'package:flutter/foundation.dart';
+
+void main() {
   debugPrint('=== Testing Overflow Fix and Name Format ===\n');
 
   // Test data simulating backend response

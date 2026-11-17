@@ -1203,6 +1203,8 @@ class _ModeratorPracticalImagesSelectionPageState
                       // Fallback to API lookup if needed
                       ofoNumber ??= await _resolveOfoForClass(newValue);
 
+if (!context.mounted) return;
+
                       _selectClass(newValue, ofoNumber);
                     }
                   },

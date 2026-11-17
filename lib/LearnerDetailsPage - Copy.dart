@@ -1513,6 +1513,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
     try {
       await showModalBottomSheet(
+        if (!context.mounted) return;
         context: context,
         isScrollControlled: true,
         isDismissible: true,
@@ -2947,6 +2948,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       if (_cameraController == null ||
           !_cameraController!.value.isInitialized) {
         await _initializeCamera();
+      if (!context.mounted) return;
       }
 
       if (_cameraController == null ||

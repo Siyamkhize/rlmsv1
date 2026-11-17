@@ -571,6 +571,8 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
 
       final response = await http.get(Uri.parse(url));
 
+if (!context.mounted) return;
+
       debugPrint('[FETCH_ONLINE] API Response Status: ${response.statusCode}');
       debugPrint('[FETCH_ONLINE] API Response Body: ${response.body}');
 

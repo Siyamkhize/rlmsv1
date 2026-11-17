@@ -321,6 +321,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
         const Duration(seconds: 10),
         onTimeout: () {
           debugPrint('Server request timed out after 10 seconds');
+          if (!context.mounted) return;
           throw TimeoutException('Server request timed out');
         },
       );
@@ -2625,6 +2626,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
             // Learner exists in same project - show confirmation dialog
             if (!context.mounted) return;
             final shouldUpdate = await showDialog<bool>(
+              if (!context.mounted) return;
               context: context,
               barrierDismissible: false,
               builder: (BuildContext dialogContext) {

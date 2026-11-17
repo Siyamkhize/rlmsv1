@@ -1537,6 +1537,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       // Not clocked in (shouldn't normally happen, but handle it)
       // Show dialog to choose between clocking or managing fingerprints
       final choice = await showDialog<String>(
+        if (!context.mounted) return;
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
@@ -1884,6 +1885,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
     }
 
     final DateTime? picked = await showDatePicker(
+      if (!context.mounted) return;
       context: context,
       initialDate: initialDate ?? DateTime.now(),
       firstDate: DateTime(2020),

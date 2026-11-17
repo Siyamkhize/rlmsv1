@@ -12251,6 +12251,7 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
           _siteId!.isEmpty ||
           _projectId!.isEmpty) {
         await _fetchTraceabilityData(_selectedLearnerId!);
+      if (!context.mounted) return;
       }
       if (_classId == null ||
           _siteId == null ||

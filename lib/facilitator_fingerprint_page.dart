@@ -244,6 +244,7 @@ class _FacilitatorFingerprintPageState
 
     if (!context.mounted) return;
     final hasScanner = await showDialog<bool>(
+      if (!context.mounted) return;
       context: context,
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
@@ -800,6 +801,7 @@ class _FacilitatorFingerprintPageState
           // Show dialog to ask if user wants to replace existing template
           if (!context.mounted) return;
           final shouldReplace = await showDialog<bool>(
+            if (!context.mounted) return;
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
@@ -1577,6 +1579,7 @@ class _FacilitatorFingerprintPageState
             TextButton(
               onPressed: () {
                 _signatureController?.clear();
+              if (!context.mounted) return;
               },
               child: const Text('Clear'),
             ),

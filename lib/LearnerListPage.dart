@@ -524,6 +524,8 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
       debugPrint(
           'Raw server response (status ${response.statusCode}): "${response.body}"');
 
+if (!context.mounted) return;
+
       // Handle different response status codes
       if (response.statusCode == 500) {
         throw Exception(
@@ -639,6 +641,8 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
             body: payload,
           )
           .timeout(const Duration(seconds: 30));
+
+if (!context.mounted) return;
 
       debugPrint(
           'Raw server response (status ${response.statusCode}): "${response.body}"');
@@ -1084,6 +1088,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
                                           onPressed: () async {
                                             final success =
                                                 await clockInLearner(learnerID);
+                                            if (!context.mounted) return;
                                             if (!success) {
                                               debugPrint(
                                                   'Clock-in failed for learnerID: $learnerID');

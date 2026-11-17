@@ -177,6 +177,8 @@ class _POECollectionPageState extends State<POECollectionPage> {
       final response = await http.get(Uri.parse(AppConfig.buildUrl(
           'get_poe_collection_status.php?classID=${widget.classID}')));
 
+if (!context.mounted) return;
+
       debugPrint('API Response Status: ${response.statusCode}');
       debugPrint('API Response Body: ${response.body}');
 

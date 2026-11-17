@@ -706,6 +706,8 @@ class _MaterialFormState extends State<MaterialForm> {
       final response = await http.get(Uri.parse(AppConfig.buildUrl(
           'getFacilitatordetails.php?classID=${widget.classID}')));
 
+if (!context.mounted) return;
+
       debugPrint('API Response Status: ${response.statusCode}');
       debugPrint('API Response Body: ${response.body}');
 

@@ -1912,6 +1912,7 @@ class _LoginPageState extends State<LoginPage> {
     bool isClocking = false;
 
     await showDialog(
+      if (!context.mounted) return;
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(

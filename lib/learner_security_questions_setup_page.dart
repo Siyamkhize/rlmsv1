@@ -134,6 +134,8 @@ class _LearnerSecurityQuestionsSetupPageState
         }),
       );
 
+if (!context.mounted) return;
+
       if (response.statusCode != 200) {
         throw Exception('Server error: ${response.statusCode}');
       }

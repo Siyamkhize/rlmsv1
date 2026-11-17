@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';\n// Test script for enhanced clocking days functionality
+import 'package:flutter/foundation.dart';
+// Test script for enhanced clocking days functionality
 // This is a standalone test to verify the server API works
 
 import 'dart:convert';
