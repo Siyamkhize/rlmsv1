@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';\n// Test file to verify smart search ID extraction and name format
+import 'package:flutter/foundation.dart';
+// Test file to verify smart search ID extraction and name format
 // This demonstrates the correct behavior for the SDP learners page
 
 void main() {
@@ -6,9 +7,10 @@ void main() {
   final testLearner = {
     'LearnerID': '12345',
     'Name': 'John',
-    'Surname': 'Doe', 
+    'Surname': 'Doe',
     'IDNumber': '9301156789012',
-    'displayName': 'Doe John (9301156789012)', // Backend format: "Surname Name (ID)"
+    'displayName':
+        'Doe John (9301156789012)', // Backend format: "Surname Name (ID)"
     'className': 'Test Class',
     'classID': '101',
     'siteName': 'Test Site'
@@ -17,7 +19,8 @@ void main() {
   // Test suggestion data from autocomplete API
   final testSuggestion = {
     'id': '12345',
-    'display_text': 'Doe John (9301156789012)', // Backend format: "Surname Name (ID)"
+    'display_text':
+        'Doe John (9301156789012)', // Backend format: "Surname Name (ID)"
     'search_value': '9301156789012',
     'class_name': 'Test Class'
   };
@@ -29,9 +32,10 @@ void main() {
   final name = testLearner['Name']?.toString() ?? '';
   final surname = testLearner['Surname']?.toString() ?? '';
   final idNumber = testLearner['IDNumber']?.toString() ?? '--';
-  
+
   // This is how it's displayed in the Flutter app
-  final displayName = testLearner['displayName']?.toString() ?? '$surname $name ($idNumber)';
+  final displayName =
+      testLearner['displayName']?.toString() ?? '$surname $name ($idNumber)';
   debugPrint('   Display Name: $displayName');
   debugPrint('   Format: "Surname Name (ID Number)" ✓\n');
 
@@ -44,11 +48,13 @@ void main() {
   // Test 3: ID extraction from suggestion
   debugPrint('3. Testing ID extraction from suggestion:');
   String extractedId = '';
-  
+
   // Try multiple fields to get the ID number (same logic as Flutter app)
-  if (testSuggestion['id_number'] != null && testSuggestion['id_number'].toString().isNotEmpty) {
+  if (testSuggestion['id_number'] != null &&
+      testSuggestion['id_number'].toString().isNotEmpty) {
     extractedId = testSuggestion['id_number'].toString();
-  } else if (testSuggestion['search_value'] != null && testSuggestion['search_value'].toString().isNotEmpty) {
+  } else if (testSuggestion['search_value'] != null &&
+      testSuggestion['search_value'].toString().isNotEmpty) {
     extractedId = testSuggestion['search_value'].toString();
   } else if (testSuggestion['display_text'] != null) {
     // Extract ID from display text like "Doe John (9301156789012)"
@@ -58,10 +64,10 @@ void main() {
       extractedId = match.group(1) ?? '';
     }
   }
-  
+
   // Clean the ID number (remove any non-digits)
   extractedId = extractedId.replaceAll(RegExp(r'[^\d]'), '');
-  
+
   debugPrint('   Original suggestion: ${testSuggestion['display_text']}');
   debugPrint('   Extracted ID: $extractedId');
   debugPrint('   Backend should get (ID) only: $extractedId');
@@ -69,8 +75,10 @@ void main() {
 
   // Test 4: Overflow fix verification
   debugPrint('4. Testing overflow fix:');
-  debugPrint('   Old approach: Fixed width SizedBox(width: 60) with Expanded children');
-  debugPrint('   New approach: Row with mainAxisSize.min and constrained IconButtons');
+  debugPrint(
+      '   Old approach: Fixed width SizedBox(width: 60) with Expanded children');
+  debugPrint(
+      '   New approach: Row with mainAxisSize.min and constrained IconButtons');
   debugPrint('   Benefits:');
   debugPrint('   - No fixed width constraint');
   debugPrint('   - Buttons size themselves appropriately');

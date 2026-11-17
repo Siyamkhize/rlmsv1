@@ -4997,8 +4997,8 @@ updated_at TIMESTAMP
           us['name']?.toString().trim() ?? 'Unknown Unit Standard';
 
       // Aggressively remove ID from the start if it exists (e.g., "259604 - ...")
-      final idPattern = RegExp('^' + RegExp.escape(usId) + r'[\s:\-–—]*',
-          caseSensitive: false);
+      final idPattern =
+          RegExp('^${RegExp.escape(usId)}[\\s:\\-–—]*', caseSensitive: false);
       final usCleanName = usRawName.replaceFirst(idPattern, '');
       final fullUsName = "$usId - $usCleanName";
 

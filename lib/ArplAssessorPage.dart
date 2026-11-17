@@ -5179,7 +5179,7 @@ class _AssessmentReviewDetailPageState
           setState(() {
             _responseMessage = data['status'] == 'success'
                 ? 'Review saved successfully!'
-                : 'Failed to save review: ' + data['message'];
+                : 'Failed to save review: ${data['message']}';
             _isSubmitting = false;
           });
           if (data['status'] == 'success') {
@@ -5188,7 +5188,7 @@ class _AssessmentReviewDetailPageState
             );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error: ' + data['message'])),
+              SnackBar(content: Text('Error: ${data['message']}')),
             );
           }
         } else {
