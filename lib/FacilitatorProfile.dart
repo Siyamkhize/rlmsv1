@@ -309,6 +309,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
 
   /// Shows bottom sheet for image source selection.
   Future<void> _pickImage() async {
+    if (!context.mounted) return;
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
@@ -319,6 +320,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
               leading: const Icon(Icons.camera_alt),
               title: const Text('Take Photo'),
               onTap: () {
+                if (!context.mounted) return;
                 Navigator.pop(context);
                 _getImage(ImageSource.camera);
               },
@@ -327,6 +329,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
               leading: const Icon(Icons.photo_library),
               title: const Text('Choose from Gallery'),
               onTap: () {
+                if (!context.mounted) return;
                 Navigator.pop(context);
                 _getImage(ImageSource.gallery);
               },
@@ -373,9 +376,11 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
   /// Shows a responsive signature pad dialog with customizable stroke width.
   Future<void> _showSignaturePad() async {
     double strokeWidth = _signatureController.penStrokeWidth;
+    if (!context.mounted) return;
     showDialog(
       context: context,
       builder: (context) {
+        if (!context.mounted) return;
         final size = MediaQuery.of(context).size;
         return StatefulBuilder(
           builder: (context, setDialogState) {
@@ -429,6 +434,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                   child: const Text('Clear'),
                 ),
                 TextButton(
+                  if (!context.mounted) return;
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Cancel'),
                 ),
@@ -439,6 +445,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                       if (!context.mounted) return;
                       Navigator.pop(context);
                     } else {
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Please provide a signature'),
@@ -490,6 +497,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
   Future<void> _saveChanges() async {
     try {
       // Show loading indicator
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Row(
@@ -510,6 +518,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       );
 
       if (!_formKey.currentState!.validate()) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Please fix validation errors'),
@@ -545,6 +554,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
             backgroundColor: Colors.green),
       );
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error saving changes: ${e.toString()}'),
@@ -598,6 +608,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       } catch (e) {
         attempt++;
         if (attempt == maxRetries) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('Failed to upload profile image: $e'),
@@ -666,6 +677,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       } catch (e) {
         attempt++;
         if (attempt == maxRetries) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('Failed to sync data: $e'),
@@ -1520,6 +1532,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                 ),
                 actions: [
                   ElevatedButton(
+                    if (!context.mounted) return;
                     onPressed: () => Navigator.of(context).pop(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
@@ -1546,10 +1559,12 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                 'You haven\'t clocked in yet today. What would you like to do?'),
             actions: <Widget>[
               TextButton(
+                if (!context.mounted) return;
                 onPressed: () => Navigator.of(context).pop('cancel'),
                 child: const Text('Cancel'),
               ),
               ElevatedButton.icon(
+                if (!context.mounted) return;
                 onPressed: () => Navigator.of(context).pop('clock'),
                 icon: const Icon(Icons.access_time),
                 label: const Text('Clock In'),
@@ -1579,6 +1594,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       // Navigate based on choice
       final requireClockIn = choice == 'clock';
 
+      if (!context.mounted) return;
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
@@ -1920,6 +1936,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       final daysUntilExpiry = picked.difference(now).inDays;
 
       if (daysUntilExpiry < 0) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -1929,6 +1946,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
           ),
         );
       } else if (daysUntilExpiry <= 30) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(

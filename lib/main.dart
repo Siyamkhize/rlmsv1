@@ -534,6 +534,7 @@ class _LoginPageState extends State<LoginPage> {
     } catch (syncError) {
       debugPrint("Background sync failed: $syncError");
       if (mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Background sync failed: $syncError')),
         );
@@ -816,6 +817,7 @@ class _LoginPageState extends State<LoginPage> {
               child: const Text('Cancel'),
             ),
             TextButton(
+              if (!context.mounted) return;
               onPressed: () => Navigator.of(context).pop(true),
               child: const Text('Proceed Offline'),
             ),
@@ -856,6 +858,7 @@ class _LoginPageState extends State<LoginPage> {
       // SDP users navigate to Projects page with full hierarchical data
       debugPrint('[NAVIGATION] Navigating SDP to Projects Page');
       final projects = data['projects'] ?? [];
+      if (!context.mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -869,6 +872,7 @@ class _LoginPageState extends State<LoginPage> {
     } else if (normalizedRole == 'finance') {
       // Finance role - navigate to finance dashboard
       debugPrint('[NAVIGATION] Navigating to Finance Dashboard');
+      if (!context.mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -886,6 +890,7 @@ class _LoginPageState extends State<LoginPage> {
       final logisticsName = data['account_name']?.toString() ??
           _usernameController.text.split('@')[0];
 
+      if (!context.mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -951,6 +956,7 @@ class _LoginPageState extends State<LoginPage> {
             if (!context.mounted) return;
 
             // Show message that enrollment is required
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Please enroll your fingerprints to continue'),
@@ -960,6 +966,7 @@ class _LoginPageState extends State<LoginPage> {
             );
 
             // Navigate to fingerprint enrollment (first-time setup)
+            if (!context.mounted) return;
             final enrolled = await Navigator.push(
               context,
               MaterialPageRoute(
@@ -994,6 +1001,7 @@ class _LoginPageState extends State<LoginPage> {
             if (!context.mounted) return;
 
             // Show message that clock-in is required
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Please clock in to start your day'),
@@ -1003,6 +1011,7 @@ class _LoginPageState extends State<LoginPage> {
             );
 
             // Navigate to fingerprint page for clock-in (required daily)
+            if (!context.mounted) return;
             final clockedIn = await Navigator.push(
               context,
               MaterialPageRoute(
@@ -1049,6 +1058,7 @@ class _LoginPageState extends State<LoginPage> {
           if (context.mounted) {
             debugPrint(
                 '[LOGIN] Proceeding to ARPL Assessor dashboard for $facilitatorIdInt');
+            if (!context.mounted) return;
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -1823,6 +1833,7 @@ class _LoginPageState extends State<LoginPage> {
       debugPrint('[FAC_FACE_LOGIN] Navigating to face clock-in page');
 
       // Navigate to comprehensive clock-in page
+      if (!context.mounted) return;
       final result = await Navigator.push<bool>(
         context,
         MaterialPageRoute(
@@ -1856,6 +1867,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             actions: [
               TextButton(
+                if (!context.mounted) return;
                 onPressed: () => Navigator.pop(context),
                 child: const Text('OK'),
               ),
@@ -1911,6 +1923,7 @@ class _LoginPageState extends State<LoginPage> {
   }) async {
     bool isClocking = false;
 
+    if (!context.mounted) return;
     await showDialog(
       if (!context.mounted) return;
       context: context,
@@ -1958,6 +1971,7 @@ class _LoginPageState extends State<LoginPage> {
               TextButton(
                 onPressed: () {
                   // Close dialog and go to dashboard anyway
+                  if (!context.mounted) return;
                   Navigator.of(dialogContext).pop();
                   onComplete();
                 },
@@ -2026,6 +2040,7 @@ class _LoginPageState extends State<LoginPage> {
 
                     // Show success message
                     if (context.mounted) {
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('✓ Clocked in successfully'),
@@ -2065,12 +2080,14 @@ class _LoginPageState extends State<LoginPage> {
 
   void _showError(String message) {
     if (mounted) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
   void _showFacilitatorsList(List<Map<String, dynamic>> facilitators) {
+    if (!context.mounted) return;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -2090,6 +2107,7 @@ class _LoginPageState extends State<LoginPage> {
           TextButton(
             child: const Text('Close'),
             onPressed: () {
+              if (!context.mounted) return;
               Navigator.of(context).pop();
             },
           ),

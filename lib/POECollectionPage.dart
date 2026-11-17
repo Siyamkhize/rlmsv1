@@ -194,6 +194,7 @@ if (!context.mounted) return;
 
       if (apiData == null || apiData.isEmpty) {
         debugPrint('❌ No learners found in API response.');
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No learners found.')),
         );
@@ -483,6 +484,7 @@ if (!context.mounted) return;
         errorMessage = 'Server endpoint not found. Please contact support.';
       }
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
@@ -1206,6 +1208,7 @@ if (!context.mounted) return;
                                               setDialogState(() {
                                                 isLoading = false;
                                               });
+                                              if (!context.mounted) return;
                                               ScaffoldMessenger.of(context)
                                                   .showSnackBar(
                                                 const SnackBar(
@@ -1219,6 +1222,7 @@ if (!context.mounted) return;
                                             setDialogState(() {
                                               isLoading = false;
                                             });
+                                            if (!context.mounted) return;
                                             ScaffoldMessenger.of(context)
                                                 .showSnackBar(
                                               SnackBar(
@@ -1524,6 +1528,7 @@ if (!context.mounted) return;
                         errorMessage += e.toString();
                       }
 
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(errorMessage),
@@ -1569,6 +1574,7 @@ if (!context.mounted) return;
       }
 
       if (permission == LocationPermission.deniedForever) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text(
@@ -1599,6 +1605,7 @@ if (!context.mounted) return;
 
       if (learnerId == 0) {
         debugPrint('[POE_COLLECT] ❌ Invalid learner ID');
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Invalid learner ID. Cannot verify fingerprint.'),
@@ -1611,6 +1618,7 @@ if (!context.mounted) return;
       final learnerIdInt = int.tryParse(learnerId.toString());
       if (learnerIdInt == null) {
         debugPrint('[POE_COLLECT] ❌ Invalid learner ID format');
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content:
@@ -1768,6 +1776,7 @@ if (!context.mounted) return;
                   'Timeout waiting for fingerprint. Please try again.';
             }
 
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(errorMessage),
@@ -1781,6 +1790,7 @@ if (!context.mounted) return;
           // No scanner detected
           _hideProgressDialog(context);
           debugPrint('[POE_COLLECT] ❌ No scanner detected');
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -1798,6 +1808,7 @@ if (!context.mounted) return;
       } catch (e) {
         debugPrint('[POE_COLLECT] Verification error: $e');
         _hideProgressDialog(context);
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Verification error: $e'),
@@ -1809,6 +1820,7 @@ if (!context.mounted) return;
     } catch (e) {
       debugPrint('[POE_COLLECT] Fingerprint verification error: $e');
       _hideProgressDialog(context);
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Verification error: $e'),
@@ -1879,6 +1891,7 @@ if (!context.mounted) return;
   }
 
   void _showProgressDialog(BuildContext context, String message) {
+    if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1899,7 +1912,9 @@ if (!context.mounted) return;
   }
 
   void _hideProgressDialog(BuildContext context) {
+    if (!context.mounted) return;
     if (Navigator.of(context).canPop()) {
+      if (!context.mounted) return;
       Navigator.of(context).pop();
     }
   }

@@ -575,6 +575,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
         ),
       );
     } else {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('No checklist found. Click again to create one.'),
@@ -587,6 +588,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
 
   /// Show creation options dialog
   Future<void> _showCreationOptionsDialog() async {
+    if (!context.mounted) return;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -594,11 +596,13 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
         content: const Text('How would you like to create the checklist?'),
         actions: [
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
           ElevatedButton.icon(
             onPressed: () {
+              if (!context.mounted) return;
               Navigator.pop(context);
               _scanDocument();
             },
@@ -611,7 +615,9 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
           ),
           ElevatedButton.icon(
             onPressed: () {
+              if (!context.mounted) return;
               Navigator.pop(context);
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Fill in the form below and save'),
@@ -652,11 +658,13 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
           ),
           actions: [
             TextButton(
+              if (!context.mounted) return;
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
             ElevatedButton.icon(
               onPressed: () {
+                if (!context.mounted) return;
                 Navigator.pop(context);
                 if (type == 'scanned') {
                   final docPath = status['data']['document_path'] as String;
@@ -678,6 +686,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
       );
     } else {
       // No checklist exists - show creation options
+      if (!context.mounted) return;
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -685,11 +694,13 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
           content: const Text('How would you like to create the checklist?'),
           actions: [
             TextButton(
+              if (!context.mounted) return;
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
             ElevatedButton.icon(
               onPressed: () {
+                if (!context.mounted) return;
                 Navigator.pop(context);
                 _scanDocument();
               },
@@ -702,8 +713,10 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
             ),
             ElevatedButton.icon(
               onPressed: () {
+                if (!context.mounted) return;
                 Navigator.pop(context);
                 // User will fill the form on this page
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Fill in the form below and save'),
@@ -954,6 +967,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
   }
 
   void _showError(String message) {
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),

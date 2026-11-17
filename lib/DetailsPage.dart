@@ -229,6 +229,7 @@ class _POETabContentState extends State<POETabContent> {
       }
 
       if (failCount > 0 && mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('⚠️ $failCount POE record(s) failed to sync'),
@@ -265,10 +266,12 @@ class _POETabContentState extends State<POETabContent> {
               ),
               actions: [
                 TextButton(
+                  if (!context.mounted) return;
                   onPressed: () => Navigator.of(context).pop(false),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
+                  if (!context.mounted) return;
                   onPressed: () => Navigator.of(context).pop(true),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
@@ -349,6 +352,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (pendingQuestions.isEmpty) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('All formative questions are already completed.')),
@@ -370,10 +374,12 @@ class _POETabContentState extends State<POETabContent> {
               ),
               actions: [
                 TextButton(
+                  if (!context.mounted) return;
                   onPressed: () => Navigator.of(context).pop(false),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
+                  if (!context.mounted) return;
                   onPressed: () => Navigator.of(context).pop(true),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
@@ -402,6 +408,7 @@ class _POETabContentState extends State<POETabContent> {
       if (!context.mounted) return;
       if (existingDocumentPath == null) {
         // No existing document found, show error
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -481,6 +488,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (pendingItems.isEmpty) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('All logbook items are already completed.')),
@@ -502,10 +510,12 @@ class _POETabContentState extends State<POETabContent> {
               ),
               actions: [
                 TextButton(
+                  if (!context.mounted) return;
                   onPressed: () => Navigator.of(context).pop(false),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
+                  if (!context.mounted) return;
                   onPressed: () => Navigator.of(context).pop(true),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
@@ -616,6 +626,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (pendingQuestions.isEmpty) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('All summative questions are already completed.')),
@@ -637,10 +648,12 @@ class _POETabContentState extends State<POETabContent> {
               ),
               actions: [
                 TextButton(
+                  if (!context.mounted) return;
                   onPressed: () => Navigator.of(context).pop(false),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
+                  if (!context.mounted) return;
                   onPressed: () => Navigator.of(context).pop(true),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
@@ -853,6 +866,7 @@ class _POETabContentState extends State<POETabContent> {
       final extension = image.path.toLowerCase().split('.').last;
       if (!['jpg', 'jpeg', 'png'].contains(extension)) {
         debugPrint('Error: Unsupported image format: $extension');
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Unsupported image format. Use JPG or PNG.')),
@@ -875,6 +889,7 @@ class _POETabContentState extends State<POETabContent> {
       debugPrint('Image bytes length: ${imageBytes.length}');
       if (imageBytes.isEmpty) {
         debugPrint('Error: Empty image bytes');
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -953,6 +968,7 @@ class _POETabContentState extends State<POETabContent> {
       return pdfFile;
     } catch (e, stackTrace) {
       debugPrint('PDF generation error: $e\nStackTrace: $stackTrace');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to generate PDF: $e')),
       );
@@ -1883,6 +1899,7 @@ class _POETabContentState extends State<POETabContent> {
       if (scanner == 'futronic' &&
           !(hasFutLeft || hasFutRight) &&
           (hasZkLeft || hasZkRight)) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -1895,6 +1912,7 @@ class _POETabContentState extends State<POETabContent> {
       if (scanner == 'zkteco' &&
           !(hasZkLeft || hasZkRight) &&
           (hasFutLeft || hasFutRight)) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -1906,6 +1924,7 @@ class _POETabContentState extends State<POETabContent> {
       }
 
       if (scanner == 'none') {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -2001,6 +2020,7 @@ class _POETabContentState extends State<POETabContent> {
       _hideProgressDialog();
 
       if (match) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('✅ Fingerprint verified successfully!'),
@@ -2009,6 +2029,7 @@ class _POETabContentState extends State<POETabContent> {
         );
         return true;
       } else {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('❌ Fingerprint verification failed. Access denied.'),
@@ -2020,6 +2041,7 @@ class _POETabContentState extends State<POETabContent> {
     } catch (e) {
       debugPrint('Fingerprint verification error: $e');
       _hideProgressDialog();
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Verification error: $e'),
@@ -2073,6 +2095,7 @@ class _POETabContentState extends State<POETabContent> {
   }
 
   void _showProgressDialog(String message) {
+    if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -2093,7 +2116,9 @@ class _POETabContentState extends State<POETabContent> {
   }
 
   void _hideProgressDialog() {
+    if (!context.mounted) return;
     if (Navigator.of(context).canPop()) {
+      if (!context.mounted) return;
       Navigator.of(context).pop();
     }
   }
@@ -2102,6 +2127,7 @@ class _POETabContentState extends State<POETabContent> {
       BuildContext context, String assessmentType, String exercise,
       {String? unitStandard}) async {
     if (!_isExerciseAllowed(assessmentType, exercise, unitStandard)) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
@@ -2127,6 +2153,7 @@ class _POETabContentState extends State<POETabContent> {
       final controller = logBookControllers[controllerKey];
       logbookText = controller?.text;
       if (logbookText == null || logbookText.trim().isEmpty) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text(
@@ -2147,10 +2174,12 @@ class _POETabContentState extends State<POETabContent> {
             child: const Text('Open Camera'),
           ),
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.of(context).pop(ImageSource.gallery),
             child: const Text('Upload Image'),
           ),
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.of(context).pop(null),
             child: const Text('Cancel'),
           ),
@@ -2256,6 +2285,7 @@ class _POETabContentState extends State<POETabContent> {
         if (assessmentType != 'LogBook') {
           debugPrint(
               'Error: Gallery selection not supported for $assessmentType');
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text(
@@ -2380,6 +2410,7 @@ class _POETabContentState extends State<POETabContent> {
                 final rawKey = '$assessmentType-$exercise-${widget.learnerID}';
                 uploadedExercises[rawKey] = true;
               });
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content: Text('Uploaded to server: ${decoded['message']}')),
@@ -2402,6 +2433,7 @@ class _POETabContentState extends State<POETabContent> {
             if (mounted) Navigator.of(context).pop();
 
             debugPrint('❌ Upload error: $e');
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Upload failed: $e. Saving locally.')),
             );
@@ -2442,6 +2474,7 @@ class _POETabContentState extends State<POETabContent> {
         SnackBar(content: Text('An error occurred: $e')),
       );
     } finally {
+      if (!context.mounted) return;
       Navigator.of(context).pop();
     }
   }
@@ -2464,6 +2497,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (allCompleted) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('All formative questions are already completed.')),
@@ -2506,6 +2540,7 @@ class _POETabContentState extends State<POETabContent> {
     debugPrint('DEBUG: allAllowed result: $allAllowed');
 
     if (!allAllowed) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
@@ -2538,10 +2573,12 @@ class _POETabContentState extends State<POETabContent> {
             child: const Text('Open Camera'),
           ),
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.of(context).pop(ImageSource.gallery),
             child: const Text('Upload Image'),
           ),
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.of(context).pop(null),
             child: const Text('Cancel'),
           ),
@@ -2551,12 +2588,14 @@ class _POETabContentState extends State<POETabContent> {
 
     if (imageSource == null) {
       debugPrint('User cancelled image selection');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Document selection cancelled')),
       );
       return;
     }
 
+    if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -2576,6 +2615,7 @@ class _POETabContentState extends State<POETabContent> {
       File? document;
 
       if (imageSource == ImageSource.camera) {
+        if (!context.mounted) return;
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
@@ -2613,6 +2653,7 @@ class _POETabContentState extends State<POETabContent> {
         if (!file.path.toLowerCase().endsWith('.pdf')) {
           debugPrint(
               'Error: Expected PDF file for Formative, got ${file.path}');
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text(
@@ -2623,6 +2664,7 @@ class _POETabContentState extends State<POETabContent> {
         document = file;
       } else {
         // For gallery selection, we'll need to implement PDF selection
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text(
@@ -2767,6 +2809,7 @@ class _POETabContentState extends State<POETabContent> {
           }
         } catch (e) {
           // Close processing dialog if open
+          if (!context.mounted) return;
           if (mounted) Navigator.of(context).pop();
 
           debugPrint('❌ Upload error for formative: $e');
@@ -2874,10 +2917,12 @@ class _POETabContentState extends State<POETabContent> {
       }
     } catch (e, stackTrace) {
       debugPrint('Error in _openFormativeCamera: $e\nStackTrace: $stackTrace');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
     } finally {
+      if (!context.mounted) return;
       Navigator.of(context).pop();
     }
   }
@@ -2896,6 +2941,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (allCompleted) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('All summative questions are already completed.')),
@@ -2952,6 +2998,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (!allAllowed) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
@@ -2984,10 +3031,12 @@ class _POETabContentState extends State<POETabContent> {
             child: const Text('Open Camera'),
           ),
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.of(context).pop(ImageSource.gallery),
             child: const Text('Upload Image'),
           ),
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.of(context).pop(null),
             child: const Text('Cancel'),
           ),
@@ -2997,12 +3046,14 @@ class _POETabContentState extends State<POETabContent> {
 
     if (imageSource == null) {
       debugPrint('User cancelled image selection');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Document selection cancelled')),
       );
       return;
     }
 
+    if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -3022,6 +3073,7 @@ class _POETabContentState extends State<POETabContent> {
       File? document;
 
       if (imageSource == ImageSource.camera) {
+        if (!context.mounted) return;
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
@@ -3059,6 +3111,7 @@ class _POETabContentState extends State<POETabContent> {
         if (!file.path.toLowerCase().endsWith('.pdf')) {
           debugPrint(
               'Error: Expected PDF file for Summative, got ${file.path}');
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text(
@@ -3069,6 +3122,7 @@ class _POETabContentState extends State<POETabContent> {
         document = file;
       } else {
         // For gallery selection, we'll need to implement PDF selection
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text(
@@ -3213,6 +3267,7 @@ class _POETabContentState extends State<POETabContent> {
           }
         } catch (e) {
           // Close processing dialog if open
+          if (!context.mounted) return;
           if (mounted) Navigator.of(context).pop();
 
           debugPrint('❌ Upload error for summative: $e');
@@ -3320,10 +3375,12 @@ class _POETabContentState extends State<POETabContent> {
       }
     } catch (e, stackTrace) {
       debugPrint('Error in _openSummativeCamera: $e\nStackTrace: $stackTrace');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
     } finally {
+      if (!context.mounted) return;
       Navigator.of(context).pop();
     }
   }
@@ -3359,10 +3416,12 @@ class _POETabContentState extends State<POETabContent> {
             child: const Text('Open Camera'),
           ),
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.of(context).pop(ImageSource.gallery),
             child: const Text('Upload Image'),
           ),
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.of(context).pop(null),
             child: const Text('Cancel'),
           ),
@@ -3375,6 +3434,7 @@ class _POETabContentState extends State<POETabContent> {
       return;
     }
 
+    if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -3394,6 +3454,7 @@ class _POETabContentState extends State<POETabContent> {
       File? document;
 
       if (imageSource == ImageSource.camera) {
+        if (!context.mounted) return;
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
@@ -3429,6 +3490,7 @@ class _POETabContentState extends State<POETabContent> {
         document = file;
       } else {
         // Gallery selection
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -3495,6 +3557,7 @@ class _POETabContentState extends State<POETabContent> {
         SnackBar(content: Text('An error occurred: $e')),
       );
     } finally {
+      if (!context.mounted) return;
       Navigator.of(context).pop();
     }
   }
@@ -3516,6 +3579,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (allCompleted) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('All logbook items are already completed.')),
@@ -3534,6 +3598,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (!previousCompleted) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Complete the previous exercises first.')),
       );
@@ -3565,6 +3630,7 @@ class _POETabContentState extends State<POETabContent> {
             child: const Text('Cancel'),
           ),
           ElevatedButton.icon(
+            if (!context.mounted) return;
             onPressed: () => Navigator.of(context).pop(true),
             icon: const Icon(Icons.document_scanner),
             label: const Text('Open Scanner'),
@@ -3579,12 +3645,14 @@ class _POETabContentState extends State<POETabContent> {
 
     if (confirmed != true) {
       debugPrint('User cancelled scanner');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Scan cancelled')),
       );
       return;
     }
 
+    if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -3604,6 +3672,7 @@ class _POETabContentState extends State<POETabContent> {
       File? document;
 
       // Open scanner (CameraScanPage) for multi-page document scanning
+      if (!context.mounted) return;
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
@@ -3623,6 +3692,7 @@ class _POETabContentState extends State<POETabContent> {
         if (mounted) Navigator.of(context).pop();
 
         debugPrint('Error: No result returned from CameraScanPage');
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Scanner operation was cancelled or failed')),
@@ -3638,6 +3708,7 @@ class _POETabContentState extends State<POETabContent> {
         if (mounted) Navigator.of(context).pop();
 
         debugPrint('Error: No valid file returned from CameraScanPage');
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No valid document captured')),
         );
@@ -3647,9 +3718,11 @@ class _POETabContentState extends State<POETabContent> {
       // LogBook uses scanner (CameraScanPage) which returns a PDF directly
       if (!file.path.toLowerCase().endsWith('.pdf')) {
         // Close processing dialog
+        if (!context.mounted) return;
         if (mounted) Navigator.of(context).pop();
 
         debugPrint('Error: Expected PDF file for LogBook, got ${file.path}');
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -3660,6 +3733,7 @@ class _POETabContentState extends State<POETabContent> {
       document = file;
 
       // Close the "Processing" dialog before starting upload (which shows its own dialog)
+      if (!context.mounted) return;
       if (mounted) Navigator.of(context).pop();
 
       // Upload the same document for all logbook items
@@ -3786,6 +3860,7 @@ class _POETabContentState extends State<POETabContent> {
           }
         } catch (e) {
           // Close upload dialog if open
+          if (!context.mounted) return;
           if (mounted) Navigator.of(context).pop();
 
           debugPrint('❌ Upload error for logbook: $e');
@@ -3881,10 +3956,12 @@ class _POETabContentState extends State<POETabContent> {
       }
     } catch (e, stackTrace) {
       debugPrint('Error in _openLogBookCamera: $e\nStackTrace: $stackTrace');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
     } finally {
+      if (!context.mounted) return;
       Navigator.of(context).pop();
     }
   }
@@ -4004,6 +4081,7 @@ class _POETabContentState extends State<POETabContent> {
                 content: Text('Uploaded to server: ${decoded['message']}')),
           );
         } else {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Server error: ${decoded['message']}')),
           );
@@ -4128,6 +4206,7 @@ class _POETabContentState extends State<POETabContent> {
               child: const Text('Retry'),
             ),
             TextButton(
+              if (!context.mounted) return;
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Back'),
             ),
@@ -4152,6 +4231,7 @@ class _POETabContentState extends State<POETabContent> {
               child: const Text('Retry'),
             ),
             TextButton(
+              if (!context.mounted) return;
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Back'),
             ),

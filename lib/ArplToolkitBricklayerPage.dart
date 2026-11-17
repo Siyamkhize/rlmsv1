@@ -373,6 +373,7 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
             _isSaving = false;
           });
         } else {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error: ${data['message']}')),
           );
@@ -381,6 +382,7 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
           });
         }
       } else {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Server error: ${response.statusCode}')),
         );
@@ -389,6 +391,7 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
         });
       }
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving data: $e')),
       );
@@ -1464,6 +1467,7 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
       setState(() {
         _gapStandardsLoading = false;
       });
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading unit standards: $e')),
       );

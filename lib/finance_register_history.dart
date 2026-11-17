@@ -294,6 +294,7 @@ class _FinanceRegisterHistoryState extends State<FinanceRegisterHistory> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -335,6 +336,7 @@ class _FinanceRegisterHistoryState extends State<FinanceRegisterHistory> {
           );
           fetchRegisters();
         } else {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(data['message'] ?? 'Failed to delete'),
@@ -344,6 +346,7 @@ class _FinanceRegisterHistoryState extends State<FinanceRegisterHistory> {
         }
       }
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),

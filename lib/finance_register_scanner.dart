@@ -186,12 +186,14 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
             ),
           );
 
+          if (!context.mounted) return;
           Navigator.pop(context);
         } else {
           setState(() {
             isSaving = false;
           });
 
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(data['message'] ?? 'Failed to save attendance'),
@@ -206,6 +208,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
       });
 
       debugPrint('Error saving attendance: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -241,6 +244,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
 
   Future<void> proceedToScanner() async {
     if (selectedDates.isEmpty) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select at least one attendance day'),
@@ -292,6 +296,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
         showScanner = true;
       });
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Document scanned! Click Save to complete.'),
@@ -300,6 +305,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
       );
     } catch (e) {
       debugPrint('Error scanning: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
@@ -327,6 +333,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
   Future<DateTime?> showMonthYearPicker(BuildContext context) async {
     DateTime? selectedDate;
 
+    if (!context.mounted) return;
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -377,6 +384,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
                   onPressed: () {
                     selectedDate =
                         DateTime(selectedYear, selectedMonthValue, 1);
+                    if (!context.mounted) return;
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(

@@ -397,6 +397,7 @@ class _LearningMaterialFormPageState extends State<LearningMaterialFormPage> {
   }
 
   void _navigateToLearnerMaterialSelection(Map<String, dynamic> learner) async {
+    if (!context.mounted) return;
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -548,6 +549,7 @@ class _LearningMaterialFormPageState extends State<LearningMaterialFormPage> {
   // Fingerprint verification for PPE/ToolKit/Consumables
   Future<void> _verifyAndIssueMaterial(Map<String, dynamic> learner) async {
     if (selectedLearningMaterialType == 'Select') {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a material type first')),
       );
@@ -633,6 +635,7 @@ class _LearningMaterialFormPageState extends State<LearningMaterialFormPage> {
       }
 
       if (enrolledTemplate == null || enrolledTemplate.isEmpty) {
+        if (!context.mounted) return;
         Navigator.pop(context); // Close progress dialog
         _showError('No fingerprint enrolled for ${learner['FullName']}');
         return;
@@ -786,6 +789,7 @@ class _LearningMaterialFormPageState extends State<LearningMaterialFormPage> {
 
   void _showError(String message) {
     if (mounted) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -797,6 +801,7 @@ class _LearningMaterialFormPageState extends State<LearningMaterialFormPage> {
 
   void _showSuccess(String message) {
     if (mounted) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -939,6 +944,7 @@ class _LearningMaterialFormPageState extends State<LearningMaterialFormPage> {
   }
 
   void _showUnitStandardsPopup(Map<String, dynamic> learner) {
+    if (!context.mounted) return;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -954,6 +960,7 @@ class _LearningMaterialFormPageState extends State<LearningMaterialFormPage> {
   }
 
   void _showPPEPopup(Map<String, dynamic> learner) {
+    if (!context.mounted) return;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -1626,6 +1633,7 @@ class _UnitStandardsDialogState extends State<_UnitStandardsDialog> {
       }
 
       if (enrolledTemplate == null || enrolledTemplate.isEmpty) {
+        if (!context.mounted) return;
         Navigator.pop(context); // Close fingerprint dialog
         _showError('No fingerprint enrolled for ${widget.learner['FullName']}');
         setState(() => isLoading = false);
@@ -1731,6 +1739,7 @@ class _UnitStandardsDialogState extends State<_UnitStandardsDialog> {
                 duration: Duration(seconds: 3),
               ),
             );
+            if (!context.mounted) return;
             Navigator.pop(context, true);
           }
         } else {
@@ -1749,6 +1758,7 @@ class _UnitStandardsDialogState extends State<_UnitStandardsDialog> {
 
   void _showError(String message) {
     if (mounted) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -1898,7 +1908,9 @@ class _UnitStandardsDialogState extends State<_UnitStandardsDialog> {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
+        if (!context.mounted) return;
         width: MediaQuery.of(context).size.width * 0.9,
+        if (!context.mounted) return;
         height: MediaQuery.of(context).size.height * 0.8,
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -1931,6 +1943,7 @@ class _UnitStandardsDialogState extends State<_UnitStandardsDialog> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
+                  if (!context.mounted) return;
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -2444,6 +2457,7 @@ class _PPEDialogState extends State<_PPEDialog> {
       }
 
       if (enrolledTemplate == null || enrolledTemplate.isEmpty) {
+        if (!context.mounted) return;
         Navigator.pop(context);
         _showError('No fingerprint enrolled for ${widget.learner['FullName']}');
         setState(() => isLoading = false);
@@ -2543,6 +2557,7 @@ class _PPEDialogState extends State<_PPEDialog> {
 
   void _showError(String message) {
     if (mounted) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -2554,6 +2569,7 @@ class _PPEDialogState extends State<_PPEDialog> {
 
   void _showSuccess(String message) {
     if (mounted) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -2609,6 +2625,7 @@ class _PPEDialogState extends State<_PPEDialog> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close, color: Colors.white),
+                    if (!context.mounted) return;
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],

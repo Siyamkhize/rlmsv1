@@ -1256,6 +1256,7 @@ if (!context.mounted) return;
                           subtitle: Text('ID: $idNumber'),
                           trailing: ElevatedButton.icon(
                             onPressed: () {
+                              if (!context.mounted) return;
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(

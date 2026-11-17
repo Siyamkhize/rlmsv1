@@ -260,6 +260,7 @@ class _FacilitatorFaceClockOutPageState
       _statusMessage = 'Please take selfie and sign';
     });
 
+    if (!context.mounted) return;
     final result = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
@@ -281,6 +282,7 @@ class _FacilitatorFaceClockOutPageState
             duration: const Duration(seconds: 2),
           ),
         );
+        if (!context.mounted) return;
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
       return;
@@ -362,6 +364,7 @@ class _FacilitatorFaceClockOutPageState
           ),
         );
 
+        if (!context.mounted) return;
         Navigator.pop(context, true);
       }
     } catch (e) {
@@ -371,6 +374,7 @@ class _FacilitatorFaceClockOutPageState
 
       if (mounted) {
         _showError('Failed to save clock-out: $e');
+        if (!context.mounted) return;
         Navigator.pop(context, false);
       }
     }
@@ -490,6 +494,7 @@ class _FacilitatorFaceClockOutPageState
   }
 
   void _showError(String message) {
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),

@@ -168,11 +168,13 @@ class _ArplPracticalImageCapturePageState
         ),
         actions: [
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
+              if (!context.mounted) return;
               Navigator.pop(context);
               await _uploadImage(taskId, imagePath, captionController.text);
             },
@@ -239,6 +241,7 @@ class _ArplPracticalImageCapturePageState
         throw Exception('Server error: ${response.statusCode}');
       }
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Upload failed: $e'),
@@ -263,6 +266,7 @@ class _ArplPracticalImageCapturePageState
             child: const Text('Cancel'),
           ),
           ElevatedButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Delete'),
@@ -299,6 +303,7 @@ class _ArplPracticalImageCapturePageState
           }
         }
       } catch (e) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Delete failed: $e'),

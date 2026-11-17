@@ -205,6 +205,7 @@ class _FacilitatorMaterialIssuePageState
 
   Future<void> _submitMaterialIssue() async {
     if (!_formKey.currentState!.validate() || learnerMaterials.isEmpty) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(

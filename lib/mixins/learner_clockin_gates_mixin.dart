@@ -31,6 +31,7 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
     }
 
     if (int.tryParse(learnerId) == null) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Invalid learner ID for profile completion.'),
@@ -77,10 +78,12 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
           ),
           actions: [
             TextButton(
+              if (!context.mounted) return;
               onPressed: () => Navigator.of(dialogContext).pop(false),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
+              if (!context.mounted) return;
               onPressed: () => Navigator.of(dialogContext).pop(true),
               child: const Text('Open Profile'),
             ),
@@ -96,6 +99,7 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
     // CRITICAL FIX: Use pushReplacement to avoid navigation stack issues
     // This ensures we return to the CALLING page (signature_geofence_clock_in_page)
     // instead of going back through the navigation history
+    if (!context.mounted) return;
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(

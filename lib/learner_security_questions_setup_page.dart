@@ -144,6 +144,7 @@ if (!context.mounted) return;
 
       if (data['success'] == true) {
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('✅ Security questions saved successfully!'),
@@ -167,6 +168,7 @@ if (!context.mounted) return;
       });
 
       if (mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
@@ -197,6 +199,7 @@ if (!context.mounted) return;
                   child: const Text('Continue Setup'),
                 ),
                 TextButton(
+                  if (!context.mounted) return;
                   onPressed: () => Navigator.pop(context, true),
                   child:
                       const Text('Exit', style: TextStyle(color: Colors.red)),
@@ -205,6 +208,7 @@ if (!context.mounted) return;
             ),
           );
           if (shouldExit == true && context.mounted) {
+            if (!context.mounted) return;
             Navigator.of(context).pop();
           }
         }

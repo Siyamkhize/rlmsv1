@@ -142,6 +142,7 @@ class _FinanceAttendanceCalendarState extends State<FinanceAttendanceCalendar> {
       });
 
       debugPrint('Error saving attendance: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -166,6 +167,7 @@ class _FinanceAttendanceCalendarState extends State<FinanceAttendanceCalendar> {
   Future<DateTime?> showMonthYearPicker(BuildContext context) async {
     DateTime? selectedDate;
 
+    if (!context.mounted) return;
     await showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -215,6 +217,7 @@ class _FinanceAttendanceCalendarState extends State<FinanceAttendanceCalendar> {
                   onPressed: () {
                     selectedDate =
                         DateTime(selectedYear, selectedMonthValue, 1);
+                    if (!context.mounted) return;
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(

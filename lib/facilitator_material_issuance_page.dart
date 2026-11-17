@@ -208,6 +208,7 @@ class _FacilitatorMaterialIssuancePageState
 
   Future<void> _submitIssuance() async {
     if (!_formKey.currentState!.validate() || selectedMaterials.isEmpty) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select materials and fill all required fields'),

@@ -352,6 +352,7 @@ class _ContactlessClockInPageState extends State<ContactlessClockInPage> {
       _currentClockingAction = null;
     });
 
+    if (!context.mounted) return;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -360,11 +361,13 @@ class _ContactlessClockInPageState extends State<ContactlessClockInPage> {
             'The fingerprint template for learner $learnerId is invalid and cannot be used for verification.\n\nPlease choose an option to resolve this issue:'),
         actions: [
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () async {
+              if (!context.mounted) return;
               Navigator.pop(context);
               await _generateFeaturesFromWSQ(int.parse(learnerId));
             },
@@ -390,6 +393,7 @@ class _ContactlessClockInPageState extends State<ContactlessClockInPage> {
   }
 
   void _showMessage(String message) {
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -519,6 +523,7 @@ class _ContactlessClockInPageState extends State<ContactlessClockInPage> {
       _isCapturing = true;
     });
     try {
+      if (!context.mounted) return;
       final result = await Navigator.push(
         context,
         MaterialPageRoute(

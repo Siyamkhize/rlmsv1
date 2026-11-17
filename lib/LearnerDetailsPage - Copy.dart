@@ -748,6 +748,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           learnerData = {"message": "Error: $e"};
           isLoading = false;
         });
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading learner details: $e')),
         );
@@ -1029,6 +1030,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     debugPrint('Updating learner data for learner_id: ${widget.learnerID}');
     try {
       // Show loading indicator
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Updating learner data...')),
       );
@@ -1144,6 +1146,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       }
     } catch (e) {
       debugPrint('Error updating data: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error updating data: $e')),
       );
@@ -1584,6 +1587,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     } catch (e) {
       debugPrint('Error showing image capture options: $e');
       if (mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error opening photo options: ${e.toString()}'),
@@ -2562,6 +2566,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       }
     } catch (e) {
       debugPrint('Error downloading agreement: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error downloading agreement: $e')),
       );
@@ -2687,6 +2692,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
   Future<bool> _promptSignature(
       String title, SignatureController controller, String fieldName) async {
     bool saved = false;
+    if (!context.mounted) return;
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -2719,6 +2725,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                     );
                   }
                   saved = true;
+                  if (!context.mounted) return;
                   Navigator.pop(context);
                 }
               }
@@ -2735,6 +2742,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       String title, TextEditingController controller, String fieldName) async {
     bool saved = false;
     final formKey = GlobalKey<FormState>();
+    if (!context.mounted) return;
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -2769,6 +2777,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                   );
                 }
                 saved = true;
+                if (!context.mounted) return;
                 Navigator.pop(context);
               }
             },
@@ -2866,6 +2875,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         } else {
           debugPrint('Image upload failed: ${jsonResponse['message']}');
           if (mounted) {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content:
@@ -2957,6 +2967,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       }
 
       // Use direct camera navigation - no external app launch
+      if (!context.mounted) return;
       final imagePath = await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => CameraPreviewScreen(
@@ -3004,6 +3015,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       debugPrint('Error capturing photo: $e');
 
       if (mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error capturing photo: ${e.toString()}'),
@@ -3101,6 +3113,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       setState(() => capturedImage = null);
 
       if (mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error selecting image: ${e.toString()}'),
@@ -3123,6 +3136,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       }
     });
 
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Photo removed'),
@@ -3205,6 +3219,7 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
       Navigator.pop(context, image.path);
     } catch (e) {
       debugPrint('Error capturing photo: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error capturing photo: $e')),
       );

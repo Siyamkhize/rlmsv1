@@ -3344,6 +3344,7 @@ class _POETabState extends State<POETab> {
       debugPrint('DEBUG: document_path=${data!['document_path']}');
 
       // Navigate to scanned document view page with marking
+      if (!context.mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -3362,6 +3363,7 @@ class _POETabState extends State<POETab> {
           'DEBUG: checklist_items count: ${(data['checklist_items'] as Map?)?.length ?? 0}');
 
       // Navigate to full page view for system-generated checklist
+      if (!context.mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -3625,6 +3627,7 @@ class _POETabState extends State<POETab> {
                   '2. Then you can add comments';
             }
 
+            if (!context.mounted) return;
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
@@ -3632,6 +3635,7 @@ class _POETabState extends State<POETab> {
                 content: Text(errorMessage),
                 actions: [
                   TextButton(
+                    if (!context.mounted) return;
                     onPressed: () => Navigator.of(context).pop(),
                     child: const Text('OK'),
                   ),
@@ -3790,6 +3794,7 @@ class _POETabState extends State<POETab> {
         if (responseData['status'] == 'error') {
           // Check if it's a duplicate that can be updated
           if (responseData['can_update'] == true) {
+            if (!context.mounted) return;
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
@@ -3806,11 +3811,13 @@ class _POETabState extends State<POETab> {
                 ),
                 actions: [
                   TextButton(
+                    if (!context.mounted) return;
                     onPressed: () => Navigator.of(context).pop(),
                     child: const Text('Cancel'),
                   ),
                   ElevatedButton(
                     onPressed: () async {
+                      if (!context.mounted) return;
                       Navigator.of(context).pop();
                       // Retry with update flag
                       final updatePayload = Map<String, dynamic>.from(payload);
@@ -4442,6 +4449,7 @@ class ClassInfoPage extends StatelessWidget {
                           const SizedBox(width: 8),
                           ElevatedButton(
                             onPressed: () {
+                              if (!context.mounted) return;
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -5036,6 +5044,7 @@ class _AssessmentReviewDetailPageState
               const SnackBar(content: Text('Review saved successfully!')),
             );
           } else {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Error: ${data['message']}')),
             );
@@ -5046,6 +5055,7 @@ class _AssessmentReviewDetailPageState
                 'Server error: ${response.statusCode} - ${response.body}';
             _isSubmitting = false;
           });
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Server error: ${response.statusCode}')),
           );
@@ -5056,6 +5066,7 @@ class _AssessmentReviewDetailPageState
           _isSubmitting = false;
         });
         debugPrint("Exception: $e");
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
@@ -5817,6 +5828,7 @@ class _AppealFormDetailPageState extends State<AppealFormDetailPage> {
                 'Server error: ${response.statusCode} - ${response.body}';
             _isSubmitting = false;
           });
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text(_responseMessage)));
         }
@@ -5825,6 +5837,7 @@ class _AppealFormDetailPageState extends State<AppealFormDetailPage> {
           _responseMessage = 'Error saving appeal: $e';
           _isSubmitting = false;
         });
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(_responseMessage)));
       }
@@ -6722,6 +6735,7 @@ class _PotholeChecklistLearnerListPageState
     String lastName,
     String idNumber,
   ) async {
+    if (!context.mounted) return;
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -6729,11 +6743,13 @@ class _PotholeChecklistLearnerListPageState
         content: const Text('How would you like to create the checklist?'),
         actions: [
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           ElevatedButton.icon(
             onPressed: () {
+              if (!context.mounted) return;
               Navigator.pop(dialogContext);
               _scanChecklistDocument(context, learnerId, firstName, lastName);
             },
@@ -6746,6 +6762,7 @@ class _PotholeChecklistLearnerListPageState
           ),
           ElevatedButton.icon(
             onPressed: () {
+              if (!context.mounted) return;
               Navigator.pop(dialogContext);
               _openChecklistForm(
                   context, learnerId, firstName, lastName, idNumber);
@@ -6853,6 +6870,7 @@ class _PotholeChecklistLearnerListPageState
       } else {
         // User cancelled
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Scanning cancelled'),
@@ -6926,6 +6944,7 @@ class _PotholeChecklistLearnerListPageState
     String lastName,
     String idNumber,
   ) {
+    if (!context.mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -6943,6 +6962,7 @@ class _PotholeChecklistLearnerListPageState
 
   /// Show error message
   void _showError(BuildContext context, String message) {
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -7090,6 +7110,7 @@ if (!context.mounted) return;
       }
 
       // Close loading dialog
+      if (!context.mounted) return;
       Navigator.of(context).pop();
 
       if (jsonResponse['status'] == 'success') {
@@ -7107,6 +7128,7 @@ if (!context.mounted) return;
           successMsg += '\n(Some files had errors - check console)';
         }
 
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(successMsg),
@@ -7128,12 +7150,15 @@ if (!context.mounted) return;
       }
     } catch (e) {
       // Close loading dialog if still open
+      if (!context.mounted) return;
       if (Navigator.of(context).canPop()) {
+        if (!context.mounted) return;
         Navigator.of(context).pop();
       }
 
       debugPrint('Upload error: $e');
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error uploading images: $e'),
@@ -7463,6 +7488,7 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
       final markText = controller?.text.trim() ?? '';
 
       if (markText.isEmpty) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Please enter mark for ${us['unit_standard_name']}'),
@@ -7474,6 +7500,7 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
 
       final mark = int.tryParse(markText);
       if (mark == null || mark < 0 || mark > 50) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -7521,6 +7548,7 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
         throw Exception('Server error: ${response.statusCode}');
       }
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text('Error saving LogBook marks: $e'),
@@ -7533,6 +7561,7 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
 
   Future<void> _saveMarks() async {
     if (_marksController.text.trim().isEmpty) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Please enter marks'), backgroundColor: Colors.red),
@@ -7542,6 +7571,7 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
 
     final marks = int.tryParse(_marksController.text.trim());
     if (marks == null || marks < 0 || marks > 100) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Marks must be between 0 and 100'),
@@ -7578,6 +7608,7 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
                 content: Text('Marks saved successfully!'),
                 backgroundColor: Colors.green),
           );
+          if (!context.mounted) return;
           Navigator.pop(context); // Go back after saving
         } else {
           throw Exception(data['message']);
@@ -7586,6 +7617,7 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
         throw Exception('Server error: ${response.statusCode}');
       }
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text('Error saving marks: $e'),
@@ -8399,6 +8431,7 @@ class _PotholeChecklistScannedViewPageState
 
       final mark = int.tryParse(markText);
       if (mark == null || mark < 0 || mark > 50) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -8442,6 +8475,7 @@ class _PotholeChecklistScannedViewPageState
         throw Exception('Server error: ${response.statusCode}');
       }
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text('Error saving marks: $e'),
@@ -8498,6 +8532,7 @@ class _PotholeChecklistScannedViewPageState
       }
     } catch (e) {
       debugPrint('DEBUG: Error opening document: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text('Error opening document: $e'),
@@ -9639,6 +9674,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
 
   void _showArplSaveResult(Map<String, dynamic> res, String fallback) {
     final ok = res['success'] == true;
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(res['message'] ?? fallback),
@@ -9651,6 +9687,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
     if (_selectedLearnerId == null) return;
 
     try {
+      if (!context.mounted) return;
       showDialog(
           context: context,
           barrierDismissible: false,
@@ -9681,7 +9718,9 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
       final res = jsonDecode(response.body);
       _showArplSaveResult(res, 'Appendix D Saved');
     } catch (e) {
+      if (!context.mounted) return;
       Navigator.pop(context);
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error: $e')));
     }
@@ -9691,6 +9730,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
     if (_selectedLearnerId == null) return;
 
     try {
+      if (!context.mounted) return;
       showDialog(
           context: context,
           barrierDismissible: false,
@@ -9737,10 +9777,13 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
       if (lastError != null) {
         throw Exception(lastError);
       }
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Appendix E saved to server')));
     } catch (e) {
+      if (!context.mounted) return;
       Navigator.pop(context);
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error: $e')));
     }
@@ -9750,6 +9793,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
     if (_selectedLearnerId == null) return;
 
     try {
+      if (!context.mounted) return;
       showDialog(
           context: context,
           barrierDismissible: false,
@@ -9780,7 +9824,9 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
       final res = jsonDecode(response.body);
       _showArplSaveResult(res, 'Feedback Saved');
     } catch (e) {
+      if (!context.mounted) return;
       Navigator.pop(context);
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error: $e')));
     }
@@ -9790,6 +9836,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
     if (_selectedLearnerId == null) return;
 
     try {
+      if (!context.mounted) return;
       showDialog(
           context: context,
           barrierDismissible: false,
@@ -9813,7 +9860,9 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
       final res = jsonDecode(response.body);
       _showArplSaveResult(res, 'Criteria Saved');
     } catch (e) {
+      if (!context.mounted) return;
       Navigator.pop(context);
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error: $e')));
     }
@@ -10655,6 +10704,7 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
             'Missing class/site/project data. Reselect the candidate and try again.');
       }
 
+      if (!context.mounted) return;
       showDialog(
           context: context,
           barrierDismissible: false,

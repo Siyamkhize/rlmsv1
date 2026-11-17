@@ -127,12 +127,14 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
             );
           }
         } else {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Failed to load class data')),
           );
         }
       } catch (e) {
         // Show error message if an exception occurs
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
@@ -260,6 +262,7 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
 
   // Function to navigate to LearnerListPage with classID
   void navigateToLearnerList(String classID) {
+    if (!context.mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -271,6 +274,7 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
 
   // Function to navigate to InductionPage with classID
   void navigateToInductionClocking(String classID) {
+    if (!context.mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(

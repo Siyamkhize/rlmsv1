@@ -420,6 +420,7 @@ class _ArplHierarchicalNavigatorPageState
       }
 
       if (failCount > 0 && mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('⚠️ $failCount record(s) failed to sync'),
           backgroundColor: Colors.orange,
@@ -441,6 +442,7 @@ class _ArplHierarchicalNavigatorPageState
     required String questionNumber,
     required String exerciseText,
   }) async {
+    if (!context.mounted) return;
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -1498,6 +1500,7 @@ class _ArplHierarchicalNavigatorPageState
             child: const Text('Open Camera'),
           ),
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.of(context).pop(null),
             child: const Text('Cancel'),
           ),
@@ -1513,6 +1516,7 @@ class _ArplHierarchicalNavigatorPageState
     File? document;
 
     if (imageSource == ImageSource.camera) {
+      if (!context.mounted) return;
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
@@ -1555,6 +1559,7 @@ class _ArplHierarchicalNavigatorPageState
       if (!file.path.toLowerCase().endsWith('.pdf')) {
         debugPrint('Error: Expected PDF file for ARPL, got ${file.path}');
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Invalid file format. Expected a PDF.')),
@@ -1726,6 +1731,7 @@ class _ArplHierarchicalNavigatorPageState
           }
         } catch (e) {
           // Close processing dialog if open
+          if (!context.mounted) return;
           if (mounted) Navigator.of(context).pop();
 
           debugPrint('❌ Upload error: $e');
@@ -1781,6 +1787,7 @@ class _ArplHierarchicalNavigatorPageState
         if (mounted) {
           if (!context.mounted) return;
           Navigator.of(context).pop();
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Saved locally - will sync later'),
@@ -1796,6 +1803,7 @@ class _ArplHierarchicalNavigatorPageState
       if (mounted) {
         if (!context.mounted) return;
         Navigator.of(context).pop();
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('An error occurred: $e')),
         );

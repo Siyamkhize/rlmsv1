@@ -5021,6 +5021,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
         debugPrint('[FINGERPRINT_SIG] Verification error: $e');
         if (!context.mounted) return;
         if (Navigator.canPop(context)) {
+          if (!context.mounted) return;
           Navigator.of(context).pop(); // Close scanning dialog
         }
 
@@ -5045,7 +5046,9 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
         return;
       }
 
+      if (!context.mounted) return;
       if (Navigator.canPop(context)) {
+        if (!context.mounted) return;
         Navigator.of(context).pop(); // Close scanning dialog
       }
 
@@ -5098,6 +5101,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
       debugPrint('[FINGERPRINT_SIG] Error: $e');
       if (!context.mounted) return;
       if (Navigator.canPop(context)) {
+        if (!context.mounted) return;
         Navigator.of(context).pop(); // Close dialog if still open
       }
       _showError('Error during fingerprint verification: $e');
@@ -5107,6 +5111,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
   }
 
   void _showScanningDialog() {
+    if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -5135,6 +5140,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
   }
 
   void _showSuccess(String message) {
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -5151,6 +5157,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
   }
 
   void _showError(String message) {
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(

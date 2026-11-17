@@ -429,6 +429,7 @@ class _MonitoringPopupDialogState extends State<MonitoringPopupDialog> {
   }
 
   void _showProgressDialog(String message) {
+    if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -449,6 +450,7 @@ class _MonitoringPopupDialogState extends State<MonitoringPopupDialog> {
   }
 
   void _hideProgressDialog() {
+    if (!context.mounted) return;
     if (Navigator.of(context).canPop()) Navigator.of(context).pop();
   }
 

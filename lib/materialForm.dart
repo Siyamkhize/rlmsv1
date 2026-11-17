@@ -1681,6 +1681,7 @@ if (!context.mounted) return;
         representativeSignature == null ||
         selectedDescription == 'Select' ||
         representativeName.isEmpty) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -1695,6 +1696,7 @@ if (!context.mounted) return;
     if (practitionerFullName.isEmpty ||
         practitionerFullName == 'Loading...' ||
         practitionerFullName == 'Unknown Facilitator') {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -1716,6 +1718,7 @@ if (!context.mounted) return;
     // Additional validation for Learning Material
     if (selectedDescription == 'Learning Material' &&
         selectedLearningMaterialType == 'Select') {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Please select a Learning Material type."),
@@ -1730,6 +1733,7 @@ if (!context.mounted) return;
       bool hasSelectedUnitStandards =
           selectedUnitStandards.values.any((selected) => selected);
       if (!hasSelectedUnitStandards) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Please select at least one unit standard."),
@@ -1741,6 +1745,7 @@ if (!context.mounted) return;
 
     // Validate quantity
     if (quantity < 0) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please enter a valid quantity.")),
       );
@@ -2034,6 +2039,7 @@ if (!context.mounted) return;
                 content: Text('All unit standards submitted successfully!')),
           );
         } else {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text(
@@ -2057,6 +2063,7 @@ if (!context.mounted) return;
         });
 
         // Refresh the page to update existing quantities
+        if (!context.mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -2129,6 +2136,7 @@ if (!context.mounted) return;
 
           // Navigate to the same page
           debugPrint('Navigating to MaterialForm with classID: ${widget.classID}');
+          if (!context.mounted) return;
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -2136,6 +2144,7 @@ if (!context.mounted) return;
             ),
           );
         } else {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content:
@@ -2143,6 +2152,7 @@ if (!context.mounted) return;
           );
 
           // Navigate to the same page
+          if (!context.mounted) return;
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -2152,6 +2162,7 @@ if (!context.mounted) return;
         }
       } catch (e) {
         debugPrint('JSON Decode Error: $e');
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Invalid server response: $e')),
         );
@@ -2159,6 +2170,7 @@ if (!context.mounted) return;
     } catch (e, stackTrace) {
       debugPrint('Error: $e');
       debugPrint('StackTrace: $stackTrace');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -2168,6 +2180,7 @@ if (!context.mounted) return;
   // Save form offline (simplified version)
   Future<void> saveMaterialFormOffline() async {
     // Implementation for offline saving would go here
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Offline saving not implemented yet')),
     );

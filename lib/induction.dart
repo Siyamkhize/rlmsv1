@@ -317,6 +317,7 @@ class _InductionPageState extends State<InductionPage> {
       double userLon, double userAccuracy) async {
     if (userAccuracy > 50) {
       debugPrint('Geolocation accuracy too low: $userAccuracy meters');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Geolocation accuracy too low. Please enable GPS.')),
@@ -350,12 +351,14 @@ class _InductionPageState extends State<InductionPage> {
           );
         } else if (sites.isEmpty) {
           debugPrint('Sites table is empty');
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('No site data available in local database.')),
           );
         } else {
           debugPrint('No matching class or site found for classID: $classID');
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('No site coordinates found for class $classID.')),
@@ -370,6 +373,7 @@ class _InductionPageState extends State<InductionPage> {
       if (siteLat == null || siteLon == null) {
         debugPrint(
             'Invalid site coordinates for classID: $classID, lat: ${result.first['latitude']}, lon: ${result.first['longitude']}');
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Invalid site coordinates in database.')),
@@ -381,6 +385,7 @@ class _InductionPageState extends State<InductionPage> {
 
       debugPrint('Distance to site for classID $classID: $distance meters');
       if (distance > 100) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -392,6 +397,7 @@ class _InductionPageState extends State<InductionPage> {
     } catch (e, stackTrace) {
       debugPrint(
           'Error checking site radius for classID $classID: $e\nStack trace: $stackTrace');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error checking location: $e')),
       );
@@ -401,6 +407,7 @@ class _InductionPageState extends State<InductionPage> {
 
   Future<bool> _performLivenessCheck() async {
     if (!_isCameraReady || _cameraController == null) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Camera not available')),
       );
@@ -450,6 +457,7 @@ class _InductionPageState extends State<InductionPage> {
                   ),
                   ElevatedButton(
                     onPressed: () {
+                      if (!context.mounted) return;
                       Navigator.of(context).pop(false);
                     },
                     child: const Text('Cancel'),
@@ -553,6 +561,7 @@ if (!context.mounted) return;
           clockOutTimes[learnerID] = result['clock_out_time'] ?? '';
           contactTimes[learnerID] = result['contact_time'] ?? '';
         });
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result['message'])),
         );
@@ -690,6 +699,7 @@ if (!context.mounted) return;
           clockOutTimes[learnerID] = result['clock_out_time'] ?? '';
           contactTimes[learnerID] = contactTime ?? '';
         });
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result['message'])),
         );
@@ -733,6 +743,7 @@ if (!context.mounted) return;
       }
 
       if (permission == LocationPermission.deniedForever) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Location permissions are permanently denied.')),
@@ -800,6 +811,7 @@ if (!context.mounted) return;
     } catch (e, stackTrace) {
       debugPrint(
           'Offline clock-in error for learnerID: $learnerID: $e\nStack trace: $stackTrace');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving offline clock-in: $e')),
       );
@@ -862,6 +874,7 @@ if (!context.mounted) return;
       );
     } catch (e) {
       debugPrint('Offline clock-out error: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving offline clock-out: $e')),
       );
@@ -920,6 +933,7 @@ if (!context.mounted) return;
                           if (!context.mounted) return;
                           Navigator.of(context).pop(true);
                         } else {
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                                 content: Text('Please provide a signature')),
@@ -992,6 +1006,7 @@ if (!context.mounted) return;
                         if (!context.mounted) return;
                         Navigator.of(context).pop(true);
                       } else {
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text('Please provide a signature')),

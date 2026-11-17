@@ -138,6 +138,7 @@ class _ArplCompetencyScalePageState extends State<ArplCompetencyScalePage>
             ),
           );
         } else {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: ${data['message']}'),
@@ -146,6 +147,7 @@ class _ArplCompetencyScalePageState extends State<ArplCompetencyScalePage>
           );
         }
       } else {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Server error'),
@@ -154,6 +156,7 @@ class _ArplCompetencyScalePageState extends State<ArplCompetencyScalePage>
         );
       }
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),

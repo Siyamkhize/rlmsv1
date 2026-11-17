@@ -411,6 +411,7 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
               );
             } else {
               debugPrint('[WORK_EXP] Server returned success=false: ${jsonResponse['message']}');
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Saved locally. Server: ${jsonResponse['message']}'),
@@ -420,6 +421,7 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
             }
           } else {
             debugPrint('[WORK_EXP] HTTP error: ${response.statusCode}');
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Saved locally. Server error: ${response.statusCode}'),
@@ -430,6 +432,7 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
         } catch (e) {
           debugPrint('[WORK_EXP] Error syncing to server: $e');
           debugPrint('[WORK_EXP] Error type: ${e.runtimeType}');
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Saved locally. Sync error: ${e.toString().substring(0, 50)}...'),
@@ -440,6 +443,7 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
         }
       } else {
         debugPrint('[WORK_EXP] Device is offline');
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Saved locally, will sync when online'),
@@ -448,9 +452,11 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
         );
       }
 
+      if (!context.mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
       debugPrint('[WORK_EXP] Error saving work experience: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving: $e')),
       );

@@ -125,6 +125,7 @@ class _ModeratorPageState extends State<ModeratorPage> {
                           DataCell(
                             ElevatedButton(
                               onPressed: () {
+                                if (!context.mounted) return;
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -1512,6 +1513,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
       debugPrint('DEBUG: Full PDF URL: $fullUrl');
 
       // Navigate to PDF viewer page
+      if (!context.mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -1527,6 +1529,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
       debugPrint('DEBUG: Opening system checklist');
 
       // Show dialog with checklist data
+      if (!context.mounted) return;
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -1536,6 +1539,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
           ),
           actions: [
             TextButton(
+              if (!context.mounted) return;
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Close'),
             ),
@@ -1750,6 +1754,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
             _poeData = fetchPOE(widget.learnerId);
           });
         } else {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content:
@@ -1763,6 +1768,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
       }
     } catch (e) {
       debugPrint('[Moderation] Error: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error submitting moderation: $e'),
@@ -1821,6 +1827,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
           // DON'T refresh the entire POE data - this causes navigation issues
           // The UI will update when the user navigates away and comes back
         } else {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content:
@@ -1834,6 +1841,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
       }
     } catch (e) {
       debugPrint('[Pothole Moderation] Error: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error submitting moderation: $e'),
@@ -2218,6 +2226,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
               ? 'Status already set to ${action == 'upheld' ? 'upheld' : 'withdrawn'}'
               : 'Exercise ${action == 'upheld' ? 'upheld' : 'withdrawn'} successfully!';
 
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(message),
@@ -2227,6 +2236,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
             ),
           );
         } else {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: ${responseData['message']}'),
@@ -2238,6 +2248,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
         throw Exception('Server error: ${response.statusCode}');
       }
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to submit moderation: $e'),
@@ -2391,6 +2402,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
       }
 
       if (failCount > 0) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to update $failCount unit standard(s)'),
@@ -2400,6 +2412,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
       }
     } catch (e) {
       debugPrint('[Pothole Comment Update] Error: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error updating comments: $e'),
@@ -2416,6 +2429,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
     String comment,
   ) async {
     if (comment.isEmpty) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a comment before updating'),
@@ -2484,6 +2498,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
       }
 
       if (failCount > 0) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content:
@@ -2494,6 +2509,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
       }
     } catch (e) {
       debugPrint('[Comment Update] Error: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error updating comments: $e'),

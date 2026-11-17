@@ -310,6 +310,7 @@ class _LearnerMaterialSelectionPageState
 
   Future<void> _submitMaterials() async {
     if (selectedMaterialType == 'Select') {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a material type')),
       );
@@ -319,6 +320,7 @@ class _LearnerMaterialSelectionPageState
     // Check if at least one item is selected
     bool hasSelection = selections.values.any((selected) => selected);
     if (!hasSelection) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Please select at least one item to update')),
@@ -382,6 +384,7 @@ class _LearnerMaterialSelectionPageState
     } catch (e) {
       debugPrint('Error updating materials: $e');
       if (mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),

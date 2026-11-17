@@ -592,6 +592,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
               child: const Text('Cancel'),
             ),
             ElevatedButton(
+              if (!context.mounted) return;
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
@@ -706,6 +707,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
+                  if (!context.mounted) return;
                   onPressed: () => Navigator.pop(context, true),
                   style:
                       ElevatedButton.styleFrom(backgroundColor: Colors.orange),
@@ -1047,7 +1049,9 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
                   onPressed: () {
                     // Safe dialog dismissal
                     try {
+                      if (!context.mounted) return;
                       if (Navigator.canPop(context)) {
+                        if (!context.mounted) return;
                         Navigator.pop(context);
                       }
                     } catch (navError) {
@@ -1063,6 +1067,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
           debugPrint('Error showing upload error dialog: $dialogError');
           // Fallback: show snackbar instead
           try {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Upload failed: $e'),
@@ -1291,6 +1296,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
   }
 
   void _showError(String message) {
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );

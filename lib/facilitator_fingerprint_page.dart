@@ -180,6 +180,7 @@ class _FacilitatorFingerprintPageState
               arguments: widget.routeArguments,
             );
           } else {
+            if (!context.mounted) return;
             Navigator.pop(context, true);
           }
         }
@@ -256,6 +257,7 @@ class _FacilitatorFingerprintPageState
           ),
           actions: [
             TextButton(
+              if (!context.mounted) return;
               onPressed: () => Navigator.of(dialogContext).pop(false),
               style: TextButton.styleFrom(
                 foregroundColor: Colors.orange,
@@ -263,6 +265,7 @@ class _FacilitatorFingerprintPageState
               child: const Text('No', style: TextStyle(fontSize: 16)),
             ),
             ElevatedButton(
+              if (!context.mounted) return;
               onPressed: () => Navigator.of(dialogContext).pop(true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
@@ -810,10 +813,12 @@ class _FacilitatorFingerprintPageState
                     'This fingerprint matches your $matchedTemplate. Do you want to replace it with this new scan?'),
                 actions: [
                   TextButton(
+                    if (!context.mounted) return;
                     onPressed: () => Navigator.of(context).pop(false),
                     child: const Text('Cancel'),
                   ),
                   TextButton(
+                    if (!context.mounted) return;
                     onPressed: () => Navigator.of(context).pop(true),
                     child: const Text('Replace'),
                   ),
@@ -1587,6 +1592,7 @@ class _FacilitatorFingerprintPageState
               onPressed: () {
                 _signatureController?.dispose();
                 _signatureController = null;
+                if (!context.mounted) return;
                 Navigator.of(dialogContext).pop(false);
               },
               child: const Text('Cancel'),
@@ -1600,6 +1606,7 @@ class _FacilitatorFingerprintPageState
                   );
                   return;
                 }
+                if (!context.mounted) return;
                 Navigator.of(dialogContext).pop(true);
               },
               style: ElevatedButton.styleFrom(
@@ -1652,6 +1659,7 @@ class _FacilitatorFingerprintPageState
   }
 
   void _showProceedDialog() {
+    if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1662,14 +1670,17 @@ class _FacilitatorFingerprintPageState
         actions: [
           TextButton(
             onPressed: () {
+              if (!context.mounted) return;
               Navigator.pop(context); // Close dialog
               if (widget.nextRoute != null) {
+                if (!context.mounted) return;
                 Navigator.pushReplacementNamed(
                   context,
                   widget.nextRoute!,
                   arguments: widget.routeArguments,
                 );
               } else {
+                if (!context.mounted) return;
                 Navigator.pop(context, true);
               }
             },

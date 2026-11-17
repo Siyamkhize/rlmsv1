@@ -333,6 +333,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
         SnackBar(content: Text('$documentName uploaded locally')),
       );
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to upload $documentName: $e')),
       );
@@ -418,6 +419,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
 
       setState(() {});
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error syncing: $e')),
       );
@@ -496,6 +498,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
   void showDocumentUploadModal(BuildContext context, String learnerId) {
     String? selectedDocument;
 
+    if (!context.mounted) return;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -531,6 +534,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
                     ),
                     actions: [
                       TextButton(
+                        if (!context.mounted) return;
                         onPressed: () => Navigator.pop(context),
                         child: const Text('OK'),
                       ),
@@ -570,6 +574,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
                   ),
                   actions: [
                     TextButton(
+                      if (!context.mounted) return;
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Cancel'),
                     ),
@@ -625,6 +630,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
                                 Navigator.pop(context);
                                 this.setState(() {});
                               } catch (e) {
+                                if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                       content:
@@ -847,6 +853,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
     List<Map<String, dynamic>> classes = [];
     bool isLoadingSites = true;
 
+    if (!context.mounted) return;
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
