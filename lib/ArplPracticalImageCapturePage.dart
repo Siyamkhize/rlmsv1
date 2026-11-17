@@ -105,6 +105,7 @@ class _ArplPracticalImageCapturePageState
         await _showCaptionDialog(taskId, photo.path);
       }
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error capturing image: $e'),
@@ -127,6 +128,7 @@ class _ArplPracticalImageCapturePageState
         await _showCaptionDialog(taskId, image.path);
       }
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error selecting image: $e'),
@@ -222,6 +224,7 @@ class _ArplPracticalImageCapturePageState
             });
           });
 
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('✅ Image uploaded successfully'),
@@ -254,6 +257,7 @@ class _ArplPracticalImageCapturePageState
         content: const Text('Are you sure you want to delete this image?'),
         actions: [
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
@@ -284,6 +288,7 @@ class _ArplPracticalImageCapturePageState
               }
             });
 
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('✅ Image deleted'),

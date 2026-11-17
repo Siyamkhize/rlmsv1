@@ -44,6 +44,7 @@ class _DatabaseInspectionPageState extends State<DatabaseInspectionPage> {
         _isLoading = false;
       });
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
               'Query executed successfully. ${results.length} rows returned.')));

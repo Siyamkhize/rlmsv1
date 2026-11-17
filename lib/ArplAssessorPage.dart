@@ -4002,6 +4002,7 @@ class _POETabState extends State<POETab> {
               ),
             );
           } else {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error: ${responseData['message']}'),
@@ -4215,6 +4216,7 @@ class _ExerciseTileState extends State<ExerciseTile> {
                                     isSaving = false;
                                   });
                                 } else {
+                                  if (!context.mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                         content: Text('Please enter a mark')),

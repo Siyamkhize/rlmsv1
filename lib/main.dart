@@ -525,6 +525,7 @@ class _LoginPageState extends State<LoginPage> {
       debugPrint("Background sync completed successfully.");
 
       if (mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Background sync completed successfully')),
@@ -810,6 +811,7 @@ class _LoginPageState extends State<LoginPage> {
               'No internet connection detected. Would you like to proceed with offline login?'),
           actions: [
             TextButton(
+              if (!context.mounted) return;
               onPressed: () => Navigator.of(context).pop(false),
               child: const Text('Cancel'),
             ),
@@ -900,6 +902,7 @@ class _LoginPageState extends State<LoginPage> {
         facilitatorId: facilitatorId,
         facilitatorName: 'Assessor',
         onSuccess: () {
+          if (!context.mounted) return;
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -1030,6 +1033,7 @@ class _LoginPageState extends State<LoginPage> {
                 '[LOGIN] ARPL Assessor $facilitatorIdInt already clocked in at $clockInTime');
 
             if (context.mounted) {
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
@@ -1063,6 +1067,7 @@ class _LoginPageState extends State<LoginPage> {
         facilitatorId: facilitatorId,
         facilitatorName: 'Moderator',
         onSuccess: () {
+          if (!context.mounted) return;
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -1081,6 +1086,7 @@ class _LoginPageState extends State<LoginPage> {
         facilitatorId: facilitatorId,
         facilitatorName: 'Facilitator',
         onSuccess: () {
+          if (!context.mounted) return;
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -1115,6 +1121,7 @@ class _LoginPageState extends State<LoginPage> {
       
       // Navigate back to login page (replace the current route)
       if (mounted) {
+        if (!context.mounted) return;
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginPage()),
           (route) => false,
@@ -1681,6 +1688,7 @@ class _LoginPageState extends State<LoginPage> {
             '[LOGIN] No fingerprints or face enrolled for facilitator $facilitatorIdInt');
         // Navigate to fingerprint page which will handle scanner dialog
         // If no scanner, it will automatically use face enrollment flow
+        if (!context.mounted) return;
         final enrolled = await Navigator.push(
               context,
               MaterialPageRoute(
@@ -1729,6 +1737,7 @@ class _LoginPageState extends State<LoginPage> {
             '[LOGIN] Facilitator $facilitatorIdInt has NOT clocked in today');
         // Show message that clock-in is required
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Please clock in to start your day'),
@@ -1750,6 +1759,7 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           debugPrint('[LOGIN] Using fingerprint for clock-in');
           // Navigate to fingerprint page for clock-in (required daily)
+          if (!context.mounted) return;
           clockedIn = await Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -1779,6 +1789,7 @@ class _LoginPageState extends State<LoginPage> {
         debugPrint(
             '[LOGIN] Facilitator $facilitatorIdInt already clocked in at $clockInTime');
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -1829,6 +1840,7 @@ class _LoginPageState extends State<LoginPage> {
 
       // Show error
       if (mounted) {
+        if (!context.mounted) return;
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -2007,6 +2019,7 @@ class _LoginPageState extends State<LoginPage> {
 
                     // Success - close dialog and proceed
                     if (dialogContext.mounted) {
+                      if (!context.mounted) return;
                       Navigator.of(dialogContext).pop();
                     }
 

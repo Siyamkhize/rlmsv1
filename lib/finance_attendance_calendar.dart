@@ -117,6 +117,7 @@ class _FinanceAttendanceCalendarState extends State<FinanceAttendanceCalendar> {
         final data = json.decode(response.body);
 
         if (data['success'] == true) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Attendance saved successfully!'),

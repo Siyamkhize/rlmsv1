@@ -54,6 +54,7 @@ class _CroppingPageState extends State<CroppingPage> {
       });
     } catch (e) {
       debugPrint("Error cropping image: $e");
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error cropping image: $e')),
       );

@@ -78,6 +78,7 @@ class _WorkExperienceFormState extends State<WorkExperienceForm> {
         content: const Text('Are you sure you want to delete this work experience?'),
         actions: [
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
@@ -93,6 +94,7 @@ class _WorkExperienceFormState extends State<WorkExperienceForm> {
     if (confirm == true) {
       try {
         await DatabaseHelper().deleteWorkExperience(id);
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Work experience deleted')),
         );
@@ -400,6 +402,7 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
             if (jsonResponse['success'] == true) {
               // Mark as synced
               await DatabaseHelper().markWorkExperienceSynced(id);
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Work experience saved and synced'),

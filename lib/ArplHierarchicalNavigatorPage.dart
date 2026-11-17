@@ -412,6 +412,7 @@ class _ArplHierarchicalNavigatorPageState
       await _updateUnsyncedCount();
 
       if (successCount > 0 && mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('✅ Synced $successCount record(s) to server'),
           backgroundColor: Colors.green,
@@ -476,6 +477,7 @@ class _ArplHierarchicalNavigatorPageState
 
         await _refreshUploadStatus();
 
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('✅ Question uploaded successfully!'),
           backgroundColor: Colors.green,
@@ -1491,6 +1493,7 @@ class _ArplHierarchicalNavigatorPageState
         content: const Text('This will capture answers for all questions.'),
         actions: [
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.of(context).pop(ImageSource.camera),
             child: const Text('Open Camera'),
           ),
@@ -1527,6 +1530,7 @@ class _ArplHierarchicalNavigatorPageState
       if (result == null || result is! Map) {
         debugPrint('Error: No result returned from CameraScanPage');
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Camera operation was cancelled or failed')),
@@ -1540,6 +1544,7 @@ class _ArplHierarchicalNavigatorPageState
       if (file == null || !await file.exists()) {
         debugPrint('Error: No valid file returned from CameraScanPage');
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No valid document captured')),
           );
@@ -1581,6 +1586,7 @@ class _ArplHierarchicalNavigatorPageState
 
     // Show processing dialog
     if (mounted) {
+      if (!context.mounted) return;
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -1653,6 +1659,7 @@ class _ArplHierarchicalNavigatorPageState
           final responseBody = await response.stream.bytesToString();
 
           // Close processing dialog
+          if (!context.mounted) return;
           if (mounted) Navigator.of(context).pop();
 
           final decoded = json.decode(responseBody);
@@ -1678,6 +1685,7 @@ class _ArplHierarchicalNavigatorPageState
               });
             }
             if (mounted) {
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('✅ Uploaded ${questions.length} items'),
@@ -1707,6 +1715,7 @@ class _ArplHierarchicalNavigatorPageState
               });
             }
             if (mounted) {
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Saved locally - will sync later'),
@@ -1740,6 +1749,7 @@ class _ArplHierarchicalNavigatorPageState
             });
           }
           if (mounted) {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Saved locally - will sync later'),
@@ -1769,6 +1779,7 @@ class _ArplHierarchicalNavigatorPageState
           });
         }
         if (mounted) {
+          if (!context.mounted) return;
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -1783,6 +1794,7 @@ class _ArplHierarchicalNavigatorPageState
     } catch (e, stackTrace) {
       debugPrint('Error in _scanAllQuestions: $e\nStackTrace: $stackTrace');
       if (mounted) {
+        if (!context.mounted) return;
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('An error occurred: $e')),

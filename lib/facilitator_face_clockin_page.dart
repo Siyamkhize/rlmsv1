@@ -52,6 +52,7 @@ class _FacilitatorFaceClockInPageState
     if (alreadyClockedIn) {
       // Already clocked in - show message and navigate to dashboard
       if (mounted) {
+        if (!context.mounted) return;
         await showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -68,6 +69,7 @@ class _FacilitatorFaceClockInPageState
             actions: [
               ElevatedButton(
                 onPressed: () {
+                  if (!context.mounted) return;
                   Navigator.of(context).pop();
                 },
                 style: ElevatedButton.styleFrom(
@@ -211,6 +213,7 @@ class _FacilitatorFaceClockInPageState
     if (result == null || result['success'] != true) {
       // User cancelled or error
       if (mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result?['message'] ?? 'Clock-in cancelled'),
@@ -272,6 +275,7 @@ class _FacilitatorFaceClockInPageState
 
       // Show success and return
       if (mounted) {
+        if (!context.mounted) return;
         await showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -288,6 +292,7 @@ class _FacilitatorFaceClockInPageState
             actions: [
               ElevatedButton(
                 onPressed: () {
+                  if (!context.mounted) return;
                   Navigator.of(context).pop();
                 },
                 style: ElevatedButton.styleFrom(

@@ -153,6 +153,7 @@ class _LearnerSecurityQuestionsSetupPageState
           await Future.delayed(const Duration(seconds: 1));
 
           // Return success to caller
+          if (!context.mounted) return;
           Navigator.of(context).pop(true);
         }
       } else {
@@ -189,6 +190,7 @@ class _LearnerSecurityQuestionsSetupPageState
                   'Security questions are required for backup verification. Are you sure you want to exit?'),
               actions: [
                 TextButton(
+                  if (!context.mounted) return;
                   onPressed: () => Navigator.pop(context, false),
                   child: const Text('Continue Setup'),
                 ),

@@ -207,6 +207,7 @@ class _LearnerMaterialSelectionPageState
     } catch (e) {
       debugPrint('Error fetching unit standards: $e');
       if (mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading unit standards: $e')),
         );
@@ -252,6 +253,7 @@ class _LearnerMaterialSelectionPageState
       await Future.delayed(const Duration(seconds: 1));
 
       // Show fingerprint dialog
+      if (!context.mounted) return;
       bool? verified = await showDialog<bool>(
         context: context,
         barrierDismissible: false,
@@ -276,6 +278,7 @@ class _LearnerMaterialSelectionPageState
 
       // Simulate verification result
       await Future.delayed(const Duration(seconds: 2));
+      if (!context.mounted) return;
       Navigator.of(context).pop(); // Close dialog
 
       // For testing, assume verified = true
@@ -292,6 +295,7 @@ class _LearnerMaterialSelectionPageState
       await _submitMaterials();
     } catch (e) {
       if (mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Verification failed: $e'),
@@ -357,6 +361,7 @@ class _LearnerMaterialSelectionPageState
         final result = json.decode(response.body);
         if (result['success'] == true) {
           if (mounted) {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Materials updated successfully!'),
@@ -522,6 +527,7 @@ class _LearnerMaterialSelectionPageState
 
     // If PPE was issued successfully, go back
     if (result == true) {
+      if (!context.mounted) return;
       Navigator.pop(context, true);
     } else {
       // Reset selection if user cancelled

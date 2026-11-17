@@ -72,6 +72,7 @@ class _InductionPageState extends State<InductionPage> {
         });
       } else {
         debugPrint('No cameras available');
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No cameras available')),
         );
@@ -113,6 +114,7 @@ class _InductionPageState extends State<InductionPage> {
         _capturedImage = await _cameraController!.takePicture();
         debugPrint('Image captured: ${_capturedImage!.path}');
         if (mounted) {
+          if (!context.mounted) return;
           Navigator.of(context).pop(true);
         }
       }
@@ -340,6 +342,7 @@ class _InductionPageState extends State<InductionPage> {
       if (result.isEmpty) {
         if (classes.isEmpty) {
           debugPrint('Class table is empty');
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('No class data available in local database.')),
@@ -704,6 +707,7 @@ class _InductionPageState extends State<InductionPage> {
       // Validate location services
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Location services are disabled.')),
         );
@@ -714,6 +718,7 @@ class _InductionPageState extends State<InductionPage> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Location permissions are denied.')),
           );
@@ -750,6 +755,7 @@ class _InductionPageState extends State<InductionPage> {
 
       final signatureImage = await _signatureController.toPngBytes();
       if (signatureImage == null) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to generate signature image.')),
         );
@@ -780,6 +786,7 @@ class _InductionPageState extends State<InductionPage> {
         clockInTimes[learnerID] = clockInTime;
       });
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Clock-in saved locally. Will sync when online.')),
@@ -806,6 +813,7 @@ class _InductionPageState extends State<InductionPage> {
       );
 
       if (existingRecords.isEmpty) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No clock-in record found for today.')),
         );
@@ -841,6 +849,7 @@ class _InductionPageState extends State<InductionPage> {
         }
       });
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Clock-out saved locally. Will sync when online.')),
@@ -870,6 +879,7 @@ class _InductionPageState extends State<InductionPage> {
     try {
       final livenessPassed = await _performLivenessCheck();
       if (!livenessPassed) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Image capture cancelled or failed')),
         );
@@ -901,6 +911,7 @@ class _InductionPageState extends State<InductionPage> {
                     ElevatedButton(
                       onPressed: () {
                         if (_signatureController.isNotEmpty) {
+                          if (!context.mounted) return;
                           Navigator.of(context).pop(true);
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -933,6 +944,7 @@ class _InductionPageState extends State<InductionPage> {
       }
       return true;
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error during clock-in: $e')),
       );
@@ -971,6 +983,7 @@ class _InductionPageState extends State<InductionPage> {
                   ElevatedButton(
                     onPressed: () {
                       if (_signatureController.isNotEmpty) {
+                        if (!context.mounted) return;
                         Navigator.of(context).pop(true);
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -1002,6 +1015,7 @@ class _InductionPageState extends State<InductionPage> {
             DateFormat('yyyy-MM-dd').format(DateTime.now()));
       }
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to record clock-out: $e')),
       );

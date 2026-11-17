@@ -173,6 +173,7 @@ class _FacilitatorFingerprintPageState
           if (!mounted) return;
 
           if (widget.nextRoute != null) {
+            if (!context.mounted) return;
             Navigator.pushReplacementNamed(
               context,
               widget.nextRoute!,
@@ -241,6 +242,7 @@ class _FacilitatorFingerprintPageState
       return;
     }
 
+    if (!context.mounted) return;
     final hasScanner = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -305,6 +307,7 @@ class _FacilitatorFingerprintPageState
 
       // Go directly to smart face clocking (skip enrollment check)
       if (mounted) {
+        if (!context.mounted) return;
         final clockedIn = await Navigator.push(
               context,
               MaterialPageRoute(
@@ -320,6 +323,7 @@ class _FacilitatorFingerprintPageState
 
         if (clockedIn) {
           // Clock-in/out successful, return to profile
+          if (!context.mounted) return;
           Navigator.pop(context, true);
         } else {
           setState(() {
@@ -794,6 +798,7 @@ class _FacilitatorFingerprintPageState
             '[FAC_FP] Template matches $matchedTemplate - this appears to be the same finger!');
         if (mounted) {
           // Show dialog to ask if user wants to replace existing template
+          if (!context.mounted) return;
           final shouldReplace = await showDialog<bool>(
             context: context,
             builder: (BuildContext context) {
@@ -1111,6 +1116,7 @@ class _FacilitatorFingerprintPageState
           debugPrint('[FAC_CLOCK] Step 6: Navigating back to main...');
           // Always return true to indicate successful clock-in
           // This allows main.dart to proceed to dashboard
+          if (!context.mounted) return;
           Navigator.pop(context, true);
         }
       } else if (_clockingAction == 'out') {
@@ -1176,6 +1182,7 @@ class _FacilitatorFingerprintPageState
             FingerprintErrorHandler.showInfo(
                 context, 'Clock-out saved locally! Contact time: $contactTime');
           }
+          if (!context.mounted) return;
           Navigator.pop(context, true);
         }
       }

@@ -935,6 +935,7 @@ class _ArplModeratorClassDetailsPageState
                                     onPressed: () async {
                                       final ofo = await _resolveOfoForClass();
                                       if (!mounted) return;
+                                      if (!context.mounted) return;
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -969,6 +970,7 @@ class _ArplModeratorClassDetailsPageState
                                     onPressed: () async {
                                       final ofo = await _resolveOfoForClass();
                                       if (!mounted) return;
+                                      if (!context.mounted) return;
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(

@@ -219,6 +219,7 @@ class _POETabContentState extends State<POETabContent> {
     );
 
     if (result != null) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(result),
       ));

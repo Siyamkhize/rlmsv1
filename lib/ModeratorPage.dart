@@ -1736,6 +1736,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
         var responseData = jsonDecode(response.body);
 
         if (responseData['status'] == 'success') {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -1807,6 +1808,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
         var responseData = jsonDecode(response.body);
 
         if (responseData['status'] == 'success') {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -2374,6 +2376,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
       }
 
       if (successCount > 0) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Comment updated for $successCount unit standard(s)'),
@@ -2465,6 +2468,7 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
       }
 
       if (successCount > 0) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -2569,6 +2573,7 @@ class _ModerationFeedbackPageState extends State<ModerationFeedbackPage> {
           await file.writeAsBytes(response.bodyBytes);
 
           // Open the PDF
+          if (!context.mounted) return;
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -2755,6 +2760,7 @@ class _ModerationReportPageState extends State<ModerationReportPage> {
       );
       debugPrint('launchUrl result: $launched');
       if (!launched) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to launch $url')),
         );
@@ -2775,6 +2781,7 @@ class _ModerationReportPageState extends State<ModerationReportPage> {
         showLearnersTable = true;
       });
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error fetching learners: $e')),
       );
@@ -3636,6 +3643,7 @@ class _PotholeChecklistPDFViewerState extends State<PotholeChecklistPDFViewer> {
       if (await canLaunchUrl(fileUri)) {
         await launchUrl(fileUri, mode: LaunchMode.externalApplication);
       } else {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Cannot open PDF with external app')),
         );
@@ -3834,6 +3842,7 @@ class _ModeratorPdfViewerScreenState extends State<ModeratorPdfViewerScreen> {
       if (await canLaunchUrl(fileUri)) {
         await launchUrl(fileUri, mode: LaunchMode.externalApplication);
       } else {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Cannot open PDF with external app')),
         );

@@ -587,6 +587,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
           ),
           actions: [
             TextButton(
+              if (!context.mounted) return;
               onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancel'),
             ),
@@ -700,6 +701,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
                   'Continue with this scan?'),
               actions: [
                 TextButton(
+                  if (!context.mounted) return;
                   onPressed: () => Navigator.pop(context, false),
                   child: const Text('Cancel'),
                 ),
@@ -976,6 +978,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
 
       if (mounted) {
         // Show success message
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -995,6 +998,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
         // route is LoginPage, so those "fallbacks" logged users out of their workflow.
         if (mounted) {
           try {
+            if (!context.mounted) return;
             Navigator.pop(context, true);
           } catch (e) {
             debugPrint('Navigation error after upload: $e');

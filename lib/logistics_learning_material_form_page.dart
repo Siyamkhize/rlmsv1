@@ -172,6 +172,7 @@ class _LogisticsLearningMaterialFormPageState
         debugPrint('[LOGISTICS] ❌ No data in local database');
 
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -264,6 +265,7 @@ class _LogisticsLearningMaterialFormPageState
       debugPrint('[LOGISTICS] Error fetching learners: $e');
       setState(() => isLoading = false);
       if (mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading learners: $e')),
         );
@@ -537,6 +539,7 @@ class _LogisticsLearningMaterialFormPageState
       debugPrint('[VERIFY] Scanner detected: $activeScanner');
 
       // STEP 3: Show progress dialog and verify fingerprint
+      if (!context.mounted) return;
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -565,6 +568,7 @@ class _LogisticsLearningMaterialFormPageState
       );
 
       if (learnerData.isEmpty) {
+        if (!context.mounted) return;
         Navigator.pop(context); // Close progress dialog
         _showError('Learner not found in database');
         return;
@@ -591,6 +595,7 @@ class _LogisticsLearningMaterialFormPageState
       // Capture and verify fingerprint
       bool verified = await _captureAndVerifyFingerprint(enrolledTemplate);
 
+      if (!context.mounted) return;
       Navigator.pop(context); // Close progress dialog
 
       if (verified) {
@@ -601,6 +606,7 @@ class _LogisticsLearningMaterialFormPageState
             'Fingerprint verification failed for ${learner['FullName']}');
       }
     } catch (e) {
+      if (!context.mounted) return;
       Navigator.pop(context); // Close progress dialog
       debugPrint('Error in fingerprint verification: $e');
       _showError('Verification error: $e');
@@ -1544,6 +1550,7 @@ class _LogisticsUnitStandardsDialogState
 
     try {
       // Show fingerprint verification dialog
+      if (!context.mounted) return;
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -1577,6 +1584,7 @@ class _LogisticsUnitStandardsDialogState
       );
 
       if (learnerData.isEmpty) {
+        if (!context.mounted) return;
         Navigator.pop(context); // Close fingerprint dialog
         _showError('Learner not found in database');
         setState(() => isLoading = false);
@@ -1605,6 +1613,7 @@ class _LogisticsUnitStandardsDialogState
       // Capture and verify fingerprint
       bool verified = await _captureAndVerifyFingerprint(enrolledTemplate);
 
+      if (!context.mounted) return;
       Navigator.pop(context); // Close fingerprint dialog
 
       if (!verified) {
@@ -1616,6 +1625,7 @@ class _LogisticsUnitStandardsDialogState
       // Fingerprint verified, now save the selections
       await _saveSelectionsToServer();
     } catch (e) {
+      if (!context.mounted) return;
       Navigator.pop(context); // Close fingerprint dialog if still open
       debugPrint('Error in fingerprint verification: $e');
       _showError('Verification error: $e');
@@ -1688,6 +1698,7 @@ class _LogisticsUnitStandardsDialogState
         final result = json.decode(response.body);
         if (result['success'] == true) {
           if (mounted) {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
@@ -2376,6 +2387,7 @@ class _LogisticsPPEDialogState extends State<_LogisticsPPEDialog> {
       );
 
       if (learnerData.isEmpty) {
+        if (!context.mounted) return;
         Navigator.pop(context); // Close fingerprint dialog
         _showError('Learner not found in database');
         setState(() => isLoading = false);
@@ -2404,6 +2416,7 @@ class _LogisticsPPEDialogState extends State<_LogisticsPPEDialog> {
       // Verify fingerprint
       bool verified = await _captureAndVerifyFingerprint(enrolledTemplate);
 
+      if (!context.mounted) return;
       Navigator.pop(context); // Close fingerprint dialog
 
       if (!verified) {
@@ -2415,6 +2428,7 @@ class _LogisticsPPEDialogState extends State<_LogisticsPPEDialog> {
       // Fingerprint verified, save PPE issuance
       await _savePPEToServer();
     } catch (e) {
+      if (!context.mounted) return;
       Navigator.pop(context); // Close fingerprint dialog if still open
       debugPrint('Error in fingerprint verification: $e');
       _showError('Verification error: $e');
@@ -2537,6 +2551,7 @@ class _LogisticsPPEDialogState extends State<_LogisticsPPEDialog> {
         _showSuccess('PPE issued locally (will sync when online)');
       }
 
+      if (!context.mounted) return;
       Navigator.pop(context, true); // Close dialog and refresh list
     } catch (e) {
       debugPrint('Error saving PPE: $e');

@@ -14,6 +14,7 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
   Future<bool> ensureLearnerProfileCompleteForClockIn(String learnerId) async {
     final learner = await fetchLearnerForClockInValidation(learnerId);
     if (learner == null) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Could not load learner profile. Please try again.'),
@@ -118,6 +119,7 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
     );
 
     if (refreshedMissing.isNotEmpty) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

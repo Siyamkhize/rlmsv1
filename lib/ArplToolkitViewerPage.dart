@@ -583,6 +583,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
         _isSaving = false;
       });
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error saving: $e'),
@@ -2384,6 +2385,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
         final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
           if (mounted) {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -5015,6 +5017,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
         }
       } catch (e) {
         debugPrint('[FINGERPRINT_SIG] Verification error: $e');
+        if (!context.mounted) return;
         if (Navigator.canPop(context)) {
           Navigator.of(context).pop(); // Close scanning dialog
         }
@@ -5091,6 +5094,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
       }
     } catch (e) {
       debugPrint('[FINGERPRINT_SIG] Error: $e');
+      if (!context.mounted) return;
       if (Navigator.canPop(context)) {
         Navigator.of(context).pop(); // Close dialog if still open
       }

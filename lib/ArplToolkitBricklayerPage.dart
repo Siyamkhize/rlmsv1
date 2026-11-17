@@ -364,6 +364,7 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
           // Now save gap closure data if applicable
           await _saveGapClosureData();
 
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Toolkit data saved successfully!')),
           );
@@ -1452,6 +1453,7 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
         setState(() {
           _gapStandardsLoading = false;
         });
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content:

@@ -289,6 +289,7 @@ class _FinanceRegisterHistoryState extends State<FinanceRegisterHistory> {
             'Are you sure you want to delete the register for $monthName $year?\n\nThis will also delete all attendance records for this month.'),
         actions: [
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
@@ -325,6 +326,7 @@ class _FinanceRegisterHistoryState extends State<FinanceRegisterHistory> {
         final data = json.decode(response.body);
 
         if (data['success'] == true) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Register deleted successfully'),

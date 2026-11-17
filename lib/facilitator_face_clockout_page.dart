@@ -52,6 +52,7 @@ class _FacilitatorFaceClockOutPageState
     if (clockingStatus == 'not_clocked_in') {
       // Not clocked in yet - show message
       if (mounted) {
+        if (!context.mounted) return;
         await showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -68,6 +69,7 @@ class _FacilitatorFaceClockOutPageState
             actions: [
               ElevatedButton(
                 onPressed: () {
+                  if (!context.mounted) return;
                   Navigator.of(context).pop();
                 },
                 style: ElevatedButton.styleFrom(
@@ -103,6 +105,7 @@ class _FacilitatorFaceClockOutPageState
             actions: [
               ElevatedButton(
                 onPressed: () {
+                  if (!context.mounted) return;
                   Navigator.of(context).pop();
                 },
                 style: ElevatedButton.styleFrom(
@@ -271,6 +274,7 @@ class _FacilitatorFaceClockOutPageState
     if (result == null || result['success'] != true) {
       // User cancelled or error
       if (mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result?['message'] ?? 'Clock-out cancelled'),
@@ -329,6 +333,7 @@ class _FacilitatorFaceClockOutPageState
 
       // Show success and return
       if (mounted) {
+        if (!context.mounted) return;
         await showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -345,6 +350,7 @@ class _FacilitatorFaceClockOutPageState
             actions: [
               ElevatedButton(
                 onPressed: () {
+                  if (!context.mounted) return;
                   Navigator.of(context).pop();
                 },
                 style: ElevatedButton.styleFrom(

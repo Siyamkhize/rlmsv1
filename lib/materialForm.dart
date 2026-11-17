@@ -773,6 +773,7 @@ class _MaterialFormState extends State<MaterialForm> {
       }
     } catch (e) {
       debugPrint('Error fetching offline data: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading offline data: $e')),
       );
@@ -1747,6 +1748,7 @@ class _MaterialFormState extends State<MaterialForm> {
     // Check connectivity
     final connectivityResult = await Connectivity().checkConnectivity();
     if (connectivityResult.contains(ConnectivityResult.none)) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text("No internet connection. Please try again later.")),
@@ -2024,6 +2026,7 @@ class _MaterialFormState extends State<MaterialForm> {
         debugPrint('   - Failed Items: $failedSubmissions');
 
         if (allSuccessful) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('All unit standards submitted successfully!')),
@@ -2107,6 +2110,7 @@ class _MaterialFormState extends State<MaterialForm> {
         debugPrint('Decoded Response: $responseBody');
 
         if (responseBody['success']) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Form submitted successfully!')),
           );
@@ -2414,6 +2418,7 @@ class _MaterialFormState extends State<MaterialForm> {
                 if (signatureBytes != null) {
                   onSignatureCaptured(signatureBytes);
                 }
+                if (!context.mounted) return;
                 Navigator.pop(context);
                 setState(() {});
               },

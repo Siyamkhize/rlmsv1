@@ -436,6 +436,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                   onPressed: () async {
                     if (_signatureController.isNotEmpty) {
                       await _saveSignature();
+                      if (!context.mounted) return;
                       Navigator.pop(context);
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -537,6 +538,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       });
       _refreshData();
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Changes saved successfully'),
@@ -582,6 +584,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                   ? '${Config.baseUrl}/${data['image_url']}'
                   : null;
             });
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                   content: Text('Profile image uploaded successfully'),
@@ -611,6 +614,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
     if (!await Connectivity()
         .checkConnectivity()
         .then((r) => !r.contains(ConnectivityResult.none))) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('No internet connection'),
@@ -648,6 +652,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
         if (response.statusCode == 200) {
           final responseData = json.decode(response.body);
           if (responseData['success']) {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                   content: Text('Data synced successfully'),
@@ -1212,6 +1217,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
     final facilitatorName =
         facilitatorData['fullName'] as String? ?? 'Facilitator';
 
+    if (!context.mounted) return;
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -1473,6 +1479,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
         debugPrint(
             '[FAC_PROFILE] Facilitator clocked in, navigating to clock-out');
 
+        if (!context.mounted) return;
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
@@ -1493,6 +1500,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       } else {
         // Already clocked out today
         if (mounted) {
+          if (!context.mounted) return;
           showDialog(
             context: context,
             builder: (BuildContext context) {

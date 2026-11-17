@@ -650,6 +650,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
       }
     } catch (e) {
       debugPrint('Error fetching offline data: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading offline data: $e')),
       );
@@ -710,6 +711,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
                         // Try to fetch learners again
                         await _checkConnectivity();
                         if (learners.isEmpty) {
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(
@@ -1709,6 +1711,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
                 if (signatureBytes != null) {
                   onSignatureCaptured(signatureBytes);
                 }
+                if (!context.mounted) return;
                 Navigator.pop(context);
                 setState(() {});
               },
@@ -2040,6 +2043,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
     // Check connectivity
     final connectivityResult = await Connectivity().checkConnectivity();
     if (connectivityResult.contains(ConnectivityResult.none)) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text("No internet connection. Please try again later.")),
@@ -2249,6 +2253,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
         }
 
         if (allSuccessful) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content:
@@ -2327,6 +2332,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
       if (response.statusCode == 200) {
         final responseBody = json.decode(response.body);
         if (responseBody['success']) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Material issued to learner successfully!')),

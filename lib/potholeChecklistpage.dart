@@ -384,6 +384,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
           _hasCheckedStatus = true;
         });
 
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -529,6 +530,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
         _viewScannedDocument(_scannedDocumentPath!);
       } else if (_checklistType == 'system') {
         _loadExistingChecklist();
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Checklist loaded. You can view and edit below.'),
@@ -560,6 +562,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
 
     // Show feedback
     if (_checklistExists) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -637,6 +640,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
     if (status['exists'] == true) {
       // Checklist exists - show view option
       final type = status['type'];
+      if (!context.mounted) return;
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -807,6 +811,7 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
           // Also save logbook marks
           await _saveLogbookMarks();
 
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(data['message']),

@@ -129,6 +129,7 @@ class _PoeBulkScanPageState extends State<PoeBulkScanPage> {
       }
 
       if (mounted) {
+        if (!context.mounted) return;
         Navigator.pop(context, true); // Return success
       }
     } catch (e) {

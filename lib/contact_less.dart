@@ -372,6 +372,7 @@ class _ContactlessClockInPageState extends State<ContactlessClockInPage> {
           ),
           TextButton(
             onPressed: () async {
+              if (!context.mounted) return;
               Navigator.pop(context);
               await DatabaseHelper()
                   .clearFingerprintTemplates(int.parse(learnerId));
@@ -457,6 +458,7 @@ class _ContactlessClockInPageState extends State<ContactlessClockInPage> {
       _currentClockingAction = null;
     });
     _refreshDataWithoutClearingState();
+    if (!context.mounted) return;
     Navigator.of(context).pop();
   }
 
@@ -638,6 +640,7 @@ class _ContactlessClockInPageState extends State<ContactlessClockInPage> {
         return;
       }
 
+      if (!context.mounted) return;
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -665,6 +668,7 @@ class _ContactlessClockInPageState extends State<ContactlessClockInPage> {
           )
           .timeout(const Duration(seconds: 30));
 
+      if (!context.mounted) return;
       Navigator.pop(context);
 
       debugPrint('[CONTACTLESS] Server response: ${response.statusCode}');
@@ -688,6 +692,7 @@ class _ContactlessClockInPageState extends State<ContactlessClockInPage> {
         _showMessage('❌ Server error (${response.statusCode})');
       }
     } catch (e) {
+      if (!context.mounted) return;
       Navigator.pop(context);
       debugPrint('[CONTACTLESS] Error generating features: $e');
       _showMessage('❌ Error: $e');
@@ -933,6 +938,7 @@ class _ContactlessClockInPageState extends State<ContactlessClockInPage> {
                                       : () async {
                                           debugPrint(
                                               '[CONTACTLESS] Enroll button for learner $learnerId');
+                                          if (!context.mounted) return;
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(

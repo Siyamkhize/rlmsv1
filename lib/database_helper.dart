@@ -6410,6 +6410,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     bool isConnected = await _checkConnectivity();
 
     if (!isConnected) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('No internet connection, cannot sync data')),
@@ -6427,6 +6428,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     debugPrint('Found ${unsyncedLearners.length} unsynced learners');
 
     if (unsyncedLearners.isEmpty) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No data to sync')),
       );
@@ -6532,6 +6534,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         // Only sync if there's internet connection
         await syncAllData(context);
       } else {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -6541,6 +6544,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       }
     } catch (e) {
       debugPrint('Error submitting learner data: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving data: $e')),
       );
@@ -6976,6 +6980,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       await syncBankDetails();
 
       if (context.mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('All data synced successfully'),

@@ -286,6 +286,7 @@ class _ArplToolkitPlumberPageState extends State<ArplToolkitPlumberPage>
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Toolkit data saved successfully!')),
           );

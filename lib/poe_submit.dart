@@ -475,6 +475,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         setState(() {
           fingerprintVerified = true;
         });
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('✅ Fingerprint verified successfully!'),
@@ -485,6 +486,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         // Show confirmation dialog before submitting
         await _showSubmitConfirmationDialog();
       } else {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('❌ Fingerprint verification failed'),
@@ -564,6 +566,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
           !(hasFutLeft || hasFutRight) &&
           (hasZkLeft || hasZkRight)) {
         debugPrint('[POE_SUBMIT] ❌ Futronic scanner but only ZKTeco templates');
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -883,6 +886,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       final url = AppConfig.buildUrl('poe_collection_submit.php');
 
       // Step 1: Mark learner as received in material_receipt_form
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Row(
@@ -916,6 +920,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       );
 
       // Step 2: Submit the POE form data with signatures to material_forms
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Row(
@@ -966,6 +971,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         final formData = json.decode(formResponse.body);
 
         if (receiptData['success'] == true && formData['success'] == true) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('✅ POE collection completed successfully!'),
@@ -977,6 +983,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
           // Wait a moment for user to see success message, then navigate back
           await Future.delayed(const Duration(seconds: 2));
           if (mounted) {
+            if (!context.mounted) return;
             Navigator.of(context).pop(true);
           }
         } else {
@@ -1139,6 +1146,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       await _autoSubmitPOECollection();
     } else {
       // User cancelled - show cancellation message
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('POE submission cancelled'),
@@ -1157,6 +1165,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content:
@@ -1174,6 +1183,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           if (mounted) {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Location permissions are denied'),
@@ -1221,6 +1231,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
     } catch (e) {
       debugPrint('[POE_GEOFENCE] Error checking location: $e');
       if (mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error getting location: $e'),
@@ -1270,6 +1281,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         if (classes.isEmpty) {
           debugPrint('[POE_GEOFENCE] Class table is empty');
           if (mounted) {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                   content: Text('No class data available in local database.')),

@@ -245,6 +245,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
       debugPrint('Learners: $learners');
     } catch (e) {
       debugPrint('❌ Error fetching learners: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Failed to fetch learners. Please try again later.')),
@@ -261,6 +262,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
       if (result.isEmpty) {
         debugPrint('❌ No learners found in local database.');
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No learners found in local database.')),
         );
@@ -295,6 +297,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
       debugPrint('Local Learners: $learners');
     } catch (e) {
       debugPrint('❌ Error fetching learners from local database: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Error fetching learners from local database.')),
@@ -447,6 +450,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
           }
         }
 
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(responseData['message'].contains('already exist')
@@ -457,6 +461,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
         await fetchLearners();
       } else {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content:
@@ -560,6 +565,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
         }
       }
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('POE submissions saved locally!')),
       );
@@ -567,6 +573,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
       await fetchLearners();
     } catch (e) {
       debugPrint('❌ Error saving material receipt form: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving form: $e')),
       );
@@ -1184,6 +1191,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
                                                 fingerprintVerified = true;
                                                 isLoading = false;
                                               });
+                                              if (!context.mounted) return;
                                               ScaffoldMessenger.of(context)
                                                   .showSnackBar(
                                                 const SnackBar(
@@ -1345,6 +1353,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
                       final url =
                           AppConfig.buildUrl('poe_collection_submit.php');
 
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Row(
@@ -1389,6 +1398,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
                         },
                       );
 
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Row(
@@ -1467,6 +1477,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
                           await _savePOESubmissionLocally(learner);
 
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(
@@ -1478,6 +1489,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
                           await Future.delayed(const Duration(seconds: 2));
                           if (mounted) {
+                            if (!context.mounted) return;
                             Navigator.pop(context);
                             setState(() {});
                           }
@@ -1533,6 +1545,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -1545,6 +1558,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Location permissions are denied.')),
           );
@@ -1630,6 +1644,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
           (hasZkLeft || hasZkRight)) {
         debugPrint(
             '[POE_COLLECT] ❌ Futronic scanner but only ZKTeco templates');
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(

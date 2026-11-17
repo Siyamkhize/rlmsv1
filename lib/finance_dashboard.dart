@@ -137,6 +137,7 @@ class _FinanceDashboardState extends State<FinanceDashboard> {
         showSearchResults = true;
       });
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text('Search error: $e'), backgroundColor: Colors.red),

@@ -76,6 +76,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
   //       });
   //     } else {
   //       debugPrint('No cameras available');
+  if (!context.mounted) return;
   //       ScaffoldMessenger.of(context).showSnackBar(
   //         const SnackBar(content: Text('No cameras available')),
   //       );
@@ -123,6 +124,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
   //       _capturedImage = await _cameraController!.takePicture();
   //       debugPrint('Image captured: ${_capturedImage!.path}');
   //       if (mounted) {
+  if (!context.mounted) return;
   //         Navigator.of(context).pop(true);
   //       }
   //     }
@@ -351,6 +353,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
       if (result.isEmpty) {
         if (classes.isEmpty) {
           debugPrint('Class table is empty');
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('No class data available in local database.')),
@@ -447,6 +450,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
   //             ),
   //             ElevatedButton(
   //               onPressed: () {
+  if (!context.mounted) return;
   //                 Navigator.of(context).pop(false);
   //               },
   //               child: const Text('Cancel'),
@@ -747,6 +751,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
         clockInTimes[learnerID] = clockInTime;
       });
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Clock-in saved locally. Will sync when online.')),
@@ -772,6 +777,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
       );
 
       if (existingRecords.isEmpty) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No clock-in record found for today.')),
         );
@@ -812,6 +818,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
         }
       });
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Clock-out saved locally. Will sync when online.')),
@@ -841,6 +848,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
     try {
       // final livenessPassed = await _performLivenessCheck();  // Temporarily disabled due to Java 21 compatibility issues
       // if (!livenessPassed) {  // Temporarily disabled due to Java 21 compatibility issues
+      if (!context.mounted) return;
       //   ScaffoldMessenger.of(context).showSnackBar(  // Temporarily disabled due to Java 21 compatibility issues
       //     const SnackBar(content: Text('Image capture cancelled or failed')),  // Temporarily disabled due to Java 21 compatibility issues
       //   );  // Temporarily disabled due to Java 21 compatibility issues
@@ -872,6 +880,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
                     ElevatedButton(
                       onPressed: () {
                         if (_signatureController.isNotEmpty) {
+                          if (!context.mounted) return;
                           Navigator.of(context).pop(true);
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -904,6 +913,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
       }
       return true;
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error during clock-in: $e')),
       );
@@ -942,6 +952,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
                   ElevatedButton(
                     onPressed: () {
                       if (_signatureController.isNotEmpty) {
+                        if (!context.mounted) return;
                         Navigator.of(context).pop(true);
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -973,6 +984,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
             DateFormat('yyyy-MM-dd').format(DateTime.now()));
       }
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to record clock-out: $e')),
       );

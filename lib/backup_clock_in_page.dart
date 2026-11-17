@@ -870,6 +870,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
     final timeOk = await TimezoneValidator.ensureCorrectTime(context);
     if (!timeOk) {
       // User cancelled or time is wrong - block clock-in
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content:
@@ -976,6 +977,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                 '[BACKUP_CLOCKIN] ⚠️ Face enrolled but security questions NOT set up - forcing setup');
 
             if (mounted) {
+              if (!context.mounted) return;
               final setupNow = await showDialog<bool>(
                 context: context,
                 barrierDismissible: false,
@@ -1071,6 +1073,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               if (setupComplete != true) {
                 debugPrint(
                     '[BACKUP_CLOCKIN] Security questions setup not completed - aborting clock-in');
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text(
@@ -1105,6 +1108,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         if (!enrolled) {
           debugPrint(
               '[BACKUP_CLOCKIN] ⚠️ Face enrollment CANCELLED by user - aborting clock-in');
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -1140,6 +1144,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                 '[BACKUP_CLOCKIN] Face enrolled but security questions NOT set up - offering setup');
 
             if (mounted) {
+              if (!context.mounted) return;
               final setupNow = await showDialog<bool>(
                 context: context,
                 barrierDismissible: false,
@@ -1228,6 +1233,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           if (!securityVerified) {
             debugPrint(
                 '[BACKUP_CLOCKIN] Security questions verification CANCELLED by user - aborting clock-in');
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
@@ -1263,6 +1269,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       debugPrint(
           '[BACKUP_CLOCKIN] Signature capture result: ${signatureData != null ? "SUCCESS (${signatureData.length} chars)" : "NULL/CANCELLED"}');
       if (signatureData == null) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Signature is required for backup clock-in'),
@@ -1306,6 +1313,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       }
 
       // Success
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('✅ Clocked in successfully!'),
@@ -1373,6 +1381,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               '[BACKUP_CLOCKOUT] ❌ FACE VERIFICATION FAILED - WRONG PERSON!');
 
           if (mounted) {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
@@ -1435,6 +1444,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       }
 
       // Success
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('✅ Clocked out successfully!'),
@@ -2107,6 +2117,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                 final bytes = await _signatureController.toPngBytes();
                 if (bytes != null) {
                   final base64Signature = base64Encode(bytes);
+                  if (!context.mounted) return;
                   Navigator.of(context).pop(base64Signature);
                 }
               },
@@ -3277,6 +3288,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       final checkData = json.decode(checkResponse.body);
       if (checkData['success'] != true || checkData['question_count'] < 3) {
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content:
@@ -3299,6 +3311,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           questionData['questions'] == null ||
           questionData['questions'].isEmpty) {
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Could not retrieve security question'),
@@ -3383,6 +3396,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
                     final verifyData = json.decode(verifyResponse.body);
                     if (verifyData['verified'] == true) {
+                      if (!context.mounted) return;
                       Navigator.of(dialogContext).pop(true);
                     } else {
                       ScaffoldMessenger.of(dialogContext).showSnackBar(
@@ -3552,6 +3566,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             onCapture: (imageFile, base64Image) {
               capturedImage = imageFile;
               capturedBase64 = base64Image;
+              if (!context.mounted) return;
               Navigator.pop(context);
             },
             onCancel: () => Navigator.pop(context),
@@ -3596,6 +3611,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
       if (embedding == null) {
         if (mounted) {
+          if (!context.mounted) return;
           Navigator.pop(context); // Close processing dialog
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -3627,6 +3643,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       debugPrint('[FACE] Local cache result: $cachedLocally');
 
       if (mounted) {
+        if (!context.mounted) return;
         Navigator.pop(context); // Close processing dialog
       }
 
@@ -3655,6 +3672,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             '[FACE] Server enrollment failed but local cache saved: $serverMsg');
         _isFaceEnrolled = true;
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -3751,6 +3769,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             timeout: const Duration(seconds: 45),
             onTimeout: () {
               timedOut = true;
+              if (!context.mounted) return;
               if (Navigator.canPop(context)) Navigator.pop(context);
             },
             onCapture: (imageFile, base64Image) {
@@ -3809,6 +3828,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
       if (embedding == null) {
         if (mounted) {
+          if (!context.mounted) return;
           Navigator.pop(context); // Close processing dialog
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -3855,6 +3875,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       }
 
       if (mounted) {
+        if (!context.mounted) return;
         Navigator.pop(context); // Close processing dialog
       }
 
@@ -3977,6 +3998,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         _faceLogId =
             result['log_id']; // Store verification log ID (null if offline)
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(isOffline

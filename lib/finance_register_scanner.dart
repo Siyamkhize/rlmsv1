@@ -176,6 +176,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
             isSaving = false;
           });
 
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(scannedDocumentPath != null
@@ -257,6 +258,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
       debugPrint('Scanned image type: ${scannedImage.runtimeType}');
 
       if (scannedImage == null) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No document scanned')),
         );
@@ -275,6 +277,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
       final resolved =
           await resolveFlutterDocScannerPdfFile(pdfUri);
       if (resolved == null || !await isReadablePdfFile(resolved)) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to read scanned PDF (try again)'),
@@ -315,6 +318,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
     } else {
       // User cancelled month selection, go back
       if (selectedMonth == null) {
+        if (!context.mounted) return;
         Navigator.pop(context);
       }
     }

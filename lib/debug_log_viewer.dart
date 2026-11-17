@@ -39,6 +39,7 @@ class _DebugLogViewerState extends State<DebugLogViewer> {
     try {
       await ClockingLogger.instance.clearOldLogs();
       await _loadLogs();
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Logs cleared successfully')),
       );
@@ -51,6 +52,7 @@ class _DebugLogViewerState extends State<DebugLogViewer> {
 
   Future<void> _copyLogs() async {
     await Clipboard.setData(ClipboardData(text: _logContent));
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Logs copied to clipboard')),
     );
@@ -60,6 +62,7 @@ class _DebugLogViewerState extends State<DebugLogViewer> {
     try {
       await ClockingLogger.instance.generateSummaryReport();
       await _loadLogs();
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Summary report generated')),
       );

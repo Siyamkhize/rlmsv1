@@ -277,6 +277,7 @@ class _SickNotePageState extends State<SickNotePage> {
       status = await Permission.camera.request();
       if (!status.isGranted) {
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Camera permission denied'),
@@ -294,6 +295,7 @@ class _SickNotePageState extends State<SickNotePage> {
 
     if (!hasAccess) {
       if (mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -321,6 +323,7 @@ class _SickNotePageState extends State<SickNotePage> {
           !scanResult.containsKey('pdfUri') ||
           scanResult['pdfUri'] == null) {
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Scanner returned invalid data'),
@@ -336,6 +339,7 @@ class _SickNotePageState extends State<SickNotePage> {
 
       if (file == null || !await isReadablePdfFile(file)) {
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Scanner returned unreadable file. Try again.'),
@@ -466,6 +470,7 @@ class _SickNotePageState extends State<SickNotePage> {
 
         if (data['status'] == 'success') {
           if (mounted) {
+            if (!context.mounted) return;
             showDialog(
               context: context,
               barrierDismissible: false,

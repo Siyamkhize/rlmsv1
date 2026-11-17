@@ -328,6 +328,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
 
       setState(() {});
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('$documentName uploaded locally')),
       );
@@ -387,6 +388,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
 
   Future<void> syncUnsyncedDocuments() async {
     if (!await _checkConnectivity()) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No internet connection, cannot sync')),
       );
@@ -406,6 +408,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
       await _syncPendingAssignments();
 
       if (unsyncedDocs.isNotEmpty) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content:
@@ -470,6 +473,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
       }
 
       if (synced > 0) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Synced $synced learner assignments')),
         );
@@ -578,6 +582,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
                                 final status =
                                     await Permission.camera.request();
                                 if (!status.isGranted) {
+                                  if (!context.mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(
@@ -616,6 +621,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
 
                                 await uploadDocument(
                                     learnerId, selectedDocument!, pdfPath);
+                                if (!context.mounted) return;
                                 Navigator.pop(context);
                                 this.setState(() {});
                               } catch (e) {
@@ -751,6 +757,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
           final data = json.decode(response.body);
           if (data['success'] == true) {
             if (mounted) {
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content:
@@ -771,6 +778,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
         await _queueOfflineAssignment(learnerId, classId, className);
 
         if (mounted) {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content:
@@ -788,6 +796,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
       await _queueOfflineAssignment(learnerId, classId, className);
 
       if (mounted) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content:

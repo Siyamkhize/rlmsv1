@@ -933,6 +933,7 @@ class _UnitStandardDetailPageState extends State<UnitStandardDetailPage> {
             _isSubmitting = false;
           });
           if (data['status'] == 'success') {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Form saved successfully!')),
             );
@@ -1340,6 +1341,7 @@ class _AssessmentPlanDetailPageState extends State<AssessmentPlanDetailPage> {
             _isSubmitting = false;
           });
           if (data['status'] == 'success') {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                   content: Text('Assessment plan saved successfully!')),
@@ -3560,6 +3562,7 @@ class _POETabState extends State<POETab> {
                 : 'Comment saved successfully!';
           });
 
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(_responseMessage)),
           );
@@ -3851,6 +3854,7 @@ class _POETabState extends State<POETab> {
               ),
             );
           } else {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error: ${responseData['message']}'),
@@ -3987,6 +3991,7 @@ class _ExerciseTileState extends State<ExerciseTile> {
                       if (filePath.isNotEmpty) {
                         final serveUrl =
                             await AppConfig.buildServeFileUrl(filePath);
+                        if (!context.mounted) return;
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -4063,6 +4068,7 @@ class _ExerciseTileState extends State<ExerciseTile> {
                                     isSaving = false;
                                   });
                                 } else {
+                                  if (!context.mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                         content: Text('Please enter a mark')),
@@ -4367,6 +4373,7 @@ class ClassInfoPage extends StatelessWidget {
       );
       debugPrint('launchUrl result: $launched');
       if (!launched) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to launch $url')),
         );
@@ -4956,6 +4963,7 @@ class _AssessmentReviewDetailPageState
       setState(() {
         _responseMessage = 'Error fetching facilitator or class details: $e';
       });
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
@@ -5022,6 +5030,7 @@ class _AssessmentReviewDetailPageState
             _isSubmitting = false;
           });
           if (data['status'] == 'success') {
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Review saved successfully!')),
             );
@@ -5798,6 +5807,7 @@ class _AppealFormDetailPageState extends State<AppealFormDetailPage> {
               _isSubmitting = false;
             });
           }
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text(_responseMessage)));
         } else {
@@ -6810,6 +6820,7 @@ class _PotholeChecklistLearnerListPageState
                 );
 
                 if (mounted) {
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content:
@@ -7016,6 +7027,7 @@ class _PotholeChecklistLearnerListPageState
       }
 
       // Show loading dialog
+      if (!context.mounted) return;
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -7493,6 +7505,7 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('LogBook marks saved successfully!'),
@@ -7556,6 +7569,7 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Marks saved successfully!'),
@@ -8412,6 +8426,7 @@ class _PotholeChecklistScannedViewPageState
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('LogBook marks saved successfully'),
@@ -9656,6 +9671,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         body: jsonEncode(payload),
       );
 
+      if (!context.mounted) return;
       Navigator.pop(context); // Hide loader
 
       final res = jsonDecode(response.body);
@@ -9712,6 +9728,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         }
       }
 
+      if (!context.mounted) return;
       Navigator.pop(context);
       if (lastError != null) {
         throw Exception(lastError);
@@ -9754,6 +9771,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         body: jsonEncode(payload),
       );
 
+      if (!context.mounted) return;
       Navigator.pop(context);
       final res = jsonDecode(response.body);
       _showArplSaveResult(res, 'Feedback Saved');
@@ -9786,6 +9804,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         body: jsonEncode(payload),
       );
 
+      if (!context.mounted) return;
       Navigator.pop(context);
       final res = jsonDecode(response.body);
       _showArplSaveResult(res, 'Criteria Saved');
@@ -10655,6 +10674,7 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
         body: jsonEncode(payload),
       );
 
+      if (!context.mounted) return;
       Navigator.pop(context);
       final res = jsonDecode(response.body);
       ScaffoldMessenger.of(context).showSnackBar(
