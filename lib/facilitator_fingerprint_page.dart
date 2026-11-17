@@ -1672,15 +1672,14 @@ class _FacilitatorFingerprintPageState
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: !widget.requireClockIn,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
         // Prevent back navigation if clock-in is required
-        if (widget.requireClockIn) {
+        if (!didPop && widget.requireClockIn) {
           FingerprintErrorHandler.showInfo(
               context, 'Please clock in before proceeding');
-          return false;
         }
-        return true;
       },
       child: Scaffold(
         appBar: AppBar(

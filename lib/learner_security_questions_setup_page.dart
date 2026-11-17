@@ -176,10 +176,11 @@ class _LearnerSecurityQuestionsSetupPageState
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: !widget.isRequired,
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
         // If required, don't allow back navigation
-        if (widget.isRequired) {
+        if (!didPop && widget.isRequired) {
           final shouldExit = await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(

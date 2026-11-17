@@ -865,7 +865,9 @@ class _POESubmitPageState extends State<POESubmitPage> {
     try {
       // Get current position for storing with POE collection
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
       debugPrint(
@@ -1199,8 +1201,10 @@ class _POESubmitPageState extends State<POESubmitPage> {
       // Get current position
       debugPrint('[POE_GEOFENCE] Getting current position...');
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 10),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
       );
 
       debugPrint(

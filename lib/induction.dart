@@ -65,7 +65,8 @@ class _InductionPageState extends State<InductionPage> {
           enableAudio: false,
         );
         await _cameraController!.initialize();
-        debugPrint('Camera initialized: ${_cameras![_selectedCameraIndex].name}');
+        debugPrint(
+            'Camera initialized: ${_cameras![_selectedCameraIndex].name}');
         setState(() {
           _isCameraReady = true;
         });
@@ -491,7 +492,9 @@ class _InductionPageState extends State<InductionPage> {
       }
 
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
       // Validate site radius
@@ -600,7 +603,9 @@ class _InductionPageState extends State<InductionPage> {
       }
 
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
       // Validate site radius
@@ -725,7 +730,9 @@ class _InductionPageState extends State<InductionPage> {
       }
 
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
       // Validate site radius
@@ -766,7 +773,8 @@ class _InductionPageState extends State<InductionPage> {
 
       debugPrint('Inserting clock-in data: $clockInData');
       await dbHelper.insertInductionClocking(clockInData);
-      debugPrint('Offline clock-in inserted successfully for learnerID: $learnerID');
+      debugPrint(
+          'Offline clock-in inserted successfully for learnerID: $learnerID');
 
       setState(() {
         clockInTimes[learnerID] = clockInTime;

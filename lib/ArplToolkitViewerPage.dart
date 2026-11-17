@@ -207,10 +207,12 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        debugPrint('[TOOLKIT_VIEWER_DEBUG] Full API Response: ${jsonEncode(data)}');
+        debugPrint(
+            '[TOOLKIT_VIEWER_DEBUG] Full API Response: ${jsonEncode(data)}');
         debugPrint(
             '[TOOLKIT_VIEWER_DEBUG] appendixE type: ${data['appendixE'].runtimeType}');
-        debugPrint('[TOOLKIT_VIEWER_DEBUG] appendixE value: ${data['appendixE']}');
+        debugPrint(
+            '[TOOLKIT_VIEWER_DEBUG] appendixE value: ${data['appendixE']}');
         if (data['status'] == 'success') {
           try {
             // ✅ Re-derive trade from returned OFO number (system-of-record), not widget or hardcoded
@@ -407,10 +409,12 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
     debugPrint('🔍 [DEBUG] learnerID: ${widget.learnerID}');
     debugPrint('🔍 [DEBUG] classID: ${widget.classID}');
     debugPrint('🔍 [DEBUG] ofoNumber: ${widget.ofoNumber}');
-    debugPrint('🔍 [DEBUG] Appendix B ratings count: ${_appendixBRatings.length}');
+    debugPrint(
+        '🔍 [DEBUG] Appendix B ratings count: ${_appendixBRatings.length}');
     debugPrint(
         '🔍 [DEBUG] Appendix D responses count: ${_appendixDResponses.length}');
-    debugPrint('🔍 [DEBUG] Appendix E ratings count: ${_appendixERatings.length}');
+    debugPrint(
+        '🔍 [DEBUG] Appendix E ratings count: ${_appendixERatings.length}');
 
     setState(() {
       _isSaving = true;
@@ -516,7 +520,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
             '🔍 [DEBUG] Workplace observations count: ${_workplaceObservations.length}');
         debugPrint(
             '🔍 [DEBUG] Knowledge questions count: ${_knowledgeQuestions.length}');
-        debugPrint('🔍 [DEBUG] Practical tasks count: ${_practicalTasks.length}');
+        debugPrint(
+            '🔍 [DEBUG] Practical tasks count: ${_practicalTasks.length}');
 
         final payloadJson = jsonEncode(appendixFData);
         debugPrint(
@@ -528,7 +533,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
           body: payloadJson,
         );
 
-        debugPrint('🔍 [DEBUG] Appendix F Response status: ${responseF.statusCode}');
+        debugPrint(
+            '🔍 [DEBUG] Appendix F Response status: ${responseF.statusCode}');
         debugPrint(
             '🔍 [DEBUG] Appendix F Response body: ${responseF.body.substring(0, min(500, responseF.body.length))}');
 
@@ -541,7 +547,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
             if (errorData['message'] != null) {
               errorMsg = '${errorData['message']}';
               if (errorData['debug'] != null) {
-                debugPrint('🔍 [DEBUG] Server error details: ${errorData['debug']}');
+                debugPrint(
+                    '🔍 [DEBUG] Server error details: ${errorData['debug']}');
               }
             }
           } catch (e) {
@@ -5097,8 +5104,8 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => WillPopScope(
-        onWillPop: () async => false,
+      builder: (context) => PopScope(
+        canPop: false,
         child: const AlertDialog(
           content: Column(
             mainAxisSize: MainAxisSize.min,

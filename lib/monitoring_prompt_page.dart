@@ -252,11 +252,8 @@ class _MonitoringPromptPageState extends State<MonitoringPromptPage>
     final isUrgent = _timeRemaining <= 30;
     final isExpired = _timeRemaining <= 0;
 
-    return WillPopScope(
-      onWillPop: () async {
-        // Prevent going back unless completed or expired
-        return _isCompleted || isExpired;
-      },
+    return PopScope(
+      canPop: _isCompleted || isExpired,
       child: Scaffold(
         backgroundColor: isExpired
             ? Colors.red[900]

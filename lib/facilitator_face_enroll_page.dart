@@ -39,14 +39,13 @@ class _FacilitatorFaceEnrollPageState extends State<FacilitatorFaceEnrollPage> {
         title: const Text('Face Enrollment'),
         automaticallyImplyLeading: !widget.isFirstTimeSetup,
       ),
-      body: WillPopScope(
-        onWillPop: () async {
-          if (widget.isFirstTimeSetup) {
+      body: PopScope(
+        canPop: !widget.isFirstTimeSetup,
+        onPopInvokedWithResult: (bool didPop, dynamic result) {
+          if (!didPop && widget.isFirstTimeSetup) {
             // Don't allow back navigation during first-time setup
             _showExitConfirmation();
-            return false;
           }
-          return true;
         },
         child: Padding(
           padding: const EdgeInsets.all(24.0),

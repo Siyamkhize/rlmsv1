@@ -798,7 +798,9 @@ class _LogisticsLearningMaterialFormPageState
       }
 
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
       debugPrint(
@@ -1751,7 +1753,9 @@ class _LogisticsUnitStandardsDialogState
       }
 
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
       debugPrint(

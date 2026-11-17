@@ -258,7 +258,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         debugPrint('[BACKUP_API] Response keys: ${data.keys.toList()}');
-        debugPrint('[BACKUP_API] Has success key: ${data.containsKey('success')}');
+        debugPrint(
+            '[BACKUP_API] Has success key: ${data.containsKey('success')}');
         debugPrint('[BACKUP_API] success value: ${data['success']}');
 
         if (data['success'] == true && data['data'] != null) {
@@ -319,7 +320,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           debugPrint('[BACKUP_STORE] ===== LEARNER 11443 BEFORE INSERT =====');
           debugPrint('[BACKUP_STORE] Province: ${learnerMap['Province']}');
           debugPrint('[BACKUP_STORE] District: ${learnerMap['District']}');
-          debugPrint('[BACKUP_STORE] Municipality: ${learnerMap['Municipality']}');
+          debugPrint(
+              '[BACKUP_STORE] Municipality: ${learnerMap['Municipality']}');
         }
 
         await db.insert(
@@ -395,7 +397,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         await db.rawQuery('SELECT 1 FROM learner_clocking_evidence LIMIT 1');
         debugPrint('[BACKUP_STATUS] ✅ Evidence table exists');
       } catch (e) {
-        debugPrint('[BACKUP_STATUS] ⚠️ Evidence table missing, creating now: $e');
+        debugPrint(
+            '[BACKUP_STATUS] ⚠️ Evidence table missing, creating now: $e');
         await DatabaseHelper().repairEvidenceTable();
         debugPrint('[BACKUP_STATUS] ✅ Evidence table created');
       }
@@ -515,7 +518,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             }
           }
         } catch (e) {
-          debugPrint('[BACKUP_STATUS] ⚠️ Server fetch failed, using local only: $e');
+          debugPrint(
+              '[BACKUP_STATUS] ⚠️ Server fetch failed, using local only: $e');
         }
       }
 
@@ -539,7 +543,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           LIMIT 1
         ''', [learnerId, todayStr]);
 
-        debugPrint('[BACKUP_STATUS] --- Learner: $learnerName (ID: $learnerId) ---');
+        debugPrint(
+            '[BACKUP_STATUS] --- Learner: $learnerName (ID: $learnerId) ---');
         debugPrint('[BACKUP_STATUS]     Evidence records: ${result.length}');
 
         if (result.isNotEmpty) {
@@ -867,7 +872,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       // User cancelled or time is wrong - block clock-in
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Clock-in cancelled: Device time must be corrected first'),
+          content:
+              Text('Clock-in cancelled: Device time must be corrected first'),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
         ),
@@ -1237,13 +1243,16 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             });
             return;
           } else {
-            debugPrint('[BACKUP_CLOCKIN] Security questions verification SUCCESS');
+            debugPrint(
+                '[BACKUP_CLOCKIN] Security questions verification SUCCESS');
           }
         } else {
-          debugPrint('[BACKUP_CLOCKIN] Face verification SUCCESS - photo captured');
+          debugPrint(
+              '[BACKUP_CLOCKIN] Face verification SUCCESS - photo captured');
         }
       } else {
-        debugPrint('[BACKUP_CLOCKIN] No face enrolled - will use signature only');
+        debugPrint(
+            '[BACKUP_CLOCKIN] No face enrolled - will use signature only');
       }
 
       // Step 6: Signature capture (clock-in signature - temporary, will be replaced by clock-out signature)
@@ -1360,7 +1369,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
         if (!faceVerified) {
           // Face verification failed - this is the WRONG PERSON!
-          debugPrint('[BACKUP_CLOCKOUT] ❌ FACE VERIFICATION FAILED - WRONG PERSON!');
+          debugPrint(
+              '[BACKUP_CLOCKOUT] ❌ FACE VERIFICATION FAILED - WRONG PERSON!');
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -1507,7 +1517,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                     children: [
                       const Icon(Icons.circle, size: 8, color: Colors.grey),
                       const SizedBox(width: 8),
-                      Text(doc['name'] ?? '', style: const TextStyle(fontSize: 14)),
+                      Text(doc['name'] ?? '',
+                          style: const TextStyle(fontSize: 14)),
                     ],
                   ),
                 );
@@ -1721,7 +1732,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                      const Icon(Icons.info_outline,
+                          color: Colors.blue, size: 20),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -1894,7 +1906,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       debugPrint('[VERIFY_LEARNER] Sample learner structure:');
       final sample = _learners.first as Map;
       sample.forEach((key, value) {
-        debugPrint('[VERIFY_LEARNER]   $key: $value (type: ${value.runtimeType})');
+        debugPrint(
+            '[VERIFY_LEARNER]   $key: $value (type: ${value.runtimeType})');
       });
     }
 
@@ -1988,7 +2001,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                     '[VERIFY_LEARNER] Entered ID: $enteredId, Expected: $idNumber');
 
                 if (enteredId == idNumber) {
-                  debugPrint('[VERIFY_LEARNER] ID MATCH! Closing dialog with TRUE');
+                  debugPrint(
+                      '[VERIFY_LEARNER] ID MATCH! Closing dialog with TRUE');
                   Navigator.of(context).pop(true);
                 } else {
                   debugPrint('[VERIFY_LEARNER] ID MISMATCH! Showing error');
@@ -2018,7 +2032,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
   }
 
   Future<String?> _captureSignature(String learnerId) async {
-    debugPrint('[SIGNATURE] Starting signature capture for learner: $learnerId');
+    debugPrint(
+        '[SIGNATURE] Starting signature capture for learner: $learnerId');
     _signatureController.clear();
 
     Map<String, dynamic>? learner;
@@ -2178,7 +2193,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
   Future<void> _submitBackupClockIn(
       String learnerId, String signatureData) async {
-    debugPrint('[BACKUP] Submitting clock-in for learner $learnerId WITH SIGNATURE');
+    debugPrint(
+        '[BACKUP] Submitting clock-in for learner $learnerId WITH SIGNATURE');
 
     try {
       final now = _getCurrentTimeString();
@@ -2252,7 +2268,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       // ⚠️ REMOVED: No longer inserting into learner_clocking table
       // This is now handled by the evidence table only
       // await DatabaseHelper().insertClocking(dbData);
-      debugPrint('[BACKUP] ℹ️ Clock-in evidence only (no learner_clocking insert)');
+      debugPrint(
+          '[BACKUP] ℹ️ Clock-in evidence only (no learner_clocking insert)');
 
       // Save evidence (signature + face photo + GPS + verification method)
       try {
@@ -2337,8 +2354,10 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               'face_log_id': _faceLogId,
             };
 
-            debugPrint('[BACKUP] Request body keys: ${requestBody.keys.join(", ")}');
-            debugPrint('[BACKUP] Signature filename: $clockInSignatureFilename');
+            debugPrint(
+                '[BACKUP] Request body keys: ${requestBody.keys.join(", ")}');
+            debugPrint(
+                '[BACKUP] Signature filename: $clockInSignatureFilename');
             debugPrint(
                 '[BACKUP] Photo filename: ${_capturedFacePhotoFilename ?? "NULL"}');
 
@@ -2359,7 +2378,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               if (result['success'] == true) {
                 debugPrint('[BACKUP] ✅ Evidence saved directly to server');
                 debugPrint('[BACKUP] Server response: ${result['message']}');
-                debugPrint('[BACKUP] Signature saved: ${result['signature_saved']}');
+                debugPrint(
+                    '[BACKUP] Signature saved: ${result['signature_saved']}');
                 debugPrint('[BACKUP] Photo saved: ${result['photo_saved']}');
 
                 // Upload images to server (BLOCKING - ensures upload completes)
@@ -2372,7 +2392,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                 );
 
                 if (uploadSuccess) {
-                  debugPrint('[BACKUP] ✅ Images uploaded to server successfully');
+                  debugPrint(
+                      '[BACKUP] ✅ Images uploaded to server successfully');
                 } else {
                   debugPrint(
                       '[BACKUP] ⚠️ Image upload failed - images saved locally only');
@@ -2571,13 +2592,15 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                 .timeout(const Duration(
                     seconds: 10)); // Reduced timeout (filenames only)
 
-            debugPrint('[BACKUP_CLOCKOUT] Response status: ${response.statusCode}');
+            debugPrint(
+                '[BACKUP_CLOCKOUT] Response status: ${response.statusCode}');
             debugPrint('[BACKUP_CLOCKOUT] Response body: ${response.body}');
 
             if (response.statusCode == 200) {
               final result = json.decode(response.body);
               if (result['success'] == true) {
-                debugPrint('[BACKUP_CLOCKOUT] ✅ Evidence saved directly to server');
+                debugPrint(
+                    '[BACKUP_CLOCKOUT] ✅ Evidence saved directly to server');
                 debugPrint(
                     '[BACKUP_CLOCKOUT] Server response: ${result['message']}');
                 debugPrint(
@@ -2586,7 +2609,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                     '[BACKUP_CLOCKOUT] Photo saved: ${result['photo_saved']}');
 
                 // Upload images to server (BLOCKING - ensures upload completes)
-                debugPrint('[BACKUP_CLOCKOUT] Starting image upload to server...');
+                debugPrint(
+                    '[BACKUP_CLOCKOUT] Starting image upload to server...');
                 final uploadSuccess = await _uploadClockingImagesToServer(
                   learnerId: learnerId,
                   signatureFilename: clockOutSignatureFilename,
@@ -2624,9 +2648,11 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               throw Exception('HTTP ${response.statusCode}: ${response.body}');
             }
           } catch (e) {
-            debugPrint('[BACKUP_CLOCKOUT] ❌ ERROR saving evidence to server: $e');
+            debugPrint(
+                '[BACKUP_CLOCKOUT] ❌ ERROR saving evidence to server: $e');
             debugPrint('[BACKUP_CLOCKOUT] Error type: ${e.runtimeType}');
-            debugPrint('[BACKUP_CLOCKOUT] Error stack trace: ${StackTrace.current}');
+            debugPrint(
+                '[BACKUP_CLOCKOUT] Error stack trace: ${StackTrace.current}');
             debugPrint('[BACKUP_CLOCKOUT] ⚠️ Falling back to local storage...');
             // Fall back to local storage if online save fails
             await _saveEvidenceLocally(
@@ -2657,7 +2683,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
         debugPrint('[BACKUP] ✅ Clock-out evidence saved successfully');
       } catch (e) {
-        debugPrint('[BACKUP] ⚠️ Error saving clock-out evidence (non-critical): $e');
+        debugPrint(
+            '[BACKUP] ⚠️ Error saving clock-out evidence (non-critical): $e');
         // Don't fail the clock-out if evidence saving fails
       }
     } catch (e) {
@@ -2827,7 +2854,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           .map((file) => File(file.path))
           .toList();
 
-      debugPrint('[SIGNATURE_SYNC] Found ${signatureFiles.length} signature files');
+      debugPrint(
+          '[SIGNATURE_SYNC] Found ${signatureFiles.length} signature files');
 
       if (signatureFiles.isEmpty) {
         debugPrint('[SIGNATURE_SYNC] No signatures to sync');
@@ -2924,7 +2952,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       final signaturesDir = Directory('${directory.path}/signatures');
       if (!await signaturesDir.exists()) {
         await signaturesDir.create(recursive: true);
-        debugPrint('[BACKUP] Created signatures directory: ${signaturesDir.path}');
+        debugPrint(
+            '[BACKUP] Created signatures directory: ${signaturesDir.path}');
       }
 
       // Generate unique filename: signature_{ID}_{YYYYMMDD_HHMMSS}_{in/out}.png
@@ -2980,7 +3009,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       final file = File(filePath);
       await file.writeAsBytes(bytes);
 
-      debugPrint('[BACKUP] Face photo saved: $filePath (${bytes.length} bytes)');
+      debugPrint(
+          '[BACKUP] Face photo saved: $filePath (${bytes.length} bytes)');
 
       // Return ONLY the filename (not the full path)
       return filename;
@@ -3057,7 +3087,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       // Add learner ID
       request.fields['learner_id'] = learnerId;
 
-      debugPrint('[UPLOAD] Sending ${request.files.length} file(s) to server...');
+      debugPrint(
+          '[UPLOAD] Sending ${request.files.length} file(s) to server...');
 
       // Send request with timeout
       final streamedResponse =
@@ -3224,7 +3255,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
     );
 
     if (setupComplete == true) {
-      debugPrint('[SECURITY_Q] Security questions setup completed successfully');
+      debugPrint(
+          '[SECURITY_Q] Security questions setup completed successfully');
     } else {
       debugPrint('[SECURITY_Q] Security questions setup was not completed');
     }
@@ -3429,11 +3461,13 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         context: context,
         barrierDismissible: false,
         builder: (dialogContext) {
-          return WillPopScope(
-            onWillPop: () async {
-              // When back button pressed, cancel and return to previous page
-              Navigator.of(dialogContext).pop(false);
-              return false;
+          return PopScope(
+            canPop: false,
+            onPopInvokedWithResult: (bool didPop, dynamic result) {
+              if (!didPop) {
+                // When back button pressed, cancel and return to previous page
+                Navigator.of(dialogContext).pop(false);
+              }
             },
             child: AlertDialog(
               title: const Row(
@@ -3910,7 +3944,8 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           );
 
           if (confirmed != true) {
-            debugPrint('[FACE] User rejected identity confirmation for: $fullName');
+            debugPrint(
+                '[FACE] User rejected identity confirmation for: $fullName');
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

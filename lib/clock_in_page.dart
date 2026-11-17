@@ -764,8 +764,10 @@ class _ClockInPageState extends State<ClockInPage>
             Position? position;
             try {
               position = await Geolocator.getCurrentPosition(
-                desiredAccuracy: LocationAccuracy.high,
-                timeLimit: const Duration(seconds: 20), // Increased timeout
+                locationSettings: const LocationSettings(
+                  accuracy: LocationAccuracy.high,
+                  timeLimit: Duration(seconds: 20), // Increased timeout
+                ),
               );
             } catch (e) {
               debugPrint('[CLOCK_IN] High accuracy failed, trying cached: $e');
@@ -774,8 +776,10 @@ class _ClockInPageState extends State<ClockInPage>
                 final age = DateTime.now().difference(position.timestamp);
                 if (age.inMinutes > 5) {
                   position = await Geolocator.getCurrentPosition(
-                    desiredAccuracy: LocationAccuracy.medium,
-                    timeLimit: const Duration(seconds: 15),
+                    locationSettings: const LocationSettings(
+                      accuracy: LocationAccuracy.medium,
+                      timeLimit: Duration(seconds: 15),
+                    ),
                   );
                 }
               }
@@ -953,8 +957,10 @@ class _ClockInPageState extends State<ClockInPage>
               Position? position;
               try {
                 position = await Geolocator.getCurrentPosition(
-                  desiredAccuracy: LocationAccuracy.high,
-                  timeLimit: const Duration(seconds: 20), // Increased timeout
+                  locationSettings: const LocationSettings(
+                    accuracy: LocationAccuracy.high,
+                    timeLimit: Duration(seconds: 20), // Increased timeout
+                  ),
                 );
               } catch (e) {
                 debugPrint(
@@ -964,8 +970,10 @@ class _ClockInPageState extends State<ClockInPage>
                   final age = DateTime.now().difference(position.timestamp);
                   if (age.inMinutes > 5) {
                     position = await Geolocator.getCurrentPosition(
-                      desiredAccuracy: LocationAccuracy.medium,
-                      timeLimit: const Duration(seconds: 15),
+                      locationSettings: const LocationSettings(
+                        accuracy: LocationAccuracy.medium,
+                        timeLimit: Duration(seconds: 15),
+                      ),
                     );
                   }
                 }
@@ -2946,8 +2954,10 @@ class _ClockInPageState extends State<ClockInPage>
         Position? position;
         try {
           position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.high,
-            timeLimit: const Duration(seconds: 20), // Increased timeout
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              timeLimit: Duration(seconds: 20), // Increased timeout
+            ),
           );
         } catch (e) {
           debugPrint('[CLOCK_IN] High accuracy failed, trying cached: $e');
@@ -2956,8 +2966,10 @@ class _ClockInPageState extends State<ClockInPage>
             final age = DateTime.now().difference(position.timestamp);
             if (age.inMinutes > 5) {
               position = await Geolocator.getCurrentPosition(
-                desiredAccuracy: LocationAccuracy.medium,
-                timeLimit: const Duration(seconds: 15),
+                locationSettings: const LocationSettings(
+                  accuracy: LocationAccuracy.medium,
+                  timeLimit: Duration(seconds: 15),
+                ),
               );
             }
           }
@@ -5230,8 +5242,10 @@ class _ClockInPageState extends State<ClockInPage>
         Position? position;
         try {
           position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.high,
-            timeLimit: const Duration(seconds: 20), // Increased timeout
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              timeLimit: Duration(seconds: 20), // Increased timeout
+            ),
           );
         } catch (e) {
           debugPrint('[CLOCK_OUT] High accuracy failed, trying cached: $e');
@@ -5240,8 +5254,10 @@ class _ClockInPageState extends State<ClockInPage>
             final age = DateTime.now().difference(position.timestamp);
             if (age.inMinutes > 5) {
               position = await Geolocator.getCurrentPosition(
-                desiredAccuracy: LocationAccuracy.medium,
-                timeLimit: const Duration(seconds: 15),
+                locationSettings: const LocationSettings(
+                  accuracy: LocationAccuracy.medium,
+                  timeLimit: Duration(seconds: 15),
+                ),
               );
             }
           }

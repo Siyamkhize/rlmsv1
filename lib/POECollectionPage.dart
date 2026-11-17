@@ -1330,7 +1330,9 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
                     try {
                       Position position = await Geolocator.getCurrentPosition(
-                        desiredAccuracy: LocationAccuracy.high,
+                        locationSettings: const LocationSettings(
+                          accuracy: LocationAccuracy.high,
+                        ),
                       );
 
                       final facilitatorSignatureBytes =

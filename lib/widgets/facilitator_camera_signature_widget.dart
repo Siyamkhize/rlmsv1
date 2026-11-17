@@ -638,10 +638,12 @@ class _FacilitatorCameraSignatureWidgetState
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        _cancelFlow();
-        return false;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (!didPop) {
+          _cancelFlow();
+        }
       },
       child: Scaffold(
         backgroundColor: Colors.black,
