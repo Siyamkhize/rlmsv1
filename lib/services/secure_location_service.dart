@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 import 'package:crypto/crypto.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:geolocator/geolocator.dart';
@@ -225,7 +226,8 @@ class SecureLocationService {
       }
 
       if (pos.isMocked) {
-        debugPrint('[SECURE_LOC] ⚠️ Stream position flagged as mocked, skipping');
+        debugPrint(
+            '[SECURE_LOC] ⚠️ Stream position flagged as mocked, skipping');
         return;
       }
 

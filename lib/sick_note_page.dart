@@ -393,7 +393,7 @@ class _SickNotePageState extends State<SickNotePage> {
   /// Validate form
   bool _validateForm() {
     if (_practitionerNameController.text.trim().isEmpty) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter medical practitioner name'),
@@ -404,7 +404,7 @@ class _SickNotePageState extends State<SickNotePage> {
     }
 
     if (_selectedDateFrom == null) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select Date From'),
@@ -415,7 +415,7 @@ class _SickNotePageState extends State<SickNotePage> {
     }
 
     if (_selectedDateTo == null) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select Date To'),
@@ -426,7 +426,7 @@ class _SickNotePageState extends State<SickNotePage> {
     }
 
     if (_scannedPdf == null) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please scan sick note document'),
@@ -439,7 +439,7 @@ class _SickNotePageState extends State<SickNotePage> {
     // Validate file size (max 10MB)
     final fileSizeInMB = _scannedPdf!.lengthSync() / (1024 * 1024);
     if (fileSizeInMB > 10) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('File size must be less than 10MB'),

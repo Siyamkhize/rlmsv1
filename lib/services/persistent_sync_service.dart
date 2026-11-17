@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -90,9 +91,9 @@ class PersistentSyncService {
         ..success = false
         ..message = 'Sync already in progress';
     }
-    
+
     _isSyncing = true;
-    
+
     try {
       debugPrint('[PERSISTENT_SYNC] Starting full data sync');
 
@@ -123,7 +124,7 @@ class PersistentSyncService {
       result.success = true;
       result.message = 'Sync completed successfully';
       debugPrint('[PERSISTENT_SYNC] Full sync completed: ${result.message}');
-      
+
       return result;
     } catch (e) {
       final result = SyncResult();

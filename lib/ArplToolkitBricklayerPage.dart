@@ -153,7 +153,8 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
         }),
       );
 
-      debugPrint('[BRICKLAYER_TRACE] API Response Status: ${response.statusCode}');
+      debugPrint(
+          '[BRICKLAYER_TRACE] API Response Status: ${response.statusCode}');
       debugPrint(
           '[BRICKLAYER_TRACE] API Response Length: ${response.body.length} bytes');
 
@@ -192,9 +193,11 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
             }
             debugPrint('[BRICKLAYER_TRACE] ═══ END TYPE CHECKING ═══');
 
-            debugPrint('[BRICKLAYER_TRACE] Attempting to parse ArplToolkitData...');
+            debugPrint(
+                '[BRICKLAYER_TRACE] Attempting to parse ArplToolkitData...');
             _toolkitData = ArplToolkitData.fromJson(data);
-            debugPrint('[BRICKLAYER_TRACE] ✅ ArplToolkitData parsed successfully');
+            debugPrint(
+                '[BRICKLAYER_TRACE] ✅ ArplToolkitData parsed successfully');
 
             setState(() {
               _isLoading = false;
@@ -204,7 +207,7 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
             debugPrint('[BRICKLAYER_ERROR] ═══ PARSE ERROR ═══');
             debugPrint('[BRICKLAYER_ERROR] Error: $parseError');
             debugPrint('[BRICKLAYER_ERROR] Stack Trace:');
-            debugPrint(stackTrace);
+            debugPrint(stackTrace.toString());
             debugPrint('[BRICKLAYER_ERROR] ═══ END PARSE ERROR ═══');
 
             setState(() {
@@ -235,7 +238,7 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
       debugPrint('[BRICKLAYER_ERROR] ═══ NETWORK ERROR ═══');
       debugPrint('[BRICKLAYER_ERROR] Error: $e');
       debugPrint('[BRICKLAYER_ERROR] Stack Trace:');
-      debugPrint(stackTrace);
+      debugPrint(stackTrace.toString());
       debugPrint('[BRICKLAYER_ERROR] ═══ END NETWORK ERROR ═══');
 
       setState(() {
@@ -435,7 +438,8 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
           debugPrint('[BRICKLAYER] Gap closure save error: ${data['message']}');
         }
       } else {
-        debugPrint('[BRICKLAYER] Gap closure save failed: ${response.statusCode}');
+        debugPrint(
+            '[BRICKLAYER] Gap closure save failed: ${response.statusCode}');
       }
     } catch (e) {
       debugPrint('[BRICKLAYER] Gap closure save exception: $e');

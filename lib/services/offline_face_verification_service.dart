@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:http/http.dart' as http;
 import '../database_helper.dart';
@@ -443,11 +444,13 @@ class OfflineFaceVerificationService {
 
           return syncedCount;
         } else {
-          debugPrint('[OFFLINE_FACE] Server rejected sync: ${result['message']}');
+          debugPrint(
+              '[OFFLINE_FACE] Server rejected sync: ${result['message']}');
           return 0;
         }
       } else {
-        debugPrint('[OFFLINE_FACE] Sync failed with status ${response.statusCode}');
+        debugPrint(
+            '[OFFLINE_FACE] Sync failed with status ${response.statusCode}');
         return 0;
       }
     } catch (e) {

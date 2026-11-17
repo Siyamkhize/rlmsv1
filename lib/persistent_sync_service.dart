@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'database_helper.dart';
@@ -230,7 +231,8 @@ class PersistentSyncService {
   /// Force refresh - clears and re-syncs all data (use sparingly)
   Future<Map<String, dynamic>> forceRefreshAllData() async {
     try {
-      debugPrint('[PERSISTENT_SYNC] ⚠️ FORCE REFRESH - Clearing all local data');
+      debugPrint(
+          '[PERSISTENT_SYNC] ⚠️ FORCE REFRESH - Clearing all local data');
 
       // Check connectivity first
       final connectivityResult = await Connectivity().checkConnectivity();

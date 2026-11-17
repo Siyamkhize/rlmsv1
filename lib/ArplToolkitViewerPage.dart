@@ -2399,7 +2399,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
           }
           // Reload toolkit data to refresh
           await _loadToolkitData();
-        if (!context.mounted) return;
+          if (!context.mounted) return;
         } else {
           throw Exception(data['message'] ?? 'Failed to save');
         }
@@ -5654,7 +5654,7 @@ class _InputCell extends StatelessWidget {
   final String hintText;
   final TextEditingController? controller;
 
-  const _InputCell(this.hintText);
+  const _InputCell(this.hintText, {this.controller});
 
   @override
   Widget build(BuildContext context) {

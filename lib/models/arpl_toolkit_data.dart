@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class ArplToolkitData {
   final LearnerDetails? learner;
   final FacilitatorDetails? facilitator;
@@ -118,7 +120,8 @@ class ArplToolkitData {
           : null;
       debugPrint('[ArplToolkitData.fromJson] ✓ AppendixJ parsed');
 
-      debugPrint('[ArplToolkitData.fromJson] ✅ ALL APPENDICES PARSED SUCCESSFULLY');
+      debugPrint(
+          '[ArplToolkitData.fromJson] ✅ ALL APPENDICES PARSED SUCCESSFULLY');
       debugPrint('[ArplToolkitData.fromJson] ═══ COMPLETE ═══');
 
       return ArplToolkitData(

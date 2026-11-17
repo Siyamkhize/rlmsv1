@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,12 +15,12 @@ class SignatureSyncService {
   /// Returns: number of files successfully synced
   static Future<int> syncAllSignatures() async {
     debugPrint('[SIGNATURE_SYNC] Starting signature sync...');
-    
+
     try {
       // Get signatures directory
       final directory = await getApplicationDocumentsDirectory();
       final signaturesDir = Directory('${directory.path}/signatures');
-      
+
       if (!await signaturesDir.exists()) {
         debugPrint('[SIGNATURE_SYNC] Signatures directory does not exist');
         return 0;
@@ -27,7 +28,7 @@ class SignatureSyncService {
 
       // Get list of already synced files
       final syncedFiles = await _getSyncedFiles();
-      
+
       // List all PNG files in signatures folder
       final files = signaturesDir
           .listSync()
@@ -36,26 +37,26 @@ class SignatureSyncService {
           .toList();
 
       debugPrint('[SIGNATURE_SYNC] Found ${files.length} signature files');
-      
+
       if (files.isEmpty) {
         return 0;
       }
 
       int successCount = 0;
-      
+
       // Upload each file that hasn't been synced yet
       for (final file in files) {
         final filename = file.path.split('/').last;
-        
+
         // Skip if already synced
         if (syncedFiles.contains(filename)) {
           debugPrint('[SIGNATURE_SYNC] Skipping already synced: $filename');
           continue;
         }
-        
+
         // Upload file
         final success = await _uploadSignatureFile(file, filename);
-        
+
         if (success) {
           successCount++;
           // Mark as synced
@@ -64,14 +65,14 @@ class SignatureSyncService {
         } else {
           debugPrint('[SIGNATURE_SYNC] ❌ Failed: $filename');
         }
-        
+
         // Small delay between uploads to avoid overwhelming server
         await Future.delayed(const Duration(milliseconds: 200));
       }
-      
-      debugPrint('[SIGNATURE_SYNC] Sync complete: $successCount/${ files.length} files synced');
+
+      debugPrint(
+          '[SIGNATURE_SYNC] Sync complete: $successCount/${files.length} files synced');
       return successCount;
-      
     } catch (e) {
       debugPrint('[SIGNATURE_SYNC] Error during sync: $e');
       return 0;
@@ -83,18 +84,19 @@ class SignatureSyncService {
     try {
       // Read file bytes
       final bytes = await file.readAsBytes();
-      
+
       // Create multipart request
-      final uri = Uri.parse(AppConfig.buildUrl('sync_attendance_signatures.php'));
+      final uri =
+          Uri.parse(AppConfig.buildUrl('sync_attendance_signatures.php'));
       final request = http.MultipartRequest('POST', uri);
-      
+
       // Add authentication token if available
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
       if (token != null) {
         request.headers['Authorization'] = 'Bearer $token';
       }
-      
+
       // Add file and filename
       request.files.add(http.MultipartFile.fromBytes(
         'signature_file',
@@ -102,19 +104,19 @@ class SignatureSyncService {
         filename: filename,
       ));
       request.fields['filename'] = filename;
-      
+
       // Send request
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
-      
+
       if (response.statusCode == 200) {
         final decoded = json.decode(responseBody);
         return decoded['success'] == true;
       } else {
-        debugPrint('[SIGNATURE_SYNC] Upload failed (${response.statusCode}): $responseBody');
+        debugPrint(
+            '[SIGNATURE_SYNC] Upload failed (${response.statusCode}): $responseBody');
         return false;
       }
-      
     } catch (e) {
       debugPrint('[SIGNATURE_SYNC] Upload error for $filename: $e');
       return false;
@@ -132,7 +134,7 @@ class SignatureSyncService {
   static Future<void> _markFileSynced(String filename) async {
     final syncedFiles = await _getSyncedFiles();
     syncedFiles.add(filename);
-    
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_syncedFilesKey, syncedFiles.toList());
   }
@@ -149,7 +151,7 @@ class SignatureSyncService {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final signaturesDir = Directory('${directory.path}/signatures');
-      
+
       if (!await signaturesDir.exists()) {
         return 0;
       }

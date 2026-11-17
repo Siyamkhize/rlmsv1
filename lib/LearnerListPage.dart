@@ -76,7 +76,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
   //       });
   //     } else {
   //       debugPrint('No cameras available');
-  if (!context.mounted) return;
+  // if (!context.mounted) return;
   //       ScaffoldMessenger.of(context).showSnackBar(
   //         const SnackBar(content: Text('No cameras available')),
   //       );
@@ -124,7 +124,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
   //       _capturedImage = await _cameraController!.takePicture();
   //       debugPrint('Image captured: ${_capturedImage!.path}');
   //       if (mounted) {
-  if (!context.mounted) return;
+  // if (!context.mounted) return;
   //         Navigator.of(context).pop(true);
   //       }
   //     }
@@ -308,7 +308,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
       debugPrint(
           '[LEARNER_LIST] Loaded ${widget.learners.length} clocked-in learners for today');
     } catch (e) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading clocked-in learners: $e')),
       );
@@ -354,21 +354,21 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
       if (result.isEmpty) {
         if (classes.isEmpty) {
           debugPrint('Class table is empty');
-          if (!context.mounted) return null;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('No class data available in local database.')),
           );
         } else if (sites.isEmpty) {
           debugPrint('Sites table is empty');
-          if (!context.mounted) return null;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('No site data available in local database.')),
           );
         } else {
           debugPrint('No matching class or site found for classID: $classID');
-          if (!context.mounted) return null;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('No site coordinates found for class $classID.')),
@@ -383,7 +383,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
       if (siteLat == null || siteLon == null) {
         debugPrint(
             'Invalid site coordinates for classID: $classID, lat: ${result.first['latitude']}, lon: ${result.first['longitude']}');
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Invalid site coordinates in database.')),
@@ -399,7 +399,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
     } catch (e, stackTrace) {
       debugPrint(
           'Error checking site radius for classID $classID: $e\nStack trace: $stackTrace');
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error checking location: $e')),
       );
@@ -409,7 +409,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
 
   // Future<bool> _performLivenessCheck() async {  // Temporarily disabled due to Java 21 compatibility issues
   //   if (!_isCameraReady || _cameraController == null) {
-  if (!context.mounted) return;
+  // if (!context.mounted) return;
   //     ScaffoldMessenger.of(context).showSnackBar(
   //       const SnackBar(content: Text('Camera not available')),
   //     );
@@ -456,7 +456,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
   //             ),
   //             ElevatedButton(
   //               onPressed: () {
-  if (!context.mounted) return;
+  // if (!context.mounted) return;
   //                 Navigator.of(context).pop(false);
   //               },
   //               child: const Text('Cancel'),
@@ -530,7 +530,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
       debugPrint(
           'Raw server response (status ${response.statusCode}): "${response.body}"');
 
-if (!context.mounted) return;
+      if (!context.mounted) return;
 
       // Handle different response status codes
       if (response.statusCode == 500) {
@@ -563,7 +563,7 @@ if (!context.mounted) return;
           clockOutTimes[learnerID] = result['clock_out_time'] ?? '';
           contactTimes[learnerID] = result['contact_time'] ?? '';
         });
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result['message'] ?? 'Clock-in successful')),
         );
@@ -582,7 +582,7 @@ if (!context.mounted) return;
           e.toString().contains('empty response')) {
         debugPrint(
             'Server appears to be down. Consider falling back to offline mode.');
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -650,7 +650,7 @@ if (!context.mounted) return;
           )
           .timeout(const Duration(seconds: 30));
 
-if (!context.mounted) return;
+      if (!context.mounted) return;
 
       debugPrint(
           'Raw server response (status ${response.statusCode}): "${response.body}"');
@@ -758,13 +758,14 @@ if (!context.mounted) return;
 
       debugPrint('Inserting clock-in data: $clockInData');
       await dbHelper.insertClockInOffline(clockInData);
-      debugPrint('Offline clock-in inserted successfully for learnerID: $learnerID');
+      debugPrint(
+          'Offline clock-in inserted successfully for learnerID: $learnerID');
 
       setState(() {
         clockInTimes[learnerID] = clockInTime;
       });
 
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Clock-in saved locally. Will sync when online.')),
@@ -772,7 +773,7 @@ if (!context.mounted) return;
     } catch (e, stackTrace) {
       debugPrint(
           'Offline clock-in error for learnerID: $learnerID: $e\nStack trace: $stackTrace');
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving offline clock-in: $e')),
       );
@@ -863,7 +864,7 @@ if (!context.mounted) return;
     try {
       // final livenessPassed = await _performLivenessCheck();  // Temporarily disabled due to Java 21 compatibility issues
       // if (!livenessPassed) {  // Temporarily disabled due to Java 21 compatibility issues
-      if (!context.mounted) return;
+      if (!context.mounted) return false;
       //   ScaffoldMessenger.of(context).showSnackBar(  // Temporarily disabled due to Java 21 compatibility issues
       //     const SnackBar(content: Text('Image capture cancelled or failed')),  // Temporarily disabled due to Java 21 compatibility issues
       //   );  // Temporarily disabled due to Java 21 compatibility issues
@@ -895,10 +896,10 @@ if (!context.mounted) return;
                     ElevatedButton(
                       onPressed: () {
                         if (_signatureController.isNotEmpty) {
-                          if (!context.mounted) return null;
+                          if (!context.mounted) return;
                           Navigator.of(context).pop(true);
                         } else {
-                          if (!context.mounted) return null;
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                                 content: Text('Please provide a signature')),
@@ -929,7 +930,7 @@ if (!context.mounted) return;
       }
       return true;
     } catch (e) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error during clock-in: $e')),
       );
@@ -968,10 +969,10 @@ if (!context.mounted) return;
                   ElevatedButton(
                     onPressed: () {
                       if (_signatureController.isNotEmpty) {
-                        if (!context.mounted) return null;
+                        if (!context.mounted) return;
                         Navigator.of(context).pop(true);
                       } else {
-                        if (!context.mounted) return null;
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text('Please provide a signature')),
@@ -1001,7 +1002,7 @@ if (!context.mounted) return;
             DateFormat('yyyy-MM-dd').format(DateTime.now()));
       }
     } catch (e) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to record clock-out: $e')),
       );

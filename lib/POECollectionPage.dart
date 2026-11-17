@@ -177,7 +177,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
       final response = await http.get(Uri.parse(AppConfig.buildUrl(
           'get_poe_collection_status.php?classID=${widget.classID}')));
 
-if (!context.mounted) return;
+      if (!context.mounted) return;
 
       debugPrint('API Response Status: ${response.statusCode}');
       debugPrint('API Response Body: ${response.body}');
@@ -194,7 +194,7 @@ if (!context.mounted) return;
 
       if (apiData == null || apiData.isEmpty) {
         debugPrint('❌ No learners found in API response.');
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No learners found.')),
         );
@@ -248,7 +248,7 @@ if (!context.mounted) return;
       debugPrint('Learners: $learners');
     } catch (e) {
       debugPrint('❌ Error fetching learners: $e');
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Failed to fetch learners. Please try again later.')),
@@ -265,7 +265,7 @@ if (!context.mounted) return;
 
       if (result.isEmpty) {
         debugPrint('❌ No learners found in local database.');
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No learners found in local database.')),
         );
@@ -300,7 +300,7 @@ if (!context.mounted) return;
       debugPrint('Local Learners: $learners');
     } catch (e) {
       debugPrint('❌ Error fetching learners from local database: $e');
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Error fetching learners from local database.')),
@@ -453,7 +453,7 @@ if (!context.mounted) return;
           }
         }
 
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(responseData['message'].contains('already exist')
@@ -464,7 +464,7 @@ if (!context.mounted) return;
 
         await fetchLearners();
       } else {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content:
@@ -484,7 +484,7 @@ if (!context.mounted) return;
         errorMessage = 'Server endpoint not found. Please contact support.';
       }
 
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
@@ -569,7 +569,7 @@ if (!context.mounted) return;
         }
       }
 
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('POE submissions saved locally!')),
       );
@@ -577,7 +577,7 @@ if (!context.mounted) return;
       await fetchLearners();
     } catch (e) {
       debugPrint('❌ Error saving material receipt form: $e');
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving form: $e')),
       );
@@ -1552,7 +1552,7 @@ if (!context.mounted) return;
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -1565,7 +1565,7 @@ if (!context.mounted) return;
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          if (!context.mounted) return null;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Location permissions are denied.')),
           );
@@ -1574,7 +1574,7 @@ if (!context.mounted) return;
       }
 
       if (permission == LocationPermission.deniedForever) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text(
@@ -1605,7 +1605,7 @@ if (!context.mounted) return;
 
       if (learnerId == 0) {
         debugPrint('[POE_COLLECT] ❌ Invalid learner ID');
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Invalid learner ID. Cannot verify fingerprint.'),
@@ -1618,7 +1618,7 @@ if (!context.mounted) return;
       final learnerIdInt = int.tryParse(learnerId.toString());
       if (learnerIdInt == null) {
         debugPrint('[POE_COLLECT] ❌ Invalid learner ID format');
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content:

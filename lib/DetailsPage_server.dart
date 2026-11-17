@@ -1715,7 +1715,7 @@ class _POETabContentState extends State<POETabContent> {
           (templates['futronic_right_template']?.isNotEmpty ?? false);
 
       if (!hasZkLeft && !hasZkRight && !hasFutLeft && !hasFutRight) {
-        if (!context.mounted) return;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -1755,7 +1755,7 @@ class _POETabContentState extends State<POETabContent> {
       }
 
       if (scanner == 'none') {
-        if (!context.mounted) return;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -1851,7 +1851,7 @@ class _POETabContentState extends State<POETabContent> {
       _hideProgressDialog();
 
       if (match) {
-        if (!context.mounted) return;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('✅ Fingerprint verified successfully!'),

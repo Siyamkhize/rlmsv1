@@ -870,7 +870,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
     final timeOk = await TimezoneValidator.ensureCorrectTime(context);
     if (!timeOk) {
       // User cancelled or time is wrong - block clock-in
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content:
@@ -884,7 +884,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
     // Check if learners are still loading
     if (_isLoadingLearners || _learners.isEmpty) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please wait, learners are still loading...'),
@@ -897,7 +897,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
     // Block if learner has already completed their day
     if (_hasLearnerCompletedDay(learnerId)) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -1076,7 +1076,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               if (setupComplete != true) {
                 debugPrint(
                     '[BACKUP_CLOCKIN] Security questions setup not completed - aborting clock-in');
-                if (!context.mounted) return null;
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text(
@@ -1111,7 +1111,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         if (!enrolled) {
           debugPrint(
               '[BACKUP_CLOCKIN] ⚠️ Face enrollment CANCELLED by user - aborting clock-in');
-          if (!context.mounted) return null;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -1237,7 +1237,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           if (!securityVerified) {
             debugPrint(
                 '[BACKUP_CLOCKIN] Security questions verification CANCELLED by user - aborting clock-in');
-            if (!context.mounted) return null;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
@@ -1273,7 +1273,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       debugPrint(
           '[BACKUP_CLOCKIN] Signature capture result: ${signatureData != null ? "SUCCESS (${signatureData.length} chars)" : "NULL/CANCELLED"}');
       if (signatureData == null) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Signature is required for backup clock-in'),
@@ -1317,7 +1317,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       }
 
       // Success
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('✅ Clocked in successfully!'),
@@ -1326,7 +1326,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       );
     } catch (e) {
       debugPrint('[BACKUP_CLOCK_IN] Error: $e');
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -1349,7 +1349,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
     // Check if learners are still loading
     if (_isLoadingLearners || _learners.isEmpty) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please wait, learners are still loading...'),
@@ -1387,7 +1387,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               '[BACKUP_CLOCKOUT] ❌ FACE VERIFICATION FAILED - WRONG PERSON!');
 
           if (mounted) {
-            if (!context.mounted) return null;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
@@ -1450,7 +1450,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       }
 
       // Success
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('✅ Clocked out successfully!'),
@@ -1459,7 +1459,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       );
     } catch (e) {
       debugPrint('[BACKUP_CLOCK_OUT] Error: $e');
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),

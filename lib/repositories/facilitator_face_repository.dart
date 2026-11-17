@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config.dart';
 
@@ -10,7 +11,10 @@ class FacilitatorFaceRepository {
   Map<String, dynamic> _parseJsonBody(String body, String operation) {
     final trimmed = body.trim();
     if (trimmed.isEmpty) {
-      return {'success': false, 'message': 'Empty server response ($operation)'};
+      return {
+        'success': false,
+        'message': 'Empty server response ($operation)'
+      };
     }
 
     try {

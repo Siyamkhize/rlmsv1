@@ -136,7 +136,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     switch (state) {
       case AppLifecycleState.paused:
         // App is going to background - could be ML Kit scanner launching
-        debugPrint('[LIFECYCLE] App paused - checking if ML Kit scanner is active');
+        debugPrint(
+            '[LIFECYCLE] App paused - checking if ML Kit scanner is active');
         if (_cameraManager.isMLKitScannerActive) {
           debugPrint(
               '[LIFECYCLE] ML Kit scanner is active - app paused for document scanning');
@@ -210,7 +211,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     debugPrint('[ID_CALC] ===== CALCULATE FROM ID NUMBER =====');
     debugPrint(
         '[ID_CALC] IDNumber controller text: "${_controllers['IDNumber']?.text}"');
-    debugPrint('[ID_CALC] IDNumber from learnerData: "${learnerData?['IDNumber']}"');
+    debugPrint(
+        '[ID_CALC] IDNumber from learnerData: "${learnerData?['IDNumber']}"');
     debugPrint('[ID_CALC] Final IDNumber used: "$idNumber"');
 
     if (idNumber == null || idNumber.length < 6) {
@@ -228,7 +230,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       final gender =
           idNumber.length >= 10 ? _calculateGenderFromID(idNumber) : null;
 
-      debugPrint('[ID_CALC] Calculated values: Age=$age, Gender=$gender, DOB=$dob');
+      debugPrint(
+          '[ID_CALC] Calculated values: Age=$age, Gender=$gender, DOB=$dob');
 
       // Check if we should update (always update if offline or if values are wrong)
       bool shouldUpdate = false;
@@ -266,12 +269,14 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
               currentGender == 'Unknown' ||
               currentGender != gender)) {
         shouldUpdate = true;
-        debugPrint('[ID_CALC] 🔄 Gender needs update: "$currentGender" → "$gender"');
+        debugPrint(
+            '[ID_CALC] 🔄 Gender needs update: "$currentGender" → "$gender"');
       }
 
       if (dob != null && isDefaultDOB) {
         shouldUpdate = true;
-        debugPrint('[ID_CALC] 🔄 DOB needs update: "$currentDOB" → calculated DOB');
+        debugPrint(
+            '[ID_CALC] 🔄 DOB needs update: "$currentDOB" → calculated DOB');
       }
 
       // Force update if we're offline (to fix any wrong cached values)
@@ -285,7 +290,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       if ((currentAge == '0' || currentGender == 'Unknown' || isDefaultDOB) &&
           (age != null || gender != null)) {
         shouldUpdate = true;
-        debugPrint('[ID_CALC] 🔄 Forcing update because values are obviously wrong');
+        debugPrint(
+            '[ID_CALC] 🔄 Forcing update because values are obviously wrong');
       }
 
       if (shouldUpdate) {
@@ -333,7 +339,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           _saveCalculatedValuesToDatabase(age, gender, dob);
         }
       } else {
-        debugPrint('[ID_CALC] ℹ️ No update needed - current values are correct');
+        debugPrint(
+            '[ID_CALC] ℹ️ No update needed - current values are correct');
       }
     } catch (e) {
       debugPrint('[ID_CALC] ❌ Error calculating from ID number: $e');
@@ -365,7 +372,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       if (updateData.isNotEmpty) {
         await DatabaseHelper()
             .updateLearnerLocally(widget.learnerID, updateData);
-        debugPrint('[ID_CALC] 💾 Saved calculated values to database: $updateData');
+        debugPrint(
+            '[ID_CALC] 💾 Saved calculated values to database: $updateData');
       }
     } catch (e) {
       debugPrint('[ID_CALC] ❌ Error saving calculated values to database: $e');
@@ -558,7 +566,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         });
         debugPrint('[BANK] Bank details loaded: ${bankDetails!['BankName']}');
       } else {
-        debugPrint('[BANK] No bank details found for learner ${widget.learnerID}');
+        debugPrint(
+            '[BANK] No bank details found for learner ${widget.learnerID}');
       }
     } catch (e) {
       debugPrint('[BANK] Error fetching bank details: $e');
@@ -797,7 +806,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     try {
       final idNumber = learnerData?['IDNumber']?.toString();
       if (idNumber == null || idNumber.length < 6) {
-        debugPrint('[AGE_UPDATE] ID number not available or invalid: $idNumber');
+        debugPrint(
+            '[AGE_UPDATE] ID number not available or invalid: $idNumber');
         return;
       }
 
@@ -933,7 +943,8 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           if (response.statusCode == 200) {
             debugPrint('[FORCE_UPDATE] Force update successful online');
           } else {
-            debugPrint('[FORCE_UPDATE] Online force update failed, saving locally');
+            debugPrint(
+                '[FORCE_UPDATE] Online force update failed, saving locally');
             await DatabaseHelper()
                 .updateLearnerLocally(widget.learnerID, forceUpdateData);
           }
@@ -2691,7 +2702,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
   Future<bool> _promptSignature(
       String title, SignatureController controller, String fieldName) async {
     bool saved = false;
-    if (!context.mounted) return;
+    if (!context.mounted) return false;
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -2741,7 +2752,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       String title, TextEditingController controller, String fieldName) async {
     bool saved = false;
     final formKey = GlobalKey<FormState>();
-    if (!context.mounted) return;
+    if (!context.mounted) return false;
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -2956,7 +2967,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       if (_cameraController == null ||
           !_cameraController!.value.isInitialized) {
         await _initializeCamera();
-      if (!context.mounted) return;
+        if (!context.mounted) return;
       }
 
       if (_cameraController == null ||

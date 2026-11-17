@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 
 /// Global camera resource manager to prevent conflicts between different camera operations
 /// This ensures only one camera operation can run at a time across the entire app

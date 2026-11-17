@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config.dart';
 
@@ -248,7 +249,8 @@ class FaceVerificationRepository {
         body: json.encode({'learner_id': learnerId}),
       );
 
-      debugPrint('🔷 Delete enrollment response status: ${response.statusCode}');
+      debugPrint(
+          '🔷 Delete enrollment response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = _parseJsonBody(response.body, 'delete enrollment');

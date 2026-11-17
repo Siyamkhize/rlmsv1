@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
@@ -130,7 +131,8 @@ class FaceEmbeddingService {
       final embedding = List<double>.from(output[0]);
 
       debugPrint('✅ Face embedding extracted from file');
-      debugPrint('🔷 Quality score: ${qualityResult['score']?.toStringAsFixed(2)}');
+      debugPrint(
+          '🔷 Quality score: ${qualityResult['score']?.toStringAsFixed(2)}');
 
       return embedding;
     } catch (e, stackTrace) {
@@ -211,7 +213,8 @@ class FaceEmbeddingService {
       final embedding = List<double>.from(output[0]);
 
       debugPrint('✅ Face embedding extracted successfully');
-      debugPrint('🔷 Quality score: ${qualityResult['score']?.toStringAsFixed(2)}');
+      debugPrint(
+          '🔷 Quality score: ${qualityResult['score']?.toStringAsFixed(2)}');
       debugPrint('🔷 Liveness passed: ${livenessResult['passed']}');
 
       return {

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:sqflite/sqflite.dart';
@@ -23,13 +24,15 @@ class ManualClockingEvidenceSyncService {
   static final List<Function()> _syncQueue = [];
 
   /// Execute sync operation with concurrency limits
-  Future<T> _executeConcurrencyControlled<T>(Future<T> Function() operation) async {
+  Future<T> _executeConcurrencyControlled<T>(
+      Future<T> Function() operation) async {
     if (_activeSyncs >= maxConcurrentSyncs) {
-      debugPrint('[EVIDENCE_SYNC] Concurrency limit reached ($_activeSyncs/$maxConcurrentSyncs), queuing operation');
-      
+      debugPrint(
+          '[EVIDENCE_SYNC] Concurrency limit reached ($_activeSyncs/$maxConcurrentSyncs), queuing operation');
+
       // Create completer for queued operation
       final completer = Completer<T>();
-      
+
       _syncQueue.add(() async {
         try {
           final result = await operation();
@@ -38,20 +41,22 @@ class ManualClockingEvidenceSyncService {
           completer.completeError(e);
         }
       });
-      
+
       return completer.future;
     }
-    
+
     _activeSyncs++;
-    debugPrint('[EVIDENCE_SYNC] Starting operation (active: $_activeSyncs/$maxConcurrentSyncs)');
-    
+    debugPrint(
+        '[EVIDENCE_SYNC] Starting operation (active: $_activeSyncs/$maxConcurrentSyncs)');
+
     try {
       final result = await operation();
       return result;
     } finally {
       _activeSyncs--;
-      debugPrint('[EVIDENCE_SYNC] Completed operation (active: $_activeSyncs/$maxConcurrentSyncs)');
-      
+      debugPrint(
+          '[EVIDENCE_SYNC] Completed operation (active: $_activeSyncs/$maxConcurrentSyncs)');
+
       // Process next queued operation if any
       if (_syncQueue.isNotEmpty && _activeSyncs < maxConcurrentSyncs) {
         final nextOperation = _syncQueue.removeAt(0);
@@ -66,12 +71,13 @@ class ManualClockingEvidenceSyncService {
     // Use cryptographically secure random generation
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final randomBytes = List.generate(16, (_) => Random.secure().nextInt(256));
-    final randomHex = randomBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
-    
+    final randomHex =
+        randomBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+
     // Combine timestamp + secure random for uniqueness and traceability
     final tokenData = '${timestamp}_$randomHex';
     final hash = sha256.convert(utf8.encode(tokenData));
-    
+
     return 'clk_${hash.toString().substring(0, 32)}'; // 32-char hex subset
   }
 
@@ -208,7 +214,8 @@ class ManualClockingEvidenceSyncService {
 
         for (int i = 0; i < allRecords.length; i++) {
           final record = allRecords[i];
-          debugPrint('[DEBUG] ========== Record ${i + 1}/$totalCount ==========');
+          debugPrint(
+              '[DEBUG] ========== Record ${i + 1}/$totalCount ==========');
           debugPrint('[DEBUG]   Evidence ID: ${record['evidence_id']}');
           debugPrint('[DEBUG]   Learner ID: ${record['LearnerID']}');
           debugPrint('[DEBUG]   Clock Date: ${record['clock_date']}');
@@ -362,11 +369,13 @@ class ManualClockingEvidenceSyncService {
         final url =
             Uri.parse('${AppConfig.baseUrl}/sync_manual_clocking_evidence.php');
 
-        final response = await http.post(
-          url,
-          headers: {'Content-Type': 'application/json'},
-          body: json.encode({'records': recordsToSync}),
-        ).timeout(const Duration(seconds: 10));
+        final response = await http
+            .post(
+              url,
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode({'records': recordsToSync}),
+            )
+            .timeout(const Duration(seconds: 10));
 
         if (response.statusCode == 200) {
           final result = json.decode(response.body);

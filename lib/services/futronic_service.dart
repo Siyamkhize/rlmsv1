@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 // class FutronicService {
 //   /// Check if the Futronic scanner is connected
 //   Future<bool> isFutronicConnected() async {

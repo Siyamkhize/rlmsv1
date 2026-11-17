@@ -1,15 +1,15 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config.dart';
 
 /// Consolidated clocking service that combines image upload and record saving
 /// into a single request to reduce server load by 75%
 class ConsolidatedClockingService {
-  
   /// Process clock-in with consolidated request (1 request instead of 3)
   static Future<Map<String, dynamic>> processClockIn({
     required String learnerID,
-    required String classID, 
+    required String classID,
     required String token,
     required String faceImageBase64,
     required String signatureBase64,
@@ -17,11 +17,10 @@ class ConsolidatedClockingService {
     required double longitude,
     required double accuracy,
   }) async {
-    
     final url = Uri.parse(AppConfig.buildUrl('save_consolidated_clocking.php'));
     final currentDate = DateTime.now().toIso8601String().substring(0, 10);
     final timestamp = DateTime.now().toIso8601String();
-    
+
     final payload = {
       'learner_id': learnerID,
       'class_id': classID,
@@ -38,17 +37,20 @@ class ConsolidatedClockingService {
     };
 
     try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(payload),
-      ).timeout(const Duration(seconds: 45)); // Longer timeout for consolidated operation
+      final response = await http
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(payload),
+          )
+          .timeout(const Duration(
+              seconds: 45)); // Longer timeout for consolidated operation
 
       final result = jsonDecode(response.body);
-      
+
       if (response.statusCode == 200 && result['success'] == true) {
         return {
           'success': true,
@@ -74,11 +76,10 @@ class ConsolidatedClockingService {
     required double longitude,
     required double accuracy,
   }) async {
-    
     final url = Uri.parse(AppConfig.buildUrl('save_consolidated_clocking.php'));
     final currentDate = DateTime.now().toIso8601String().substring(0, 10);
     final timestamp = DateTime.now().toIso8601String();
-    
+
     final payload = {
       'learner_id': learnerID,
       'class_id': classID,
@@ -95,17 +96,20 @@ class ConsolidatedClockingService {
     };
 
     try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(payload),
-      ).timeout(const Duration(seconds: 45)); // Longer timeout for consolidated operation
+      final response = await http
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(payload),
+          )
+          .timeout(const Duration(
+              seconds: 45)); // Longer timeout for consolidated operation
 
       final result = jsonDecode(response.body);
-      
+
       if (response.statusCode == 200 && result['success'] == true) {
         return {
           'success': true,
@@ -129,20 +133,20 @@ class ConsolidatedClockingService {
     required String currentDate,
     bool forceRefresh = false,
   }) async {
-    
     // Check cache first (unless force refresh)
-    if (!forceRefresh && 
-        _statusCache.containsKey(currentDate) && 
+    if (!forceRefresh &&
+        _statusCache.containsKey(currentDate) &&
         _lastCacheUpdate != null &&
-        DateTime.now().difference(_lastCacheUpdate!).inMinutes < _cacheValidDuration.inMinutes) {
-      
+        DateTime.now().difference(_lastCacheUpdate!).inMinutes <
+            _cacheValidDuration.inMinutes) {
       debugPrint('[CONSOLIDATED_CLOCKING] Using cached status data');
       return _statusCache[currentDate]!;
     }
 
     // Fetch from server
     final url = Uri.parse(
-      AppConfig.buildUrl('get_manual_clocking_status.php?clock_date=$currentDate'),
+      AppConfig.buildUrl(
+          'get_manual_clocking_status.php?clock_date=$currentDate'),
     );
 
     try {
@@ -150,22 +154,24 @@ class ConsolidatedClockingService {
 
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
-        
+
         if (result['success'] == true) {
           // Cache the response
           _statusCache[currentDate] = result;
           _lastCacheUpdate = DateTime.now();
-          
-          debugPrint('[CONSOLIDATED_CLOCKING] Loaded and cached status from server');
+
+          debugPrint(
+              '[CONSOLIDATED_CLOCKING] Loaded and cached status from server');
           return result;
         }
       }
-      
+
       throw Exception('Failed to load clocking status');
     } catch (e) {
       // Return cached data if available, even if expired
       if (_statusCache.containsKey(currentDate)) {
-        debugPrint('[CONSOLIDATED_CLOCKING] Using expired cache due to network error');
+        debugPrint(
+            '[CONSOLIDATED_CLOCKING] Using expired cache due to network error');
         return _statusCache[currentDate]!;
       }
       throw Exception('Network error loading status: $e');
@@ -177,11 +183,12 @@ class ConsolidatedClockingService {
     _statusCache.clear();
     _lastCacheUpdate = null;
   }
-  
+
   /// Check if we have recent cached data
   static bool hasFreshCache(String currentDate) {
-    return _statusCache.containsKey(currentDate) && 
-           _lastCacheUpdate != null &&
-           DateTime.now().difference(_lastCacheUpdate!).inMinutes < _cacheValidDuration.inMinutes;
+    return _statusCache.containsKey(currentDate) &&
+        _lastCacheUpdate != null &&
+        DateTime.now().difference(_lastCacheUpdate!).inMinutes <
+            _cacheValidDuration.inMinutes;
   }
 }

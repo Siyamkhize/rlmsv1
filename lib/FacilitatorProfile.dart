@@ -1895,8 +1895,8 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       initialDate = DateTime.now();
     }
 
+    if (!context.mounted) return;
     final DateTime? picked = await showDatePicker(
-      if (!context.mounted) return;
       context: context,
       initialDate: initialDate ?? DateTime.now(),
       firstDate: DateTime(2020),

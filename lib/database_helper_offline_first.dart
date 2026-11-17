@@ -13,6 +13,7 @@
 /// 3. Test thoroughly before deploying to production
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -30,7 +31,8 @@ class DatabaseHelperOfflineFirst {
     bool preserveLocalTemplates = true,
   }) async {
     try {
-      debugPrint('[OFFLINE_FIRST_SYNC] Starting learner sync for classID: $classID');
+      debugPrint(
+          '[OFFLINE_FIRST_SYNC] Starting learner sync for classID: $classID');
 
       final response = await http
           .get(

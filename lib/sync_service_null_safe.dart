@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'database_helper.dart';
@@ -50,20 +51,22 @@ class SyncServiceNullSafe {
           try {
             // Validate required fields
             if (learner['IDNumber'] == null || learner['classID'] == null) {
-              debugPrint("Skipping invalid learner record: Missing IDNumber or classID");
+              debugPrint(
+                  "Skipping invalid learner record: Missing IDNumber or classID");
               errorCount++;
               continue;
             }
 
             // Create a sanitized copy of the learner data
-            Map<String, dynamic> sanitizedLearnerData = _sanitizeLearnerData(learner);
+            Map<String, dynamic> sanitizedLearnerData =
+                _sanitizeLearnerData(learner);
 
             // Insert using the enhanced insertData method
             await _dbHelper.insertData('learnerdetails', sanitizedLearnerData);
-            
-            debugPrint("✅ Successfully inserted learner: ${sanitizedLearnerData['Name']} ${sanitizedLearnerData['Surname']} (ID: ${sanitizedLearnerData['IDNumber']})");
+
+            debugPrint(
+                "✅ Successfully inserted learner: ${sanitizedLearnerData['Name']} ${sanitizedLearnerData['Surname']} (ID: ${sanitizedLearnerData['IDNumber']})");
             successCount++;
-            
           } catch (e) {
             debugPrint("❌ Error inserting learner ${learner['IDNumber']}: $e");
             errorCount++;
@@ -71,15 +74,17 @@ class SyncServiceNullSafe {
           }
         }
 
-        debugPrint("Sync completed: $successCount successful, $errorCount errors");
-        
+        debugPrint(
+            "Sync completed: $successCount successful, $errorCount errors");
+
         // Verify the sync
-        final insertedCount = await db.rawQuery('SELECT COUNT(*) as count FROM learnerdetails');
+        final insertedCount =
+            await db.rawQuery('SELECT COUNT(*) as count FROM learnerdetails');
         final count = insertedCount.first['count'];
         debugPrint("Verification: $count learners now in local database");
-
       } else {
-        throw Exception("Failed to sync learner details. Status code: ${response.statusCode}");
+        throw Exception(
+            "Failed to sync learner details. Status code: ${response.statusCode}");
       }
     } catch (e, stackTrace) {
       debugPrint("Error syncing learner details: $e");
@@ -120,9 +125,12 @@ class SyncServiceNullSafe {
       'signature': _sanitizeString(rawData['signature']),
       'synced': rawData['synced'] ?? 0,
       'zkteco_left_template': _sanitizeString(rawData['zkteco_left_template']),
-      'zkteco_right_template': _sanitizeString(rawData['zkteco_right_template']),
-      'futronic_left_template': _sanitizeString(rawData['futronic_left_template']),
-      'futronic_right_template': _sanitizeString(rawData['futronic_right_template']),
+      'zkteco_right_template':
+          _sanitizeString(rawData['zkteco_right_template']),
+      'futronic_left_template':
+          _sanitizeString(rawData['futronic_left_template']),
+      'futronic_right_template':
+          _sanitizeString(rawData['futronic_right_template']),
       'imagePath': _sanitizeString(rawData['imagePath']),
       'activity_statu': _sanitizeString(rawData['activity_statu']),
       'witness_initials': _sanitizeString(rawData['witness_initials']),
@@ -168,21 +176,25 @@ class SyncServiceNullSafe {
   Future<Map<String, dynamic>> testSyncStatus() async {
     try {
       final db = await _dbHelper.database;
-      
+
       // Count total learners
-      final totalResult = await db.rawQuery('SELECT COUNT(*) as count FROM learnerdetails');
+      final totalResult =
+          await db.rawQuery('SELECT COUNT(*) as count FROM learnerdetails');
       final totalCount = totalResult.first['count'];
-      
+
       // Count learners with null values in key fields
-      final nullNameResult = await db.rawQuery('SELECT COUNT(*) as count FROM learnerdetails WHERE Name IS NULL OR Name = ""');
+      final nullNameResult = await db.rawQuery(
+          'SELECT COUNT(*) as count FROM learnerdetails WHERE Name IS NULL OR Name = ""');
       final nullNameCount = nullNameResult.first['count'];
-      
-      final nullPhoneResult = await db.rawQuery('SELECT COUNT(*) as count FROM learnerdetails WHERE PhoneNumber IS NULL OR PhoneNumber = ""');
+
+      final nullPhoneResult = await db.rawQuery(
+          'SELECT COUNT(*) as count FROM learnerdetails WHERE PhoneNumber IS NULL OR PhoneNumber = ""');
       final nullPhoneCount = nullPhoneResult.first['count'];
-      
+
       // Sample some records
-      final sampleResult = await db.rawQuery('SELECT LearnerID, Name, Surname, IDNumber, PhoneNumber FROM learnerdetails LIMIT 5');
-      
+      final sampleResult = await db.rawQuery(
+          'SELECT LearnerID, Name, Surname, IDNumber, PhoneNumber FROM learnerdetails LIMIT 5');
+
       return {
         'status': 'success',
         'totalLearners': totalCount,
