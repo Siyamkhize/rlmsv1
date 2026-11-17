@@ -215,10 +215,10 @@ class AppConfig {
   // Offline session configuration - matches online behavior
   // OFFLINE_SESSION_EXPIRY_DAYS: sessions last 7 days
   // OFFLINE_TOKEN_REFRESH_ENABLED: auto-extend expiry during last day
-  // OFFLINE_TOKEN_LENGTH: 64-char hex token matches online format
-  static const int OFFLINE_SESSION_EXPIRY_DAYS = 7;
-  static const bool OFFLINE_TOKEN_REFRESH_ENABLED = true;
-  static const int OFFLINE_TOKEN_LENGTH = 64;
+  // offlineTokenLength: 64-char hex token matches online format
+  static const int offlineSessionExpiryDays = 7;
+  static const bool offlineTokenRefreshEnabled = true;
+  static const int offlineTokenLength = 64;
 
   // Helper function to get auth token
   static Future<String?> getAuthToken() async {
@@ -228,8 +228,10 @@ class AppConfig {
       if (token != null) {
         debugPrint('[AUTH] ✅ Token retrieved from storage');
         debugPrint('[AUTH] Token length: ${token.length}');
-        debugPrint('[AUTH] Token first 16 chars: ${token.substring(0, token.length >= 16 ? 16 : token.length)}...');
-        debugPrint('[AUTH] Token last 16 chars: ...${token.substring(token.length >= 16 ? token.length - 16 : 0)}');
+        debugPrint(
+            '[AUTH] Token first 16 chars: ${token.substring(0, token.length >= 16 ? 16 : token.length)}...');
+        debugPrint(
+            '[AUTH] Token last 16 chars: ...${token.substring(token.length >= 16 ? token.length - 16 : 0)}');
       } else {
         debugPrint('[AUTH] ❌ No token found in storage');
       }

@@ -16,12 +16,12 @@ class EnhancedDocumentScannerManager {
   bool _isScanning = false;
   Timer? _watchdogTimer;
 
-  static const int MAX_SCAN_ATTEMPTS = 10; // effectively unlimited
-  static const Duration SCAN_COOLDOWN = Duration(seconds: 3);
-  static const Duration WATCHDOG_TIMEOUT = Duration(minutes: 10);
+  static const int maxScanAttempts = 10; // effectively unlimited
+  static const Duration scanCooldown = Duration(seconds: 3);
+  static const Duration watchdogTimeout = Duration(minutes: 10);
   // Delay after a scan completes before allowing the next one,
   // giving Android time to fully settle the activity stack.
-  static const Duration POST_SCAN_SETTLE_DELAY = Duration(milliseconds: 800);
+  static const Duration postScanSettleDelay = Duration(milliseconds: 800);
 
   /// Execute scan with enhanced protection
   Future<dynamic> executeSafeScan({
@@ -37,13 +37,13 @@ class EnhancedDocumentScannerManager {
     }
 
     // Check scan attempts and cooldown
-    if (_scanAttempts >= MAX_SCAN_ATTEMPTS) {
+    if (_scanAttempts >= maxScanAttempts) {
       final timeSinceLastScan = _lastScanTime != null
           ? DateTime.now().difference(_lastScanTime!)
           : Duration.zero;
 
-      if (timeSinceLastScan < SCAN_COOLDOWN) {
-        final remainingCooldown = SCAN_COOLDOWN - timeSinceLastScan;
+      if (timeSinceLastScan < scanCooldown) {
+        final remainingCooldown = scanCooldown - timeSinceLastScan;
         throw Exception(
             'Scanner is in cooldown mode. Please wait ${remainingCooldown.inSeconds} seconds before scanning again.\n\n'
             'This prevents crashes after multiple scans.');
@@ -80,7 +80,7 @@ class EnhancedDocumentScannerManager {
       // allowing another scan. Without this delay the next call to
       // getScanDocuments() can fire before GmsDocumentScanningDelegateActivity
       // has fully finished, leaving pendingResult in a bad state.
-      await Future.delayed(POST_SCAN_SETTLE_DELAY);
+      await Future.delayed(postScanSettleDelay);
 
       debugPrint('[ENHANCED_SCANNER] Scan completed successfully');
       return result;
@@ -102,7 +102,7 @@ class EnhancedDocumentScannerManager {
   /// Start watchdog timer to prevent hanging scans
   void _startWatchdogTimer() {
     _watchdogTimer?.cancel();
-    _watchdogTimer = Timer(WATCHDOG_TIMEOUT, () {
+    _watchdogTimer = Timer(watchdogTimeout, () {
       if (_isScanning) {
         debugPrint('[ENHANCED_SCANNER] WATCHDOG: Scan timeout detected');
         _isScanning = false;
@@ -303,7 +303,7 @@ class EnhancedDocumentScannerManager {
     return {
       'isScanning': _isScanning,
       'scanAttempts': _scanAttempts,
-      'maxAttempts': MAX_SCAN_ATTEMPTS,
+      'maxAttempts': maxScanAttempts,
       'lastScanTime': _lastScanTime?.toIso8601String(),
       'cooldownRemaining': _getCooldownRemaining(),
     };
@@ -316,12 +316,12 @@ class EnhancedDocumentScannerManager {
       return 0;
     }
 
-    if (_scanAttempts < MAX_SCAN_ATTEMPTS) {
+    if (_scanAttempts < maxScanAttempts) {
       return 0;
     }
 
     final timeSinceLastScan = DateTime.now().difference(_lastScanTime!);
-    final remaining = SCAN_COOLDOWN - timeSinceLastScan;
+    final remaining = scanCooldown - timeSinceLastScan;
 
     return remaining.inSeconds > 0 ? remaining.inSeconds : 0;
   }

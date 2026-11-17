@@ -14,11 +14,11 @@ class OfflineFaceVerificationService {
   // Lowered from 0.95 to 0.80 on 2026-09-22 to match server-side threshold
   // based on real learner_face_verification_log data showing genuine learners
   // scoring between 0.65 and 0.94 on legitimate clock-ins.
-  // Must equal FACE_MATCH_THRESHOLD in face_recognition_config.php (PHP server).
-  static const double FACE_MATCH_THRESHOLD = 0.80;
+  // Must equal faceMatchThreshold in face_recognition_config.php (PHP server).
+  static const double faceMatchThreshold = 0.80;
 
   // Minimum quality score to accept verification attempt (0.0 to 1.0)
-  static const double MIN_VERIFICATION_QUALITY = 0.5;
+  static const double minVerificationQuality = 0.5;
 
   /// Calculate cosine similarity between two embeddings
   /// Returns RAW cosine similarity in range [-1, 1] (higher = more similar)
@@ -198,9 +198,9 @@ class OfflineFaceVerificationService {
           '[OFFLINE_FACE] Starting offline verification for learner $learnerId (camera: $cameraFacing)');
 
       // QUALITY CHECK: Reject poor quality captures before comparison
-      if (qualityScore < MIN_VERIFICATION_QUALITY) {
+      if (qualityScore < minVerificationQuality) {
         debugPrint(
-            '[OFFLINE_FACE] Quality too low: $qualityScore < $MIN_VERIFICATION_QUALITY');
+            '[OFFLINE_FACE] Quality too low: $qualityScore < $minVerificationQuality');
 
         await _queueVerificationLog(
           learnerId: learnerId,
@@ -266,9 +266,9 @@ class OfflineFaceVerificationService {
       }
 
       debugPrint(
-          '[OFFLINE_FACE] BEST score: $bestScore (matched: $matchedCamera, threshold: $FACE_MATCH_THRESHOLD)');
+          '[OFFLINE_FACE] BEST score: $bestScore (matched: $matchedCamera, threshold: $faceMatchThreshold)');
 
-      final verified = bestScore >= FACE_MATCH_THRESHOLD;
+      final verified = bestScore >= faceMatchThreshold;
 
       // Queue verification log for sync
       await _queueVerificationLog(
@@ -289,7 +289,7 @@ class OfflineFaceVerificationService {
         'cached': true,
         'message': verified
             ? 'Face verified offline (score: ${bestScore.toStringAsFixed(3)}, matched: $matchedCamera)'
-            : 'Face does not match (best score: ${bestScore.toStringAsFixed(3)} < $FACE_MATCH_THRESHOLD)',
+            : 'Face does not match (best score: ${bestScore.toStringAsFixed(3)} < $faceMatchThreshold)',
         'failureReason': verified ? null : 'similarity_below_threshold',
       };
     } catch (e) {

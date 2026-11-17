@@ -19,15 +19,15 @@ class ComprehensiveManualClockingSync {
   ComprehensiveManualClockingSync._internal();
 
   // Queue control to prevent server flooding
-  static const int MAX_BATCH_SIZE = 10; // Max records per sync batch
-  static const Duration DELAY_BETWEEN_RECORDS = Duration(milliseconds: 500); // 500ms delay
-  static const Duration DELAY_BETWEEN_BATCHES = Duration(seconds: 2); // 2 seconds between batches
+  static const int maxBatchSize = 10; // Max records per sync batch
+  static const Duration delayBetweenRecords = Duration(milliseconds: 500); // 500ms delay
+  static const Duration delayBetweenBatches = Duration(seconds: 2); // 2 seconds between batches
   
   // Retry control with exponential backoff
-  static const int MAX_RETRIES_PER_RECORD = 3; // Max retry attempts per record
-  static const Duration INITIAL_RETRY_DELAY = Duration(seconds: 5); // Start with 5 seconds
-  static const Duration MAX_RETRY_DELAY = Duration(minutes: 5); // Cap at 5 minutes
-  static const Duration COOLDOWN_PERIOD = Duration(minutes: 10); // Wait 10 minutes after multiple failures
+  static const int maxRetriesPerRecord = 3; // Max retry attempts per record
+  static const Duration initialRetryDelay = Duration(seconds: 5); // Start with 5 seconds
+  static const Duration maxRetryDelay = Duration(minutes: 5); // Cap at 5 minutes
+  static const Duration cooldownPeriod = Duration(minutes: 10); // Wait 10 minutes after multiple failures
   
   bool _isSyncing = false; // Prevent concurrent sync operations
   DateTime? _lastFailureTime; // Track when last major failure occurred
@@ -54,8 +54,8 @@ class ComprehensiveManualClockingSync {
     // Check cooldown period after multiple failures (circuit breaker pattern)
     if (_lastFailureTime != null && _consecutiveFailures >= 3) {
       final timeSinceFailure = DateTime.now().difference(_lastFailureTime!);
-      if (timeSinceFailure < COOLDOWN_PERIOD) {
-        final remainingCooldown = COOLDOWN_PERIOD - timeSinceFailure;
+      if (timeSinceFailure < cooldownPeriod) {
+        final remainingCooldown = cooldownPeriod - timeSinceFailure;
         debugPrint('[COMPREHENSIVE_SYNC] 🛑 Circuit breaker active - too many failures');
         debugPrint('[COMPREHENSIVE_SYNC] ⏰ Cooldown: ${remainingCooldown.inMinutes} minutes ${remainingCooldown.inSeconds % 60} seconds remaining');
         return {
@@ -79,7 +79,7 @@ class ComprehensiveManualClockingSync {
       final db = await DatabaseHelper().database;
 
       // 1. Get unsynced records from manual_clocking table (with limit to prevent flooding)
-      final int recordLimit = maxRecords ?? MAX_BATCH_SIZE;
+      final int recordLimit = maxRecords ?? maxBatchSize;
       
       final unsyncedClockIns = await db.query(
         'manual_clocking',
@@ -102,7 +102,7 @@ class ComprehensiveManualClockingSync {
 
       debugPrint('[COMPREHENSIVE_SYNC] Found ${unsyncedClockIns.length} unsynced clock-ins');
       debugPrint('[COMPREHENSIVE_SYNC] Processing batch of ${unsyncedClockIns.length} records');
-      debugPrint('[COMPREHENSIVE_SYNC] Rate limit: ${DELAY_BETWEEN_RECORDS.inMilliseconds}ms between records');
+      debugPrint('[COMPREHENSIVE_SYNC] Rate limit: ${delayBetweenRecords.inMilliseconds}ms between records');
 
       int successCount = 0;
       int failCount = 0;
@@ -124,15 +124,15 @@ class ComprehensiveManualClockingSync {
         bool recordSynced = false;
         String? lastError;
         
-        for (int attempt = 0; attempt < MAX_RETRIES_PER_RECORD; attempt++) {
+        for (int attempt = 0; attempt < maxRetriesPerRecord; attempt++) {
           if (attempt > 0) {
             // Calculate exponential backoff delay: 5s, 15s, 45s
-            final delaySeconds = INITIAL_RETRY_DELAY.inSeconds * (attempt * 3);
-            final retryDelay = Duration(seconds: delaySeconds > MAX_RETRY_DELAY.inSeconds 
-                ? MAX_RETRY_DELAY.inSeconds 
+            final delaySeconds = initialRetryDelay.inSeconds * (attempt * 3);
+            final retryDelay = Duration(seconds: delaySeconds > maxRetryDelay.inSeconds 
+                ? maxRetryDelay.inSeconds 
                 : delaySeconds);
             
-            debugPrint('[COMPREHENSIVE_SYNC] 🔄 Retry attempt ${attempt + 1}/$MAX_RETRIES_PER_RECORD after ${retryDelay.inSeconds}s...');
+            debugPrint('[COMPREHENSIVE_SYNC] 🔄 Retry attempt ${attempt + 1}/$maxRetriesPerRecord after ${retryDelay.inSeconds}s...');
             await Future.delayed(retryDelay);
           }
 
@@ -292,7 +292,7 @@ class ComprehensiveManualClockingSync {
           }
           
           // For other errors, continue retry loop
-          if (attempt == MAX_RETRIES_PER_RECORD - 1) {
+          if (attempt == maxRetriesPerRecord - 1) {
             // Final attempt failed
             debugPrint('[COMPREHENSIVE_SYNC] ❌ All retry attempts exhausted for learner $learnerID');
             failCount++;
@@ -320,8 +320,8 @@ class ComprehensiveManualClockingSync {
 
         // RATE LIMITING: Add delay between records to prevent server flooding
         if (unsyncedClockIns.indexOf(clockIn) < unsyncedClockIns.length - 1) {
-          debugPrint('[COMPREHENSIVE_SYNC] ⏱️  Waiting ${DELAY_BETWEEN_RECORDS.inMilliseconds}ms before next record...');
-          await Future.delayed(DELAY_BETWEEN_RECORDS);
+          debugPrint('[COMPREHENSIVE_SYNC] ⏱️  Waiting ${delayBetweenRecords.inMilliseconds}ms before next record...');
+          await Future.delayed(delayBetweenRecords);
         }
       }
 

@@ -18,14 +18,14 @@ class ManualClockingEvidenceSyncService {
   ManualClockingEvidenceSyncService._internal();
 
   // Concurrency control
-  static const int MAX_CONCURRENT_SYNCS = 3;
+  static const int maxConcurrentSyncs = 3;
   static int _activeSyncs = 0;
   static final List<Function()> _syncQueue = [];
 
   /// Execute sync operation with concurrency limits
   Future<T> _executeConcurrencyControlled<T>(Future<T> Function() operation) async {
-    if (_activeSyncs >= MAX_CONCURRENT_SYNCS) {
-      debugPrint('[EVIDENCE_SYNC] Concurrency limit reached ($_activeSyncs/$MAX_CONCURRENT_SYNCS), queuing operation');
+    if (_activeSyncs >= maxConcurrentSyncs) {
+      debugPrint('[EVIDENCE_SYNC] Concurrency limit reached ($_activeSyncs/$maxConcurrentSyncs), queuing operation');
       
       // Create completer for queued operation
       final completer = Completer<T>();
@@ -43,17 +43,17 @@ class ManualClockingEvidenceSyncService {
     }
     
     _activeSyncs++;
-    debugPrint('[EVIDENCE_SYNC] Starting operation (active: $_activeSyncs/$MAX_CONCURRENT_SYNCS)');
+    debugPrint('[EVIDENCE_SYNC] Starting operation (active: $_activeSyncs/$maxConcurrentSyncs)');
     
     try {
       final result = await operation();
       return result;
     } finally {
       _activeSyncs--;
-      debugPrint('[EVIDENCE_SYNC] Completed operation (active: $_activeSyncs/$MAX_CONCURRENT_SYNCS)');
+      debugPrint('[EVIDENCE_SYNC] Completed operation (active: $_activeSyncs/$maxConcurrentSyncs)');
       
       // Process next queued operation if any
-      if (_syncQueue.isNotEmpty && _activeSyncs < MAX_CONCURRENT_SYNCS) {
+      if (_syncQueue.isNotEmpty && _activeSyncs < maxConcurrentSyncs) {
         final nextOperation = _syncQueue.removeAt(0);
         Future.microtask(nextOperation);
       }

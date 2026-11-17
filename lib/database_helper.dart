@@ -3972,7 +3972,7 @@ updated_at TIMESTAMP
       // Calculate expiry (7 days from now)
       final now = DateTime.now();
       final expiresAt =
-          now.add(const Duration(days: AppConfig.OFFLINE_SESSION_EXPIRY_DAYS));
+          now.add(const Duration(days: AppConfig.offlineSessionExpiryDays));
 
       // Insert or replace the session
       await db.insert(
@@ -4065,9 +4065,9 @@ updated_at TIMESTAMP
         'last_activity_at': now.toIso8601String(),
       };
 
-      if (AppConfig.OFFLINE_TOKEN_REFRESH_ENABLED && hoursUntilExpiry < 24) {
-        final newExpiresAt = now
-            .add(const Duration(days: AppConfig.OFFLINE_SESSION_EXPIRY_DAYS));
+      if (AppConfig.offlineTokenRefreshEnabled && hoursUntilExpiry < 24) {
+        final newExpiresAt =
+            now.add(const Duration(days: AppConfig.offlineSessionExpiryDays));
         updateData['expires_at'] = newExpiresAt.toIso8601String();
         debugPrint(
             '[OFFLINE_TOKEN] 🔄 Token refreshed for $email (new expiry: ${newExpiresAt.toIso8601String()})');

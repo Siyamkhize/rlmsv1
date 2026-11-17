@@ -18,8 +18,8 @@ class UltimateScannerCrashPrevention {
   Timer? _memoryCleanupTimer;
 
   // CRITICAL: Track scanner plugin instances to prevent accumulation
-  static const int MAX_SCANS_BEFORE_RESET = 100; // effectively unlimited
-  static const Duration FORCED_CLEANUP_INTERVAL = Duration(minutes: 2);
+  static const int maxScansBeforeReset = 100; // effectively unlimited
+  static const Duration forcedCleanupInterval = Duration(minutes: 2);
 
   /// Initialize the ultimate crash prevention system
   void initialize() {
@@ -44,7 +44,7 @@ class UltimateScannerCrashPrevention {
     debugPrint('[ULTIMATE_CRASH_PREVENTION] Scan count: $_scanCount');
 
     // CRITICAL CHECK: Force reset if too many scans
-    if (_scanCount >= MAX_SCANS_BEFORE_RESET) {
+    if (_scanCount >= maxScansBeforeReset) {
       debugPrint(
           '[ULTIMATE_CRASH_PREVENTION] CRITICAL: Too many scans, forcing complete reset');
       await _forceCompleteReset(context);
@@ -391,7 +391,7 @@ class UltimateScannerCrashPrevention {
       'scanCount': _scanCount,
       'isInCriticalState': _isInCriticalState,
       'lastScanTime': _lastScanTime?.toIso8601String(),
-      'scansUntilReset': MAX_SCANS_BEFORE_RESET - _scanCount,
+      'scansUntilReset': maxScansBeforeReset - _scanCount,
     };
   }
 
