@@ -344,21 +344,21 @@ class _InductionPageState extends State<InductionPage> {
       if (result.isEmpty) {
         if (classes.isEmpty) {
           debugPrint('Class table is empty');
-          if (!context.mounted) return null;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('No class data available in local database.')),
           );
         } else if (sites.isEmpty) {
           debugPrint('Sites table is empty');
-          if (!context.mounted) return null;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('No site data available in local database.')),
           );
         } else {
           debugPrint('No matching class or site found for classID: $classID');
-          if (!context.mounted) return null;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('No site coordinates found for class $classID.')),
@@ -373,7 +373,7 @@ class _InductionPageState extends State<InductionPage> {
       if (siteLat == null || siteLon == null) {
         debugPrint(
             'Invalid site coordinates for classID: $classID, lat: ${result.first['latitude']}, lon: ${result.first['longitude']}');
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Invalid site coordinates in database.')),
@@ -385,7 +385,7 @@ class _InductionPageState extends State<InductionPage> {
 
       debugPrint('Distance to site for classID $classID: $distance meters');
       if (distance > 100) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(

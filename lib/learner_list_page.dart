@@ -1267,7 +1267,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
 
   Future<void> syncUnsyncedDocuments() async {
     if (!await _checkConnectivity()) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No internet connection, cannot sync')),
       );
@@ -1294,7 +1294,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
 
       setState(() {});
     } catch (e) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error syncing documents: $e')),
       );
@@ -1320,12 +1320,12 @@ class _LearnerListPageState extends State<LearnerListPage> {
         // No need to reload all learners, just update the document status if needed
       });
 
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('$documentName uploaded locally')),
       );
     } catch (e) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to upload $documentName: $e')),
       );
