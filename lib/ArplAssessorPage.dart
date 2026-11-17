@@ -2155,6 +2155,7 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
                               DataCell(
                                 ElevatedButton(
                                   onPressed: () {
+                                    if (!context.mounted) return;
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(

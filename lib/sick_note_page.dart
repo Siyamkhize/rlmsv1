@@ -151,6 +151,7 @@ class _SickNotePageState extends State<SickNotePage> {
       },
       builder: (context, child) {
         return Theme(
+          if (!context.mounted) return;
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
               primary: Color(0xFF006341),
@@ -231,6 +232,7 @@ class _SickNotePageState extends State<SickNotePage> {
       },
       builder: (context, child) {
         return Theme(
+          if (!context.mounted) return;
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
               primary: Color(0xFF006341),

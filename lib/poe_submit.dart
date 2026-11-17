@@ -688,6 +688,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
                   'Timeout waiting for fingerprint. Please try again.';
             }
 
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(errorMessage),

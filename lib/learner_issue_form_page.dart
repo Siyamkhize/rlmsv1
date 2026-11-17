@@ -1922,6 +1922,7 @@ if (!context.mounted) return;
         ),
         actions: [
           TextButton(
+            if (!context.mounted) return;
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Cancel'),
           ),

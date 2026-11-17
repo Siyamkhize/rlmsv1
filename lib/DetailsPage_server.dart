@@ -1824,6 +1824,7 @@ class _POETabContentState extends State<POETabContent> {
           errorMessage = 'Timeout waiting for fingerprint. Please try again.';
         }
 
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),

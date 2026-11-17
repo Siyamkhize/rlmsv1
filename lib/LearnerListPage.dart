@@ -308,6 +308,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
       debugPrint(
           '[LEARNER_LIST] Loaded ${widget.learners.length} clocked-in learners for today');
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading clocked-in learners: $e')),
       );

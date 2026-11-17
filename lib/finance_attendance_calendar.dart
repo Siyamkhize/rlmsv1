@@ -207,6 +207,7 @@ class _FinanceAttendanceCalendarState extends State<FinanceAttendanceCalendar> {
               ),
               actions: [
                 TextButton(
+                  if (!context.mounted) return;
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Cancel'),
                 ),

@@ -235,6 +235,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
       }
     } catch (e) {
       debugPrint('Error loading single learner: $e');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading learner data: $e')),
       );
@@ -500,6 +501,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
           _currentLearnerIdForClocking = null;
           _currentClockingAction = null;
         });
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -724,6 +726,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
           _currentLearnerIdForClocking = null;
           _currentClockingAction = null;
         });
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(

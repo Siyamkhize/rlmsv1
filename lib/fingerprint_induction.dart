@@ -286,6 +286,7 @@ class _InductionPageState extends State<InductionPage> {
         }
       });
     } catch (e) {
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading offline learners: $e')),
       );
@@ -551,6 +552,7 @@ class _InductionPageState extends State<InductionPage> {
           _currentLearnerIdForClocking = null;
           _currentClockingAction = null;
         });
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -775,6 +777,7 @@ class _InductionPageState extends State<InductionPage> {
           _currentLearnerIdForClocking = null;
           _currentClockingAction = null;
         });
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(

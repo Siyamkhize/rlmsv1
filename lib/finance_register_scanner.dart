@@ -369,6 +369,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
               ),
               actions: [
                 TextButton(
+                  if (!context.mounted) return;
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Cancel'),
                 ),

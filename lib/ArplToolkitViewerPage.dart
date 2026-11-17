@@ -568,6 +568,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
         _isEditing = false;
       });
 
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('✓ Changes saved successfully'),

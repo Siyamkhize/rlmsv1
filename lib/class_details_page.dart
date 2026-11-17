@@ -121,6 +121,7 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
                 enrichedClassData); // Save data locally for offline use
           } else {
             // Show error message from the API response
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(jsonResponse['message'])),
             );

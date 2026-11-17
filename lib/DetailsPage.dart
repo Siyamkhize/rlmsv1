@@ -593,6 +593,7 @@ class _POETabContentState extends State<POETabContent> {
           'Manual mark all logbook complete: $markedCount items linked to document: $existingDocumentPath');
     } catch (e, stackTrace) {
       debugPrint('Error in _manualMarkAllLogBook: $e\nStackTrace: $stackTrace');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -724,6 +725,7 @@ class _POETabContentState extends State<POETabContent> {
     } catch (e, stackTrace) {
       debugPrint(
           'Error in _manualMarkAllSummative: $e\nStackTrace: $stackTrace');
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -797,6 +799,7 @@ class _POETabContentState extends State<POETabContent> {
 
     if (currentFile == null) {
       debugPrint('Error: No valid file after compression');
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Image compression failed. Please try again.')),
@@ -806,6 +809,7 @@ class _POETabContentState extends State<POETabContent> {
 
     if (currentSize > maxSizeBytes) {
       debugPrint('Image too large after compression: $currentSize bytes');
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
@@ -1982,6 +1986,7 @@ class _POETabContentState extends State<POETabContent> {
           errorMessage = 'Timeout waiting for fingerprint. Please try again.';
         }
 
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
