@@ -28,7 +28,8 @@ class _WorkExperienceFormState extends State<WorkExperienceForm> {
   Future<void> _loadWorkExperiences() async {
     setState(() => _isLoading = true);
     try {
-      final experiences = await DatabaseHelper().getWorkExperiences(widget.learnerID);
+      final experiences =
+          await DatabaseHelper().getWorkExperiences(widget.learnerID);
       setState(() {
         _workExperiences = experiences;
         _isLoading = false;
@@ -75,10 +76,10 @@ class _WorkExperienceFormState extends State<WorkExperienceForm> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Work Experience'),
-        content: const Text('Are you sure you want to delete this work experience?'),
+        content:
+            const Text('Are you sure you want to delete this work experience?'),
         actions: [
           TextButton(
-            if (!context.mounted) return;
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
@@ -113,8 +114,8 @@ class _WorkExperienceFormState extends State<WorkExperienceForm> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _workExperiences.isEmpty
-          ? _buildEmptyState()
-          : _buildExperienceList(),
+              ? _buildEmptyState()
+              : _buildExperienceList(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addNewExperience,
         icon: const Icon(Icons.add),
@@ -194,7 +195,8 @@ class _WorkExperienceFormState extends State<WorkExperienceForm> {
                     Icons.calendar_today,
                     '${_formatDate(exp['period_from'])} - ${_formatDate(exp['period_to'])}',
                   ),
-                  if (exp['responsibilities'] != null && exp['responsibilities'].toString().isNotEmpty) ...[
+                  if (exp['responsibilities'] != null &&
+                      exp['responsibilities'].toString().isNotEmpty) ...[
                     const SizedBox(height: 8),
                     const Text(
                       'Responsibilities:',
@@ -215,14 +217,16 @@ class _WorkExperienceFormState extends State<WorkExperienceForm> {
                       Icon(
                         exp['synced'] == 1 ? Icons.cloud_done : Icons.cloud_off,
                         size: 16,
-                        color: exp['synced'] == 1 ? Colors.green : Colors.orange,
+                        color:
+                            exp['synced'] == 1 ? Colors.green : Colors.orange,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         exp['synced'] == 1 ? 'Synced' : 'Not synced',
                         style: TextStyle(
                           fontSize: 12,
-                          color: exp['synced'] == 1 ? Colors.green : Colors.orange,
+                          color:
+                              exp['synced'] == 1 ? Colors.green : Colors.orange,
                         ),
                       ),
                     ],
@@ -291,8 +295,9 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
     if (widget.experience != null) {
       _employerNameController.text = widget.experience!['employer_name'] ?? '';
       _positionController.text = widget.experience!['position_held'] ?? '';
-      _responsibilitiesController.text = widget.experience!['responsibilities'] ?? '';
-      
+      _responsibilitiesController.text =
+          widget.experience!['responsibilities'] ?? '';
+
       if (widget.experience!['period_from'] != null) {
         _periodFrom = DateTime.parse(widget.experience!['period_from']);
       }
@@ -313,7 +318,9 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
   Future<void> _selectDate(BuildContext context, bool isFrom) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: isFrom ? (_periodFrom ?? DateTime.now()) : (_periodTo ?? DateTime.now()),
+      initialDate: isFrom
+          ? (_periodFrom ?? DateTime.now())
+          : (_periodTo ?? DateTime.now()),
       firstDate: DateTime(1950),
       lastDate: DateTime.now(),
     );
@@ -381,18 +388,20 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
       // Try to sync to server if online
       bool isOnline = await _checkConnectivity();
       debugPrint('[WORK_EXP] Connectivity check: $isOnline');
-      
+
       if (isOnline) {
         try {
           final url = '${AppConfig.baseUrl}/save_work_experience.php';
           debugPrint('[WORK_EXP] Syncing to: $url');
           debugPrint('[WORK_EXP] Data: ${jsonEncode(experienceData)}');
-          
-          final response = await http.post(
-            Uri.parse(url),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode(experienceData),
-          ).timeout(const Duration(seconds: 30));
+
+          final response = await http
+              .post(
+                Uri.parse(url),
+                headers: {'Content-Type': 'application/json'},
+                body: jsonEncode(experienceData),
+              )
+              .timeout(const Duration(seconds: 30));
 
           debugPrint('[WORK_EXP] Response status: ${response.statusCode}');
           debugPrint('[WORK_EXP] Response body: ${response.body}');
@@ -410,11 +419,13 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
                 ),
               );
             } else {
-              debugPrint('[WORK_EXP] Server returned success=false: ${jsonResponse['message']}');
+              debugPrint(
+                  '[WORK_EXP] Server returned success=false: ${jsonResponse['message']}');
               if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Saved locally. Server: ${jsonResponse['message']}'),
+                  content:
+                      Text('Saved locally. Server: ${jsonResponse['message']}'),
                   backgroundColor: Colors.orange,
                 ),
               );
@@ -424,7 +435,8 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Saved locally. Server error: ${response.statusCode}'),
+                content:
+                    Text('Saved locally. Server error: ${response.statusCode}'),
                 backgroundColor: Colors.orange,
               ),
             );
@@ -435,7 +447,8 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Saved locally. Sync error: ${e.toString().substring(0, 50)}...'),
+              content: Text(
+                  'Saved locally. Sync error: ${e.toString().substring(0, 50)}...'),
               backgroundColor: Colors.orange,
               duration: const Duration(seconds: 5),
             ),
@@ -469,7 +482,9 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.experience != null ? 'Edit Work Experience' : 'Add Work Experience'),
+        title: Text(widget.experience != null
+            ? 'Edit Work Experience'
+            : 'Add Work Experience'),
         actions: [
           if (_isSaving)
             const Center(
@@ -549,10 +564,13 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
                               ),
                               child: Text(
                                 _periodFrom != null
-                                    ? DateFormat('dd MMM yyyy').format(_periodFrom!)
+                                    ? DateFormat('dd MMM yyyy')
+                                        .format(_periodFrom!)
                                     : 'Select date',
                                 style: TextStyle(
-                                  color: _periodFrom != null ? Colors.black : Colors.grey,
+                                  color: _periodFrom != null
+                                      ? Colors.black
+                                      : Colors.grey,
                                 ),
                               ),
                             ),
@@ -570,10 +588,13 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
                               ),
                               child: Text(
                                 _periodTo != null
-                                    ? DateFormat('dd MMM yyyy').format(_periodTo!)
+                                    ? DateFormat('dd MMM yyyy')
+                                        .format(_periodTo!)
                                     : 'Select date',
                                 style: TextStyle(
-                                  color: _periodTo != null ? Colors.black : Colors.grey,
+                                  color: _periodTo != null
+                                      ? Colors.black
+                                      : Colors.grey,
                                 ),
                               ),
                             ),
@@ -606,7 +627,9 @@ class _WorkExperienceEditPageState extends State<WorkExperienceEditPage> {
             ElevatedButton.icon(
               onPressed: _isSaving ? null : _saveExperience,
               icon: const Icon(Icons.save),
-              label: Text(widget.experience != null ? 'Update Experience' : 'Save Experience'),
+              label: Text(widget.experience != null
+                  ? 'Update Experience'
+                  : 'Save Experience'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 backgroundColor: Colors.blue,

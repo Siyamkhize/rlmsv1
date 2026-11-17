@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'dart:math';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -587,12 +587,10 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
           ),
           actions: [
             TextButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
@@ -702,12 +700,10 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
                   'Continue with this scan?'),
               actions: [
                 TextButton(
-                  if (!context.mounted) return;
                   onPressed: () => Navigator.pop(context, false),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  if (!context.mounted) return;
                   onPressed: () => Navigator.pop(context, true),
                   style:
                       ElevatedButton.styleFrom(backgroundColor: Colors.orange),

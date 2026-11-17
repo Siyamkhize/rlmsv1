@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -735,7 +735,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           isLoading = false;
         });
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No learner data found')),
           );
@@ -748,7 +748,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           learnerData = {"message": "Error: $e"};
           isLoading = false;
         });
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading learner details: $e')),
         );
@@ -1030,7 +1030,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     debugPrint('Updating learner data for learner_id: ${widget.learnerID}');
     try {
       // Show loading indicator
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Updating learner data...')),
       );
@@ -1047,7 +1047,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         } else {
           await saveImageLocally(capturedImage!.path);
           if (mounted) {
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content:
@@ -1071,7 +1071,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         } else {
           await DatabaseHelper().saveSignatureLocally(
               widget.learnerID, signaturePath, 'signature');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Learner signature saved locally')),
           );
@@ -1090,7 +1090,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         } else {
           await DatabaseHelper().saveSignatureLocally(
               widget.learnerID, signaturePath, 'witness_signature');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Witness signature saved locally')),
           );
@@ -1106,7 +1106,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         } else {
           await DatabaseHelper().saveInitialsLocally(widget.learnerID,
               _learnerInitialsController.text, 'learner_initials');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Learner initials saved locally')),
           );
@@ -1122,7 +1122,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         } else {
           await DatabaseHelper().saveInitialsLocally(widget.learnerID,
               _witnessInitialsController.text, 'witness_initials');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Witness initials saved locally')),
           );
@@ -1134,7 +1134,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
       final isConnected = await _checkConnectivity();
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(isConnected
@@ -1146,7 +1146,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       }
     } catch (e) {
       debugPrint('Error updating data: $e');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error updating data: $e')),
       );
@@ -1516,7 +1516,6 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
     try {
       await showModalBottomSheet(
-        if (!context.mounted) return;
         context: context,
         isScrollControlled: true,
         isDismissible: true,
@@ -1549,7 +1548,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                   title: const Text('Choose from Gallery'),
                   subtitle: const Text('Select existing photo from gallery'),
                   onTap: () async {
-                    if (!context.mounted) return;
+                    if (!context.mounted) return null;
                     Navigator.pop(context);
                     // Add small delay to ensure modal is closed
                     await Future.delayed(const Duration(milliseconds: 300));
@@ -1566,7 +1565,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                         style: TextStyle(color: Colors.red)),
                     subtitle: const Text('Delete current profile photo'),
                     onTap: () {
-                      if (!context.mounted) return;
+                      if (!context.mounted) return null;
                       Navigator.pop(context);
                       _removePhoto();
                     },
@@ -1587,7 +1586,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     } catch (e) {
       debugPrint('Error showing image capture options: $e');
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error opening photo options: ${e.toString()}'),
@@ -2513,7 +2512,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       );
       await _downloadAndSaveWordDocument();
     } catch (e) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error downloading agreement: $e'),
@@ -2535,7 +2534,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           final jsonResponse = jsonDecode(response.body);
           if (jsonResponse.containsKey('error')) {
             debugPrint('Server error: ${jsonResponse['error']}');
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -2557,7 +2556,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         }
       } else {
         debugPrint('Failed to download agreement: HTTP ${response.statusCode}');
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -2566,7 +2565,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       }
     } catch (e) {
       debugPrint('Error downloading agreement: $e');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error downloading agreement: $e')),
       );
@@ -2608,7 +2607,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           debugPrint('$fieldName uploaded successfully');
         } else {
           debugPrint('$fieldName upload failed: ${jsonResponse['message']}');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text(
@@ -2619,7 +2618,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         }
       } else {
         debugPrint('Failed to upload $fieldName: HTTP ${response.statusCode}');
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -2630,7 +2629,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       }
     } catch (e) {
       debugPrint('Error uploading $fieldName: $e');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error uploading $fieldName: $e')),
       );
@@ -2658,7 +2657,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
           debugPrint('$fieldName uploaded successfully');
         } else {
           debugPrint('$fieldName upload failed: ${jsonResponse['message']}');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text(
@@ -2669,7 +2668,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         }
       } else {
         debugPrint('Failed to upload $fieldName: HTTP ${response.statusCode}');
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -2680,7 +2679,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       }
     } catch (e) {
       debugPrint('Error uploading $fieldName: $e');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error uploading $fieldName: $e')),
       );
@@ -2719,13 +2718,13 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                   } else {
                     await DatabaseHelper().saveSignatureLocally(
                         widget.learnerID, signaturePath, fieldName);
-                    if (!context.mounted) return;
+                    if (!context.mounted) return null;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('$fieldName saved locally')),
                     );
                   }
                   saved = true;
-                  if (!context.mounted) return;
+                  if (!context.mounted) return null;
                   Navigator.pop(context);
                 }
               }
@@ -2759,7 +2758,6 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         ),
         actions: [
           TextButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancel')),
           TextButton(
@@ -2771,13 +2769,13 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
                 } else {
                   await DatabaseHelper().saveInitialsLocally(
                       widget.learnerID, controller.text, fieldName);
-                  if (!context.mounted) return;
+                  if (!context.mounted) return null;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('$fieldName saved locally')),
                   );
                 }
                 saved = true;
-                if (!context.mounted) return;
+                if (!context.mounted) return null;
                 Navigator.pop(context);
               }
             },
@@ -2864,7 +2862,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         if (jsonResponse['success']) {
           debugPrint('Image uploaded successfully');
           if (mounted) {
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Profile image uploaded successfully!'),
@@ -2875,7 +2873,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
         } else {
           debugPrint('Image upload failed: ${jsonResponse['message']}');
           if (mounted) {
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content:
@@ -2889,7 +2887,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       } else {
         debugPrint('Failed to upload image: HTTP ${response.statusCode}');
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -2903,7 +2901,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
     } catch (e) {
       debugPrint('Error uploading image: $e');
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error uploading image: ${e.toString()}'),
@@ -2916,7 +2914,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       try {
         await saveImageLocally(imagePath);
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Image saved locally for later sync'),
@@ -2939,7 +2937,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
     if (!hasAccess) {
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_cameraManager.currentUser != null
@@ -2997,7 +2995,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
         if (mounted) {
           final isConnected = await _checkConnectivity();
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(isConnected
@@ -3015,7 +3013,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       debugPrint('Error capturing photo: $e');
 
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error capturing photo: ${e.toString()}'),
@@ -3039,7 +3037,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
     if (!hasAccess) {
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_cameraManager.currentUser != null
@@ -3084,7 +3082,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
 
             if (mounted) {
               final isConnected = await _checkConnectivity();
-              if (!context.mounted) return;
+              if (!context.mounted) return null;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(isConnected
@@ -3113,7 +3111,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       setState(() => capturedImage = null);
 
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error selecting image: ${e.toString()}'),
@@ -3136,7 +3134,7 @@ class _LearnerDetailsPageState extends State<LearnerDetailsPage>
       }
     });
 
-    if (!context.mounted) return;
+    if (!context.mounted) return null;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Photo removed'),
@@ -3215,11 +3213,11 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
   Future<void> _capturePhoto() async {
     try {
       final image = await widget.cameraController.takePicture();
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       Navigator.pop(context, image.path);
     } catch (e) {
       debugPrint('Error capturing photo: $e');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error capturing photo: $e')),
       );

@@ -141,8 +141,8 @@ class _ArplPracticalImageCapturePageState
   Future<void> _showCaptionDialog(String taskId, String imagePath) async {
     final TextEditingController captionController = TextEditingController();
 
+    if (!context.mounted) return;
     await showDialog(
-      if (!context.mounted) return;
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Add Caption'),
@@ -168,7 +168,6 @@ class _ArplPracticalImageCapturePageState
         ),
         actions: [
           TextButton(
-            if (!context.mounted) return;
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
@@ -261,12 +260,10 @@ class _ArplPracticalImageCapturePageState
         content: const Text('Are you sure you want to delete this image?'),
         actions: [
           TextButton(
-            if (!context.mounted) return;
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            if (!context.mounted) return;
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Delete'),
@@ -432,8 +429,8 @@ class _ArplPracticalImageCapturePageState
                                                 _deleteImage(taskId, image),
                                             icon: const Icon(Icons.delete),
                                             style: IconButton.styleFrom(
-                                              backgroundColor:
-                                                  Colors.red.withValues(alpha: 0.8),
+                                              backgroundColor: Colors.red
+                                                  .withValues(alpha: 0.8),
                                               foregroundColor: Colors.white,
                                             ),
                                           ),
@@ -446,8 +443,8 @@ class _ArplPracticalImageCapturePageState
                                             right: 0,
                                             child: Container(
                                               padding: const EdgeInsets.all(4),
-                                              color:
-                                                  Colors.black.withValues(alpha: 0.7),
+                                              color: Colors.black
+                                                  .withValues(alpha: 0.7),
                                               child: Text(
                                                 image['caption'],
                                                 style: const TextStyle(

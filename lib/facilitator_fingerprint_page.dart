@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:rlmss/services/fingerprint_service.dart';
 import 'package:rlmss/database_helper.dart';
@@ -245,7 +245,6 @@ class _FacilitatorFingerprintPageState
 
     if (!context.mounted) return;
     final hasScanner = await showDialog<bool>(
-      if (!context.mounted) return;
       context: context,
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
@@ -257,7 +256,6 @@ class _FacilitatorFingerprintPageState
           ),
           actions: [
             TextButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.of(dialogContext).pop(false),
               style: TextButton.styleFrom(
                 foregroundColor: Colors.orange,
@@ -265,7 +263,6 @@ class _FacilitatorFingerprintPageState
               child: const Text('No', style: TextStyle(fontSize: 16)),
             ),
             ElevatedButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.of(dialogContext).pop(true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
@@ -804,7 +801,6 @@ class _FacilitatorFingerprintPageState
           // Show dialog to ask if user wants to replace existing template
           if (!context.mounted) return;
           final shouldReplace = await showDialog<bool>(
-            if (!context.mounted) return;
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
@@ -813,12 +809,10 @@ class _FacilitatorFingerprintPageState
                     'This fingerprint matches your $matchedTemplate. Do you want to replace it with this new scan?'),
                 actions: [
                   TextButton(
-                    if (!context.mounted) return;
                     onPressed: () => Navigator.of(context).pop(false),
                     child: const Text('Cancel'),
                   ),
                   TextButton(
-                    if (!context.mounted) return;
                     onPressed: () => Navigator.of(context).pop(true),
                     child: const Text('Replace'),
                   ),

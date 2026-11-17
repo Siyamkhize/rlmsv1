@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'config.dart';
@@ -194,12 +194,10 @@ if (!context.mounted) return;
                   'Security questions are required for backup verification. Are you sure you want to exit?'),
               actions: [
                 TextButton(
-                  if (!context.mounted) return;
                   onPressed: () => Navigator.pop(context, false),
                   child: const Text('Continue Setup'),
                 ),
                 TextButton(
-                  if (!context.mounted) return;
                   onPressed: () => Navigator.pop(context, true),
                   child:
                       const Text('Exit', style: TextStyle(color: Colors.red)),

@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:signature/signature.dart';
@@ -870,7 +870,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
     final timeOk = await TimezoneValidator.ensureCorrectTime(context);
     if (!timeOk) {
       // User cancelled or time is wrong - block clock-in
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content:
@@ -884,7 +884,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
     // Check if learners are still loading
     if (_isLoadingLearners || _learners.isEmpty) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please wait, learners are still loading...'),
@@ -897,7 +897,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
     // Block if learner has already completed their day
     if (_hasLearnerCompletedDay(learnerId)) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -981,7 +981,6 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             if (mounted) {
               if (!context.mounted) return;
               final setupNow = await showDialog<bool>(
-                if (!context.mounted) return;
                 context: context,
                 barrierDismissible: false,
                 builder: (dialogContext) {
@@ -1022,12 +1021,10 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                     ),
                     actions: [
                       TextButton(
-                        if (!context.mounted) return;
                         onPressed: () => Navigator.of(dialogContext).pop(false),
                         child: const Text('Cancel'),
                       ),
                       ElevatedButton(
-                        if (!context.mounted) return;
                         onPressed: () => Navigator.of(dialogContext).pop(true),
                         style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.orange),
@@ -1079,7 +1076,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               if (setupComplete != true) {
                 debugPrint(
                     '[BACKUP_CLOCKIN] Security questions setup not completed - aborting clock-in');
-                if (!context.mounted) return;
+                if (!context.mounted) return null;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text(
@@ -1114,7 +1111,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         if (!enrolled) {
           debugPrint(
               '[BACKUP_CLOCKIN] ⚠️ Face enrollment CANCELLED by user - aborting clock-in');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -1152,7 +1149,6 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             if (mounted) {
               if (!context.mounted) return;
               final setupNow = await showDialog<bool>(
-                if (!context.mounted) return;
                 context: context,
                 barrierDismissible: false,
                 builder: (dialogContext) {
@@ -1171,12 +1167,10 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                     ),
                     actions: [
                       TextButton(
-                        if (!context.mounted) return;
                         onPressed: () => Navigator.of(dialogContext).pop(false),
                         child: const Text('Later'),
                       ),
                       ElevatedButton(
-                        if (!context.mounted) return;
                         onPressed: () => Navigator.of(dialogContext).pop(true),
                         style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blue),
@@ -1243,7 +1237,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           if (!securityVerified) {
             debugPrint(
                 '[BACKUP_CLOCKIN] Security questions verification CANCELLED by user - aborting clock-in');
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
@@ -1279,7 +1273,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       debugPrint(
           '[BACKUP_CLOCKIN] Signature capture result: ${signatureData != null ? "SUCCESS (${signatureData.length} chars)" : "NULL/CANCELLED"}');
       if (signatureData == null) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Signature is required for backup clock-in'),
@@ -1323,7 +1317,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       }
 
       // Success
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('✅ Clocked in successfully!'),
@@ -1332,7 +1326,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       );
     } catch (e) {
       debugPrint('[BACKUP_CLOCK_IN] Error: $e');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -1355,7 +1349,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
     // Check if learners are still loading
     if (_isLoadingLearners || _learners.isEmpty) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please wait, learners are still loading...'),
@@ -1393,7 +1387,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               '[BACKUP_CLOCKOUT] ❌ FACE VERIFICATION FAILED - WRONG PERSON!');
 
           if (mounted) {
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
@@ -1456,7 +1450,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       }
 
       // Success
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('✅ Clocked out successfully!'),
@@ -1465,7 +1459,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       );
     } catch (e) {
       debugPrint('[BACKUP_CLOCK_OUT] Error: $e');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -1551,7 +1545,6 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           ),
           actions: [
             TextButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.of(context).pop({'action': 'cancel'}),
               child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
             ),
@@ -1559,7 +1552,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               onPressed: () {
                 // Find first "Not Uploaded" document
                 final firstMissing = missingDocs.first;
-                if (!context.mounted) return;
+                if (!context.mounted) return false;
                 Navigator.of(context).pop({
                   'action': 'upload',
                   'document': firstMissing['name'],
@@ -1687,7 +1680,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                             if (status == 'Declined')
                               ElevatedButton.icon(
                                 onPressed: () =>
-                                    if (!context.mounted) return;
+                                    if (!context.mounted) return false;
                                     Navigator.of(dialogContext).pop({
                                   'action': 'reupload',
                                   'document': docName,
@@ -1991,7 +1984,6 @@ class _BackupClockInPageState extends State<BackupClockInPage>
     final TextEditingController idController = TextEditingController();
 
     final confirmed = await showDialog<bool>(
-      if (!context.mounted) return;
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
@@ -2020,7 +2012,6 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           ),
           actions: [
             TextButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.of(context).pop(false),
               child: const Text('Cancel'),
             ),
@@ -2033,11 +2024,11 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                 if (enteredId == idNumber) {
                   debugPrint(
                       '[VERIFY_LEARNER] ID MATCH! Closing dialog with TRUE');
-                  if (!context.mounted) return;
+                  if (!context.mounted) return false;
                   Navigator.of(context).pop(true);
                 } else {
                   debugPrint('[VERIFY_LEARNER] ID MISMATCH! Showing error');
-                  if (!context.mounted) return;
+                  if (!context.mounted) return false;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('ID number does not match!'),
@@ -2122,14 +2113,13 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               child: const Text('Clear'),
             ),
             TextButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.of(context).pop(null),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () async {
                 if (_signatureController.isEmpty) {
-                  if (!context.mounted) return;
+                  if (!context.mounted) return false;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Please provide a signature'),
@@ -2142,7 +2132,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                 final bytes = await _signatureController.toPngBytes();
                 if (bytes != null) {
                   final base64Signature = base64Encode(bytes);
-                  if (!context.mounted) return;
+                  if (!context.mounted) return false;
                   Navigator.of(context).pop(base64Signature);
                 }
               },
@@ -3209,7 +3199,6 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
     // Show prompt dialog
     final shouldSetup = await showDialog<bool>(
-      if (!context.mounted) return;
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
@@ -3258,12 +3247,10 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           ),
           actions: [
             TextButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.of(dialogContext).pop(false),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.of(dialogContext).pop(true),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
               child: const Text('Set Up Now'),
@@ -3317,7 +3304,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       final checkData = json.decode(checkResponse.body);
       if (checkData['success'] != true || checkData['question_count'] < 3) {
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content:
@@ -3340,7 +3327,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           questionData['questions'] == null ||
           questionData['questions'].isEmpty) {
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Could not retrieve security question'),
@@ -3359,7 +3346,6 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       final TextEditingController answerController = TextEditingController();
 
       final verified = await showDialog<bool>(
-        if (!context.mounted) return;
         context: context,
         barrierDismissible: false,
         builder: (dialogContext) {
@@ -3394,7 +3380,6 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             ),
             actions: [
               TextButton(
-                if (!context.mounted) return;
                 onPressed: () => Navigator.of(dialogContext).pop(false),
                 child: const Text('Cancel'),
               ),
@@ -3427,7 +3412,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
                     final verifyData = json.decode(verifyResponse.body);
                     if (verifyData['verified'] == true) {
-                      if (!context.mounted) return;
+                      if (!context.mounted) return false;
                       Navigator.of(dialogContext).pop(true);
                     } else {
                       ScaffoldMessenger.of(dialogContext).showSnackBar(
@@ -3457,7 +3442,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       if (verified == true) {
         debugPrint('[FACE] Security questions verified successfully');
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('✅ Identity verified via security questions'),
@@ -3472,7 +3457,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
     } catch (e) {
       debugPrint('[FACE] Error in security questions verification: $e');
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
@@ -3505,7 +3490,6 @@ class _BackupClockInPageState extends State<BackupClockInPage>
     try {
       // Show enrollment dialog
       final shouldEnroll = await showDialog<bool>(
-        if (!context.mounted) return;
         context: context,
         barrierDismissible: false,
         builder: (dialogContext) {
@@ -3514,7 +3498,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             onPopInvokedWithResult: (bool didPop, dynamic result) {
               if (!didPop) {
                 // When back button pressed, cancel and return to previous page
-                if (!context.mounted) return;
+                if (!context.mounted) return false;
                 Navigator.of(dialogContext).pop(false);
               }
             },
@@ -3566,12 +3550,10 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               ),
               actions: [
                 TextButton(
-                  if (!context.mounted) return;
                   onPressed: () => Navigator.of(dialogContext).pop(false),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  if (!context.mounted) return;
                   onPressed: () => Navigator.of(dialogContext).pop(true),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
                   child: const Text('Register Face'),
@@ -3604,7 +3586,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             onCapture: (imageFile, base64Image) {
               capturedImage = imageFile;
               capturedBase64 = base64Image;
-              if (!context.mounted) return;
+              if (!context.mounted) return false;
               Navigator.pop(context);
             },
             if (!context.mounted) return;
@@ -3616,7 +3598,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       if (capturedImage == null || capturedBase64 == null) {
         debugPrint('[FACE] Face capture cancelled or failed');
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Face capture cancelled'),
@@ -3629,7 +3611,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
       // Show processing dialog
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return false;
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -3652,9 +3634,9 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
       if (embedding == null) {
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return false;
           Navigator.pop(context); // Close processing dialog
-          if (!context.mounted) return;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -3685,7 +3667,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       debugPrint('[FACE] Local cache result: $cachedLocally');
 
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return false;
         Navigator.pop(context); // Close processing dialog
       }
 
@@ -3695,7 +3677,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             '[FACE] Enrollment successful (server: true, local: $cachedLocally)');
         _isFaceEnrolled = true;
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('✅ Face registered successfully!'),
@@ -3715,7 +3697,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             '[FACE] Server enrollment failed but local cache saved: $serverMsg');
         _isFaceEnrolled = true;
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -3742,7 +3724,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               '[FACE] Server returned "$serverMsg" but local cache=$cachedLocally — treating learner $learnerId as enrolled.');
           _isFaceEnrolled = true;
           if (mounted) {
-            if (!context.mounted) return;
+            if (!context.mounted) return false;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content:
@@ -3757,7 +3739,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         debugPrint(
             '[FACE] Enrollment failed (server: $serverMsg, local: $cachedLocally)');
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Enrollment failed: $serverMsg'),
@@ -3770,9 +3752,9 @@ class _BackupClockInPageState extends State<BackupClockInPage>
     } catch (e) {
       debugPrint('[FACE] Enrollment error: $e');
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return false;
         Navigator.pop(context); // Close any open dialogs
-        if (!context.mounted) return;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
@@ -3823,7 +3805,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             onCapture: (imageFile, base64Image) {
               capturedImage = imageFile;
               capturedBase64 = base64Image;
-              if (!context.mounted) return;
+              if (!context.mounted) return null;
               Navigator.pop(context);
             },
             if (!context.mounted) return;
@@ -3836,7 +3818,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         debugPrint(
             '[FACE] Verification attempt $_faceVerificationAttempts timed out after 45s → fall through to next attempt / security questions');
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -3856,7 +3838,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
       // Show processing dialog
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -3880,9 +3862,9 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
       if (embedding == null) {
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           Navigator.pop(context); // Close processing dialog
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -3928,7 +3910,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       }
 
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         Navigator.pop(context); // Close processing dialog
       }
 
@@ -3944,7 +3926,6 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
           // Show confirmation dialog
           final confirmed = await showDialog<bool>(
-            if (!context.mounted) return;
             context: context,
             barrierDismissible: false,
             builder: (context) => AlertDialog(
@@ -3987,7 +3968,6 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               ),
               actions: [
                 TextButton(
-                  if (!context.mounted) return;
                   onPressed: () => Navigator.of(context).pop(false),
                   child: const Text(
                     'NO',
@@ -3999,7 +3979,6 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                   ),
                 ),
                 ElevatedButton(
-                  if (!context.mounted) return;
                   onPressed: () => Navigator.of(context).pop(true),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
@@ -4024,7 +4003,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             debugPrint(
                 '[FACE] User rejected identity confirmation for: $fullName');
             if (mounted) {
-              if (!context.mounted) return;
+              if (!context.mounted) return null;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Clock-in cancelled - identity not confirmed'),
@@ -4055,7 +4034,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         _faceLogId =
             result['log_id']; // Store verification log ID (null if offline)
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(isOffline
@@ -4069,7 +4048,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       } else {
         debugPrint('[FACE] Verification failed: ${result['message']}');
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -4085,7 +4064,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
     // All 3 attempts failed
     debugPrint('[FACE] All 3 verification attempts failed');
     if (mounted) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -4102,7 +4081,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
   void _showErrorDialog(String title, String message) {
     if (!mounted) return;
 
-    if (!context.mounted) return;
+    if (!context.mounted) return null;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -4110,7 +4089,6 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         content: Text(message),
         actions: [
           TextButton(
-            if (!context.mounted) return;
             onPressed: () => Navigator.pop(context),
             child: const Text('OK'),
           ),

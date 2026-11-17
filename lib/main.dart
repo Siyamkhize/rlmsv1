@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -525,7 +525,7 @@ class _LoginPageState extends State<LoginPage> {
       debugPrint("Background sync completed successfully.");
 
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Background sync completed successfully')),
@@ -534,7 +534,7 @@ class _LoginPageState extends State<LoginPage> {
     } catch (syncError) {
       debugPrint("Background sync failed: $syncError");
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Background sync failed: $syncError')),
         );
@@ -812,12 +812,10 @@ class _LoginPageState extends State<LoginPage> {
               'No internet connection detected. Would you like to proceed with offline login?'),
           actions: [
             TextButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.of(context).pop(false),
               child: const Text('Cancel'),
             ),
             TextButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.of(context).pop(true),
               child: const Text('Proceed Offline'),
             ),
@@ -858,7 +856,7 @@ class _LoginPageState extends State<LoginPage> {
       // SDP users navigate to Projects page with full hierarchical data
       debugPrint('[NAVIGATION] Navigating SDP to Projects Page');
       final projects = data['projects'] ?? [];
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -872,7 +870,7 @@ class _LoginPageState extends State<LoginPage> {
     } else if (normalizedRole == 'finance') {
       // Finance role - navigate to finance dashboard
       debugPrint('[NAVIGATION] Navigating to Finance Dashboard');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -890,7 +888,7 @@ class _LoginPageState extends State<LoginPage> {
       final logisticsName = data['account_name']?.toString() ??
           _usernameController.text.split('@')[0];
 
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -907,7 +905,7 @@ class _LoginPageState extends State<LoginPage> {
         facilitatorId: facilitatorId,
         facilitatorName: 'Assessor',
         onSuccess: () {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -956,7 +954,7 @@ class _LoginPageState extends State<LoginPage> {
             if (!context.mounted) return;
 
             // Show message that enrollment is required
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Please enroll your fingerprints to continue'),
@@ -1001,7 +999,7 @@ class _LoginPageState extends State<LoginPage> {
             if (!context.mounted) return;
 
             // Show message that clock-in is required
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Please clock in to start your day'),
@@ -1042,7 +1040,7 @@ class _LoginPageState extends State<LoginPage> {
                 '[LOGIN] ARPL Assessor $facilitatorIdInt already clocked in at $clockInTime');
 
             if (context.mounted) {
-              if (!context.mounted) return;
+              if (!context.mounted) return null;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
@@ -1058,7 +1056,7 @@ class _LoginPageState extends State<LoginPage> {
           if (context.mounted) {
             debugPrint(
                 '[LOGIN] Proceeding to ARPL Assessor dashboard for $facilitatorIdInt');
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -1077,7 +1075,7 @@ class _LoginPageState extends State<LoginPage> {
         facilitatorId: facilitatorId,
         facilitatorName: 'Moderator',
         onSuccess: () {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -1096,7 +1094,7 @@ class _LoginPageState extends State<LoginPage> {
         facilitatorId: facilitatorId,
         facilitatorName: 'Facilitator',
         onSuccess: () {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -1131,7 +1129,7 @@ class _LoginPageState extends State<LoginPage> {
       
       // Navigate back to login page (replace the current route)
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginPage()),
           (route) => false,
@@ -1747,7 +1745,7 @@ class _LoginPageState extends State<LoginPage> {
             '[LOGIN] Facilitator $facilitatorIdInt has NOT clocked in today');
         // Show message that clock-in is required
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Please clock in to start your day'),
@@ -1799,7 +1797,7 @@ class _LoginPageState extends State<LoginPage> {
         debugPrint(
             '[LOGIN] Facilitator $facilitatorIdInt already clocked in at $clockInTime');
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -1851,7 +1849,7 @@ class _LoginPageState extends State<LoginPage> {
 
       // Show error
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -1867,7 +1865,6 @@ class _LoginPageState extends State<LoginPage> {
             ),
             actions: [
               TextButton(
-                if (!context.mounted) return;
                 onPressed: () => Navigator.pop(context),
                 child: const Text('OK'),
               ),
@@ -1925,7 +1922,6 @@ class _LoginPageState extends State<LoginPage> {
 
     if (!context.mounted) return;
     await showDialog(
-      if (!context.mounted) return;
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(
@@ -1971,7 +1967,7 @@ class _LoginPageState extends State<LoginPage> {
               TextButton(
                 onPressed: () {
                   // Close dialog and go to dashboard anyway
-                  if (!context.mounted) return;
+                  if (!context.mounted) return null;
                   Navigator.of(dialogContext).pop();
                   onComplete();
                 },
@@ -2034,13 +2030,13 @@ class _LoginPageState extends State<LoginPage> {
 
                     // Success - close dialog and proceed
                     if (dialogContext.mounted) {
-                      if (!context.mounted) return;
+                      if (!context.mounted) return null;
                       Navigator.of(dialogContext).pop();
                     }
 
                     // Show success message
                     if (context.mounted) {
-                      if (!context.mounted) return;
+                      if (!context.mounted) return null;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('✓ Clocked in successfully'),
@@ -2080,14 +2076,14 @@ class _LoginPageState extends State<LoginPage> {
 
   void _showError(String message) {
     if (mounted) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
   void _showFacilitatorsList(List<Map<String, dynamic>> facilitators) {
-    if (!context.mounted) return;
+    if (!context.mounted) return null;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -2107,7 +2103,7 @@ class _LoginPageState extends State<LoginPage> {
           TextButton(
             child: const Text('Close'),
             onPressed: () {
-              if (!context.mounted) return;
+              if (!context.mounted) return null;
               Navigator.of(context).pop();
             },
           ),

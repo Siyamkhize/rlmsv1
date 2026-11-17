@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
@@ -3635,7 +3635,6 @@ class _POETabState extends State<POETab> {
                 content: Text(errorMessage),
                 actions: [
                   TextButton(
-                    if (!context.mounted) return;
                     onPressed: () => Navigator.of(context).pop(),
                     child: const Text('OK'),
                   ),
@@ -3811,7 +3810,6 @@ class _POETabState extends State<POETab> {
                 ),
                 actions: [
                   TextButton(
-                    if (!context.mounted) return;
                     onPressed: () => Navigator.of(context).pop(),
                     child: const Text('Cancel'),
                   ),
@@ -6743,7 +6741,6 @@ class _PotholeChecklistLearnerListPageState
         content: const Text('How would you like to create the checklist?'),
         actions: [
           TextButton(
-            if (!context.mounted) return;
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),

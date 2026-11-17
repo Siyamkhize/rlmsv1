@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -308,7 +308,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
       debugPrint(
           '[LEARNER_LIST] Loaded ${widget.learners.length} clocked-in learners for today');
     } catch (e) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading clocked-in learners: $e')),
       );
@@ -354,21 +354,21 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
       if (result.isEmpty) {
         if (classes.isEmpty) {
           debugPrint('Class table is empty');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('No class data available in local database.')),
           );
         } else if (sites.isEmpty) {
           debugPrint('Sites table is empty');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('No site data available in local database.')),
           );
         } else {
           debugPrint('No matching class or site found for classID: $classID');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('No site coordinates found for class $classID.')),
@@ -383,7 +383,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
       if (siteLat == null || siteLon == null) {
         debugPrint(
             'Invalid site coordinates for classID: $classID, lat: ${result.first['latitude']}, lon: ${result.first['longitude']}');
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Invalid site coordinates in database.')),
@@ -399,7 +399,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
     } catch (e, stackTrace) {
       debugPrint(
           'Error checking site radius for classID $classID: $e\nStack trace: $stackTrace');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error checking location: $e')),
       );
@@ -563,7 +563,7 @@ if (!context.mounted) return;
           clockOutTimes[learnerID] = result['clock_out_time'] ?? '';
           contactTimes[learnerID] = result['contact_time'] ?? '';
         });
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result['message'] ?? 'Clock-in successful')),
         );
@@ -582,7 +582,7 @@ if (!context.mounted) return;
           e.toString().contains('empty response')) {
         debugPrint(
             'Server appears to be down. Consider falling back to offline mode.');
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -692,7 +692,7 @@ if (!context.mounted) return;
           clockOutTimes[learnerID] = result['clock_out_time'] ?? '';
           contactTimes[learnerID] = contactTime ?? '';
         });
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result['message'])),
         );
@@ -764,7 +764,7 @@ if (!context.mounted) return;
         clockInTimes[learnerID] = clockInTime;
       });
 
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Clock-in saved locally. Will sync when online.')),
@@ -772,7 +772,7 @@ if (!context.mounted) return;
     } catch (e, stackTrace) {
       debugPrint(
           'Offline clock-in error for learnerID: $learnerID: $e\nStack trace: $stackTrace');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving offline clock-in: $e')),
       );
@@ -791,7 +791,7 @@ if (!context.mounted) return;
       );
 
       if (existingRecords.isEmpty) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No clock-in record found for today.')),
         );
@@ -832,14 +832,14 @@ if (!context.mounted) return;
         }
       });
 
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Clock-out saved locally. Will sync when online.')),
       );
     } catch (e) {
       debugPrint('Offline clock-out error: $e');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving offline clock-out: $e')),
       );
@@ -895,10 +895,10 @@ if (!context.mounted) return;
                     ElevatedButton(
                       onPressed: () {
                         if (_signatureController.isNotEmpty) {
-                          if (!context.mounted) return;
+                          if (!context.mounted) return null;
                           Navigator.of(context).pop(true);
                         } else {
-                          if (!context.mounted) return;
+                          if (!context.mounted) return null;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                                 content: Text('Please provide a signature')),
@@ -929,7 +929,7 @@ if (!context.mounted) return;
       }
       return true;
     } catch (e) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error during clock-in: $e')),
       );
@@ -968,10 +968,10 @@ if (!context.mounted) return;
                   ElevatedButton(
                     onPressed: () {
                       if (_signatureController.isNotEmpty) {
-                        if (!context.mounted) return;
+                        if (!context.mounted) return null;
                         Navigator.of(context).pop(true);
                       } else {
-                        if (!context.mounted) return;
+                        if (!context.mounted) return null;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text('Please provide a signature')),
@@ -1001,7 +1001,7 @@ if (!context.mounted) return;
             DateFormat('yyyy-MM-dd').format(DateTime.now()));
       }
     } catch (e) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to record clock-out: $e')),
       );
@@ -1176,7 +1176,7 @@ if (!context.mounted) return;
                                             'Upload a sick note for this learner',
                                         child: ElevatedButton.icon(
                                           onPressed: () {
-                                            if (!context.mounted) return;
+                                            if (!context.mounted) return null;
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'config.dart';
@@ -289,12 +289,10 @@ class _FinanceRegisterHistoryState extends State<FinanceRegisterHistory> {
             'Are you sure you want to delete the register for $monthName $year?\n\nThis will also delete all attendance records for this month.'),
         actions: [
           TextButton(
-            if (!context.mounted) return;
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            if (!context.mounted) return;
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,

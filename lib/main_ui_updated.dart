@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -657,12 +657,10 @@ class _LoginPageState extends State<LoginPage> {
               'No internet connection detected. Would you like to proceed with offline login?'),
           actions: [
             TextButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.of(context).pop(false),
               child: const Text('Cancel'),
             ),
             TextButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.of(context).pop(true),
               child: const Text('Proceed Offline'),
             ),
@@ -1618,7 +1616,6 @@ class _LoginPageState extends State<LoginPage> {
 
     if (!context.mounted) return;
     await showDialog(
-      if (!context.mounted) return;
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(

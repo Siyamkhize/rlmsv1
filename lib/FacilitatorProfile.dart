@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -320,7 +320,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
               leading: const Icon(Icons.camera_alt),
               title: const Text('Take Photo'),
               onTap: () {
-                if (!context.mounted) return;
+                if (!context.mounted) return null;
                 Navigator.pop(context);
                 _getImage(ImageSource.camera);
               },
@@ -329,7 +329,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
               leading: const Icon(Icons.photo_library),
               title: const Text('Choose from Gallery'),
               onTap: () {
-                if (!context.mounted) return;
+                if (!context.mounted) return null;
                 Navigator.pop(context);
                 _getImage(ImageSource.gallery);
               },
@@ -380,7 +380,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
     showDialog(
       context: context,
       builder: (context) {
-        if (!context.mounted) return;
+        if (!context.mounted) return const SizedBox.shrink();
         final size = MediaQuery.of(context).size;
         return StatefulBuilder(
           builder: (context, setDialogState) {
@@ -434,7 +434,6 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                   child: const Text('Clear'),
                 ),
                 TextButton(
-                  if (!context.mounted) return;
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Cancel'),
                 ),
@@ -442,10 +441,10 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                   onPressed: () async {
                     if (_signatureController.isNotEmpty) {
                       await _saveSignature();
-                      if (!context.mounted) return;
+                      if (!context.mounted) return null;
                       Navigator.pop(context);
                     } else {
-                      if (!context.mounted) return;
+                      if (!context.mounted) return null;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Please provide a signature'),
@@ -497,7 +496,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
   Future<void> _saveChanges() async {
     try {
       // Show loading indicator
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Row(
@@ -518,7 +517,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       );
 
       if (!_formKey.currentState!.validate()) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Please fix validation errors'),
@@ -547,14 +546,14 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       });
       _refreshData();
 
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Changes saved successfully'),
             backgroundColor: Colors.green),
       );
     } catch (e) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error saving changes: ${e.toString()}'),
@@ -594,7 +593,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                   ? '${Config.baseUrl}/${data['image_url']}'
                   : null;
             });
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                   content: Text('Profile image uploaded successfully'),
@@ -608,7 +607,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       } catch (e) {
         attempt++;
         if (attempt == maxRetries) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('Failed to upload profile image: $e'),
@@ -625,7 +624,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
     if (!await Connectivity()
         .checkConnectivity()
         .then((r) => !r.contains(ConnectivityResult.none))) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('No internet connection'),
@@ -663,7 +662,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
         if (response.statusCode == 200) {
           final responseData = json.decode(response.body);
           if (responseData['success']) {
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                   content: Text('Data synced successfully'),
@@ -677,7 +676,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       } catch (e) {
         attempt++;
         if (attempt == maxRetries) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('Failed to sync data: $e'),
@@ -1512,7 +1511,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       } else {
         // Already clocked out today
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -1532,7 +1531,6 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                 ),
                 actions: [
                   ElevatedButton(
-                    if (!context.mounted) return;
                     onPressed: () => Navigator.of(context).pop(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
@@ -1550,7 +1548,6 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       // Not clocked in (shouldn't normally happen, but handle it)
       // Show dialog to choose between clocking or managing fingerprints
       final choice = await showDialog<String>(
-        if (!context.mounted) return;
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
@@ -1559,12 +1556,10 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                 'You haven\'t clocked in yet today. What would you like to do?'),
             actions: <Widget>[
               TextButton(
-                if (!context.mounted) return;
                 onPressed: () => Navigator.of(context).pop('cancel'),
                 child: const Text('Cancel'),
               ),
               ElevatedButton.icon(
-                if (!context.mounted) return;
                 onPressed: () => Navigator.of(context).pop('clock'),
                 icon: const Icon(Icons.access_time),
                 label: const Text('Clock In'),
@@ -1936,7 +1931,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       final daysUntilExpiry = picked.difference(now).inDays;
 
       if (daysUntilExpiry < 0) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -1946,7 +1941,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
           ),
         );
       } else if (daysUntilExpiry <= 30) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(

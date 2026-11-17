@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
@@ -475,7 +475,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         setState(() {
           fingerprintVerified = true;
         });
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('✅ Fingerprint verified successfully!'),
@@ -486,7 +486,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         // Show confirmation dialog before submitting
         await _showSubmitConfirmationDialog();
       } else {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('❌ Fingerprint verification failed'),
@@ -520,7 +520,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
 
       if (learnerId == 0) {
         debugPrint('[POE_SUBMIT] ❌ Invalid learner ID');
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Invalid learner ID. Cannot verify fingerprint.'),
@@ -533,7 +533,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       final learnerIdInt = int.tryParse(learnerId.toString());
       if (learnerIdInt == null) {
         debugPrint('[POE_SUBMIT] ❌ Invalid learner ID format');
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content:
@@ -568,7 +568,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
           !(hasFutLeft || hasFutRight) &&
           (hasZkLeft || hasZkRight)) {
         debugPrint('[POE_SUBMIT] ❌ Futronic scanner but only ZKTeco templates');
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -582,7 +582,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
           !(hasZkLeft || hasZkRight) &&
           (hasFutLeft || hasFutRight)) {
         debugPrint('[POE_SUBMIT] ❌ ZKTeco scanner but only Futronic templates');
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -605,7 +605,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
 
       if (template == null || template.isEmpty) {
         debugPrint('[POE_SUBMIT] ❌ No templates available');
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -692,7 +692,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
                   'Timeout waiting for fingerprint. Please try again.';
             }
 
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(errorMessage),
@@ -706,7 +706,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
           // No scanner detected - EXACT SAME AS CLOCK_IN_PAGE
           _hideProgressDialog();
           debugPrint('[POE_SUBMIT] ❌ No scanner detected');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -724,7 +724,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       } catch (e) {
         debugPrint('[POE_SUBMIT] Verification error: $e');
         _hideProgressDialog();
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Verification error: $e'),
@@ -736,7 +736,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
     } catch (e) {
       debugPrint('[POE_SUBMIT] Fingerprint verification error: $e');
       _hideProgressDialog();
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Verification error: $e'),
@@ -808,7 +808,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
 
   // Progress dialog methods from DetailsPage.dart
   void _showProgressDialog(String message) {
-    if (!context.mounted) return;
+    if (!context.mounted) return null;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -831,7 +831,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
   void _hideProgressDialog() {
     if (!context.mounted) return;
     if (Navigator.of(context).canPop()) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       Navigator.of(context).pop();
     }
   }
@@ -852,7 +852,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
 
     // Validate representative name is provided
     if (representativeController.text.trim().isEmpty) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Representative name is required'),
@@ -898,7 +898,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       final url = AppConfig.buildUrl('poe_collection_submit.php');
 
       // Step 1: Mark learner as received in material_receipt_form
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Row(
@@ -932,7 +932,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       );
 
       // Step 2: Submit the POE form data with signatures to material_forms
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Row(
@@ -983,7 +983,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         final formData = json.decode(formResponse.body);
 
         if (receiptData['success'] == true && formData['success'] == true) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('✅ POE collection completed successfully!'),
@@ -995,7 +995,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
           // Wait a moment for user to see success message, then navigate back
           await Future.delayed(const Duration(seconds: 2));
           if (mounted) {
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             Navigator.of(context).pop(true);
           }
         } else {
@@ -1026,7 +1026,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         errorMessage += e.toString();
       }
 
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
@@ -1056,7 +1056,6 @@ class _POESubmitPageState extends State<POESubmitPage> {
   // Show confirmation dialog after successful fingerprint verification
   Future<void> _showSubmitConfirmationDialog() async {
     final confirmed = await showDialog<bool>(
-      if (!context.mounted) return;
       context: context,
       barrierDismissible: false, // Prevent dismissing by tapping outside
       builder: (context) => AlertDialog(
@@ -1137,7 +1136,6 @@ class _POESubmitPageState extends State<POESubmitPage> {
         ),
         actions: [
           TextButton(
-            if (!context.mounted) return;
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text(
               'No, Cancel',
@@ -1145,7 +1143,6 @@ class _POESubmitPageState extends State<POESubmitPage> {
             ),
           ),
           ElevatedButton(
-            if (!context.mounted) return;
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
@@ -1162,7 +1159,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       await _autoSubmitPOECollection();
     } else {
       // User cancelled - show cancellation message
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('POE submission cancelled'),
@@ -1181,7 +1178,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content:
@@ -1199,7 +1196,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           if (mounted) {
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Location permissions are denied'),
@@ -1213,7 +1210,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
 
       if (permission == LocationPermission.deniedForever) {
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -1248,7 +1245,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
     } catch (e) {
       debugPrint('[POE_GEOFENCE] Error checking location: $e');
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error getting location: $e'),
@@ -1267,7 +1264,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       debugPrint(
           '[POE_GEOFENCE] Geolocation accuracy too low: $userAccuracy meters');
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content:
@@ -1299,7 +1296,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         if (classes.isEmpty) {
           debugPrint('[POE_GEOFENCE] Class table is empty');
           if (mounted) {
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                   content: Text('No class data available in local database.')),
@@ -1308,7 +1305,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         } else if (sites.isEmpty) {
           debugPrint('[POE_GEOFENCE] Sites table is empty');
           if (mounted) {
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                   content: Text('No site data available in local database.')),
@@ -1318,7 +1315,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
           debugPrint(
               '[POE_GEOFENCE] No matching class or site found for classID: $classID');
           if (mounted) {
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                   content:
@@ -1336,7 +1333,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         debugPrint(
             '[POE_GEOFENCE] Invalid site coordinates for classID: $classID, lat: ${result.first['latitude']}, lon: ${result.first['longitude']}');
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Invalid site coordinates in database.')),
@@ -1355,7 +1352,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       if (distance > 50) {
         // 50 meters radius
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -1375,7 +1372,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       debugPrint(
           '[POE_GEOFENCE] Error checking site radius for classID $classID: $e\nStack trace: $stackTrace');
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error checking location: $e')),
         );

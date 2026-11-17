@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -235,7 +235,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
       }
     } catch (e) {
       debugPrint('Error loading single learner: $e');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading learner data: $e')),
       );
@@ -261,7 +261,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
       double userLon, double userAccuracy) async {
     if (userAccuracy > 50) {
       debugPrint('Geolocation accuracy too low: $userAccuracy meters');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Geolocation accuracy too low. Please enable GPS.')),
@@ -288,21 +288,21 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
       if (result.isEmpty) {
         if (classes.isEmpty) {
           debugPrint('Class table is empty');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('No class data available in local database.')),
           );
         } else if (sites.isEmpty) {
           debugPrint('Sites table is empty');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('No site data available in local database.')),
           );
         } else {
           debugPrint('No matching class or site found for classID: $classID');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('No site coordinates found for class $classID.')),
@@ -317,7 +317,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
       if (siteLat == null || siteLon == null) {
         debugPrint(
             'Invalid site coordinates for classID: $classID, lat: ${result.first['latitude']}, lon: ${result.first['longitude']}');
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Invalid site coordinates in database.')),
@@ -329,7 +329,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
 
       debugPrint('Distance to site for classID $classID: $distance meters');
       if (distance > 100) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -341,7 +341,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
     } catch (e, stackTrace) {
       debugPrint(
           'Error checking site radius for classID $classID: $e\nStack trace: $stackTrace');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error checking location: $e')),
       );
@@ -372,7 +372,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
 
   Future<void> _verifyAndClockIn(String learnerId) async {
     if (_isClockingIn[learnerId] == true || _isInitializing) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(_isInitializing
@@ -384,7 +384,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
 
     // Check if learner has already clocked in using our state tracking
     if (_hasClockIn[learnerId] == true) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
@@ -408,7 +408,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
       setState(() {
         _hasClockIn[learnerId] = true;
       });
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
@@ -430,7 +430,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
           templates['futronic_right_template'];
     }
     if (template == null || template.isEmpty) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -439,7 +439,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
           action: SnackBarAction(
             label: 'Enroll',
             onPressed: () {
-              if (!context.mounted) return;
+              if (!context.mounted) return null;
               Navigator.pushNamed(context, '/enrollment',
                   arguments: {'learnerId': learnerId});
             },
@@ -510,7 +510,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
           _currentLearnerIdForClocking = null;
           _currentClockingAction = null;
         });
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -548,7 +548,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
         if (synced) {
           attendance['synced'] = 1;
           debugPrint('[INDUCTION_CLOCK_IN] Showing clock-in success SnackBar.');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Induction clock-in successful (synced)'),
@@ -556,7 +556,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
           );
         } else {
           debugPrint('[INDUCTION_CLOCK_IN] Showing clock-in offline SnackBar.');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Induction clock-in saved locally (offline)'),
@@ -587,7 +587,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
 
   Future<void> _verifyAndClockOut(String learnerId) async {
     if (_isClockingIn[learnerId] == true || _isInitializing) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(_isInitializing
@@ -599,7 +599,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
 
     // Check if learner has already clocked out using our state tracking
     if (_hasClockOut[learnerId] == true) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
@@ -611,7 +611,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
 
     // Check if learner has clocked in first
     if (_hasClockIn[learnerId] != true) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Please clock in first before clocking out.'),
@@ -625,7 +625,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
             learnerId, DateFormat('yyyy-MM-dd').format(DateTime.now()));
     if (existingAttendance == null ||
         existingAttendance['clock_in_time'] == null) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Please clock in first'),
@@ -640,7 +640,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
       setState(() {
         _hasClockOut[learnerId] = true;
       });
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('This learner has already clocked out.'),
@@ -661,7 +661,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
           templates['futronic_right_template'];
     }
     if (template == null || template.isEmpty) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -670,7 +670,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
           action: SnackBarAction(
             label: 'Enroll',
             onPressed: () {
-              if (!context.mounted) return;
+              if (!context.mounted) return null;
               Navigator.pushNamed(context, '/enrollment',
                   arguments: {'learnerId': learnerId});
             },
@@ -741,7 +741,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
           _currentLearnerIdForClocking = null;
           _currentClockingAction = null;
         });
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -791,7 +791,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
           };
           await DatabaseHelper()
               .updateInductionClocking(learnerId, date, updatedAttendance);
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Induction clock-out successful (synced)'),
@@ -806,7 +806,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
           };
           await DatabaseHelper()
               .updateInductionClocking(learnerId, date, updatedAttendance);
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Induction clock-out saved locally (offline)'),
@@ -852,7 +852,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
       );
       if (existingInduction.isNotEmpty &&
           existingInduction.first['clock_in_time'] != null) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('This learner is already inducted.'),
@@ -881,7 +881,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
         clockInTimes[learnerID] = clockInTime;
       });
 
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Clock-in saved locally. Will sync when online.')),
@@ -889,7 +889,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
     } catch (e, stackTrace) {
       debugPrint(
           'Offline clock-in error for learnerID: $learnerID: $e\nStack trace: $stackTrace');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving offline clock-in: $e')),
       );
@@ -909,7 +909,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
       );
 
       if (existingRecords.isEmpty) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No clock-in record found for today.')),
         );
@@ -945,14 +945,14 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
         }
       });
 
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Clock-out saved locally. Will sync when online.')),
       );
     } catch (e) {
       debugPrint('Offline clock-out error: $e');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving offline clock-out: $e')),
       );
@@ -1063,7 +1063,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
   }
 
   void _showProgressDialog(String message) {
-    if (!context.mounted) return;
+    if (!context.mounted) return null;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1086,7 +1086,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
   void _hideProgressDialog() {
     if (!context.mounted) return;
     if (Navigator.of(context).canPop()) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       Navigator.of(context).pop();
     }
   }
@@ -1120,7 +1120,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
                 icon: const Icon(Icons.refresh),
                 onPressed: () async {
                   // Fast sync for single learner
-                  if (!context.mounted) return;
+                  if (!context.mounted) return null;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Refreshing learner data...'),
@@ -1135,7 +1135,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
                     await _checkLearnerClockingStatus(widget.learnerID);
 
                     if (mounted) {
-                      if (!context.mounted) return;
+                      if (!context.mounted) return null;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Learner data refreshed'),

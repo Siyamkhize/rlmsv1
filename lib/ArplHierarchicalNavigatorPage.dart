@@ -1495,12 +1495,10 @@ class _ArplHierarchicalNavigatorPageState
         content: const Text('This will capture answers for all questions.'),
         actions: [
           TextButton(
-            if (!context.mounted) return;
             onPressed: () => Navigator.of(context).pop(ImageSource.camera),
             child: const Text('Open Camera'),
           ),
           TextButton(
-            if (!context.mounted) return;
             onPressed: () => Navigator.of(context).pop(null),
             child: const Text('Cancel'),
           ),

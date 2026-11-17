@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'config.dart';
@@ -117,7 +117,7 @@ class _FinanceAttendanceCalendarState extends State<FinanceAttendanceCalendar> {
         final data = json.decode(response.body);
 
         if (data['success'] == true) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Attendance saved successfully!'),
@@ -142,7 +142,7 @@ class _FinanceAttendanceCalendarState extends State<FinanceAttendanceCalendar> {
       });
 
       debugPrint('Error saving attendance: $e');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -209,7 +209,6 @@ class _FinanceAttendanceCalendarState extends State<FinanceAttendanceCalendar> {
               ),
               actions: [
                 TextButton(
-                  if (!context.mounted) return;
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Cancel'),
                 ),
@@ -217,7 +216,7 @@ class _FinanceAttendanceCalendarState extends State<FinanceAttendanceCalendar> {
                   onPressed: () {
                     selectedDate =
                         DateTime(selectedYear, selectedMonthValue, 1);
-                    if (!context.mounted) return;
+                    if (!context.mounted) return null;
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(

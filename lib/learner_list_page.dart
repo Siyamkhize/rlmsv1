@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -276,7 +276,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
         // Show a notification after a short delay to let the UI load
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -287,7 +287,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
                   onPressed: () async {
                     await _syncLocalLearnersToServer();
                     await fetchLearnersData();
-                    if (!context.mounted) return;
+                    if (!context.mounted) return null;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Sync completed')),
                     );
@@ -361,7 +361,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
     } catch (e) {
       debugPrint('Error fetching server data: $e');
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Loading from local database (offline)'),
@@ -596,7 +596,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
           'Fingerprint templates are preserved from local database if they exist');
       debugPrint('=== END SYNC SUMMARY ===');
 
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
@@ -605,7 +605,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
     } catch (e) {
       debugPrint('Error saving learners to local database: $e');
       debugPrint('Stack trace: ${StackTrace.current}');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving to local database: $e')),
       );
@@ -656,7 +656,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
       _filterLearners();
 
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -669,7 +669,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
     } catch (e) {
       debugPrint('[LEARNER_LIST] Error loading local data: $e');
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading local data: $e')),
         );
@@ -703,7 +703,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
         debugPrint('[LEARNER_LIST] Offline - loading from local database');
         await loadLearnersFromLocalDatabase();
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Offline mode - showing cached data'),
@@ -720,7 +720,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
         debugPrint('[LEARNER_LIST] Error occurred, falling back to local database');
         await loadLearnersFromLocalDatabase();
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Loading from local database'),
@@ -732,7 +732,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
       } catch (localError) {
         debugPrint('Error loading local data: $localError');
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error loading data: $e')),
           );
@@ -1257,7 +1257,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
 
   Future<void> syncUnsyncedDocuments() async {
     if (!await _checkConnectivity()) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No internet connection, cannot sync')),
       );
@@ -1274,7 +1274,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
       }
 
       if (unsyncedDocs.isNotEmpty) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content:
@@ -1284,7 +1284,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
 
       setState(() {});
     } catch (e) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error syncing documents: $e')),
       );
@@ -1310,12 +1310,12 @@ class _LearnerListPageState extends State<LearnerListPage> {
         // No need to reload all learners, just update the document status if needed
       });
 
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('$documentName uploaded locally')),
       );
     } catch (e) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to upload $documentName: $e')),
       );
@@ -1326,7 +1326,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
   void showDocumentUploadModal(BuildContext context, String learnerId) {
     String? selectedDocument;
 
-    if (!context.mounted) return;
+    if (!context.mounted) return null;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -1365,7 +1365,6 @@ class _LearnerListPageState extends State<LearnerListPage> {
                     ),
                     actions: [
                       TextButton(
-                        if (!context.mounted) return;
                         onPressed: () => Navigator.pop(context),
                         child: const Text('OK'),
                       ),
@@ -1417,7 +1416,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
                                 final status =
                                     await Permission.camera.request();
                                 if (!status.isGranted) {
-                                  if (!context.mounted) return;
+                                  if (!context.mounted) return null;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(
@@ -1459,12 +1458,12 @@ class _LearnerListPageState extends State<LearnerListPage> {
                                 await uploadDocument(
                                     learnerId, selectedDocument!, pdfPath);
                                 // Avoid full refresh, just close the dialog
-                                if (!context.mounted) return;
+                                if (!context.mounted) return null;
                                 Navigator.pop(context);
                                 // Refresh document status
                                 refreshDocumentStatus();
                               } catch (e) {
-                                if (!context.mounted) return;
+                                if (!context.mounted) return null;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                       content:
@@ -1497,7 +1496,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
             onPressed: () async {
               await _syncLocalLearnersToServer();
               await fetchLearnersData(); // Refresh the list after sync
-              if (!context.mounted) return;
+              if (!context.mounted) return null;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Sync completed')),
               );
@@ -1611,7 +1610,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
                                         return ElevatedButton(
                                           onPressed: hasDocuments
                                               ? () {
-                                                  if (!context.mounted) return;
+                                                  if (!context.mounted) return null;
                                                   Navigator.push(
                                                     context,
                                                     MaterialPageRoute(
@@ -1666,7 +1665,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
                                         final learnerName =
                                             '${learner.surname ?? ''} ${learner.name ?? ''}'
                                                 .trim();
-                                        if (!context.mounted) return;
+                                        if (!context.mounted) return null;
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -2494,7 +2493,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
                       final success =
                           await _submitLearnerData(context, learnerData);
                       if (success) {
-                        if (!context.mounted) return;
+                        if (!context.mounted) return null;
                         Navigator.pop(context, true);
                       }
                     }
@@ -2637,7 +2636,6 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
             // Learner exists in same project - show confirmation dialog
             if (!context.mounted) return;
             final shouldUpdate = await showDialog<bool>(
-              if (!context.mounted) return;
               context: context,
               barrierDismissible: false,
               builder: (BuildContext dialogContext) {
@@ -2683,7 +2681,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
               });
 
               if (mounted) {
-                if (!context.mounted) return;
+                if (!context.mounted) return null;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Changes discarded'),
@@ -2727,7 +2725,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
               });
 
               if (mounted) {
-                if (!context.mounted) return;
+                if (!context.mounted) return null;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text(
@@ -2802,7 +2800,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
         if (id > 0) {
           await dbHelper.syncBankDetails();
           if (mounted) {
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -2814,7 +2812,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           return true;
         } else {
           if (mounted) {
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Failed to save learner locally')),
             );
@@ -2867,7 +2865,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
     } catch (e) {
       debugPrint('Submission error: $e');
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error saving data: $e')),
         );
@@ -2895,14 +2893,14 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
       if (response.statusCode == 200) {
         try {
           final responseData = json.decode(response.body);
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(responseData['message'] ?? 'Success')),
           );
           return responseData['success'] == true;
         } catch (e) {
           debugPrint('JSON parse error: $e');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('Invalid server response: ${response.body}')),
@@ -2910,7 +2908,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           return false;
         }
       } else {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -2920,7 +2918,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
       }
     } catch (e) {
       debugPrint('Network error: $e');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Network error: $e')),
       );
@@ -2948,7 +2946,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
         try {
           final responseData = json.decode(response.body);
           if (responseData['success'] == true) {
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(responseData['message'] ?? 'Success')),
             );
@@ -2961,7 +2959,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
               'message': responseData['message'] ?? 'Success'
             };
           } else {
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                   content:
@@ -2974,7 +2972,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           }
         } catch (e) {
           debugPrint('JSON parse error: $e');
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('Invalid server response: ${response.body}')),
@@ -2982,7 +2980,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           return {'success': false, 'message': 'Invalid server response'};
         }
       } else {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -2995,7 +2993,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
       }
     } catch (e) {
       debugPrint('Network error: $e');
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Network error: $e')),
       );

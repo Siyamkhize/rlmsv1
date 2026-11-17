@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -169,7 +169,7 @@ class _SickNotePageState extends State<SickNotePage> {
 
       // Validate again
       if (!_validDates.contains(pickedStr)) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -194,7 +194,7 @@ class _SickNotePageState extends State<SickNotePage> {
   /// Select Date To with validation
   Future<void> _selectDateTo() async {
     if (_selectedDateFrom == null) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select Date From first'),
@@ -205,7 +205,7 @@ class _SickNotePageState extends State<SickNotePage> {
     }
 
     if (_validDates.isEmpty) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('No valid dates available'),
@@ -253,7 +253,7 @@ class _SickNotePageState extends State<SickNotePage> {
 
       // Validate
       if (!_validDates.contains(pickedStr)) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -283,7 +283,7 @@ class _SickNotePageState extends State<SickNotePage> {
       status = await Permission.camera.request();
       if (!status.isGranted) {
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Camera permission denied'),
@@ -301,7 +301,7 @@ class _SickNotePageState extends State<SickNotePage> {
 
     if (!hasAccess) {
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -329,7 +329,7 @@ class _SickNotePageState extends State<SickNotePage> {
           !scanResult.containsKey('pdfUri') ||
           scanResult['pdfUri'] == null) {
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Scanner returned invalid data'),
@@ -345,7 +345,7 @@ class _SickNotePageState extends State<SickNotePage> {
 
       if (file == null || !await isReadablePdfFile(file)) {
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Scanner returned unreadable file. Try again.'),
@@ -363,7 +363,7 @@ class _SickNotePageState extends State<SickNotePage> {
       });
 
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Document scanned successfully!'),
@@ -373,7 +373,7 @@ class _SickNotePageState extends State<SickNotePage> {
       }
     } catch (e) {
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Scan error: $e'),
@@ -393,7 +393,7 @@ class _SickNotePageState extends State<SickNotePage> {
   /// Validate form
   bool _validateForm() {
     if (_practitionerNameController.text.trim().isEmpty) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter medical practitioner name'),
@@ -404,7 +404,7 @@ class _SickNotePageState extends State<SickNotePage> {
     }
 
     if (_selectedDateFrom == null) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select Date From'),
@@ -415,7 +415,7 @@ class _SickNotePageState extends State<SickNotePage> {
     }
 
     if (_selectedDateTo == null) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select Date To'),
@@ -426,7 +426,7 @@ class _SickNotePageState extends State<SickNotePage> {
     }
 
     if (_scannedPdf == null) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please scan sick note document'),
@@ -439,7 +439,7 @@ class _SickNotePageState extends State<SickNotePage> {
     // Validate file size (max 10MB)
     final fileSizeInMB = _scannedPdf!.lengthSync() / (1024 * 1024);
     if (fileSizeInMB > 10) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('File size must be less than 10MB'),
@@ -483,7 +483,7 @@ class _SickNotePageState extends State<SickNotePage> {
 
         if (data['status'] == 'success') {
           if (mounted) {
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             showDialog(
               context: context,
               barrierDismissible: false,
@@ -500,9 +500,9 @@ class _SickNotePageState extends State<SickNotePage> {
                 actions: [
                   TextButton(
                     onPressed: () {
-                      if (!context.mounted) return;
+                      if (!context.mounted) return null;
                       Navigator.of(context).pop();
-                      if (!context.mounted) return;
+                      if (!context.mounted) return null;
                       Navigator.of(context).pop();
                     },
                     child: const Text('OK'),
@@ -513,7 +513,7 @@ class _SickNotePageState extends State<SickNotePage> {
           }
         } else {
           if (mounted) {
-            if (!context.mounted) return;
+            if (!context.mounted) return null;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(data['message'] ?? 'Submission failed'),
@@ -525,7 +525,7 @@ class _SickNotePageState extends State<SickNotePage> {
         }
       } else {
         if (mounted) {
-          if (!context.mounted) return;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Server error: ${response.statusCode}'),
@@ -536,7 +536,7 @@ class _SickNotePageState extends State<SickNotePage> {
       }
     } catch (e) {
       if (mounted) {
-        if (!context.mounted) return;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),

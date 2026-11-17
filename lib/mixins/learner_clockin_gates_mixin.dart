@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -14,7 +14,7 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
   Future<bool> ensureLearnerProfileCompleteForClockIn(String learnerId) async {
     final learner = await fetchLearnerForClockInValidation(learnerId);
     if (learner == null) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Could not load learner profile. Please try again.'),
@@ -31,7 +31,7 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
     }
 
     if (int.tryParse(learnerId) == null) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Invalid learner ID for profile completion.'),
@@ -42,7 +42,6 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
     }
 
     final shouldOpenProfile = await showDialog<bool>(
-      if (!context.mounted) return;
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
@@ -78,12 +77,10 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
           ),
           actions: [
             TextButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.of(dialogContext).pop(false),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.of(dialogContext).pop(true),
               child: const Text('Open Profile'),
             ),
@@ -124,7 +121,7 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
     );
 
     if (refreshedMissing.isNotEmpty) {
-      if (!context.mounted) return;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

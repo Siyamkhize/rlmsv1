@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -596,7 +596,6 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
         content: const Text('How would you like to create the checklist?'),
         actions: [
           TextButton(
-            if (!context.mounted) return;
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
@@ -658,7 +657,6 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
           ),
           actions: [
             TextButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
@@ -694,7 +692,6 @@ class _PotholeChecklistPageState extends State<PotholeChecklistPage> {
           content: const Text('How would you like to create the checklist?'),
           actions: [
             TextButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),

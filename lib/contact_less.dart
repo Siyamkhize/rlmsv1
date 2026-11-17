@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -361,7 +361,6 @@ class _ContactlessClockInPageState extends State<ContactlessClockInPage> {
             'The fingerprint template for learner $learnerId is invalid and cannot be used for verification.\n\nPlease choose an option to resolve this issue:'),
         actions: [
           TextButton(
-            if (!context.mounted) return;
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),

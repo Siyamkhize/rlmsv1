@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -534,7 +534,6 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
                     ),
                     actions: [
                       TextButton(
-                        if (!context.mounted) return;
                         onPressed: () => Navigator.pop(context),
                         child: const Text('OK'),
                       ),
@@ -574,7 +573,6 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
                   ),
                   actions: [
                     TextButton(
-                      if (!context.mounted) return;
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Cancel'),
                     ),

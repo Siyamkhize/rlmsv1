@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+﻿import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:signature/signature.dart';
 import 'package:http/http.dart' as http;
@@ -1923,7 +1923,6 @@ if (!context.mounted) return;
         ),
         actions: [
           TextButton(
-            if (!context.mounted) return;
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('Cancel'),
           ),

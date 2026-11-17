@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
@@ -1539,7 +1539,6 @@ class _ModeratorPOETabState extends State<ModeratorPOETab> {
           ),
           actions: [
             TextButton(
-              if (!context.mounted) return;
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Close'),
             ),
