@@ -1820,13 +1820,14 @@ class _POECollectionPageState extends State<POECollectionPage> {
     } catch (e) {
       debugPrint('[POE_COLLECT] Fingerprint verification error: $e');
       _hideProgressDialog(context);
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Verification error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Verification error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
       return false;
     }
   }

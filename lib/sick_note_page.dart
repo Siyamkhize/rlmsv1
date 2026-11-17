@@ -150,8 +150,8 @@ class _SickNotePageState extends State<SickNotePage> {
         return _validDates.contains(dateStr);
       },
       builder: (context, child) {
+        if (!context.mounted) return const SizedBox.shrink();
         return Theme(
-          if (!context.mounted) return;
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
               primary: Color(0xFF006341),
@@ -234,8 +234,8 @@ class _SickNotePageState extends State<SickNotePage> {
                 _validDates.contains(dateStr);
       },
       builder: (context, child) {
+        if (!context.mounted) return const SizedBox.shrink();
         return Theme(
-          if (!context.mounted) return;
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
               primary: Color(0xFF006341),

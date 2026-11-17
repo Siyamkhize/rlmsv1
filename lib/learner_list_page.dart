@@ -323,7 +323,6 @@ class _LearnerListPageState extends State<LearnerListPage> {
         const Duration(seconds: 10),
         onTimeout: () {
           debugPrint('Server request timed out after 10 seconds');
-          if (!context.mounted) return;
           throw TimeoutException('Server request timed out');
         },
       );
@@ -363,8 +362,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
       }
     } catch (e) {
       debugPrint('Error fetching server data: $e');
-      if (mounted) {
-        if (!context.mounted) return null;
+      if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Loading from local database (offline)'),
@@ -602,19 +600,21 @@ class _LearnerListPageState extends State<LearnerListPage> {
           'Fingerprint templates are preserved from local database if they exist');
       debugPrint('=== END SYNC SUMMARY ===');
 
-      if (!context.mounted) return false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(
-                'Loaded ${serverLearners.length} learners from server with complete data')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Loaded ${serverLearners.length} learners from server with complete data')),
+        );
+      }
     } catch (e) {
       debugPrint('Error saving learners to local database: $e');
       debugPrint('Stack trace: ${StackTrace.current}');
-      if (!context.mounted) return false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving to local database: $e')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving to local database: $e')),
+        );
+      }
     }
   }
 
@@ -661,8 +661,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
       // Initialize filtered list and apply current search filter
       _filterLearners();
 
-      if (mounted) {
-        if (!context.mounted) return null;
+      if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -674,8 +673,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
       }
     } catch (e) {
       debugPrint('[LEARNER_LIST] Error loading local data: $e');
-      if (mounted) {
-        if (!context.mounted) return null;
+      if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading local data: $e')),
         );
@@ -1283,8 +1281,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
         await _syncDocument(doc);
       }
 
-      if (unsyncedDocs.isNotEmpty) {
-        if (!context.mounted) return null;
+      if (unsyncedDocs.isNotEmpty && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content:
@@ -1294,10 +1291,11 @@ class _LearnerListPageState extends State<LearnerListPage> {
 
       setState(() {});
     } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error syncing documents: $e')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error syncing documents: $e')),
+        );
+      }
     }
   }
 
@@ -2814,8 +2812,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
             await dbHelper.insertOrUpdateLearner(learnerOnlyData, bankData);
         if (id > 0) {
           await dbHelper.syncBankDetails();
-          if (mounted) {
-            if (!context.mounted) return null;
+          if (mounted && context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -2826,8 +2823,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           }
           return true;
         } else {
-          if (mounted) {
-            if (!context.mounted) return null;
+          if (mounted && context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Failed to save learner locally')),
             );
@@ -2881,8 +2877,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
       }
     } catch (e) {
       debugPrint('Submission error: $e');
-      if (mounted) {
-        if (!context.mounted) return null;
+      if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error saving data: $e')),
         );
@@ -2910,14 +2905,14 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
       if (response.statusCode == 200) {
         try {
           final responseData = json.decode(response.body);
-          if (!context.mounted) return null;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(responseData['message'] ?? 'Success')),
           );
           return responseData['success'] == true;
         } catch (e) {
           debugPrint('JSON parse error: $e');
-          if (!context.mounted) return null;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('Invalid server response: ${response.body}')),
@@ -2925,7 +2920,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           return false;
         }
       } else {
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -2963,7 +2958,8 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
         try {
           final responseData = json.decode(response.body);
           if (responseData['success'] == true) {
-            if (!context.mounted) return null;
+            if (!context.mounted)
+              return {'success': false, 'message': 'Context no longer mounted'};
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(responseData['message'] ?? 'Success')),
             );
@@ -2976,7 +2972,8 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
               'message': responseData['message'] ?? 'Success'
             };
           } else {
-            if (!context.mounted) return null;
+            if (!context.mounted)
+              return {'success': false, 'message': 'Context no longer mounted'};
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                   content:
@@ -2989,7 +2986,8 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           }
         } catch (e) {
           debugPrint('JSON parse error: $e');
-          if (!context.mounted) return null;
+          if (!context.mounted)
+            return {'success': false, 'message': 'Context no longer mounted'};
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('Invalid server response: ${response.body}')),
@@ -2997,7 +2995,8 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           return {'success': false, 'message': 'Invalid server response'};
         }
       } else {
-        if (!context.mounted) return null;
+        if (!context.mounted)
+          return {'success': false, 'message': 'Context no longer mounted'};
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(

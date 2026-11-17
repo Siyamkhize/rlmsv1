@@ -802,18 +802,20 @@ class _InductionPageState extends State<InductionPage> {
         clockInTimes[learnerID] = clockInTime;
       });
 
-      if (!context.mounted) return false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Clock-in saved locally. Will sync when online.')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Clock-in saved locally. Will sync when online.')),
+        );
+      }
     } catch (e, stackTrace) {
       debugPrint(
           'Offline clock-in error for learnerID: $learnerID: $e\nStack trace: $stackTrace');
-      if (!context.mounted) return false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving offline clock-in: $e')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving offline clock-in: $e')),
+        );
+      }
       rethrow;
     }
   }
@@ -866,17 +868,19 @@ class _InductionPageState extends State<InductionPage> {
         }
       });
 
-      if (!context.mounted) return false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Clock-out saved locally. Will sync when online.')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Clock-out saved locally. Will sync when online.')),
+        );
+      }
     } catch (e) {
       debugPrint('Offline clock-out error: $e');
-      if (!context.mounted) return false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving offline clock-out: $e')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving offline clock-out: $e')),
+        );
+      }
     }
   }
 
@@ -897,10 +901,11 @@ class _InductionPageState extends State<InductionPage> {
     try {
       final livenessPassed = await _performLivenessCheck();
       if (!livenessPassed) {
-        if (!context.mounted) return null;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Image capture cancelled or failed')),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Image capture cancelled or failed')),
+          );
+        }
         return false;
       }
 
@@ -963,10 +968,11 @@ class _InductionPageState extends State<InductionPage> {
       }
       return true;
     } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error during clock-in: $e')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error during clock-in: $e')),
+        );
+      }
       return false;
     } finally {
       _signatureController.clear();

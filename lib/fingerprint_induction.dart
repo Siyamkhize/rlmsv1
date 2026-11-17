@@ -286,10 +286,11 @@ class _InductionPageState extends State<InductionPage> {
         }
       });
     } catch (e) {
-      if (!context.mounted) return false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading offline learners: $e')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading offline learners: $e')),
+        );
+      }
     }
   }
 

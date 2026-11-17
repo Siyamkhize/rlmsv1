@@ -262,11 +262,13 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
       double userLon, double userAccuracy) async {
     if (userAccuracy > 50) {
       debugPrint('Geolocation accuracy too low: $userAccuracy meters');
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Geolocation accuracy too low. Please enable GPS.')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content:
+                  Text('Geolocation accuracy too low. Please enable GPS.')),
+        );
+      }
       return false;
     }
 
@@ -342,10 +344,11 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
     } catch (e, stackTrace) {
       debugPrint(
           'Error checking site radius for classID $classID: $e\nStack trace: $stackTrace');
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error checking location: $e')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error checking location: $e')),
+        );
+      }
       return false;
     }
   }

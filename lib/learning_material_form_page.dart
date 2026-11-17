@@ -1908,9 +1908,7 @@ class _UnitStandardsDialogState extends State<_UnitStandardsDialog> {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
-        if (!context.mounted) return;
         width: MediaQuery.of(context).size.width * 0.9,
-        if (!context.mounted) return;
         height: MediaQuery.of(context).size.height * 0.8,
         padding: const EdgeInsets.all(16),
         child: Column(

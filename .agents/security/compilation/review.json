@@ -2,97 +2,81 @@
   "verdict": "CHANGES_REQUESTED",
   "findings": [
     {
+      "id": "BLOCKER-1",
       "severity": "blocker",
-      "category": "incorrect_return_type",
-      "title": "Incorrect Return Type Fixes in Future<File?> Methods",
-      "files": [
-        "lib/DetailsPage_server.dart"
-      ],
-      "lines": [730, 765, 781, 792, 802, 822, 834, 846, 859, 869, 923, 935, 948, 3501, 3509],
-      "description": "Automated script changed 'return null;' to 'return false;' in methods that return Future<File?>. This is incorrect - bool cannot be returned from a method with return type Future<File?>.",
-      "evidence": "Line 730: if (!context.mounted) return false; // Should be: return null;",
-      "impact": "Image compression and PDF creation methods fail to compile, breaking image upload functionality throughout the app",
-      "fix": "Change 'return false;' back to 'return null;' in all Future<File?> methods, or remove the unreachable 'return null;' statements that follow"
+      "category": "compilation_error",
+      "file": "lib/learner_list_page.dart",
+      "line": 1289,
+      "description": "Method syncUnsyncedDocuments() has return type Future<void> but contains 'return null;'",
+      "evidence": "if (!context.mounted) return null;",
+      "impact": "Build-breaking compilation error prevents application from compiling",
+      "correction": "Change 'return null;' to 'return;' for Future<void> method",
+      "user_consequence": "Application will not build or deploy"
     },
     {
+      "id": "BLOCKER-2",
       "severity": "blocker",
-      "category": "incorrect_return_type",
-      "title": "Incorrect Return Type Fixes in void Methods",
-      "files": [
-        "lib/DetailsPage_server.dart",
-        "lib/POECollectionPage.dart"
-      ],
-      "lines": [
-        "DetailsPage_server.dart: 1929, 1952",
-        "POECollectionPage.dart: 1894, 1917"
-      ],
-      "description": "Automated script changed 'return null;' to 'return false;' in void methods. Void methods cannot return any value.",
-      "evidence": "Line 1929 in DetailsPage_server.dart: void _showProgressDialog(String message) { if (!context.mounted) return false; ... }",
-      "impact": "Progress dialog methods fail to compile, breaking user feedback during long operations",
-      "fix": "Change 'return false;' to 'return;' (no value) in all void methods"
+      "category": "syntax_error",
+      "file": "lib/sick_note_page.dart",
+      "lines": [153, 154, 237, 238],
+      "description": "Misplaced 'if (!context.mounted) return;' statement inside Theme constructor parameters",
+      "evidence": "builder: (context, child) { return Theme( if (!context.mounted) return; data: Theme.of(context).copyWith(...), child: child!, ); }",
+      "impact": "8 compilation errors (missing_required_argument, missing_identifier, expected_token) - appears in 2 locations",
+      "correction": "Move context.mounted check before the Theme constructor: if (!context.mounted) return const SizedBox.shrink();",
+      "user_consequence": "Application will not compile. Date picker widget will fail to render."
     },
     {
+      "id": "BLOCKER-3",
       "severity": "blocker",
-      "category": "unfixed_return_type",
-      "title": "Unfixed Return Type Issues in Future<bool> Methods",
-      "files": [
-        "lib/fingerprint_induction.dart",
-        "lib/induction.dart"
-      ],
-      "lines": [
-        "fingerprint_induction.dart: 315, 342, 349, 356, 371, 383, 395",
-        "induction.dart: 320, 347, 354, 361, 376, 388, 400, 410, 900"
-      ],
-      "description": "Methods returning Future<bool> still have 'return null;' statements that were not fixed. Null cannot be returned from a method with return type Future<bool>.",
-      "evidence": "Line 410 in induction.dart: Future<bool> _performLivenessCheck() async { if (!context.mounted) return null; ... }",
-      "impact": "Geofencing and liveness check methods fail to compile, preventing learner check-in functionality",
-      "fix": "Change all 'return null;' to 'return false;' in Future<bool> methods"
+      "category": "compilation_error",
+      "file": "lib/learner_list_page.dart",
+      "lines": [326, 367, 605, 614, 665],
+      "description": "Multiple return type mismatches in async methods",
+      "evidence": "Line 326: return_without_value; Line 367: returning null in Future<List<Learner>>; Lines 605,614: returning bool in Future<void>",
+      "impact": "5 compilation errors preventing build",
+      "correction": "Line 326: Add explicit return value; Line 367: Return empty list or throw; Lines 605,614,665: Change 'return false;' to 'return;'",
+      "user_consequence": "Application will not compile. Learner sync and database operations will fail."
     },
     {
-      "severity": "blocker",
-      "category": "incorrect_return_type_closure",
-      "title": "Incorrect Return Values in Future<void> Closures",
-      "files": [
-        "lib/DetailsPage_server.dart",
-        "lib/POECollectionPage.dart"
-      ],
-      "lines": [
-        "DetailsPage_server.dart: 3847",
-        "POECollectionPage.dart: 1198, 1211, 1225, 1362, 1407, 1486, 1498, 1531"
-      ],
-      "description": "Closures with Future<void> return type have 'return false;' statements. Bool cannot be returned from Future<void>.",
-      "evidence": "Line 1198 in POECollectionPage.dart: closure returns bool where Future<void> is expected",
-      "impact": "POE collection and image capture callbacks fail to compile",
-      "fix": "Remove 'return false;' statements from Future<void> closures, or change to just 'return;'"
-    },
-    {
-      "severity": "blocker",
-      "category": "missing_return_value",
-      "title": "Missing Return Values in Non-void Methods",
-      "files": [
-        "lib/finance_attendance_calendar.dart",
-        "lib/finance_register_scanner.dart"
-      ],
-      "lines": [170, 336],
-      "description": "Methods with explicit return types have 'return;' without values",
-      "evidence": "Line 170 in finance_attendance_calendar.dart: return; // Missing value",
-      "impact": "Finance module attendance features fail to compile",
-      "fix": "Add appropriate return values or change return type to void"
-    },
-    {
-      "severity": "blocker",
-      "category": "missing_file",
-      "title": "Import References Non-existent File",
-      "files": [
-        "lib/clock_in_page.dart",
-        "lib/dashboard_page.dart"
-      ],
-      "lines": [22, 9],
-      "description": "Import statements reference 'backup_clock_in_page.dart' which does not exist in the lib directory",
-      "evidence": "import 'backup_clock_in_page.dart'; // File not found",
-      "impact": "Clock-in and dashboard pages fail to compile. BackupClockInPage class is undefined, causing additional undefined_method errors",
-      "fix": "Either create the missing backup_clock_in_page.dart file or remove the import and any code that references BackupClockInPage"
+      "id": "SECURITY-1",
+      "severity": "warning",
+      "category": "sql_injection",
+      "file": "mobile/check_arpl_data.php",
+      "lines": [6, 7, 8],
+      "description": "Direct SQL interpolation without prepared statements",
+      "evidence": "$learnerId = isset($_GET['learner_id']) ? intval($_GET['learner_id']) : 0; $result = $conn->query(\"SELECT * FROM learnerdetails WHERE LearnerID = $learnerId\");",
+      "impact": "SQL injection vulnerability - inconsistent with rest of codebase which uses prepared statements",
+      "correction": "Use prepared statements: $stmt = $conn->prepare(\"SELECT * FROM learnerdetails WHERE LearnerID = ?\"); $stmt->bind_param(\"i\", $learnerId);",
+      "user_consequence": "Potential security vulnerability if exploited. However, intval() provides partial protection and this appears to be a debug script.",
+      "note": "Most other PHP APIs correctly use prepared statements. This may be a diagnostic tool not in production."
     }
   ],
-  "reviewDoc": "c:\\projects\\rlmssv1\\.agents\\security\\compilation\\compilation-review.md"
+  "reviewDoc": "c:\\projects\\rlmssv1\\.agents\\security\\compilation\\compilation-review.md",
+  "summary": {
+    "total_blockers": 3,
+    "total_warnings": 1,
+    "compilation_errors": 14,
+    "security_issues": 1,
+    "initial_errors": 668,
+    "current_errors": 97,
+    "reduction_percentage": 85.5,
+    "approval_status": "CHANGES_REQUESTED",
+    "reason": "14 compilation errors across 2 files prevent application from building. Fixes are straightforward but must be completed before approval."
+  },
+  "verification_results": {
+    "deprecated_apis_fixed": true,
+    "context_safety_added": "partial",
+    "no_new_errors": false,
+    "error_reduction_achieved": true,
+    "build_passes": false,
+    "security_review_completed": true
+  },
+  "next_steps": [
+    "Fix learner_list_page.dart line 1289: change 'return null;' to 'return;'",
+    "Fix sick_note_page.dart lines 153-154 and 237-238: move context checks outside Theme constructor",
+    "Fix learner_list_page.dart lines 326, 367, 605, 614, 665: correct return types",
+    "Run 'flutter analyze' to verify error count drops below 90",
+    "Optionally: Refactor check_arpl_data.php to use prepared statements",
+    "Submit for re-review"
+  ]
 }
