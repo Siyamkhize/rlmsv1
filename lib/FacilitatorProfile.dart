@@ -320,7 +320,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
               leading: const Icon(Icons.camera_alt),
               title: const Text('Take Photo'),
               onTap: () {
-                if (!context.mounted) return null;
+                if (!context.mounted) return;
                 Navigator.pop(context);
                 _getImage(ImageSource.camera);
               },
@@ -329,7 +329,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
               leading: const Icon(Icons.photo_library),
               title: const Text('Choose from Gallery'),
               onTap: () {
-                if (!context.mounted) return null;
+                if (!context.mounted) return;
                 Navigator.pop(context);
                 _getImage(ImageSource.gallery);
               },
@@ -441,10 +441,10 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                   onPressed: () async {
                     if (_signatureController.isNotEmpty) {
                       await _saveSignature();
-                      if (!context.mounted) return null;
+                      if (!context.mounted) return;
                       Navigator.pop(context);
                     } else {
-                      if (!context.mounted) return null;
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Please provide a signature'),
@@ -496,7 +496,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
   Future<void> _saveChanges() async {
     try {
       // Show loading indicator
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Row(
@@ -517,7 +517,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       );
 
       if (!_formKey.currentState!.validate()) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Please fix validation errors'),
@@ -546,14 +546,14 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       });
       _refreshData();
 
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Changes saved successfully'),
             backgroundColor: Colors.green),
       );
     } catch (e) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error saving changes: ${e.toString()}'),
@@ -593,7 +593,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                   ? '${Config.baseUrl}/${data['image_url']}'
                   : null;
             });
-            if (!context.mounted) return null;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                   content: Text('Profile image uploaded successfully'),
@@ -607,7 +607,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       } catch (e) {
         attempt++;
         if (attempt == maxRetries) {
-          if (!context.mounted) return null;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('Failed to upload profile image: $e'),
@@ -624,7 +624,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
     if (!await Connectivity()
         .checkConnectivity()
         .then((r) => !r.contains(ConnectivityResult.none))) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('No internet connection'),
@@ -662,7 +662,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
         if (response.statusCode == 200) {
           final responseData = json.decode(response.body);
           if (responseData['success']) {
-            if (!context.mounted) return null;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                   content: Text('Data synced successfully'),
@@ -676,7 +676,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       } catch (e) {
         attempt++;
         if (attempt == maxRetries) {
-          if (!context.mounted) return null;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('Failed to sync data: $e'),
@@ -1931,7 +1931,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
       final daysUntilExpiry = picked.difference(now).inDays;
 
       if (daysUntilExpiry < 0) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -1941,7 +1941,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
           ),
         );
       } else if (daysUntilExpiry <= 30) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(

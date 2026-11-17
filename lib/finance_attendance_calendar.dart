@@ -117,7 +117,7 @@ class _FinanceAttendanceCalendarState extends State<FinanceAttendanceCalendar> {
         final data = json.decode(response.body);
 
         if (data['success'] == true) {
-          if (!context.mounted) return null;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Attendance saved successfully!'),
@@ -142,7 +142,7 @@ class _FinanceAttendanceCalendarState extends State<FinanceAttendanceCalendar> {
       });
 
       debugPrint('Error saving attendance: $e');
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),

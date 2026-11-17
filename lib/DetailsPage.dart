@@ -218,7 +218,7 @@ class _POETabContentState extends State<POETabContent> {
       await _updateUnsyncedCount();
 
       if (successCount > 0 && mounted) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('✅ Synced $successCount POE record(s) to server'),
@@ -229,7 +229,7 @@ class _POETabContentState extends State<POETabContent> {
       }
 
       if (failCount > 0 && mounted) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('⚠️ $failCount POE record(s) failed to sync'),
@@ -310,7 +310,7 @@ class _POETabContentState extends State<POETabContent> {
         // Refresh upload status
         await _refreshUploadStatus();
 
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('✅ $type exercise "$exercise" marked as uploaded'),
@@ -322,7 +322,7 @@ class _POETabContentState extends State<POETabContent> {
             'Manual mark as uploaded: ${_uploadKey(type, exercise, unitStandard)}');
       } catch (e) {
         debugPrint('Error manually marking as uploaded: $e');
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to mark as uploaded: $e'),
@@ -349,7 +349,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (pendingQuestions.isEmpty) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('All formative questions are already completed.')),
@@ -402,7 +402,7 @@ class _POETabContentState extends State<POETabContent> {
       if (!context.mounted) return;
       if (existingDocumentPath == null) {
         // No existing document found, show error
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -445,7 +445,7 @@ class _POETabContentState extends State<POETabContent> {
       // Refresh upload status to update UI
       await _refreshUploadStatus();
 
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -459,7 +459,7 @@ class _POETabContentState extends State<POETabContent> {
     } catch (e, stackTrace) {
       debugPrint(
           'Error in _manualMarkAllFormative: $e\nStackTrace: $stackTrace');
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -482,7 +482,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (pendingItems.isEmpty) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('All logbook items are already completed.')),
@@ -534,7 +534,7 @@ class _POETabContentState extends State<POETabContent> {
 
       if (existingDocumentPath == null) {
         // No existing document found, show error
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -581,7 +581,7 @@ class _POETabContentState extends State<POETabContent> {
       // Refresh upload status to update UI
       await _refreshUploadStatus();
 
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -594,7 +594,7 @@ class _POETabContentState extends State<POETabContent> {
           'Manual mark all logbook complete: $markedCount items linked to document: $existingDocumentPath');
     } catch (e, stackTrace) {
       debugPrint('Error in _manualMarkAllLogBook: $e\nStackTrace: $stackTrace');
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -617,7 +617,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (pendingQuestions.isEmpty) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('All summative questions are already completed.')),
@@ -669,7 +669,7 @@ class _POETabContentState extends State<POETabContent> {
 
       if (existingDocumentPath == null) {
         // No existing document found, show error
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -712,7 +712,7 @@ class _POETabContentState extends State<POETabContent> {
       // Refresh upload status to update UI
       await _refreshUploadStatus();
 
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -726,7 +726,7 @@ class _POETabContentState extends State<POETabContent> {
     } catch (e, stackTrace) {
       debugPrint(
           'Error in _manualMarkAllSummative: $e\nStackTrace: $stackTrace');
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -1872,7 +1872,7 @@ class _POETabContentState extends State<POETabContent> {
           (templates['futronic_right_template']?.isNotEmpty ?? false);
 
       if (!hasZkLeft && !hasZkRight && !hasFutLeft && !hasFutRight) {
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -1912,7 +1912,7 @@ class _POETabContentState extends State<POETabContent> {
       }
 
       if (scanner == 'none') {
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -2008,7 +2008,7 @@ class _POETabContentState extends State<POETabContent> {
       _hideProgressDialog();
 
       if (match) {
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('✅ Fingerprint verified successfully!'),
@@ -2083,7 +2083,7 @@ class _POETabContentState extends State<POETabContent> {
   }
 
   void _showProgressDialog(String message) {
-    if (!context.mounted) return false;
+    if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -2106,7 +2106,7 @@ class _POETabContentState extends State<POETabContent> {
   void _hideProgressDialog() {
     if (!context.mounted) return;
     if (Navigator.of(context).canPop()) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       Navigator.of(context).pop();
     }
   }
@@ -2115,7 +2115,7 @@ class _POETabContentState extends State<POETabContent> {
       BuildContext context, String assessmentType, String exercise,
       {String? unitStandard}) async {
     if (!_isExerciseAllowed(assessmentType, exercise, unitStandard)) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
@@ -2126,7 +2126,7 @@ class _POETabContentState extends State<POETabContent> {
 
     bool verificationValid = await _showFingerprintVerificationDialog(context);
     if (!verificationValid) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
@@ -2141,7 +2141,7 @@ class _POETabContentState extends State<POETabContent> {
       final controller = logBookControllers[controllerKey];
       logbookText = controller?.text;
       if (logbookText == null || logbookText.trim().isEmpty) {
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text(
@@ -2216,7 +2216,7 @@ class _POETabContentState extends State<POETabContent> {
 
         if (result == null || result is! Map) {
           debugPrint('Error: No result returned from CameraScanPage');
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Camera operation was cancelled or failed')),
@@ -2229,7 +2229,7 @@ class _POETabContentState extends State<POETabContent> {
 
         if (file == null || !await file.exists()) {
           debugPrint('Error: No valid file returned from CameraScanPage');
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No valid document captured')),
           );
@@ -2240,7 +2240,7 @@ class _POETabContentState extends State<POETabContent> {
           final compressedImage = await _compressImage(file);
           if (compressedImage == null) {
             debugPrint('Error: Image compression failed');
-            if (!context.mounted) return false;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Failed to process captured image')),
             );
@@ -2256,7 +2256,7 @@ class _POETabContentState extends State<POETabContent> {
           if (!file.path.toLowerCase().endsWith('.pdf')) {
             debugPrint(
                 'Error: Expected PDF file for $assessmentType, got ${file.path}');
-            if (!context.mounted) return false;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                   content: Text(
@@ -2270,7 +2270,7 @@ class _POETabContentState extends State<POETabContent> {
         if (assessmentType != 'LogBook') {
           debugPrint(
               'Error: Gallery selection not supported for $assessmentType');
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text(
@@ -2283,7 +2283,7 @@ class _POETabContentState extends State<POETabContent> {
         final pickedImage = await picker.pickImage(source: ImageSource.gallery);
         if (pickedImage == null) {
           debugPrint('Error: No image selected from gallery');
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No image selected')),
           );
@@ -2294,7 +2294,7 @@ class _POETabContentState extends State<POETabContent> {
         if (!await imageFile.exists()) {
           debugPrint(
               'Error: Selected image file does not exist at ${imageFile.path}');
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Selected image file is invalid')),
           );
@@ -2304,7 +2304,7 @@ class _POETabContentState extends State<POETabContent> {
         final compressedImage = await _compressImage(imageFile);
         if (compressedImage == null) {
           debugPrint('Error: Image compression failed');
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Failed to process selected image')),
           );
@@ -2320,7 +2320,7 @@ class _POETabContentState extends State<POETabContent> {
 
       if (document == null) {
         debugPrint('Error: Document creation failed');
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Failed to generate or process document')),
@@ -2345,7 +2345,7 @@ class _POETabContentState extends State<POETabContent> {
               'Uploading file: ${document.path}, Size: ${await document.length()} bytes');
 
           // Show processing dialog
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           showDialog(
             context: context,
             barrierDismissible: false,
@@ -2395,7 +2395,7 @@ class _POETabContentState extends State<POETabContent> {
                 final rawKey = '$assessmentType-$exercise-${widget.learnerID}';
                 uploadedExercises[rawKey] = true;
               });
-              if (!context.mounted) return false;
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content: Text('Uploaded to server: ${decoded['message']}')),
@@ -2405,7 +2405,7 @@ class _POETabContentState extends State<POETabContent> {
                   updatedLogbookText ?? logbookText,
                   showSnackBar: false, synced: 1);
             } else {
-              if (!context.mounted) return false;
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Server error: ${decoded['message']}')),
               );
@@ -2418,7 +2418,7 @@ class _POETabContentState extends State<POETabContent> {
             if (mounted) Navigator.of(context).pop();
 
             debugPrint('❌ Upload error: $e');
-            if (!context.mounted) return false;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Upload failed: $e. Saving locally.')),
             );
@@ -2430,7 +2430,7 @@ class _POETabContentState extends State<POETabContent> {
               updatedLogbookText ?? logbookText);
         }
       } else {
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text(
@@ -2454,12 +2454,12 @@ class _POETabContentState extends State<POETabContent> {
       }
     } catch (e, stackTrace) {
       debugPrint('Error in openCamera: $e\nStackTrace: $stackTrace');
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
     } finally {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       Navigator.of(context).pop();
     }
   }
@@ -2482,7 +2482,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (allCompleted) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('All formative questions are already completed.')),
@@ -2525,7 +2525,7 @@ class _POETabContentState extends State<POETabContent> {
     debugPrint('DEBUG: allAllowed result: $allAllowed');
 
     if (!allAllowed) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
@@ -2536,7 +2536,7 @@ class _POETabContentState extends State<POETabContent> {
 
     bool verificationValid = await _showFingerprintVerificationDialog(context);
     if (!verificationValid) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
@@ -2570,14 +2570,14 @@ class _POETabContentState extends State<POETabContent> {
 
     if (imageSource == null) {
       debugPrint('User cancelled image selection');
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Document selection cancelled')),
       );
       return;
     }
 
-    if (!context.mounted) return false;
+    if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -2613,7 +2613,7 @@ class _POETabContentState extends State<POETabContent> {
 
         if (result == null || result is! Map) {
           debugPrint('Error: No result returned from CameraScanPage');
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Camera operation was cancelled or failed')),
@@ -2625,7 +2625,7 @@ class _POETabContentState extends State<POETabContent> {
 
         if (file == null || !await file.exists()) {
           debugPrint('Error: No valid file returned from CameraScanPage');
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No valid document captured')),
           );
@@ -2635,7 +2635,7 @@ class _POETabContentState extends State<POETabContent> {
         if (!file.path.toLowerCase().endsWith('.pdf')) {
           debugPrint(
               'Error: Expected PDF file for Formative, got ${file.path}');
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text(
@@ -2646,7 +2646,7 @@ class _POETabContentState extends State<POETabContent> {
         document = file;
       } else {
         // For gallery selection, we'll need to implement PDF selection
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text(
@@ -2715,7 +2715,7 @@ class _POETabContentState extends State<POETabContent> {
         debugPrint('Assigned filename for formative: $standardizedName');
 
         // Show processing dialog
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -2764,7 +2764,7 @@ class _POETabContentState extends State<POETabContent> {
                   targetFilePath: targetFilePath);
             }
             successfulUploads = formativeQuestions.length;
-            if (!context.mounted) return false;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('✅ Uploaded $successfulUploads formative items'),
@@ -2780,7 +2780,7 @@ class _POETabContentState extends State<POETabContent> {
               await _saveLocally(document, 'Formative', exercise, null,
                   showSnackBar: false, targetFilePath: targetFilePath);
             }
-            if (!context.mounted) return false;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('📱 Server busy. Saved offline.'),
@@ -2801,7 +2801,7 @@ class _POETabContentState extends State<POETabContent> {
             await _saveLocally(document, 'Formative', exercise, null,
                 showSnackBar: false, targetFilePath: targetFilePath);
           }
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('📱 Upload failed. Saved offline.'),
@@ -2844,7 +2844,7 @@ class _POETabContentState extends State<POETabContent> {
         debugPrint(
             '   Formative exercises marked: ${uploadedExercises.keys.where((k) => k.startsWith('Formative-')).toList()}');
 
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -2890,7 +2890,7 @@ class _POETabContentState extends State<POETabContent> {
 
         debugPrint('[OFFLINE_SCAN] UI refresh complete');
 
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -2899,12 +2899,12 @@ class _POETabContentState extends State<POETabContent> {
       }
     } catch (e, stackTrace) {
       debugPrint('Error in _openFormativeCamera: $e\nStackTrace: $stackTrace');
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
     } finally {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       Navigator.of(context).pop();
     }
   }
@@ -2923,7 +2923,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (allCompleted) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('All summative questions are already completed.')),
@@ -2980,7 +2980,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (!allAllowed) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
@@ -2991,7 +2991,7 @@ class _POETabContentState extends State<POETabContent> {
 
     bool verificationValid = await _showFingerprintVerificationDialog(context);
     if (!verificationValid) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
@@ -3025,14 +3025,14 @@ class _POETabContentState extends State<POETabContent> {
 
     if (imageSource == null) {
       debugPrint('User cancelled image selection');
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Document selection cancelled')),
       );
       return;
     }
 
-    if (!context.mounted) return false;
+    if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -3068,7 +3068,7 @@ class _POETabContentState extends State<POETabContent> {
 
         if (result == null || result is! Map) {
           debugPrint('Error: No result returned from CameraScanPage');
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('Camera operation was cancelled or failed')),
@@ -3080,7 +3080,7 @@ class _POETabContentState extends State<POETabContent> {
 
         if (file == null || !await file.exists()) {
           debugPrint('Error: No valid file returned from CameraScanPage');
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No valid document captured')),
           );
@@ -3090,7 +3090,7 @@ class _POETabContentState extends State<POETabContent> {
         if (!file.path.toLowerCase().endsWith('.pdf')) {
           debugPrint(
               'Error: Expected PDF file for Summative, got ${file.path}');
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text(
@@ -3101,7 +3101,7 @@ class _POETabContentState extends State<POETabContent> {
         document = file;
       } else {
         // For gallery selection, we'll need to implement PDF selection
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text(
@@ -3170,7 +3170,7 @@ class _POETabContentState extends State<POETabContent> {
         debugPrint('Assigned filename for summative: $standardizedName');
 
         // Show processing dialog
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -3219,7 +3219,7 @@ class _POETabContentState extends State<POETabContent> {
                   targetFilePath: targetFilePath);
             }
             successfulUploads = summativeQuestions.length;
-            if (!context.mounted) return false;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('✅ Uploaded $successfulUploads summative items'),
@@ -3235,7 +3235,7 @@ class _POETabContentState extends State<POETabContent> {
               await _saveLocally(document, 'Summative', exercise, null,
                   showSnackBar: false, targetFilePath: targetFilePath);
             }
-            if (!context.mounted) return false;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('📱 Server busy. Saved offline.'),
@@ -3256,7 +3256,7 @@ class _POETabContentState extends State<POETabContent> {
             await _saveLocally(document, 'Summative', exercise, null,
                 showSnackBar: false, targetFilePath: targetFilePath);
           }
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('📱 Upload failed. Saved offline.'),
@@ -3299,7 +3299,7 @@ class _POETabContentState extends State<POETabContent> {
         debugPrint(
             '   Summative exercises marked: ${uploadedExercises.keys.where((k) => k.startsWith('Summative-')).toList()}');
 
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -3345,7 +3345,7 @@ class _POETabContentState extends State<POETabContent> {
 
         debugPrint('[OFFLINE_SCAN] UI refresh complete');
 
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -3354,12 +3354,12 @@ class _POETabContentState extends State<POETabContent> {
       }
     } catch (e, stackTrace) {
       debugPrint('Error in _openSummativeCamera: $e\nStackTrace: $stackTrace');
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
     } finally {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       Navigator.of(context).pop();
     }
   }
@@ -3373,7 +3373,7 @@ class _POETabContentState extends State<POETabContent> {
     // Remedial is always allowed - it's optional and doesn't block anything
     bool verificationValid = await _showFingerprintVerificationDialog(context);
     if (!verificationValid) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
@@ -3410,7 +3410,7 @@ class _POETabContentState extends State<POETabContent> {
       return;
     }
 
-    if (!context.mounted) return false;
+    if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -3446,7 +3446,7 @@ class _POETabContentState extends State<POETabContent> {
 
         if (result == null || result is! Map) {
           debugPrint('[REMEDIAL] No result from camera');
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Camera operation cancelled')),
           );
@@ -3456,7 +3456,7 @@ class _POETabContentState extends State<POETabContent> {
         final file = result['image'] as File?;
         if (file == null || !await file.exists()) {
           debugPrint('[REMEDIAL] No valid file');
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No valid document captured')),
           );
@@ -3466,7 +3466,7 @@ class _POETabContentState extends State<POETabContent> {
         document = file;
       } else {
         // Gallery selection
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -3500,7 +3500,7 @@ class _POETabContentState extends State<POETabContent> {
           final decoded = json.decode(responseBody);
 
           if (decoded['status'] == 'success') {
-            if (!context.mounted) return false;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('✅ $remedialType document uploaded to server'),
@@ -3528,12 +3528,12 @@ class _POETabContentState extends State<POETabContent> {
       debugPrint('[REMEDIAL] $remedialType document saved for $unitStandard');
     } catch (e, stackTrace) {
       debugPrint('[REMEDIAL] Error: $e\nStackTrace: $stackTrace');
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
     } finally {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       Navigator.of(context).pop();
     }
   }
@@ -3555,7 +3555,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (allCompleted) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('All logbook items are already completed.')),
@@ -3574,7 +3574,7 @@ class _POETabContentState extends State<POETabContent> {
     }
 
     if (!previousCompleted) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Complete the previous exercises first.')),
       );
@@ -3583,7 +3583,7 @@ class _POETabContentState extends State<POETabContent> {
 
     bool verificationValid = await _showFingerprintVerificationDialog(context);
     if (!verificationValid) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
@@ -3619,14 +3619,14 @@ class _POETabContentState extends State<POETabContent> {
 
     if (confirmed != true) {
       debugPrint('User cancelled scanner');
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Scan cancelled')),
       );
       return;
     }
 
-    if (!context.mounted) return false;
+    if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -3666,7 +3666,7 @@ class _POETabContentState extends State<POETabContent> {
         if (mounted) Navigator.of(context).pop();
 
         debugPrint('Error: No result returned from CameraScanPage');
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Scanner operation was cancelled or failed')),
@@ -3682,7 +3682,7 @@ class _POETabContentState extends State<POETabContent> {
         if (mounted) Navigator.of(context).pop();
 
         debugPrint('Error: No valid file returned from CameraScanPage');
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No valid document captured')),
         );
@@ -3696,7 +3696,7 @@ class _POETabContentState extends State<POETabContent> {
         if (mounted) Navigator.of(context).pop();
 
         debugPrint('Error: Expected PDF file for LogBook, got ${file.path}');
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -3757,7 +3757,7 @@ class _POETabContentState extends State<POETabContent> {
         debugPrint('Assigned filename for logbook: $standardizedName');
 
         // Show upload progress dialog
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -3805,7 +3805,7 @@ class _POETabContentState extends State<POETabContent> {
                   showSnackBar: false, synced: 1);
             }
             successfulUploads = logBookItems.length;
-            if (!context.mounted) return false;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content:
@@ -3823,7 +3823,7 @@ class _POETabContentState extends State<POETabContent> {
                   document, 'LogBook', exercise, 'Logbook entry for $exercise',
                   showSnackBar: false);
             }
-            if (!context.mounted) return false;
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('📱 Server busy. Saved offline.'),
@@ -3875,7 +3875,7 @@ class _POETabContentState extends State<POETabContent> {
         // Refresh upload status to ensure UI is updated
         await _refreshUploadStatus();
 
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -3921,7 +3921,7 @@ class _POETabContentState extends State<POETabContent> {
 
         debugPrint('[OFFLINE_SCAN] UI refresh complete');
 
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -3930,12 +3930,12 @@ class _POETabContentState extends State<POETabContent> {
       }
     } catch (e, stackTrace) {
       debugPrint('Error in _openLogBookCamera: $e\nStackTrace: $stackTrace');
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
     } finally {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       Navigator.of(context).pop();
     }
   }
@@ -3944,7 +3944,7 @@ class _POETabContentState extends State<POETabContent> {
     final pickedImage =
         await ImagePicker().pickImage(source: ImageSource.camera);
     if (pickedImage == null) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No image captured.')),
       );
@@ -3952,7 +3952,7 @@ class _POETabContentState extends State<POETabContent> {
     }
     final imageFile = File(pickedImage.path);
     if (!await imageFile.exists()) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Captured image file not found.')),
       );
@@ -4049,13 +4049,13 @@ class _POETabContentState extends State<POETabContent> {
             final rawKey = '$assessmentType-$exercise-${widget.learnerID}';
             uploadedExercises[rawKey] = true;
           });
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('Uploaded to server: ${decoded['message']}')),
           );
         } else {
-          if (!context.mounted) return false;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Server error: ${decoded['message']}')),
           );
@@ -4063,7 +4063,7 @@ class _POETabContentState extends State<POETabContent> {
         }
       } catch (e) {
         debugPrint('Upload error: $e');
-        if (!context.mounted) return false;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to upload to server')),
         );
@@ -4145,7 +4145,7 @@ class _POETabContentState extends State<POETabContent> {
     });
 
     if (showSnackBar && mounted) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('📱 Saved: $assessmentType - $exercise'),
@@ -4274,7 +4274,7 @@ class _POETabContentState extends State<POETabContent> {
                         if (await _checkConnectivity()) {
                           await _syncOfflinePOE();
                         } else {
-                          if (!context.mounted) return false;
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('No internet connection'),

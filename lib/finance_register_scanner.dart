@@ -176,7 +176,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
             isSaving = false;
           });
 
-          if (!context.mounted) return null;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(scannedDocumentPath != null
@@ -186,14 +186,14 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
             ),
           );
 
-          if (!context.mounted) return null;
+          if (!context.mounted) return;
           Navigator.pop(context);
         } else {
           setState(() {
             isSaving = false;
           });
 
-          if (!context.mounted) return null;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(data['message'] ?? 'Failed to save attendance'),
@@ -208,7 +208,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
       });
 
       debugPrint('Error saving attendance: $e');
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -244,7 +244,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
 
   Future<void> proceedToScanner() async {
     if (selectedDates.isEmpty) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select at least one attendance day'),
@@ -262,7 +262,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
       debugPrint('Scanned image type: ${scannedImage.runtimeType}');
 
       if (scannedImage == null) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No document scanned')),
         );
@@ -281,7 +281,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
       final resolved =
           await resolveFlutterDocScannerPdfFile(pdfUri);
       if (resolved == null || !await isReadablePdfFile(resolved)) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to read scanned PDF (try again)'),
@@ -296,7 +296,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
         showScanner = true;
       });
 
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Document scanned! Click Save to complete.'),
@@ -305,7 +305,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
       );
     } catch (e) {
       debugPrint('Error scanning: $e');
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
@@ -324,7 +324,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
     } else {
       // User cancelled month selection, go back
       if (selectedMonth == null) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         Navigator.pop(context);
       }
     }
