@@ -1879,15 +1879,16 @@ class _LogisticsUnitStandardsDialogState
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        if (!context.mounted) return;
-        width: MediaQuery.of(context).size.width * 0.9,
-        if (!context.mounted) return;
-        height: MediaQuery.of(context).size.height * 0.8,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: Builder(
+        builder: (context) {
+          if (!context.mounted) return const SizedBox.shrink();
+          return Container(
+            width: MediaQuery.of(context).size.width * 0.9,
+            height: MediaQuery.of(context).size.height * 0.8,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             // Header
             Row(
               children: [
@@ -1915,8 +1916,10 @@ class _LogisticsUnitStandardsDialogState
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
-                  if (!context.mounted) return;
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    if (!context.mounted) return;
+                    Navigator.pop(context);
+                  },
                 ),
               ],
             ),
@@ -2222,7 +2225,11 @@ class _LogisticsUnitStandardsDialogState
             ],
           ),
         ],
-      ],
+      ),
+    );
+          },
+        ),
+      ),
     );
   }
 }
@@ -2647,8 +2654,10 @@ class _LogisticsPPEDialogState extends State<_LogisticsPPEDialog> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close, color: Colors.white),
-                    if (!context.mounted) return;
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      if (!context.mounted) return;
+                      Navigator.pop(context);
+                    },
                   ),
                 ],
               ),

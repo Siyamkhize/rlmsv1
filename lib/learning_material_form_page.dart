@@ -1941,8 +1941,10 @@ class _UnitStandardsDialogState extends State<_UnitStandardsDialog> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
-                  if (!context.mounted) return;
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    if (!context.mounted) return;
+                    Navigator.pop(context);
+                  },
                 ),
               ],
             ),
@@ -2623,8 +2625,10 @@ class _PPEDialogState extends State<_PPEDialog> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close, color: Colors.white),
-                    if (!context.mounted) return;
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      if (!context.mounted) return;
+                      Navigator.pop(context);
+                    },
                   ),
                 ],
               ),

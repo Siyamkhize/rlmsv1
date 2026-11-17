@@ -145,7 +145,7 @@ class ArplToolkitData {
       debugPrint('[ArplToolkitData.fromJson] ═══ FATAL ERROR ═══');
       debugPrint('[ArplToolkitData.fromJson] Error: $e');
       debugPrint('[ArplToolkitData.fromJson] Stack Trace:');
-      debugPrint(stackTrace);
+      debugPrint(stackTrace.toString());
       debugPrint('[ArplToolkitData.fromJson] ═══ END ERROR ═══');
       rethrow;
     }
@@ -448,7 +448,7 @@ class AppendixHData {
       debugPrint('[AppendixHData.fromJson] ═══ EXCEPTION ═══');
       debugPrint('[AppendixHData.fromJson] Error: $e');
       debugPrint('[AppendixHData.fromJson] Stack Trace:');
-      debugPrint(stackTrace);
+      debugPrint(stackTrace.toString());
       debugPrint('[AppendixHData.fromJson] Input JSON was: $json');
       debugPrint('[AppendixHData.fromJson] ═══ END EXCEPTION ═══');
       rethrow;

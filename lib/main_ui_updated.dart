@@ -86,7 +86,7 @@ void callbackDispatcher() {
           await syncService.syncLearnerDetails();
           await syncService.syncMaterialFormsWithServer();
           await syncService.syncAcknowledgmentOfReceiptToServer();
-          await syncService.sync_inductionClocking();
+          await syncService.syncInductionClocking();
           debugPrint("Background sync completed successfully.");
           return Future.value(true);
         } else {
@@ -413,10 +413,10 @@ class _LoginPageState extends State<LoginPage> {
       await syncService.syncDataToServer();
       await syncService.syncAllPOERecords();
       var result = await syncService.syncLearnerDetails();
-      debugPrint(result);
+      debugPrint(result.toString());
       await syncService.syncMaterialFormsWithServer();
       await syncService.syncAcknowledgmentOfReceiptToServer();
-      await syncService.sync_inductionClocking();
+      await syncService.syncInductionClocking();
       debugPrint("Background sync completed successfully.");
 
       if (mounted) {
@@ -755,7 +755,7 @@ class _LoginPageState extends State<LoginPage> {
             context,
             MaterialPageRoute(
               builder: (context) => AssessorPage(
-                facilitator_id: facilitatorId,
+                facilitatorId: facilitatorId,
               ),
             ),
           );
@@ -906,7 +906,7 @@ class _LoginPageState extends State<LoginPage> {
               context,
               MaterialPageRoute(
                 builder: (context) => ArplAssessorPage(
-                  facilitator_id: facilitatorId,
+                  facilitatorId: facilitatorId,
                 ),
               ),
             );
@@ -925,7 +925,7 @@ class _LoginPageState extends State<LoginPage> {
             context,
             MaterialPageRoute(
               builder: (context) => ModeratorPage(
-                facilitator_id: facilitatorId,
+                facilitatorId: facilitatorId,
               ),
             ),
           );
@@ -1299,8 +1299,8 @@ class _LoginPageState extends State<LoginPage> {
       child: TextFormField(
         controller: controller,
         obscureText: obscureText,
-        validator: validator ??
-            (value) => value!.isEmpty ? 'Enter email' : null,
+        validator:
+            validator ?? (value) => value!.isEmpty ? 'Enter email' : null,
         style: const TextStyle(
           fontSize: 16,
           color: Color(0xFF26364D),

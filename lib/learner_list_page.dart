@@ -3009,7 +3009,8 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
       }
     } catch (e) {
       debugPrint('Network error: $e');
-      if (!context.mounted) return false;
+      if (!context.mounted)
+        return {'success': false, 'message': 'Network error: $e'};
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Network error: $e')),
       );

@@ -88,7 +88,7 @@ void callbackDispatcher() {
           await syncService.syncLearnerDetails();
           await syncService.syncMaterialFormsWithServer();
           await syncService.syncAcknowledgmentOfReceiptToServer();
-          await syncService.sync_inductionClocking();
+          await syncService.syncInductionClocking();
           debugPrint("Background sync completed successfully.");
           return Future.value(true);
         } else {
@@ -392,13 +392,15 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
 
-      debugPrint('[OFFLINE_TOKEN] Found offline session for $email, validating...');
-      
+      debugPrint(
+          '[OFFLINE_TOKEN] Found offline session for $email, validating...');
+
       // Load session from database to check expiry
       final session = await dbHelper.loadOfflineSession(email);
-      
+
       if (session == null) {
-        debugPrint('[OFFLINE_TOKEN] Session expired or not found, clearing SharedPreferences');
+        debugPrint(
+            '[OFFLINE_TOKEN] Session expired or not found, clearing SharedPreferences');
         await prefs.remove('offline_token');
         await prefs.remove('offline_user_email');
         return;
@@ -406,7 +408,7 @@ class _LoginPageState extends State<LoginPage> {
 
       // Validate the token
       final isValid = await dbHelper.validateOfflineToken(email, token);
-      
+
       if (!isValid) {
         debugPrint('[OFFLINE_TOKEN] Token validation failed, clearing session');
         await prefs.remove('offline_token');
@@ -414,8 +416,9 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
 
-      debugPrint('[OFFLINE_TOKEN] ✅ Valid session found, auto-logging in as $email');
-      
+      debugPrint(
+          '[OFFLINE_TOKEN] ✅ Valid session found, auto-logging in as $email');
+
       // Fetch user details and navigate based on role
       // First check SDP
       final sdpEntry = await dbHelper.getSdpByEmail(email);
@@ -432,19 +435,19 @@ class _LoginPageState extends State<LoginPage> {
         int siteIDInt = int.tryParse(siteID) ?? 0;
         List classData = await dbHelper.getClassData(classID);
         List learners = await dbHelper.getLearnersForClass(siteIDInt);
-        
+
         Map<String, dynamic> offlineData = {
           'sdp_name': sdpEntry['sdp_name']?.toString() ??
               sdpEntry['client_name']?.toString() ??
               '',
           'sdp_id': sdp,
         };
-        
+
         _navigateBasedOnRole(role, classID, sdp, classData, learners,
             facilitatorId, classes, offlineData);
         return;
       }
-      
+
       // Then check facilitator
       final facilitator = await dbHelper.getFacilitatorByEmail(email);
       if (facilitator != null) {
@@ -461,12 +464,14 @@ class _LoginPageState extends State<LoginPage> {
         String sdp = facilitator['sdp_name'] ?? '';
         String facilitatorId = facilitator['facilitator_id']?.toString() ?? '';
         List classes = facilitator['classes'] ?? [];
-        
-        _navigateBasedOnRole(role, classID, sdp, [], [], facilitatorId, classes, {});
+
+        _navigateBasedOnRole(
+            role, classID, sdp, [], [], facilitatorId, classes, {});
         return;
       }
 
-      debugPrint('[OFFLINE_TOKEN] ⚠️ Session valid but user not found in database');
+      debugPrint(
+          '[OFFLINE_TOKEN] ⚠️ Session valid but user not found in database');
       await prefs.remove('offline_token');
       await prefs.remove('offline_user_email');
     } catch (e) {
@@ -518,14 +523,14 @@ class _LoginPageState extends State<LoginPage> {
       await syncService.syncDataToServer();
       await syncService.syncAllPOERecords();
       var result = await syncService.syncLearnerDetails();
-      debugPrint(result);
+      debugPrint(result.toString());
       await syncService.syncMaterialFormsWithServer();
       await syncService.syncAcknowledgmentOfReceiptToServer();
-      await syncService.sync_inductionClocking();
+      await syncService.syncInductionClocking();
       debugPrint("Background sync completed successfully.");
 
       if (mounted) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Background sync completed successfully')),
@@ -534,7 +539,7 @@ class _LoginPageState extends State<LoginPage> {
     } catch (syncError) {
       debugPrint("Background sync failed: $syncError");
       if (mounted) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Background sync failed: $syncError')),
         );
@@ -567,8 +572,10 @@ class _LoginPageState extends State<LoginPage> {
             await prefs.setString('auth_token', token);
             debugPrint('[LOGIN] ✅ Auth token saved successfully');
             debugPrint('[LOGIN] Token length: ${token.length}');
-            debugPrint('[LOGIN] Token first 16 chars: ${token.substring(0, token.length >= 16 ? 16 : token.length)}...');
-            debugPrint('[LOGIN] Token last 16 chars: ...${token.substring(token.length >= 16 ? token.length - 16 : 0)}');
+            debugPrint(
+                '[LOGIN] Token first 16 chars: ${token.substring(0, token.length >= 16 ? 16 : token.length)}...');
+            debugPrint(
+                '[LOGIN] Token last 16 chars: ...${token.substring(token.length >= 16 ? token.length - 16 : 0)}');
           } else {
             debugPrint('[LOGIN] ❌ WARNING: No auth_token in login response!');
           }
@@ -693,14 +700,16 @@ class _LoginPageState extends State<LoginPage> {
               final prefs = await SharedPreferences.getInstance();
               await prefs.setString('offline_token', token);
               await prefs.setString('offline_user_email', username);
-              debugPrint('[OFFLINE_TOKEN] ✅ Offline token created and stored for $username');
+              debugPrint(
+                  '[OFFLINE_TOKEN] ✅ Offline token created and stored for $username');
             } else {
-              debugPrint('[OFFLINE_TOKEN] ⚠️ Failed to create offline token for $username');
+              debugPrint(
+                  '[OFFLINE_TOKEN] ⚠️ Failed to create offline token for $username');
             }
           } catch (e) {
             debugPrint('[OFFLINE_TOKEN] ❌ Error creating offline token: $e');
           }
-          
+
           String role = 'sdp';
           String siteID = sdpEntry['siteID']?.toString() ?? '';
           String classID = sdpEntry['classID']?.toString() ?? '';
@@ -751,21 +760,24 @@ class _LoginPageState extends State<LoginPage> {
 
           if (facilitator != null) {
             // ✅ Facilitator offline login successful - create offline session token
-            debugPrint('[OFFLINE_TOKEN] Facilitator login successful for $username');
+            debugPrint(
+                '[OFFLINE_TOKEN] Facilitator login successful for $username');
             try {
               final token = await dbHelper.createOfflineToken(username);
               if (token != null) {
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.setString('offline_token', token);
                 await prefs.setString('offline_user_email', username);
-                debugPrint('[OFFLINE_TOKEN] ✅ Offline token created and stored for $username');
+                debugPrint(
+                    '[OFFLINE_TOKEN] ✅ Offline token created and stored for $username');
               } else {
-                debugPrint('[OFFLINE_TOKEN] ⚠️ Failed to create offline token for $username');
+                debugPrint(
+                    '[OFFLINE_TOKEN] ⚠️ Failed to create offline token for $username');
               }
             } catch (e) {
               debugPrint('[OFFLINE_TOKEN] ❌ Error creating offline token: $e');
             }
-            
+
             String role = facilitator['role'];
             // Normalize the role for consistent handling
             final normalizedRole = role.toLowerCase().trim();
@@ -905,12 +917,12 @@ class _LoginPageState extends State<LoginPage> {
         facilitatorId: facilitatorId,
         facilitatorName: 'Assessor',
         onSuccess: () {
-          if (!context.mounted) return null;
+          if (!context.mounted) return;
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => AssessorPage(
-                facilitator_id: facilitatorId,
+                facilitatorId: facilitatorId,
               ),
             ),
           );
@@ -1056,12 +1068,12 @@ class _LoginPageState extends State<LoginPage> {
           if (context.mounted) {
             debugPrint(
                 '[LOGIN] Proceeding to ARPL Assessor dashboard for $facilitatorIdInt');
-            if (!context.mounted) return null;
+            if (!context.mounted) return;
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => ArplAssessorPage(
-                  facilitator_id: facilitatorId,
+                  facilitatorId: facilitatorId,
                 ),
               ),
             );
@@ -1075,12 +1087,12 @@ class _LoginPageState extends State<LoginPage> {
         facilitatorId: facilitatorId,
         facilitatorName: 'Moderator',
         onSuccess: () {
-          if (!context.mounted) return null;
+          if (!context.mounted) return;
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => ModeratorPage(
-                facilitator_id: facilitatorId,
+                facilitatorId: facilitatorId,
               ),
             ),
           );
@@ -1094,7 +1106,7 @@ class _LoginPageState extends State<LoginPage> {
         facilitatorId: facilitatorId,
         facilitatorName: 'Facilitator',
         onSuccess: () {
-          if (!context.mounted) return null;
+          if (!context.mounted) return;
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -1115,21 +1127,21 @@ class _LoginPageState extends State<LoginPage> {
       debugPrint('[OFFLINE_TOKEN] Logging out...');
       final prefs = await SharedPreferences.getInstance();
       final email = prefs.getString('offline_user_email');
-      
+
       if (email != null) {
         await dbHelper.clearOfflineSession(email);
         debugPrint('[OFFLINE_TOKEN] ✅ Cleared offline session for $email');
       }
-      
+
       await prefs.remove('offline_token');
       await prefs.remove('offline_user_email');
       await prefs.remove('auth_token');
-      
+
       debugPrint('[OFFLINE_TOKEN] ✅ Logout complete, cleared all session data');
-      
+
       // Navigate back to login page (replace the current route)
       if (mounted) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginPage()),
           (route) => false,
@@ -1831,7 +1843,7 @@ class _LoginPageState extends State<LoginPage> {
       debugPrint('[FAC_FACE_LOGIN] Navigating to face clock-in page');
 
       // Navigate to comprehensive clock-in page
-      if (!context.mounted) return;
+      if (!context.mounted) return false;
       final result = await Navigator.push<bool>(
         context,
         MaterialPageRoute(
@@ -1849,7 +1861,7 @@ class _LoginPageState extends State<LoginPage> {
 
       // Show error
       if (mounted) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         showDialog(
           context: context,
           builder: (context) => AlertDialog(

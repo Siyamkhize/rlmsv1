@@ -14,7 +14,7 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
   Future<bool> ensureLearnerProfileCompleteForClockIn(String learnerId) async {
     final learner = await fetchLearnerForClockInValidation(learnerId);
     if (learner == null) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Could not load learner profile. Please try again.'),
@@ -96,7 +96,7 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
     // CRITICAL FIX: Use pushReplacement to avoid navigation stack issues
     // This ensures we return to the CALLING page (signature_geofence_clock_in_page)
     // instead of going back through the navigation history
-    if (!context.mounted) return;
+    if (!context.mounted) return false;
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
@@ -109,7 +109,7 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
     );
 
     if (!mounted) return false;
-    
+
     // If user explicitly cancelled from LearnerDetailsPage
     if (result == false) {
       return false;
@@ -121,7 +121,7 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
     );
 
     if (refreshedMissing.isNotEmpty) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -142,13 +142,15 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
   }
 
   /// Order: (1) upload missing → (2) re-upload declined → (3) wait on pending only.
-  Future<bool> ensureLearnerDocumentsCompleteForClockIn(String learnerId) async {
+  Future<bool> ensureLearnerDocumentsCompleteForClockIn(
+      String learnerId) async {
     final docService = LearnerDocumentClockInService(context);
 
     while (true) {
       if (!mounted) return false;
 
-      final docStatuses = await getDetailedDocumentStatusesForClockIn(learnerId);
+      final docStatuses =
+          await getDetailedDocumentStatusesForClockIn(learnerId);
 
       if (docStatuses['allApproved'] == true) {
         return true;
@@ -161,9 +163,8 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
           problemDocs.where((d) => _isDocStatus(d, 'Not Uploaded')).toList();
       final declinedDocs =
           problemDocs.where((d) => _isDocStatus(d, 'Declined')).toList();
-      final pendingDocs = problemDocs
-          .where((d) => _isDocStatus(d, 'Pending'))
-          .toList();
+      final pendingDocs =
+          problemDocs.where((d) => _isDocStatus(d, 'Pending')).toList();
 
       Map<String, dynamic>? action;
 
@@ -225,50 +226,54 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
     String learnerId,
   ) async {
     try {
-      debugPrint('[CLOCKIN_GATES] ===== Starting document check for learner: $learnerId =====');
-      
+      debugPrint(
+          '[CLOCKIN_GATES] ===== Starting document check for learner: $learnerId =====');
+
       if (!await hasNetworkConnectivity()) {
-        debugPrint('[CLOCKIN_GATES] No network connectivity - allowing clock-in');
+        debugPrint(
+            '[CLOCKIN_GATES] No network connectivity - allowing clock-in');
         return {'allApproved': true, 'documents': []};
       }
 
       // Get auth token
       final token = await AppConfig.getAuthToken();
       debugPrint('[CLOCKIN_GATES] Auth token present: ${token != null}');
-      
+
       final headers = <String, String>{
         'Content-Type': 'application/x-www-form-urlencoded',
       };
       if (token != null) {
         headers['Authorization'] = 'Bearer $token';
-        debugPrint('[CLOCKIN_GATES] Auth header added (token hidden for security)');
+        debugPrint(
+            '[CLOCKIN_GATES] Auth header added (token hidden for security)');
       }
 
       final url = AppConfig.buildUrl('get_document_statuses.php');
       debugPrint('[CLOCKIN_GATES] Request URL: $url');
       debugPrint('[CLOCKIN_GATES] Request body: learner_id=$learnerId');
 
-      final response = await http
-          .post(
-            Uri.parse(url),
-            headers: headers,
-            body: {'learner_id': learnerId},
-          )
-          .timeout(const Duration(seconds: 6));
+      final response = await http.post(
+        Uri.parse(url),
+        headers: headers,
+        body: {'learner_id': learnerId},
+      ).timeout(const Duration(seconds: 6));
 
       debugPrint('[CLOCKIN_GATES] Response status: ${response.statusCode}');
-      debugPrint('[CLOCKIN_GATES] Response body length: ${response.body.length}');
+      debugPrint(
+          '[CLOCKIN_GATES] Response body length: ${response.body.length}');
       debugPrint('[CLOCKIN_GATES] Response body: ${response.body}');
 
       if (response.statusCode != 200) {
-        debugPrint('[CLOCKIN_GATES] ❌ HTTP error - status ${response.statusCode}');
+        debugPrint(
+            '[CLOCKIN_GATES] ❌ HTTP error - status ${response.statusCode}');
         return {'allApproved': false, 'documents': []};
       }
 
       final decoded = json.decode(response.body);
       debugPrint('[CLOCKIN_GATES] Decoded JSON type: ${decoded.runtimeType}');
-      debugPrint('[CLOCKIN_GATES] Decoded success field: ${decoded['success']}');
-      
+      debugPrint(
+          '[CLOCKIN_GATES] Decoded success field: ${decoded['success']}');
+
       if (decoded['success'] != true) {
         debugPrint('[CLOCKIN_GATES] ❌ API returned success=false');
         if (decoded['message'] != null) {
@@ -283,26 +288,31 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
         return {'allApproved': false, 'documents': []};
       }
 
-      debugPrint('[CLOCKIN_GATES] Documents map keys: ${docsMap.keys.toList()}');
-      debugPrint('[CLOCKIN_GATES] Required documents: $learnerClockInRequiredDocuments');
+      debugPrint(
+          '[CLOCKIN_GATES] Documents map keys: ${docsMap.keys.toList()}');
+      debugPrint(
+          '[CLOCKIN_GATES] Required documents: $learnerClockInRequiredDocuments');
 
       final List<Map<String, dynamic>> problemDocs = [];
 
       for (final requiredDoc in learnerClockInRequiredDocuments) {
         final normalizedName = requiredDoc.trim().toLowerCase();
-        debugPrint('[CLOCKIN_GATES] Checking required doc: "$requiredDoc" (normalized: "$normalizedName")');
+        debugPrint(
+            '[CLOCKIN_GATES] Checking required doc: "$requiredDoc" (normalized: "$normalizedName")');
 
         Map<String, dynamic>? docInfo;
         for (final entry in docsMap.entries) {
           if (entry.key.trim().toLowerCase() == normalizedName) {
             docInfo = entry.value as Map<String, dynamic>?;
-            debugPrint('[CLOCKIN_GATES]   ✓ Found match: ${entry.key} -> $docInfo');
+            debugPrint(
+                '[CLOCKIN_GATES]   ✓ Found match: ${entry.key} -> $docInfo');
             break;
           }
         }
 
         if (docInfo == null) {
-          debugPrint('[CLOCKIN_GATES]   ❌ Not found - marking as "Not Uploaded"');
+          debugPrint(
+              '[CLOCKIN_GATES]   ❌ Not found - marking as "Not Uploaded"');
           problemDocs.add({
             'name': requiredDoc,
             'status': 'Not Uploaded',
@@ -311,9 +321,10 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
         } else {
           final status = docInfo['status']?.toString() ?? 'Pending';
           debugPrint('[CLOCKIN_GATES]   Status: $status');
-          
+
           if (status.toLowerCase() != 'approved') {
-            debugPrint('[CLOCKIN_GATES]   ⚠️ Not approved - adding to problem docs');
+            debugPrint(
+                '[CLOCKIN_GATES]   ⚠️ Not approved - adding to problem docs');
             problemDocs.add({
               'name': requiredDoc,
               'status': status,
@@ -441,7 +452,8 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(docName,
-                            style: const TextStyle(fontWeight: FontWeight.w600)),
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w600)),
                         if (reason != null && reason.toString().isNotEmpty)
                           Text('Reason: $reason',
                               style: TextStyle(color: Colors.red.shade900)),
