@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:signature/signature.dart';
@@ -23,7 +23,7 @@ import 'learner_security_questions_setup_page.dart';
 /// BACKUP CLOCK-IN PAGE
 ///_
 /// This page is used when no fingerprint scanner is available.
-/// Flow: Profile Check → Bank Check → Documents Check → ID Verification → Signature → GPS → Clock-In/Out
+/// Flow: Profile Check ? Bank Check ? Documents Check ? ID Verification ? Signature ? GPS ? Clock-In/Out
 ///
 /// Key differences from regular clock-in:
 /// - Uses signature instead of fingerprint verification
@@ -175,7 +175,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
       // No learners found - try to create test learners for offline functionality
       debugPrint(
-          '[BACKUP_LOAD] 🔄 No learners found, attempting to create test learners...');
+          '[BACKUP_LOAD] ?? No learners found, attempting to create test learners...');
       try {
         final dbHelper = DatabaseHelper();
         await dbHelper.ensureClassDataExists(widget.classID);
@@ -192,7 +192,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
         if (retryResult.isNotEmpty) {
           debugPrint(
-              '[BACKUP_LOAD] ✅ Successfully created ${retryResult.length} test learners');
+              '[BACKUP_LOAD] ? Successfully created ${retryResult.length} test learners');
           setState(() {
             _learners = retryResult;
             _isLoadingLearners = false;
@@ -200,10 +200,10 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           await _loadClockingStatus();
           return;
         } else {
-          debugPrint('[BACKUP_LOAD] ❌ Failed to create test learners');
+          debugPrint('[BACKUP_LOAD] ? Failed to create test learners');
         }
       } catch (e) {
-        debugPrint('[BACKUP_LOAD] ❌ Error creating test learners: $e');
+        debugPrint('[BACKUP_LOAD] ? Error creating test learners: $e');
       }
 
       // PRIORITY 2: Use learners passed from parent widget (if offline DB empty)
@@ -395,12 +395,12 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       // CRITICAL FIX: Ensure learner_clocking_evidence table exists
       try {
         await db.rawQuery('SELECT 1 FROM learner_clocking_evidence LIMIT 1');
-        debugPrint('[BACKUP_STATUS] ✅ Evidence table exists');
+        debugPrint('[BACKUP_STATUS] ? Evidence table exists');
       } catch (e) {
         debugPrint(
-            '[BACKUP_STATUS] ⚠️ Evidence table missing, creating now: $e');
+            '[BACKUP_STATUS] ?? Evidence table missing, creating now: $e');
         await DatabaseHelper().repairEvidenceTable();
-        debugPrint('[BACKUP_STATUS] ✅ Evidence table created');
+        debugPrint('[BACKUP_STATUS] ? Evidence table created');
       }
 
       // Check connectivity and fetch from server if online
@@ -482,7 +482,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                     existingId,
                   ]);
                   debugPrint(
-                      '[BACKUP_STATUS] ✅ Updated local record for learner $learnerId');
+                      '[BACKUP_STATUS] ? Updated local record for learner $learnerId');
                 } else {
                   // INSERT new record
                   await db.rawInsert('''
@@ -512,14 +512,14 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                     record['face_log_id'],
                   ]);
                   debugPrint(
-                      '[BACKUP_STATUS] ✅ Inserted new server record for learner $learnerId');
+                      '[BACKUP_STATUS] ? Inserted new server record for learner $learnerId');
                 }
               }
             }
           }
         } catch (e) {
           debugPrint(
-              '[BACKUP_STATUS] ⚠️ Server fetch failed, using local only: $e');
+              '[BACKUP_STATUS] ?? Server fetch failed, using local only: $e');
         }
       }
 
@@ -576,9 +576,9 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           }
 
           debugPrint(
-              '[BACKUP_STATUS]     Status: ${completedDayUpdates[learnerId]! ? "✓✓ COMPLETED DAY" : clockedInUpdates[learnerId]! ? "✓ CLOCKED IN" : "✗ NOT CLOCKED IN"} (hasClockIn=$hasClockIn, hasClockOut=$hasClockOut)');
+              '[BACKUP_STATUS]     Status: ${completedDayUpdates[learnerId]! ? "?? COMPLETED DAY" : clockedInUpdates[learnerId]! ? "? CLOCKED IN" : "? NOT CLOCKED IN"} (hasClockIn=$hasClockIn, hasClockOut=$hasClockOut)');
         } else {
-          debugPrint('[BACKUP_STATUS]     Status: ✗ NO RECORDS FOR TODAY');
+          debugPrint('[BACKUP_STATUS]     Status: ? NO RECORDS FOR TODAY');
           clockedInUpdates[learnerId] = false;
           completedDayUpdates[learnerId] = false;
           // Don't add to clockInTimeUpdates - will be removed in setState
@@ -901,7 +901,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              '✓ You have already clocked in and out for today. See you tomorrow!'),
+              '? You have already clocked in and out for today. See you tomorrow!'),
           backgroundColor: Colors.blue,
           duration: Duration(seconds: 3),
         ),
@@ -976,7 +976,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           if (!hasSecurityQuestions) {
             // Face enrolled but NO security questions - force setup
             debugPrint(
-                '[BACKUP_CLOCKIN] ⚠️ Face enrolled but security questions NOT set up - forcing setup');
+                '[BACKUP_CLOCKIN] ?? Face enrolled but security questions NOT set up - forcing setup');
 
             if (mounted) {
               if (!context.mounted) return;
@@ -1092,7 +1092,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               }
 
               debugPrint(
-                  '[BACKUP_CLOCKIN] ✅ Security questions setup completed - proceeding with face verification');
+                  '[BACKUP_CLOCKIN] ? Security questions setup completed - proceeding with face verification');
             }
           }
         } catch (e) {
@@ -1102,7 +1102,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
         // Face enrolled and questions checked - mark as enrolled and proceed to verification
         debugPrint(
-            '[BACKUP_CLOCKIN] ✅ Face enrolled + questions checked - proceeding to verification');
+            '[BACKUP_CLOCKIN] ? Face enrolled + questions checked - proceeding to verification');
         _isFaceEnrolled = true;
       } else {
         // Face NOT enrolled - offer enrollment
@@ -1110,7 +1110,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         final enrolled = await _enrollFace(learnerId);
         if (!enrolled) {
           debugPrint(
-              '[BACKUP_CLOCKIN] ⚠️ Face enrollment CANCELLED by user - aborting clock-in');
+              '[BACKUP_CLOCKIN] ?? Face enrollment CANCELLED by user - aborting clock-in');
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -1320,7 +1320,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('✅ Clocked in successfully!'),
+          content: Text('? Clocked in successfully!'),
           backgroundColor: Colors.green,
         ),
       );
@@ -1384,14 +1384,14 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         if (!faceVerified) {
           // Face verification failed - this is the WRONG PERSON!
           debugPrint(
-              '[BACKUP_CLOCKOUT] ❌ FACE VERIFICATION FAILED - WRONG PERSON!');
+              '[BACKUP_CLOCKOUT] ? FACE VERIFICATION FAILED - WRONG PERSON!');
 
           if (mounted) {
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
-                    '❌ Identity verification failed!\n\nThe face does not match the person who clocked in.\n\nClock-out denied.'),
+                    '? Identity verification failed!\n\nThe face does not match the person who clocked in.\n\nClock-out denied.'),
                 backgroundColor: Colors.red,
                 duration: Duration(seconds: 5),
               ),
@@ -1406,10 +1406,10 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         }
 
         debugPrint(
-            '[BACKUP_CLOCKOUT] ✅ Face verification SUCCESS - Same person confirmed');
+            '[BACKUP_CLOCKOUT] ? Face verification SUCCESS - Same person confirmed');
       } else {
         debugPrint(
-            '[BACKUP_CLOCKOUT] ⚠️ No face enrolled - skipping face verification (signature only)');
+            '[BACKUP_CLOCKOUT] ?? No face enrolled - skipping face verification (signature only)');
       }
 
       // Step 4: Signature capture
@@ -1453,7 +1453,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('✅ Clocked out successfully!'),
+          content: Text('? Clocked out successfully!'),
           backgroundColor: Colors.green,
         ),
       );
@@ -2166,10 +2166,10 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         _showErrorDialog(
           'Location Not Trusted',
           'Your GPS location could not be verified. Please ensure:\n'
-              '• GPS is enabled\n'
-              '• You are outdoors with clear sky view\n'
-              '• Mock locations are disabled\n'
-              '• Battery saver is disabled for RLMSS',
+              '� GPS is enabled\n'
+              '� You are outdoors with clear sky view\n'
+              '� Mock locations are disabled\n'
+              '� Battery saver is disabled for RLMSS',
         );
         return false;
       }
@@ -2204,10 +2204,10 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         return false;
       }
 
-      debugPrint('[BACKUP] ✅ Geofence and GPS verification passed');
+      debugPrint('[BACKUP] ? Geofence and GPS verification passed');
       return true;
     } catch (e) {
-      debugPrint('[BACKUP] ❌ Geofence/GPS error: $e');
+      debugPrint('[BACKUP] ? Geofence/GPS error: $e');
       _showErrorDialog(
         'Location Error',
         'Could not verify your location: $e\n\n'
@@ -2238,7 +2238,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       if (existingEvidence.isNotEmpty &&
           existingEvidence.first['clock_in_timestamp'] != null) {
         debugPrint(
-            '[BACKUP] ⚠️ Clock-in record already exists in evidence table for today - skipping duplicate insert');
+            '[BACKUP] ?? Clock-in record already exists in evidence table for today - skipping duplicate insert');
         throw Exception('You have already clocked in today');
       }
 
@@ -2278,7 +2278,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               '[BACKUP] GPS for server: lat=$clockInLatitude, lng=$clockInLongitude, acc=$clockInAccuracy');
         }
       } catch (e) {
-        debugPrint('[BACKUP] ⚠️ Could not capture GPS: $e');
+        debugPrint('[BACKUP] ?? Could not capture GPS: $e');
       }
 
       // Backup clock-in does NOT sync to learner_clocking table
@@ -2291,11 +2291,11 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       // Update synced flag
       dbData['synced'] = synced ? 1 : 0;
 
-      // ⚠️ REMOVED: No longer inserting into learner_clocking table
+      // ?? REMOVED: No longer inserting into learner_clocking table
       // This is now handled by the evidence table only
       // await DatabaseHelper().insertClocking(dbData);
       debugPrint(
-          '[BACKUP] ℹ️ Clock-in evidence only (no learner_clocking insert)');
+          '[BACKUP] ?? Clock-in evidence only (no learner_clocking insert)');
 
       // Save evidence (signature + face photo + GPS + verification method)
       try {
@@ -2316,10 +2316,10 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             debugPrint(
                 '[BACKUP] GPS captured: lat=$latitude, lng=$longitude, acc=$accuracy');
           } else {
-            debugPrint('[BACKUP] ⚠️ GPS position not trusted');
+            debugPrint('[BACKUP] ?? GPS position not trusted');
           }
         } catch (e) {
-          debugPrint('[BACKUP] ⚠️ Could not capture GPS: $e');
+          debugPrint('[BACKUP] ?? Could not capture GPS: $e');
         }
 
         // Determine verification method
@@ -2333,17 +2333,17 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
         if (_capturedFacePhotoBase64 != null) {
           verificationMethod = 'face';
-          debugPrint('[BACKUP] ✅ Verification method: FACE (photo captured)');
+          debugPrint('[BACKUP] ? Verification method: FACE (photo captured)');
         } else if (_isFaceEnrolled && _capturedFacePhotoBase64 == null) {
           // Face was enrolled but verification failed, used security questions
           verificationMethod = 'security_question';
           debugPrint(
-              '[BACKUP] ⚠️ Verification method: SECURITY_QUESTION (face enrolled but verification failed)');
+              '[BACKUP] ?? Verification method: SECURITY_QUESTION (face enrolled but verification failed)');
         } else {
           // No face enrolled - signature only
           verificationMethod = 'signature';
           debugPrint(
-              '[BACKUP] ℹ️ Verification method: SIGNATURE (no face enrolled)');
+              '[BACKUP] ?? Verification method: SIGNATURE (no face enrolled)');
         }
 
         // Check if online - if yes, save directly to server
@@ -2402,7 +2402,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             if (response.statusCode == 200) {
               final result = json.decode(response.body);
               if (result['success'] == true) {
-                debugPrint('[BACKUP] ✅ Evidence saved directly to server');
+                debugPrint('[BACKUP] ? Evidence saved directly to server');
                 debugPrint('[BACKUP] Server response: ${result['message']}');
                 debugPrint(
                     '[BACKUP] Signature saved: ${result['signature_saved']}');
@@ -2419,10 +2419,10 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
                 if (uploadSuccess) {
                   debugPrint(
-                      '[BACKUP] ✅ Images uploaded to server successfully');
+                      '[BACKUP] ? Images uploaded to server successfully');
                 } else {
                   debugPrint(
-                      '[BACKUP] ⚠️ Image upload failed - images saved locally only');
+                      '[BACKUP] ?? Image upload failed - images saved locally only');
                   // TODO: Add to offline sync queue for retry when connection improves
                 }
 
@@ -2446,10 +2446,10 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               throw Exception('HTTP ${response.statusCode}: ${response.body}');
             }
           } catch (e) {
-            debugPrint('[BACKUP] ❌ ERROR saving evidence to server: $e');
+            debugPrint('[BACKUP] ? ERROR saving evidence to server: $e');
             debugPrint('[BACKUP] Error type: ${e.runtimeType}');
             debugPrint('[BACKUP] Error stack trace: ${StackTrace.current}');
-            debugPrint('[BACKUP] ⚠️ Falling back to local storage...');
+            debugPrint('[BACKUP] ?? Falling back to local storage...');
             // Fall back to local storage if online save fails
             await _saveEvidenceLocally(
               learnerId: learnerId,
@@ -2478,13 +2478,13 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         }
 
         debugPrint(
-            '[BACKUP] ✅ Clock-in evidence saved successfully (method: $verificationMethod)');
+            '[BACKUP] ? Clock-in evidence saved successfully (method: $verificationMethod)');
       } catch (e) {
-        debugPrint('[BACKUP] ⚠️ Error saving evidence (non-critical): $e');
+        debugPrint('[BACKUP] ?? Error saving evidence (non-critical): $e');
         // Don't fail the clock-in if evidence saving fails
       }
     } catch (e) {
-      debugPrint('[BACKUP] ❌ Error saving clock-in: $e');
+      debugPrint('[BACKUP] ? Error saving clock-in: $e');
       rethrow;
     }
   }
@@ -2531,10 +2531,10 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       bool synced =
           false; // Evidence will be synced separately via save_clocking_evidence.php
 
-      // ⚠️ REMOVED: No longer updating learner_clocking table
+      // ?? REMOVED: No longer updating learner_clocking table
       // This is now handled by the evidence table only
       debugPrint(
-          '[BACKUP] ℹ️ Clock-out evidence only (no learner_clocking update, synced=$synced)');
+          '[BACKUP] ?? Clock-out evidence only (no learner_clocking update, synced=$synced)');
 
       // Save clock-out evidence (signature + face photo + GPS)
       try {
@@ -2555,10 +2555,10 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             debugPrint(
                 '[BACKUP] GPS captured: lat=$latitude, lng=$longitude, acc=$accuracy');
           } else {
-            debugPrint('[BACKUP] ⚠️ GPS position not trusted');
+            debugPrint('[BACKUP] ?? GPS position not trusted');
           }
         } catch (e) {
-          debugPrint('[BACKUP] ⚠️ Could not capture GPS: $e');
+          debugPrint('[BACKUP] ?? Could not capture GPS: $e');
         }
 
         // Determine verification method for clock-out
@@ -2626,7 +2626,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               final result = json.decode(response.body);
               if (result['success'] == true) {
                 debugPrint(
-                    '[BACKUP_CLOCKOUT] ✅ Evidence saved directly to server');
+                    '[BACKUP_CLOCKOUT] ? Evidence saved directly to server');
                 debugPrint(
                     '[BACKUP_CLOCKOUT] Server response: ${result['message']}');
                 debugPrint(
@@ -2647,10 +2647,10 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
                 if (uploadSuccess) {
                   debugPrint(
-                      '[BACKUP_CLOCKOUT] ✅ Images uploaded to server successfully');
+                      '[BACKUP_CLOCKOUT] ? Images uploaded to server successfully');
                 } else {
                   debugPrint(
-                      '[BACKUP_CLOCKOUT] ⚠️ Image upload failed - images saved locally only');
+                      '[BACKUP_CLOCKOUT] ?? Image upload failed - images saved locally only');
                   // TODO: Add to offline sync queue for retry when connection improves
                 }
 
@@ -2675,11 +2675,11 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             }
           } catch (e) {
             debugPrint(
-                '[BACKUP_CLOCKOUT] ❌ ERROR saving evidence to server: $e');
+                '[BACKUP_CLOCKOUT] ? ERROR saving evidence to server: $e');
             debugPrint('[BACKUP_CLOCKOUT] Error type: ${e.runtimeType}');
             debugPrint(
                 '[BACKUP_CLOCKOUT] Error stack trace: ${StackTrace.current}');
-            debugPrint('[BACKUP_CLOCKOUT] ⚠️ Falling back to local storage...');
+            debugPrint('[BACKUP_CLOCKOUT] ?? Falling back to local storage...');
             // Fall back to local storage if online save fails
             await _saveEvidenceLocally(
               learnerId: learnerId,
@@ -2707,14 +2707,14 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           );
         }
 
-        debugPrint('[BACKUP] ✅ Clock-out evidence saved successfully');
+        debugPrint('[BACKUP] ? Clock-out evidence saved successfully');
       } catch (e) {
         debugPrint(
-            '[BACKUP] ⚠️ Error saving clock-out evidence (non-critical): $e');
+            '[BACKUP] ?? Error saving clock-out evidence (non-critical): $e');
         // Don't fail the clock-out if evidence saving fails
       }
     } catch (e) {
-      debugPrint('[BACKUP] ❌ Error saving clock-out: $e');
+      debugPrint('[BACKUP] ? Error saving clock-out: $e');
       rethrow;
     }
   }
@@ -2849,9 +2849,9 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
       if (syncedCount > 0) {
         debugPrint(
-            '[FACE_SYNC] ✅ Successfully synced $syncedCount verification logs');
+            '[FACE_SYNC] ? Successfully synced $syncedCount verification logs');
       } else {
-        debugPrint('[FACE_SYNC] ❌ Failed to sync verification logs (offline?)');
+        debugPrint('[FACE_SYNC] ? Failed to sync verification logs (offline?)');
       }
     } catch (e) {
       debugPrint('[FACE_SYNC] Error syncing verification logs: $e');
@@ -2931,7 +2931,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             final decoded = json.decode(responseBody);
             if (decoded['success'] == true) {
               debugPrint(
-                  '[SIGNATURE_SYNC] ✅ Synced: $filename (${bytes.length} bytes)');
+                  '[SIGNATURE_SYNC] ? Synced: $filename (${bytes.length} bytes)');
               successCount++;
 
               // Optionally delete local file after successful sync (commented out for safety)
@@ -2939,16 +2939,16 @@ class _BackupClockInPageState extends State<BackupClockInPage>
               // debugPrint('[SIGNATURE_SYNC] Deleted local file: $filename');
             } else {
               debugPrint(
-                  '[SIGNATURE_SYNC] ❌ Server rejected: $filename - ${decoded['message']}');
+                  '[SIGNATURE_SYNC] ? Server rejected: $filename - ${decoded['message']}');
               failCount++;
             }
           } else {
             debugPrint(
-                '[SIGNATURE_SYNC] ❌ HTTP ${response.statusCode} for: $filename');
+                '[SIGNATURE_SYNC] ? HTTP ${response.statusCode} for: $filename');
             failCount++;
           }
         } catch (e) {
-          debugPrint('[SIGNATURE_SYNC] ❌ Error syncing file: $e');
+          debugPrint('[SIGNATURE_SYNC] ? Error syncing file: $e');
           failCount++;
         }
 
@@ -2959,7 +2959,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       debugPrint(
           '[SIGNATURE_SYNC] Complete: $successCount succeeded, $failCount failed');
     } catch (e) {
-      debugPrint('[SIGNATURE_SYNC] ❌ Fatal error: $e');
+      debugPrint('[SIGNATURE_SYNC] ? Fatal error: $e');
     }
   }
 
@@ -3064,7 +3064,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       // Get auth token
       final token = await AppConfig.getAuthToken();
       if (token == null) {
-        debugPrint('[UPLOAD] ❌ No auth token available');
+        debugPrint('[UPLOAD] ? No auth token available');
         return false;
       }
 
@@ -3090,7 +3090,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         request.fields['signature_filename'] = signatureFilename;
         request.fields['signature_suffix'] = suffix;
       } else {
-        debugPrint('[UPLOAD] ⚠️ Signature file not found: $signaturePath');
+        debugPrint('[UPLOAD] ?? Signature file not found: $signaturePath');
       }
 
       // Add face photo file (if exists)
@@ -3106,7 +3106,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           request.fields['photo_filename'] = photoFilename;
           request.fields['photo_suffix'] = suffix;
         } else {
-          debugPrint('[UPLOAD] ⚠️ Face photo not found: $photoPath');
+          debugPrint('[UPLOAD] ?? Face photo not found: $photoPath');
         }
       }
 
@@ -3129,26 +3129,26 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       if (response.statusCode == 200) {
         final result = json.decode(response.body);
         if (result['success'] == true) {
-          debugPrint('[UPLOAD] ✅ Images uploaded successfully to server!');
+          debugPrint('[UPLOAD] ? Images uploaded successfully to server!');
           final uploaded = result['uploaded'] as List?;
           if (uploaded != null) {
             for (var file in uploaded) {
               debugPrint(
-                  '[UPLOAD] ✓ ${file['type']}: ${file['filename']} → ${file['path']}');
+                  '[UPLOAD] ? ${file['type']}: ${file['filename']} ? ${file['path']}');
             }
           }
           return true;
         } else {
           debugPrint(
-              '[UPLOAD] ❌ Upload failed: ${result['message'] ?? "Unknown error"}');
+              '[UPLOAD] ? Upload failed: ${result['message'] ?? "Unknown error"}');
           return false;
         }
       } else {
-        debugPrint('[UPLOAD] ❌ HTTP error: ${response.statusCode}');
+        debugPrint('[UPLOAD] ? HTTP error: ${response.statusCode}');
         return false;
       }
     } catch (e) {
-      debugPrint('[UPLOAD] ⚠️ Upload error (non-critical): $e');
+      debugPrint('[UPLOAD] ?? Upload error (non-critical): $e');
       // Don't fail clock-in if upload fails - images are saved locally
       return false;
     }
@@ -3238,10 +3238,10 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
               SizedBox(height: 4),
-              Text('• Select 3-5 questions', style: TextStyle(fontSize: 13)),
-              Text('• Provide answers only you know',
+              Text('� Select 3-5 questions', style: TextStyle(fontSize: 13)),
+              Text('� Provide answers only you know',
                   style: TextStyle(fontSize: 13)),
-              Text('• Use them if face verification fails',
+              Text('� Use them if face verification fails',
                   style: TextStyle(fontSize: 13)),
             ],
           ),
@@ -3445,7 +3445,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('✅ Identity verified via security questions'),
+              content: Text('? Identity verified via security questions'),
               backgroundColor: Colors.green,
             ),
           );
@@ -3483,7 +3483,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
     }
   }
 
-  /// Enroll learner's face (capture → extract embedding → save to server)
+  /// Enroll learner's face (capture ? extract embedding ? save to server)
   Future<bool> _enrollFace(String learnerId) async {
     debugPrint('[FACE] Starting face enrollment for learner $learnerId');
 
@@ -3537,13 +3537,13 @@ class _BackupClockInPageState extends State<BackupClockInPage>
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                     SizedBox(height: 4),
-                    Text('• Look directly at the camera',
+                    Text('� Look directly at the camera',
                         style: TextStyle(fontSize: 13)),
-                    Text('• Ensure good lighting',
+                    Text('� Ensure good lighting',
                         style: TextStyle(fontSize: 13)),
-                    Text('• Remove glasses if possible',
+                    Text('� Remove glasses if possible',
                         style: TextStyle(fontSize: 13)),
-                    Text('• Keep a neutral expression',
+                    Text('� Keep a neutral expression',
                         style: TextStyle(fontSize: 13)),
                   ],
                 ),
@@ -3582,7 +3582,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             mode: FaceCaptureMode.register,
             title: 'Register Your Face',
             instruction:
-                'Center your face in the oval and hold still — the photo captures automatically',
+                'Center your face in the oval and hold still � the photo captures automatically',
             onCapture: (imageFile, base64Image) {
               capturedImage = imageFile;
               capturedBase64 = base64Image;
@@ -3680,7 +3680,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('✅ Face registered successfully!'),
+              content: Text('? Face registered successfully!'),
               backgroundColor: Colors.green,
             ),
           );
@@ -3701,7 +3701,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  '⚠️ Saved locally only — online enrollment failed: $serverMsg'),
+                  '?? Saved locally only � online enrollment failed: $serverMsg'),
               backgroundColor: Colors.orange,
               duration: const Duration(seconds: 5),
             ),
@@ -3721,14 +3721,14 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
         if (alreadyEnrolled || cachedLocally) {
           debugPrint(
-              '[FACE] Server returned "$serverMsg" but local cache=$cachedLocally — treating learner $learnerId as enrolled.');
+              '[FACE] Server returned "$serverMsg" but local cache=$cachedLocally � treating learner $learnerId as enrolled.');
           _isFaceEnrolled = true;
           if (mounted) {
             if (!context.mounted) return false;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content:
-                    Text('✅ Face already enrolled — moving to verification'),
+                    Text('? Face already enrolled � moving to verification'),
                 backgroundColor: Colors.green,
               ),
             );
@@ -3805,7 +3805,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             onCapture: (imageFile, base64Image) {
               capturedImage = imageFile;
               capturedBase64 = base64Image;
-              if (!context.mounted) return null;
+              if (!context.mounted) return false;
               Navigator.pop(context);
             },
             if (!context.mounted) return;
@@ -3816,13 +3816,13 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
       if (timedOut) {
         debugPrint(
-            '[FACE] Verification attempt $_faceVerificationAttempts timed out after 45s → fall through to next attempt / security questions');
+            '[FACE] Verification attempt $_faceVerificationAttempts timed out after 45s ? fall through to next attempt / security questions');
         if (mounted) {
-          if (!context.mounted) return null;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  'Taking too long — security questions next (Attempt $_faceVerificationAttempts of 3)'),
+                  'Taking too long � security questions next (Attempt $_faceVerificationAttempts of 3)'),
               backgroundColor: Colors.deepOrange,
             ),
           );
@@ -3838,7 +3838,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
       // Show processing dialog
       if (mounted) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -3862,9 +3862,9 @@ class _BackupClockInPageState extends State<BackupClockInPage>
 
       if (embedding == null) {
         if (mounted) {
-          if (!context.mounted) return null;
+          if (!context.mounted) return false;
           Navigator.pop(context); // Close processing dialog
-          if (!context.mounted) return null;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -3910,7 +3910,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       }
 
       if (mounted) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         Navigator.pop(context); // Close processing dialog
       }
 
@@ -4003,7 +4003,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             debugPrint(
                 '[FACE] User rejected identity confirmation for: $fullName');
             if (mounted) {
-              if (!context.mounted) return null;
+              if (!context.mounted) return false;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Clock-in cancelled - identity not confirmed'),
@@ -4015,7 +4015,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
             return false; // User rejected - do not proceed
           }
 
-          debugPrint('[FACE] ✅ Identity confirmed by user: $fullName');
+          debugPrint('[FACE] ? Identity confirmed by user: $fullName');
         }
 
         // Continue with verification success (confirmation passed or offline mode)
@@ -4034,12 +4034,12 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         _faceLogId =
             result['log_id']; // Store verification log ID (null if offline)
         if (mounted) {
-          if (!context.mounted) return null;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(isOffline
-                  ? '✅ Face verified successfully! (Offline mode)'
-                  : '✅ Face verified successfully!'),
+                  ? '? Face verified successfully! (Offline mode)'
+                  : '? Face verified successfully!'),
               backgroundColor: Colors.green,
             ),
           );
@@ -4048,7 +4048,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
       } else {
         debugPrint('[FACE] Verification failed: ${result['message']}');
         if (mounted) {
-          if (!context.mounted) return null;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -4064,7 +4064,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
     // All 3 attempts failed
     debugPrint('[FACE] All 3 verification attempts failed');
     if (mounted) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -4081,7 +4081,7 @@ class _BackupClockInPageState extends State<BackupClockInPage>
   void _showErrorDialog(String title, String message) {
     if (!mounted) return;
 
-    if (!context.mounted) return null;
+    if (!context.mounted) return false;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -4135,12 +4135,12 @@ class _BackupClockInPageState extends State<BackupClockInPage>
         );
       }
 
-      debugPrint('[BACKUP] ✅ Evidence saved to local database');
+      debugPrint('[BACKUP] ? Evidence saved to local database');
 
       // Mark for sync later
       debugPrint('[BACKUP] Evidence will sync when online');
     } catch (e) {
-      debugPrint('[BACKUP] ❌ Error saving to local database: $e');
+      debugPrint('[BACKUP] ? Error saving to local database: $e');
       rethrow;
     }
   }

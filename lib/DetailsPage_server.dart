@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:async';
@@ -204,14 +204,14 @@ class _POETabContentState extends State<POETabContent> {
             // Mark as synced in database
             await dbHelper.markPOEAsSynced(id);
             successCount++;
-            debugPrint('[POE_SYNC] ✅ Synced: $type - $exercise');
+            debugPrint('[POE_SYNC] ? Synced: $type - $exercise');
           } else {
             failCount++;
-            debugPrint('[POE_SYNC] ❌ Server error: ${decoded['message']}');
+            debugPrint('[POE_SYNC] ? Server error: ${decoded['message']}');
           }
         } catch (e) {
           failCount++;
-          debugPrint('[POE_SYNC] ❌ Upload failed: $e');
+          debugPrint('[POE_SYNC] ? Upload failed: $e');
         }
       }
 
@@ -221,7 +221,7 @@ class _POETabContentState extends State<POETabContent> {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Synced $successCount POE record(s) to server'),
+            content: Text('? Synced $successCount POE record(s) to server'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 3),
           ),
@@ -232,7 +232,7 @@ class _POETabContentState extends State<POETabContent> {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('⚠️ $failCount POE record(s) failed to sync'),
+            content: Text('?? $failCount POE record(s) failed to sync'),
             backgroundColor: Colors.orange,
             duration: const Duration(seconds: 3),
           ),
@@ -306,7 +306,7 @@ class _POETabContentState extends State<POETabContent> {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ $type exercise "$exercise" marked as uploaded'),
+            content: Text('? $type exercise "$exercise" marked as uploaded'),
             backgroundColor: Colors.green,
           ),
         );
@@ -401,7 +401,7 @@ class _POETabContentState extends State<POETabContent> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                '❌ No scanned document found. Please scan at least one question first.'),
+                '? No scanned document found. Please scan at least one question first.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -428,7 +428,7 @@ class _POETabContentState extends State<POETabContent> {
 
           markedCount++;
           debugPrint(
-              '✅ Linked formative exercise to existing document: $exercise ($markedCount/${pendingQuestions.length})');
+              '? Linked formative exercise to existing document: $exercise ($markedCount/${pendingQuestions.length})');
         }
       }
 
@@ -439,7 +439,7 @@ class _POETabContentState extends State<POETabContent> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              '✅ Linked $markedCount formative questions to existing scanned document'),
+              '? Linked $markedCount formative questions to existing scanned document'),
           backgroundColor: Colors.green,
         ),
       );
@@ -531,7 +531,7 @@ class _POETabContentState extends State<POETabContent> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                '❌ No scanned document found. Please scan at least one logbook item first.'),
+                '? No scanned document found. Please scan at least one logbook item first.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -565,7 +565,7 @@ class _POETabContentState extends State<POETabContent> {
 
           markedCount++;
           debugPrint(
-              '✅ Linked logbook item to existing document: $exercise ($markedCount/${pendingItems.length})');
+              '? Linked logbook item to existing document: $exercise ($markedCount/${pendingItems.length})');
         }
       }
 
@@ -576,7 +576,7 @@ class _POETabContentState extends State<POETabContent> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              '✅ Linked $markedCount logbook items to existing scanned document'),
+              '? Linked $markedCount logbook items to existing scanned document'),
           backgroundColor: Colors.green,
         ),
       );
@@ -667,7 +667,7 @@ class _POETabContentState extends State<POETabContent> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                '❌ No scanned document found. Please scan at least one question first.'),
+                '? No scanned document found. Please scan at least one question first.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -694,7 +694,7 @@ class _POETabContentState extends State<POETabContent> {
 
           markedCount++;
           debugPrint(
-              '✅ Linked summative exercise to existing document: $exercise ($markedCount/${pendingQuestions.length})');
+              '? Linked summative exercise to existing document: $exercise ($markedCount/${pendingQuestions.length})');
         }
       }
 
@@ -705,7 +705,7 @@ class _POETabContentState extends State<POETabContent> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              '✅ Linked $markedCount summative questions to existing scanned document'),
+              '? Linked $markedCount summative questions to existing scanned document'),
           backgroundColor: Colors.green,
         ),
       );
@@ -727,7 +727,7 @@ class _POETabContentState extends State<POETabContent> {
         'Starting compression for: ${file.path}, original size: ${await file.length()} bytes');
     if (!await file.exists()) {
       debugPrint('Error: Input file does not exist at ${file.path}');
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Image file not found. Please try again.')),
@@ -762,7 +762,7 @@ class _POETabContentState extends State<POETabContent> {
         );
         if (result == null) {
           debugPrint('Compression failed at quality: $quality');
-          if (!context.mounted) return null;
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text(
@@ -778,7 +778,7 @@ class _POETabContentState extends State<POETabContent> {
             '${dir.path}/compressed_${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
       } catch (e) {
         debugPrint('Compression error: $e');
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Failed to compress image. Please try again.')),
@@ -789,7 +789,7 @@ class _POETabContentState extends State<POETabContent> {
 
     if (currentFile == null) {
       debugPrint('Error: No valid file after compression');
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Image compression failed. Please try again.')),
@@ -799,7 +799,7 @@ class _POETabContentState extends State<POETabContent> {
 
     if (currentSize > maxSizeBytes) {
       debugPrint('Image too large after compression: $currentSize bytes');
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
@@ -819,7 +819,7 @@ class _POETabContentState extends State<POETabContent> {
       debugPrint('Starting PDF creation for image: ${image.path}');
       if (!await image.exists()) {
         debugPrint('Error: Image file does not exist at ${image.path}');
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Image file not found. Please try again.')),
@@ -831,7 +831,7 @@ class _POETabContentState extends State<POETabContent> {
       debugPrint('Image size: $imageSize bytes');
       if (imageSize == 0) {
         debugPrint('Error: Image file is empty');
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -843,7 +843,7 @@ class _POETabContentState extends State<POETabContent> {
       final extension = image.path.toLowerCase().split('.').last;
       if (!['jpg', 'jpeg', 'png'].contains(extension)) {
         debugPrint('Error: Unsupported image format: $extension');
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Unsupported image format. Use JPG or PNG.')),
@@ -856,7 +856,7 @@ class _POETabContentState extends State<POETabContent> {
         imageBytes = await image.readAsBytes();
       } catch (e) {
         debugPrint('Error reading image bytes: $e');
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Failed to read image data. Please try again.')),
@@ -866,7 +866,7 @@ class _POETabContentState extends State<POETabContent> {
       debugPrint('Image bytes length: ${imageBytes.length}');
       if (imageBytes.isEmpty) {
         debugPrint('Error: Empty image bytes');
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -920,7 +920,7 @@ class _POETabContentState extends State<POETabContent> {
         await pdfFile.writeAsBytes(pdfBytes);
       } catch (e) {
         debugPrint('Error writing PDF: $e');
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Failed to save PDF file. Please try again.')),
@@ -932,7 +932,7 @@ class _POETabContentState extends State<POETabContent> {
       debugPrint('Generated PDF size: $pdfSize bytes');
       if (pdfSize > 2 * 1024 * 1024) {
         debugPrint('PDF exceeds 2MB: $pdfSize bytes');
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -945,7 +945,7 @@ class _POETabContentState extends State<POETabContent> {
       return pdfFile;
     } catch (e, stackTrace) {
       debugPrint('PDF generation error: $e\nStackTrace: $stackTrace');
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to generate PDF: $e')),
       );
@@ -965,11 +965,11 @@ class _POETabContentState extends State<POETabContent> {
       bool onlineSuccess = await fetchOnlineLearnerData();
       if (onlineSuccess) {
         debugPrint(
-            '[FETCH] ✅ Online fetch successful, checking upload status...');
+            '[FETCH] ? Online fetch successful, checking upload status...');
         await checkUploadedStatus();
       } else {
         // If online fetch failed, try offline
-        debugPrint('[FETCH] ❌ Online fetch failed, trying offline data...');
+        debugPrint('[FETCH] ? Online fetch failed, trying offline data...');
         await fetchOfflineLearnerData();
         await checkLocalUploadedStatus();
       }
@@ -1064,11 +1064,11 @@ class _POETabContentState extends State<POETabContent> {
       await dbHelper.saveLearnerPathwaysCache(widget.learnerID, pathways);
 
       debugPrint(
-          '[OFFLINE_CACHE] ✅ Successfully saved learner pathway data for offline access');
+          '[OFFLINE_CACHE] ? Successfully saved learner pathway data for offline access');
       debugPrint(
           '[OFFLINE_CACHE] Data size: ${pathways.toString().length} characters');
     } catch (e, stackTrace) {
-      debugPrint('[OFFLINE_CACHE] ❌ Error saving learner data locally: $e');
+      debugPrint('[OFFLINE_CACHE] ? Error saving learner data locally: $e');
       debugPrint('[OFFLINE_CACHE] Stack trace: $stackTrace');
     }
   }
@@ -1084,7 +1084,7 @@ class _POETabContentState extends State<POETabContent> {
           await dbHelper.getLearnerPathwaysCache(widget.learnerID);
 
       if (cachedPathways != null) {
-        debugPrint('[OFFLINE_CACHE] ✅ Found cached pathway data!');
+        debugPrint('[OFFLINE_CACHE] ? Found cached pathway data!');
         debugPrint(
             '[OFFLINE_CACHE] Cache has ${cachedPathways.keys.length} pathway(s)');
         setState(() {
@@ -1854,7 +1854,7 @@ class _POETabContentState extends State<POETabContent> {
         if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Fingerprint verified successfully!'),
+            content: Text('? Fingerprint verified successfully!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -1863,7 +1863,7 @@ class _POETabContentState extends State<POETabContent> {
         if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('❌ Fingerprint verification failed. Access denied.'),
+            content: Text('? Fingerprint verification failed. Access denied.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -1905,7 +1905,7 @@ class _POETabContentState extends State<POETabContent> {
             await _futronicService.isFutronicConnected();
 
         if (isFutronicConnected) {
-          debugPrint('[DETECT] ✅ Futronic detected on attempt $attempt!');
+          debugPrint('[DETECT] ? Futronic detected on attempt $attempt!');
           return 'futronic';
         }
 
@@ -1921,12 +1921,12 @@ class _POETabContentState extends State<POETabContent> {
       }
     }
 
-    debugPrint('[DETECT] ❌ No Futronic scanner detected after all attempts');
+    debugPrint('[DETECT] ? No Futronic scanner detected after all attempts');
     return 'none';
   }
 
   void _showProgressDialog(String message) {
-    if (!context.mounted) return null;
+    if (!context.mounted) return false;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1949,7 +1949,7 @@ class _POETabContentState extends State<POETabContent> {
   void _hideProgressDialog() {
     if (!context.mounted) return;
     if (Navigator.of(context).canPop()) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       Navigator.of(context).pop();
     }
   }
@@ -2462,7 +2462,7 @@ class _POETabContentState extends State<POETabContent> {
       // Upload the same document for all formative questions
       bool isConnected = await _checkConnectivity();
 
-      debugPrint('📊 FORMATIVE UPLOAD DEBUG:');
+      debugPrint('?? FORMATIVE UPLOAD DEBUG:');
       debugPrint('   Total questions to process: ${formativeQuestions.length}');
       debugPrint(
           '   Questions list: ${formativeQuestions.map((q) => q['exercise']).toList()}');
@@ -2512,10 +2512,10 @@ class _POETabContentState extends State<POETabContent> {
             }
             successfulUploads = formativeQuestions.length;
             debugPrint(
-                '✅ Successfully uploaded formative document for all ${formativeQuestions.length} questions');
+                '? Successfully uploaded formative document for all ${formativeQuestions.length} questions');
           } else {
             debugPrint(
-                '❌ Server error for formative upload: ${decoded['message']}');
+                '? Server error for formative upload: ${decoded['message']}');
             // Save locally for all exercises
             for (var item in formativeQuestions) {
               final exercise = item['exercise']?.toString() ?? 'N/A';
@@ -2525,7 +2525,7 @@ class _POETabContentState extends State<POETabContent> {
             failedUploads = formativeQuestions.length;
           }
         } catch (e) {
-          debugPrint('❌ Upload error for formative: $e');
+          debugPrint('? Upload error for formative: $e');
           // Save locally for all exercises
           for (var item in formativeQuestions) {
             final exercise = item['exercise']?.toString() ?? 'N/A';
@@ -2560,7 +2560,7 @@ class _POETabContentState extends State<POETabContent> {
         await _refreshUploadStatus();
 
         debugPrint(
-            '📊 AFTER REFRESH - uploadedExercises count: ${uploadedExercises.length}');
+            '?? AFTER REFRESH - uploadedExercises count: ${uploadedExercises.length}');
         debugPrint(
             '   Formative exercises marked: ${uploadedExercises.keys.where((k) => k.startsWith('Formative-')).toList()}');
 
@@ -2568,7 +2568,7 @@ class _POETabContentState extends State<POETabContent> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
-                  '✅ All ${formativeQuestions.length} formative questions completed! ($successfulUploads uploaded, $failedUploads saved locally)')),
+                  '? All ${formativeQuestions.length} formative questions completed! ($successfulUploads uploaded, $failedUploads saved locally)')),
         );
       } else {
         // Save locally for all formative questions
@@ -2612,7 +2612,7 @@ class _POETabContentState extends State<POETabContent> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
-                  '✅ All $localSaveCount formative questions completed and saved locally!')),
+                  '? All $localSaveCount formative questions completed and saved locally!')),
         );
       }
     } catch (e, stackTrace) {
@@ -2839,7 +2839,7 @@ class _POETabContentState extends State<POETabContent> {
       // Upload the same document for all summative questions
       bool isConnected = await _checkConnectivity();
 
-      debugPrint('📊 SUMMATIVE UPLOAD DEBUG:');
+      debugPrint('?? SUMMATIVE UPLOAD DEBUG:');
       debugPrint('   Total questions to process: ${summativeQuestions.length}');
       debugPrint(
           '   Questions list: ${summativeQuestions.map((q) => q['exercise']).toList()}');
@@ -2889,10 +2889,10 @@ class _POETabContentState extends State<POETabContent> {
             }
             successfulUploads = summativeQuestions.length;
             debugPrint(
-                '✅ Successfully uploaded summative document for all ${summativeQuestions.length} questions');
+                '? Successfully uploaded summative document for all ${summativeQuestions.length} questions');
           } else {
             debugPrint(
-                '❌ Server error for summative upload: ${decoded['message']}');
+                '? Server error for summative upload: ${decoded['message']}');
             // Save locally for all exercises
             for (var item in summativeQuestions) {
               final exercise = item['exercise']?.toString() ?? 'N/A';
@@ -2902,7 +2902,7 @@ class _POETabContentState extends State<POETabContent> {
             failedUploads = summativeQuestions.length;
           }
         } catch (e) {
-          debugPrint('❌ Upload error for summative: $e');
+          debugPrint('? Upload error for summative: $e');
           // Save locally for all exercises
           for (var item in summativeQuestions) {
             final exercise = item['exercise']?.toString() ?? 'N/A';
@@ -2937,7 +2937,7 @@ class _POETabContentState extends State<POETabContent> {
         await _refreshUploadStatus();
 
         debugPrint(
-            '📊 AFTER REFRESH - uploadedExercises count: ${uploadedExercises.length}');
+            '?? AFTER REFRESH - uploadedExercises count: ${uploadedExercises.length}');
         debugPrint(
             '   Summative exercises marked: ${uploadedExercises.keys.where((k) => k.startsWith('Summative-')).toList()}');
 
@@ -2945,7 +2945,7 @@ class _POETabContentState extends State<POETabContent> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
-                  '✅ All ${summativeQuestions.length} summative questions completed! ($successfulUploads uploaded, $failedUploads saved locally)')),
+                  '? All ${summativeQuestions.length} summative questions completed! ($successfulUploads uploaded, $failedUploads saved locally)')),
         );
       } else {
         // Save locally for all summative questions
@@ -2989,7 +2989,7 @@ class _POETabContentState extends State<POETabContent> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
-                  '✅ All $localSaveCount summative questions completed and saved locally!')),
+                  '? All $localSaveCount summative questions completed and saved locally!')),
         );
       }
     } catch (e, stackTrace) {
@@ -3142,7 +3142,7 @@ class _POETabContentState extends State<POETabContent> {
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('✅ $remedialType document uploaded to server'),
+                content: Text('? $remedialType document uploaded to server'),
                 backgroundColor: Colors.green,
               ),
             );
@@ -3381,10 +3381,10 @@ class _POETabContentState extends State<POETabContent> {
             }
             successfulUploads = logBookItems.length;
             debugPrint(
-                '✅ Successfully uploaded logbook document for all ${logBookItems.length} items');
+                '? Successfully uploaded logbook document for all ${logBookItems.length} items');
           } else {
             debugPrint(
-                '❌ Server error for logbook upload: ${decoded['message']}');
+                '? Server error for logbook upload: ${decoded['message']}');
             // Save locally for all exercises
             for (var item in logBookItems) {
               final exercise = item['exercise']?.toString() ?? 'N/A';
@@ -3395,7 +3395,7 @@ class _POETabContentState extends State<POETabContent> {
             failedUploads = logBookItems.length;
           }
         } catch (e) {
-          debugPrint('❌ Upload error for logbook: $e');
+          debugPrint('? Upload error for logbook: $e');
           // Save locally for all exercises
           for (var item in logBookItems) {
             final exercise = item['exercise']?.toString() ?? 'N/A';
@@ -3434,7 +3434,7 @@ class _POETabContentState extends State<POETabContent> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
-                  '✅ All ${logBookItems.length} logbook items completed! ($successfulUploads uploaded, $failedUploads saved locally)')),
+                  '? All ${logBookItems.length} logbook items completed! ($successfulUploads uploaded, $failedUploads saved locally)')),
         );
       } else {
         // Save locally for all logbook items
@@ -3479,7 +3479,7 @@ class _POETabContentState extends State<POETabContent> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
-                  '✅ All $localSaveCount logbook items completed and saved locally!')),
+                  '? All $localSaveCount logbook items completed and saved locally!')),
         );
       }
     } catch (e, stackTrace) {
@@ -3498,7 +3498,7 @@ class _POETabContentState extends State<POETabContent> {
     final pickedImage =
         await ImagePicker().pickImage(source: ImageSource.camera);
     if (pickedImage == null) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No image captured.')),
       );
@@ -3506,7 +3506,7 @@ class _POETabContentState extends State<POETabContent> {
     }
     final imageFile = File(pickedImage.path);
     if (!await imageFile.exists()) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Captured image file not found.')),
       );
@@ -3718,7 +3718,7 @@ class _POETabContentState extends State<POETabContent> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('📱 Saved offline: $assessmentType - $exercise'),
+          content: Text('?? Saved offline: $assessmentType - $exercise'),
           backgroundColor: Colors.orange,
           duration: const Duration(seconds: 2),
         ),
@@ -3844,7 +3844,7 @@ class _POETabContentState extends State<POETabContent> {
                         if (await _checkConnectivity()) {
                           await _syncOfflinePOE();
                         } else {
-                          if (!context.mounted) return null;
+                          if (!context.mounted) return false;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('No internet connection'),
@@ -4062,7 +4062,7 @@ class _POETabContentState extends State<POETabContent> {
                                                     false;
                                               }).length ==
                                               formative.length
-                                          ? 'All Formative Completed ✓'
+                                          ? 'All Formative Completed ?'
                                           : 'Scan All Formative Answers',
                                     ),
                                     style: ElevatedButton.styleFrom(
@@ -4135,7 +4135,7 @@ class _POETabContentState extends State<POETabContent> {
                                                     false;
                                               }).length ==
                                               formative.length
-                                          ? 'All Formative Completed ✓'
+                                          ? 'All Formative Completed ?'
                                           : 'Manual Mark All Formative',
                                     ),
                                     style: ElevatedButton.styleFrom(
@@ -4334,7 +4334,7 @@ class _POETabContentState extends State<POETabContent> {
                                                     false;
                                               }).length ==
                                               summative.length
-                                          ? 'All Summative Completed ✓'
+                                          ? 'All Summative Completed ?'
                                           : 'Scan All Summative Answers',
                                     ),
                                     style: ElevatedButton.styleFrom(
@@ -4407,7 +4407,7 @@ class _POETabContentState extends State<POETabContent> {
                                                     false;
                                               }).length ==
                                               summative.length
-                                          ? 'All Summative Completed ✓'
+                                          ? 'All Summative Completed ?'
                                           : 'Manual Mark All Summative',
                                     ),
                                     style: ElevatedButton.styleFrom(
@@ -4748,7 +4748,7 @@ class _POETabContentState extends State<POETabContent> {
                                   return uploadedExercises[uploadKey] ?? false;
                                 }).length ==
                                 logBookItems.length
-                            ? 'All LogBook Completed ✓'
+                            ? 'All LogBook Completed ?'
                             : 'Scan All LogBook Entries',
                       ),
                       style: ElevatedButton.styleFrom(
@@ -4805,7 +4805,7 @@ class _POETabContentState extends State<POETabContent> {
                                   return uploadedExercises[uploadKey] ?? false;
                                 }).length ==
                                 logBookItems.length
-                            ? 'All LogBook Completed ✓'
+                            ? 'All LogBook Completed ?'
                             : 'Manual Mark All LogBook',
                       ),
                       style: ElevatedButton.styleFrom(

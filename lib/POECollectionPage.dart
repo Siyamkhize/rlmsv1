@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -57,7 +57,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
   Future<void> _fetchPractitionerAndClassInfo() async {
     try {
       debugPrint(
-          '🔍 _fetchPractitionerAndClassInfo: Starting with classID = ${widget.classID}');
+          '?? _fetchPractitionerAndClassInfo: Starting with classID = ${widget.classID}');
       final dbHelper = DatabaseHelper();
       final db = await dbHelper.database;
 
@@ -76,11 +76,11 @@ class _POECollectionPageState extends State<POECollectionPage> {
       ''';
 
       final results = await db.rawQuery(facilitatorQuery, [widget.classID]);
-      debugPrint('🔍 _fetchPractitionerAndClassInfo: Raw results = $results');
+      debugPrint('?? _fetchPractitionerAndClassInfo: Raw results = $results');
 
       if (results.isNotEmpty) {
         final row = results.first;
-        debugPrint('🔍 _fetchPractitionerAndClassInfo: First row = $row');
+        debugPrint('?? _fetchPractitionerAndClassInfo: First row = $row');
         setState(() {
           practitionerFullName =
               '${row['firstName'] ?? ''} ${row['lastName'] ?? ''}'.trim();
@@ -96,36 +96,36 @@ class _POECollectionPageState extends State<POECollectionPage> {
             _fetchQualificationName(qualId);
           }
         });
-        debugPrint('✅ Set practitionerFullName: $practitionerFullName');
-        debugPrint('✅ Set className: $className');
+        debugPrint('? Set practitionerFullName: $practitionerFullName');
+        debugPrint('? Set className: $className');
       } else {
-        debugPrint('⚠️ _fetchPractitionerAndClassInfo: No results found!');
+        debugPrint('?? _fetchPractitionerAndClassInfo: No results found!');
       }
     } catch (e) {
-      debugPrint('❌ Error fetching practitioner info: $e');
+      debugPrint('? Error fetching practitioner info: $e');
     }
   }
 
   Future<void> _fetchQualificationName(String qualId) async {
     try {
-      debugPrint('🔍 _fetchQualificationName: Starting with qualId = $qualId');
+      debugPrint('?? _fetchQualificationName: Starting with qualId = $qualId');
       final dbHelper = DatabaseHelper();
       final db = await dbHelper.database;
 
       final qualQuery =
           'SELECT name FROM qualification WHERE qualification_id = ?';
       final qualResults = await db.rawQuery(qualQuery, [qualId]);
-      debugPrint('🔍 _fetchQualificationName: qualResults = $qualResults');
+      debugPrint('?? _fetchQualificationName: qualResults = $qualResults');
 
       if (qualResults.isNotEmpty) {
         setState(() {
           qualificationName = qualResults.first['name']?.toString() ??
               'No qualification assigned';
         });
-        debugPrint('✅ Set qualificationName: $qualificationName');
+        debugPrint('? Set qualificationName: $qualificationName');
       }
     } catch (e) {
-      debugPrint('❌ Error fetching qualification name: $e');
+      debugPrint('? Error fetching qualification name: $e');
     }
   }
 
@@ -163,17 +163,17 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
   Future<void> fetchLearners() async {
     try {
-      debugPrint('⚡ Fetching learners for classID: ${widget.classID}');
+      debugPrint('? Fetching learners for classID: ${widget.classID}');
 
       final connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult.contains(ConnectivityResult.none)) {
         debugPrint(
-            '❌ No internet connection. Attempting local database fetch...');
+            '? No internet connection. Attempting local database fetch...');
         await fetchLearnerss(widget.classID);
         return;
       }
 
-      debugPrint('🌐 Internet found. Fetching learners from API...');
+      debugPrint('?? Internet found. Fetching learners from API...');
       final response = await http.get(Uri.parse(AppConfig.buildUrl(
           'get_poe_collection_status.php?classID=${widget.classID}')));
 
@@ -184,16 +184,16 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
       if (response.statusCode != 200) {
         throw Exception(
-            '❌ Failed to load learners from API: ${response.statusCode}');
+            '? Failed to load learners from API: ${response.statusCode}');
       }
 
       final data = json.decode(response.body);
-      debugPrint('🔍 Decoded API data: $data');
+      debugPrint('?? Decoded API data: $data');
 
       final apiData = data['learners'] as List<dynamic>?;
 
       if (apiData == null || apiData.isEmpty) {
-        debugPrint('❌ No learners found in API response.');
+        debugPrint('? No learners found in API response.');
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No learners found.')),
@@ -204,7 +204,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
       final processedLearners = <Map<String, dynamic>>[];
 
-      debugPrint('🔍 Processing ${apiData.length} learners from API...');
+      debugPrint('?? Processing ${apiData.length} learners from API...');
 
       for (var learner in apiData) {
         final idNumber = learner['IDNumber']?.toString() ?? '';
@@ -212,7 +212,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
         final collectionDate = learner['collection_date']?.toString() ?? '';
 
         debugPrint(
-            '📋 Learner: ${learner['FullName']} ($idNumber) - POE Status: $poeStatus');
+            '?? Learner: ${learner['FullName']} ($idNumber) - POE Status: $poeStatus');
 
         if (idNumber.isNotEmpty) {
           processedLearners.add({
@@ -244,10 +244,10 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
       await _loadExistingPOESubmissions();
 
-      debugPrint('✅ Learners fetched: ${learners.length}');
+      debugPrint('? Learners fetched: ${learners.length}');
       debugPrint('Learners: $learners');
     } catch (e) {
-      debugPrint('❌ Error fetching learners: $e');
+      debugPrint('? Error fetching learners: $e');
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -264,7 +264,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
       debugPrint('Local DB Result: $result');
 
       if (result.isEmpty) {
-        debugPrint('❌ No learners found in local database.');
+        debugPrint('? No learners found in local database.');
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No learners found in local database.')),
@@ -296,10 +296,10 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
       await _loadExistingPOESubmissions();
 
-      debugPrint('✅ Local learners fetched: ${learners.length}');
+      debugPrint('? Local learners fetched: ${learners.length}');
       debugPrint('Local Learners: $learners');
     } catch (e) {
-      debugPrint('❌ Error fetching learners from local database: $e');
+      debugPrint('? Error fetching learners from local database: $e');
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -323,7 +323,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
           .map((record) => record['student_id_number']?.toString() ?? '')
           .toSet();
     } catch (e) {
-      debugPrint('❌ Error fetching submitted learners: $e');
+      debugPrint('? Error fetching submitted learners: $e');
       return <String>{};
     }
   }
@@ -357,7 +357,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
   Future<void> sendData() async {
     final url = AppConfig.buildUrl('save_material_receipt.php');
-    debugPrint('🌐 Sending data to: $url');
+    debugPrint('?? Sending data to: $url');
     final body = jsonEncode({
       'classID': widget.classID,
       'learners': learners.map((learner) {
@@ -381,16 +381,16 @@ class _POECollectionPageState extends State<POECollectionPage> {
     });
 
     try {
-      debugPrint('📤 Request body: $body');
+      debugPrint('?? Request body: $body');
       final response = await http.post(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
         body: body,
       );
 
-      debugPrint('📥 Response Status: ${response.statusCode}');
-      debugPrint('📥 Response headers: ${response.headers}');
-      debugPrint('📥 Response Body: ${response.body}');
+      debugPrint('?? Response Status: ${response.statusCode}');
+      debugPrint('?? Response headers: ${response.headers}');
+      debugPrint('?? Response Body: ${response.body}');
 
       if (response.statusCode != 200) {
         throw Exception(
@@ -423,7 +423,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
             if (existingRecords.isNotEmpty) {
               debugPrint(
-                  '⚠️ $studentName already exists locally with description: \'$description\'. Skipping...');
+                  '?? $studentName already exists locally with description: \'$description\'. Skipping...');
               continue;
             }
 
@@ -449,7 +449,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
             };
 
             await db.insert('material_receipt_form', data);
-            debugPrint('✅ Saved $studentName locally after server submission.');
+            debugPrint('? Saved $studentName locally after server submission.');
           }
         }
 
@@ -472,7 +472,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
         );
       }
     } catch (e) {
-      debugPrint('❌ Error submitting form: $e');
+      debugPrint('? Error submitting form: $e');
       String errorMessage = 'Error submitting form: $e';
 
       if (e.toString().contains('FormatException')) {
@@ -540,7 +540,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
           if (existingRecords.isNotEmpty) {
             debugPrint(
-                '⚠️ $studentName already exists locally with description: \'$description\'. Skipping...');
+                '?? $studentName already exists locally with description: \'$description\'. Skipping...');
             continue;
           }
 
@@ -565,7 +565,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
           };
 
           await db.insert('material_receipt_form', data);
-          debugPrint('✅ Saved $studentName locally.');
+          debugPrint('? Saved $studentName locally.');
         }
       }
 
@@ -576,7 +576,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
       await fetchLearners();
     } catch (e) {
-      debugPrint('❌ Error saving material receipt form: $e');
+      debugPrint('? Error saving material receipt form: $e');
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving form: $e')),
@@ -799,7 +799,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
     final poeStatus = learner['POEStatus'] ?? 'Not Submitted';
 
     debugPrint(
-        '🎯 Building status indicator for ${learner['FullName']} - Status: $poeStatus');
+        '?? Building status indicator for ${learner['FullName']} - Status: $poeStatus');
 
     switch (poeStatus) {
       case 'Collected':
@@ -945,7 +945,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
     final isReceived = learner['Received'] ?? false;
 
     debugPrint(
-        '🎯 Building submission button for ${learner['FullName']} - Status: $poeStatus, Received: $isReceived');
+        '?? Building submission button for ${learner['FullName']} - Status: $poeStatus, Received: $isReceived');
 
     switch (poeStatus) {
       case 'Collected':
@@ -1195,12 +1195,12 @@ class _POECollectionPageState extends State<POECollectionPage> {
                                                 fingerprintVerified = true;
                                                 isLoading = false;
                                               });
-                                              if (!context.mounted) return null;
+                                              if (!context.mounted) return false;
                                               ScaffoldMessenger.of(context)
                                                   .showSnackBar(
                                                 const SnackBar(
                                                   content: Text(
-                                                      '✅ Fingerprint verified successfully!'),
+                                                      '? Fingerprint verified successfully!'),
                                                   backgroundColor: Colors.green,
                                                 ),
                                               );
@@ -1208,12 +1208,12 @@ class _POECollectionPageState extends State<POECollectionPage> {
                                               setDialogState(() {
                                                 isLoading = false;
                                               });
-                                              if (!context.mounted) return null;
+                                              if (!context.mounted) return false;
                                               ScaffoldMessenger.of(context)
                                                   .showSnackBar(
                                                 const SnackBar(
                                                   content: Text(
-                                                      '❌ Fingerprint verification failed'),
+                                                      '? Fingerprint verification failed'),
                                                   backgroundColor: Colors.red,
                                                 ),
                                               );
@@ -1222,7 +1222,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
                                             setDialogState(() {
                                               isLoading = false;
                                             });
-                                            if (!context.mounted) return null;
+                                            if (!context.mounted) return false;
                                             ScaffoldMessenger.of(context)
                                                 .showSnackBar(
                                               SnackBar(
@@ -1359,7 +1359,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
                       final url =
                           AppConfig.buildUrl('poe_collection_submit.php');
 
-                      if (!context.mounted) return null;
+                      if (!context.mounted) return false;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Row(
@@ -1404,7 +1404,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
                         },
                       );
 
-                      if (!context.mounted) return null;
+                      if (!context.mounted) return false;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Row(
@@ -1483,11 +1483,11 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
                           await _savePOESubmissionLocally(learner);
 
-                          if (!context.mounted) return null;
+                          if (!context.mounted) return false;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(
-                                  '✅ POE collection completed successfully!'),
+                                  '? POE collection completed successfully!'),
                               backgroundColor: Colors.green,
                               duration: Duration(seconds: 3),
                             ),
@@ -1495,7 +1495,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
                           await Future.delayed(const Duration(seconds: 2));
                           if (mounted) {
-                            if (!context.mounted) return null;
+                            if (!context.mounted) return false;
                             Navigator.pop(context);
                             setState(() {});
                           }
@@ -1528,7 +1528,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
                         errorMessage += e.toString();
                       }
 
-                      if (!context.mounted) return null;
+                      if (!context.mounted) return false;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(errorMessage),
@@ -1604,7 +1604,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
       debugPrint('[POE_COLLECT] Learner ID: $learnerId');
 
       if (learnerId == 0) {
-        debugPrint('[POE_COLLECT] ❌ Invalid learner ID');
+        debugPrint('[POE_COLLECT] ? Invalid learner ID');
         if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1617,7 +1617,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
       final learnerIdInt = int.tryParse(learnerId.toString());
       if (learnerIdInt == null) {
-        debugPrint('[POE_COLLECT] ❌ Invalid learner ID format');
+        debugPrint('[POE_COLLECT] ? Invalid learner ID format');
         if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1653,8 +1653,8 @@ class _POECollectionPageState extends State<POECollectionPage> {
           !(hasFutLeft || hasFutRight) &&
           (hasZkLeft || hasZkRight)) {
         debugPrint(
-            '[POE_COLLECT] ❌ Futronic scanner but only ZKTeco templates');
-        if (!context.mounted) return null;
+            '[POE_COLLECT] ? Futronic scanner but only ZKTeco templates');
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -1668,7 +1668,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
           !(hasZkLeft || hasZkRight) &&
           (hasFutLeft || hasFutRight)) {
         debugPrint(
-            '[POE_COLLECT] ❌ ZKTeco scanner but only Futronic templates');
+            '[POE_COLLECT] ? ZKTeco scanner but only Futronic templates');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -1690,7 +1690,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
       }
 
       if (template == null || template.isEmpty) {
-        debugPrint('[POE_COLLECT] ❌ No templates available');
+        debugPrint('[POE_COLLECT] ? No templates available');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -1776,7 +1776,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
                   'Timeout waiting for fingerprint. Please try again.';
             }
 
-            if (!context.mounted) return null;
+            if (!context.mounted) return false;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(errorMessage),
@@ -1789,8 +1789,8 @@ class _POECollectionPageState extends State<POECollectionPage> {
         } else {
           // No scanner detected
           _hideProgressDialog(context);
-          debugPrint('[POE_COLLECT] ❌ No scanner detected');
-          if (!context.mounted) return null;
+          debugPrint('[POE_COLLECT] ? No scanner detected');
+          if (!context.mounted) return false;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -1808,7 +1808,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
       } catch (e) {
         debugPrint('[POE_COLLECT] Verification error: $e');
         _hideProgressDialog(context);
-        if (!context.mounted) return null;
+        if (!context.mounted) return false;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Verification error: $e'),
@@ -1820,7 +1820,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
     } catch (e) {
       debugPrint('[POE_COLLECT] Fingerprint verification error: $e');
       _hideProgressDialog(context);
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Verification error: $e'),
@@ -1841,7 +1841,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
       final isZkConnected = await fingerprintService.isSensorConnected();
       debugPrint('[POE_COLLECT] ZKTeco result: $isZkConnected');
       if (isZkConnected) {
-        debugPrint('[POE_COLLECT] ✅ ZKTeco scanner detected!');
+        debugPrint('[POE_COLLECT] ? ZKTeco scanner detected!');
         return 'zkteco';
       }
     } catch (e) {
@@ -1868,7 +1868,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
             '[POE_COLLECT] Futronic attempt $attempt result: $isFutronicConnected');
 
         if (isFutronicConnected) {
-          debugPrint('[POE_COLLECT] ✅ Futronic detected on attempt $attempt!');
+          debugPrint('[POE_COLLECT] ? Futronic detected on attempt $attempt!');
           return 'futronic';
         }
 
@@ -1886,12 +1886,12 @@ class _POECollectionPageState extends State<POECollectionPage> {
     }
 
     debugPrint(
-        '[POE_COLLECT] ❌ No Futronic scanner detected after all attempts');
+        '[POE_COLLECT] ? No Futronic scanner detected after all attempts');
     return 'none';
   }
 
   void _showProgressDialog(BuildContext context, String message) {
-    if (!context.mounted) return null;
+    if (!context.mounted) return false;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1914,7 +1914,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
   void _hideProgressDialog(BuildContext context) {
     if (!context.mounted) return;
     if (Navigator.of(context).canPop()) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       Navigator.of(context).pop();
     }
   }
@@ -1948,9 +1948,9 @@ class _POECollectionPageState extends State<POECollectionPage> {
       });
 
       debugPrint(
-          '✅ POE submission saved to material_receipt_form for ${learner['FullName']}');
+          '? POE submission saved to material_receipt_form for ${learner['FullName']}');
     } catch (e) {
-      debugPrint('⚠️ Error saving POE submission locally: $e');
+      debugPrint('?? Error saving POE submission locally: $e');
     }
   }
 }
