@@ -727,7 +727,7 @@ class _POETabContentState extends State<POETabContent> {
         'Starting compression for: ${file.path}, original size: ${await file.length()} bytes');
     if (!await file.exists()) {
       debugPrint('Error: Input file does not exist at ${file.path}');
-      if (!context.mounted) return false;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Image file not found. Please try again.')),
@@ -762,7 +762,7 @@ class _POETabContentState extends State<POETabContent> {
         );
         if (result == null) {
           debugPrint('Compression failed at quality: $quality');
-          if (!context.mounted) return false;
+          if (!context.mounted) return null;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text(
@@ -778,7 +778,7 @@ class _POETabContentState extends State<POETabContent> {
             '${dir.path}/compressed_${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
       } catch (e) {
         debugPrint('Compression error: $e');
-        if (!context.mounted) return false;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Failed to compress image. Please try again.')),
@@ -789,7 +789,7 @@ class _POETabContentState extends State<POETabContent> {
 
     if (currentFile == null) {
       debugPrint('Error: No valid file after compression');
-      if (!context.mounted) return false;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Image compression failed. Please try again.')),
@@ -799,7 +799,7 @@ class _POETabContentState extends State<POETabContent> {
 
     if (currentSize > maxSizeBytes) {
       debugPrint('Image too large after compression: $currentSize bytes');
-      if (!context.mounted) return false;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
@@ -819,7 +819,7 @@ class _POETabContentState extends State<POETabContent> {
       debugPrint('Starting PDF creation for image: ${image.path}');
       if (!await image.exists()) {
         debugPrint('Error: Image file does not exist at ${image.path}');
-        if (!context.mounted) return false;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Image file not found. Please try again.')),
@@ -831,7 +831,7 @@ class _POETabContentState extends State<POETabContent> {
       debugPrint('Image size: $imageSize bytes');
       if (imageSize == 0) {
         debugPrint('Error: Image file is empty');
-        if (!context.mounted) return false;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -843,7 +843,7 @@ class _POETabContentState extends State<POETabContent> {
       final extension = image.path.toLowerCase().split('.').last;
       if (!['jpg', 'jpeg', 'png'].contains(extension)) {
         debugPrint('Error: Unsupported image format: $extension');
-        if (!context.mounted) return false;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Unsupported image format. Use JPG or PNG.')),
@@ -856,7 +856,7 @@ class _POETabContentState extends State<POETabContent> {
         imageBytes = await image.readAsBytes();
       } catch (e) {
         debugPrint('Error reading image bytes: $e');
-        if (!context.mounted) return false;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Failed to read image data. Please try again.')),
@@ -866,7 +866,7 @@ class _POETabContentState extends State<POETabContent> {
       debugPrint('Image bytes length: ${imageBytes.length}');
       if (imageBytes.isEmpty) {
         debugPrint('Error: Empty image bytes');
-        if (!context.mounted) return false;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -920,7 +920,7 @@ class _POETabContentState extends State<POETabContent> {
         await pdfFile.writeAsBytes(pdfBytes);
       } catch (e) {
         debugPrint('Error writing PDF: $e');
-        if (!context.mounted) return false;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Failed to save PDF file. Please try again.')),
@@ -932,7 +932,7 @@ class _POETabContentState extends State<POETabContent> {
       debugPrint('Generated PDF size: $pdfSize bytes');
       if (pdfSize > 2 * 1024 * 1024) {
         debugPrint('PDF exceeds 2MB: $pdfSize bytes');
-        if (!context.mounted) return false;
+        if (!context.mounted) return null;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -945,7 +945,7 @@ class _POETabContentState extends State<POETabContent> {
       return pdfFile;
     } catch (e, stackTrace) {
       debugPrint('PDF generation error: $e\nStackTrace: $stackTrace');
-      if (!context.mounted) return false;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to generate PDF: $e')),
       );
@@ -1926,7 +1926,7 @@ class _POETabContentState extends State<POETabContent> {
   }
 
   void _showProgressDialog(String message) {
-    if (!context.mounted) return false;
+    if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1949,7 +1949,7 @@ class _POETabContentState extends State<POETabContent> {
   void _hideProgressDialog() {
     if (!context.mounted) return;
     if (Navigator.of(context).canPop()) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       Navigator.of(context).pop();
     }
   }
@@ -3498,7 +3498,7 @@ class _POETabContentState extends State<POETabContent> {
     final pickedImage =
         await ImagePicker().pickImage(source: ImageSource.camera);
     if (pickedImage == null) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No image captured.')),
       );
@@ -3506,7 +3506,7 @@ class _POETabContentState extends State<POETabContent> {
     }
     final imageFile = File(pickedImage.path);
     if (!await imageFile.exists()) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Captured image file not found.')),
       );
@@ -3844,7 +3844,7 @@ class _POETabContentState extends State<POETabContent> {
                         if (await _checkConnectivity()) {
                           await _syncOfflinePOE();
                         } else {
-                          if (!context.mounted) return false;
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('No internet connection'),

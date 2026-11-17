@@ -278,8 +278,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
         pdfUri = scannedImage.first.toString();
       }
 
-      final resolved =
-          await resolveFlutterDocScannerPdfFile(pdfUri);
+      final resolved = await resolveFlutterDocScannerPdfFile(pdfUri);
       if (resolved == null || !await isReadablePdfFile(resolved)) {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -333,7 +332,7 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
   Future<DateTime?> showMonthYearPicker(BuildContext context) async {
     DateTime? selectedDate;
 
-    if (!context.mounted) return;
+    if (!context.mounted) return null;
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -666,7 +665,8 @@ class _FinanceRegisterScannerState extends State<FinanceRegisterScanner> {
 
       // Debug: Print first few dates to check comparison
       if (day <= 3) {
-        debugPrint('Day $day: date=$date, isSelected=$isSelected, isSaved=$isSaved');
+        debugPrint(
+            'Day $day: date=$date, isSelected=$isSelected, isSaved=$isSaved');
       }
 
       currentWeek.add(

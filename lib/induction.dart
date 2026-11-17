@@ -291,7 +291,7 @@ class _InductionPageState extends State<InductionPage> {
         }
       });
     } catch (e) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading offline learners: $e')),
       );
@@ -317,7 +317,7 @@ class _InductionPageState extends State<InductionPage> {
       double userLon, double userAccuracy) async {
     if (userAccuracy > 50) {
       debugPrint('Geolocation accuracy too low: $userAccuracy meters');
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Geolocation accuracy too low. Please enable GPS.')),
@@ -397,7 +397,7 @@ class _InductionPageState extends State<InductionPage> {
     } catch (e, stackTrace) {
       debugPrint(
           'Error checking site radius for classID $classID: $e\nStack trace: $stackTrace');
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error checking location: $e')),
       );
@@ -407,7 +407,7 @@ class _InductionPageState extends State<InductionPage> {
 
   Future<bool> _performLivenessCheck() async {
     if (!_isCameraReady || _cameraController == null) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Camera not available')),
       );
@@ -542,7 +542,7 @@ class _InductionPageState extends State<InductionPage> {
           )
           .timeout(const Duration(seconds: 10));
 
-if (!context.mounted) return;
+      if (!context.mounted) return;
 
       debugPrint(
           'Raw server response (status ${response.statusCode}): "${response.body}"');
@@ -656,7 +656,7 @@ if (!context.mounted) return;
           )
           .timeout(const Duration(seconds: 30));
 
-if (!context.mounted) return;
+      if (!context.mounted) return;
 
       debugPrint(
           'Raw server response (status ${response.statusCode}): "${response.body}"');
@@ -802,7 +802,7 @@ if (!context.mounted) return;
         clockInTimes[learnerID] = clockInTime;
       });
 
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Clock-in saved locally. Will sync when online.')),
@@ -810,7 +810,7 @@ if (!context.mounted) return;
     } catch (e, stackTrace) {
       debugPrint(
           'Offline clock-in error for learnerID: $learnerID: $e\nStack trace: $stackTrace');
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving offline clock-in: $e')),
       );
@@ -866,14 +866,14 @@ if (!context.mounted) return;
         }
       });
 
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Clock-out saved locally. Will sync when online.')),
       );
     } catch (e) {
       debugPrint('Offline clock-out error: $e');
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving offline clock-out: $e')),
       );
@@ -963,7 +963,7 @@ if (!context.mounted) return;
       }
       return true;
     } catch (e) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error during clock-in: $e')),
       );
@@ -1035,7 +1035,7 @@ if (!context.mounted) return;
             DateFormat('yyyy-MM-dd').format(DateTime.now()));
       }
     } catch (e) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to record clock-out: $e')),
       );

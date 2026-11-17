@@ -736,7 +736,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
     } catch (e) {
       debugPrint('[POE_SUBMIT] Fingerprint verification error: $e');
       _hideProgressDialog();
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Verification error: $e'),
@@ -852,7 +852,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
 
     // Validate representative name is provided
     if (representativeController.text.trim().isEmpty) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Representative name is required'),
@@ -898,7 +898,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       final url = AppConfig.buildUrl('poe_collection_submit.php');
 
       // Step 1: Mark learner as received in material_receipt_form
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Row(
@@ -932,7 +932,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       );
 
       // Step 2: Submit the POE form data with signatures to material_forms
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Row(
@@ -1026,7 +1026,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
         errorMessage += e.toString();
       }
 
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
@@ -1159,7 +1159,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       await _autoSubmitPOECollection();
     } else {
       // User cancelled - show cancellation message
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('POE submission cancelled'),

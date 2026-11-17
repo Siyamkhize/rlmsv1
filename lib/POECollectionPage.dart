@@ -1195,7 +1195,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
                                                 fingerprintVerified = true;
                                                 isLoading = false;
                                               });
-                                              if (!context.mounted) return false;
+                                              if (!context.mounted) return;
                                               ScaffoldMessenger.of(context)
                                                   .showSnackBar(
                                                 const SnackBar(
@@ -1208,7 +1208,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
                                               setDialogState(() {
                                                 isLoading = false;
                                               });
-                                              if (!context.mounted) return false;
+                                              if (!context.mounted) return;
                                               ScaffoldMessenger.of(context)
                                                   .showSnackBar(
                                                 const SnackBar(
@@ -1222,7 +1222,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
                                             setDialogState(() {
                                               isLoading = false;
                                             });
-                                            if (!context.mounted) return false;
+                                            if (!context.mounted) return;
                                             ScaffoldMessenger.of(context)
                                                 .showSnackBar(
                                               SnackBar(
@@ -1359,7 +1359,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
                       final url =
                           AppConfig.buildUrl('poe_collection_submit.php');
 
-                      if (!context.mounted) return false;
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Row(
@@ -1404,7 +1404,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
                         },
                       );
 
-                      if (!context.mounted) return false;
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Row(
@@ -1483,7 +1483,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
                           await _savePOESubmissionLocally(learner);
 
-                          if (!context.mounted) return false;
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(
@@ -1495,7 +1495,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
 
                           await Future.delayed(const Duration(seconds: 2));
                           if (mounted) {
-                            if (!context.mounted) return false;
+                            if (!context.mounted) return;
                             Navigator.pop(context);
                             setState(() {});
                           }
@@ -1528,7 +1528,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
                         errorMessage += e.toString();
                       }
 
-                      if (!context.mounted) return false;
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(errorMessage),
@@ -1820,7 +1820,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
     } catch (e) {
       debugPrint('[POE_COLLECT] Fingerprint verification error: $e');
       _hideProgressDialog(context);
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Verification error: $e'),
@@ -1891,7 +1891,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
   }
 
   void _showProgressDialog(BuildContext context, String message) {
-    if (!context.mounted) return false;
+    if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1914,7 +1914,7 @@ class _POECollectionPageState extends State<POECollectionPage> {
   void _hideProgressDialog(BuildContext context) {
     if (!context.mounted) return;
     if (Navigator.of(context).canPop()) {
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       Navigator.of(context).pop();
     }
   }

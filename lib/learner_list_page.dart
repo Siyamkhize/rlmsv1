@@ -135,7 +135,8 @@ class Learner {
           validDateOfBirth = null;
         }
       } catch (e) {
-        debugPrint('Error parsing date in fromJson: $rawDateOfBirth, error: $e');
+        debugPrint(
+            'Error parsing date in fromJson: $rawDateOfBirth, error: $e');
         validDateOfBirth = null;
       }
     } else {
@@ -311,7 +312,8 @@ class _LearnerListPageState extends State<LearnerListPage> {
 
   Future<List<Learner>> fetchLearnersFromServer() async {
     try {
-      debugPrint('Fetching learners from server for classID: ${widget.classID}');
+      debugPrint(
+          'Fetching learners from server for classID: ${widget.classID}');
       final response = await http
           .get(
         Uri.parse(AppConfig.buildUrl('get_learners.php',
@@ -345,7 +347,8 @@ class _LearnerListPageState extends State<LearnerListPage> {
             debugPrint('  $key: $value');
           });
         } else {
-          debugPrint('No learners found on server for classID: ${widget.classID}');
+          debugPrint(
+              'No learners found on server for classID: ${widget.classID}');
         }
 
         // No need to filter since the server now returns only learners for the specific classID
@@ -481,7 +484,8 @@ class _LearnerListPageState extends State<LearnerListPage> {
           'witness_signature': _cleanFilePath(learner.witnessSignature),
         };
 
-        debugPrint('Prepared learner data with ${learnerData.keys.length} fields');
+        debugPrint(
+            'Prepared learner data with ${learnerData.keys.length} fields');
         debugPrint('All learner data fields: ${learnerData.keys.toList()}');
 
         // Prepare bank data separately since local database has separate bankdetails table
@@ -508,7 +512,8 @@ class _LearnerListPageState extends State<LearnerListPage> {
           // Use insertOrUpdate instead of insert to handle existing learners
           final result =
               await dbHelper.insertOrUpdateLearner(learnerData, bankData);
-          debugPrint('Insert/Update result for ${learnerData['Name']}: $result');
+          debugPrint(
+              'Insert/Update result for ${learnerData['Name']}: $result');
 
           // Verify the insertion by checking if learner exists in the class
           final classLearners = await dbHelper.fetchLearners(widget.classID);
@@ -590,13 +595,14 @@ class _LearnerListPageState extends State<LearnerListPage> {
       debugPrint('Total learners processed: ${serverLearners.length}');
       debugPrint(
           'Using sync_onlinedetails.php endpoint which returns all learner fields');
-      debugPrint('All fields should now be populated correctly from server data');
+      debugPrint(
+          'All fields should now be populated correctly from server data');
       debugPrint('Bank details are stored in separate bankdetails table');
       debugPrint(
           'Fingerprint templates are preserved from local database if they exist');
       debugPrint('=== END SYNC SUMMARY ===');
 
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
@@ -605,7 +611,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
     } catch (e) {
       debugPrint('Error saving learners to local database: $e');
       debugPrint('Stack trace: ${StackTrace.current}');
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving to local database: $e')),
       );
@@ -717,7 +723,8 @@ class _LearnerListPageState extends State<LearnerListPage> {
       debugPrint('Error in fetchLearnersData: $e');
       // Fallback to local data if server fails
       try {
-        debugPrint('[LEARNER_LIST] Error occurred, falling back to local database');
+        debugPrint(
+            '[LEARNER_LIST] Error occurred, falling back to local database');
         await loadLearnersFromLocalDatabase();
         if (mounted) {
           if (!context.mounted) return null;
@@ -757,7 +764,8 @@ class _LearnerListPageState extends State<LearnerListPage> {
           await dbHelper.fetchUnsyncedLearners(widget.classID);
 
       if (unsyncedLearners.isNotEmpty) {
-        debugPrint('Found ${unsyncedLearners.length} unsynced learners to sync');
+        debugPrint(
+            'Found ${unsyncedLearners.length} unsynced learners to sync');
 
         for (var learner in unsyncedLearners) {
           try {
@@ -772,7 +780,8 @@ class _LearnerListPageState extends State<LearnerListPage> {
                 debugPrint(
                     'Successfully synced learner ${learner['Name']} ${learner['Surname']}');
               } else {
-                debugPrint('Could not find learner after sync to mark as synced');
+                debugPrint(
+                    'Could not find learner after sync to mark as synced');
               }
             } else {
               debugPrint(
@@ -1003,7 +1012,8 @@ class _LearnerListPageState extends State<LearnerListPage> {
           }
         }
       } else {
-        debugPrint('No internet connection, skipping server check for $learnerId');
+        debugPrint(
+            'No internet connection, skipping server check for $learnerId');
       }
 
       debugPrint('Combined existing documents for $learnerId: $existingDocs');
@@ -1257,7 +1267,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
 
   Future<void> syncUnsyncedDocuments() async {
     if (!await _checkConnectivity()) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No internet connection, cannot sync')),
       );
@@ -1284,7 +1294,7 @@ class _LearnerListPageState extends State<LearnerListPage> {
 
       setState(() {});
     } catch (e) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error syncing documents: $e')),
       );
@@ -1310,12 +1320,12 @@ class _LearnerListPageState extends State<LearnerListPage> {
         // No need to reload all learners, just update the document status if needed
       });
 
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('$documentName uploaded locally')),
       );
     } catch (e) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to upload $documentName: $e')),
       );
@@ -1610,7 +1620,8 @@ class _LearnerListPageState extends State<LearnerListPage> {
                                         return ElevatedButton(
                                           onPressed: hasDocuments
                                               ? () {
-                                                  if (!context.mounted) return null;
+                                                  if (!context.mounted)
+                                                    return null;
                                                   Navigator.push(
                                                     context,
                                                     MaterialPageRoute(
@@ -2481,12 +2492,16 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
                           ..remove('BankCode');
                       }
 
-                      debugPrint('💾 DEBUG: Learner data prepared for submission:');
-                      debugPrint('💾 DEBUG: BankName: ${learnerData['BankName']}');
-                      debugPrint('💾 DEBUG: bankType: ${learnerData['bankType']}');
+                      debugPrint(
+                          '💾 DEBUG: Learner data prepared for submission:');
+                      debugPrint(
+                          '💾 DEBUG: BankName: ${learnerData['BankName']}');
+                      debugPrint(
+                          '💾 DEBUG: bankType: ${learnerData['bankType']}');
                       debugPrint(
                           '💾 DEBUG: BankAccount: ${learnerData['BankAccount']}');
-                      debugPrint('💾 DEBUG: BankCode: ${learnerData['BankCode']}');
+                      debugPrint(
+                          '💾 DEBUG: BankCode: ${learnerData['BankCode']}');
                       debugPrint('💾 DEBUG: Gender: ${learnerData['Gender']}');
                       debugPrint('Request body: ${json.encode(learnerData)}');
 
@@ -2850,13 +2865,15 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           try {
             final localId =
                 await dbHelper.insertOrUpdateLearner(learnerOnlyData, bankData);
-            debugPrint('Server failed, saved locally with temporary ID: $localId');
+            debugPrint(
+                'Server failed, saved locally with temporary ID: $localId');
 
             if (bankData != null) {
               await dbHelper.syncBankDetails();
             }
           } catch (localError) {
-            debugPrint('Error saving locally after server failure: $localError');
+            debugPrint(
+                'Error saving locally after server failure: $localError');
           }
 
           return false;
@@ -2918,7 +2935,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
       }
     } catch (e) {
       debugPrint('Network error: $e');
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Network error: $e')),
       );
@@ -2993,7 +3010,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
       }
     } catch (e) {
       debugPrint('Network error: $e');
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Network error: $e')),
       );
