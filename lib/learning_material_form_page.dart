@@ -834,7 +834,9 @@ class _LearningMaterialFormPageState extends State<LearningMaterialFormPage> {
       }
 
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
       debugPrint('[GEOFENCE] Current position: ${position.latitude}, ${position.longitude}');
@@ -1780,7 +1782,9 @@ class _UnitStandardsDialogState extends State<_UnitStandardsDialog> {
       }
 
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
       debugPrint('[GEOFENCE-DIALOG] Current position: ${position.latitude}, ${position.longitude}');

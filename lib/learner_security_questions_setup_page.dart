@@ -200,9 +200,10 @@ class _LearnerSecurityQuestionsSetupPageState
               ],
             ),
           );
-          return shouldExit ?? false;
+          if (shouldExit == true && context.mounted) {
+            Navigator.of(context).pop();
+          }
         }
-        return true;
       },
       child: Scaffold(
         appBar: AppBar(
