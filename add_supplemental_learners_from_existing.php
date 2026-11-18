@@ -38,11 +38,26 @@ try {
         $moderatorId = $data['moderator_id'] ?? $_GET['moderator_id'] ?? '';
         $targetCount = $data['target_count'] ?? $_GET['target_count'] ?? 402;
         
-        if (empty($moderatorId)) {
+        // Validate moderator ID (must be numeric)
+        if (empty($moderatorId) || !preg_match('/^\d+$/', $moderatorId)) {
             http_response_code(400);
             echo json_encode([
                 'status' => 'error',
-                'message' => 'moderator_id parameter is required'
+                'message' => 'Valid moderator_id parameter is required (numeric)'
+            ]);
+            exit();
+        }
+        
+        // Validate target count
+        $targetCount = filter_var($targetCount, FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1, 'max_range' => 10000]
+        ]);
+        
+        if ($targetCount === false) {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Invalid target_count (must be 1-10000)'
             ]);
             exit();
         }

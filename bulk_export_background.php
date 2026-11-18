@@ -13,17 +13,61 @@ while (ob_get_level()) {
 header('Content-Type: application/json');
 header('Connection: close');
 
-// Get parameters
+// Get and validate parameters
 $jobId = $_POST['job_id'] ?? uniqid('job_');
+
+// Validate job ID format (alphanumeric, dash, underscore only)
+if (!preg_match('/^[a-zA-Z0-9_-]+$/', $jobId)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid job ID format']);
+    exit;
+}
+
+// Validate and decode learner IDs
 $learnerIds = isset($_POST['learner_ids']) ? json_decode($_POST['learner_ids'], true) : [];
+
+if (!is_array($learnerIds) || empty($learnerIds)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid or empty learner IDs']);
+    exit;
+}
+
+// Validate each learner ID is a positive integer
+$learnerIds = array_filter($learnerIds, function($id) {
+    return filter_var($id, FILTER_VALIDATE_INT) !== false && $id > 0;
+});
+
+if (empty($learnerIds)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'No valid learner IDs provided']);
+    exit;
+}
+
+// Validate dates
 $startDate = $_POST['start_date'] ?? date('Y-m-01');
 $endDate = $_POST['end_date'] ?? date('Y-m-t');
-$projectId = $_POST['project_id'] ?? null;
 
-// Validate
-if (empty($learnerIds)) {
-    echo json_encode(['error' => 'No learner IDs provided']);
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid start date format (use YYYY-MM-DD)']);
     exit;
+}
+
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $endDate)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid end date format (use YYYY-MM-DD)']);
+    exit;
+}
+
+// Validate project ID if provided
+$projectId = $_POST['project_id'] ?? null;
+if ($projectId !== null) {
+    $projectId = filter_var($projectId, FILTER_VALIDATE_INT);
+    if ($projectId === false) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid project ID']);
+        exit;
+    }
 }
 
 // Create progress file

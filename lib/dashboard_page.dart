@@ -6,7 +6,7 @@ import 'database_helper.dart';
 import 'FacilitatorProfile.dart';
 import 'materialForm.dart';
 import 'clock_in_page.dart';
-import 'backup_clock_in_page.dart';
+// import 'backup_clock_in_page.dart'; // Temporarily commented - analyzer issue
 import 'signature_geofence_clock_in_page.dart';
 import 'services/fingerprint_service.dart';
 import 'sync_service.dart' show syncSingleClockIn, syncSingleClockOut;
@@ -135,7 +135,8 @@ class _DashboardPageState extends State<DashboardPage> {
       debugPrint("[DASHBOARD] About to call fetchClassData");
       final data = await fetchClassData(widget.classID);
       debugPrint("[DASHBOARD] Raw class data fetched: $data");
-      debugPrint("[DASHBOARD] Data fetch completed, widget still mounted: $mounted");
+      debugPrint(
+          "[DASHBOARD] Data fetch completed, widget still mounted: $mounted");
 
       final effectiveClassID = overrideClassID ?? widget.classID;
       debugPrint(
@@ -201,15 +202,18 @@ class _DashboardPageState extends State<DashboardPage> {
         debugPrint("[DASHBOARD_DEBUG] Learner $learnerId ($name $surname):");
         debugPrint("[DASHBOARD_DEBUG]   ZKTeco Left: ${zkLeft.length} chars");
         debugPrint("[DASHBOARD_DEBUG]   ZKTeco Right: ${zkRight.length} chars");
-        debugPrint("[DASHBOARD_DEBUG]   Futronic Left: ${futLeft.length} chars");
-        debugPrint("[DASHBOARD_DEBUG]   Futronic Right: ${futRight.length} chars");
+        debugPrint(
+            "[DASHBOARD_DEBUG]   Futronic Left: ${futLeft.length} chars");
+        debugPrint(
+            "[DASHBOARD_DEBUG]   Futronic Right: ${futRight.length} chars");
       }
 
       if (data.isEmpty) {
         debugPrint("[DASHBOARD] WARNING: Class data is empty!");
       }
 
-      debugPrint("[DASHBOARD] Checking mounted state before setState: $mounted");
+      debugPrint(
+          "[DASHBOARD] Checking mounted state before setState: $mounted");
       if (mounted) {
         debugPrint("[DASHBOARD] About to call setState");
         setState(() {
@@ -241,7 +245,8 @@ class _DashboardPageState extends State<DashboardPage> {
         });
 
         debugPrint("[DASHBOARD] Final class data set in state: $data");
-        debugPrint("[DASHBOARD] Final learners count: ${currentLearners.length}");
+        debugPrint(
+            "[DASHBOARD] Final learners count: ${currentLearners.length}");
 
         // Check if reloaded learners have fingerprint data
         int reloadedLearnersWithFingerprints = 0;
@@ -606,7 +611,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
       debugPrint('[1:N] Futronic verification summary:');
       debugPrint('[1:N]   Total learners: ${currentLearners.length}');
-      debugPrint('[1:N]   Learners with Futronic templates: $learnersWithTemplates');
+      debugPrint(
+          '[1:N]   Learners with Futronic templates: $learnersWithTemplates');
       debugPrint('[1:N]   Match found: ${matchedLearnerId != null}');
 
       // SECURITY CHECK: Ensure we have templates before allowing any match
@@ -846,7 +852,8 @@ class _DashboardPageState extends State<DashboardPage> {
           // OPTIMIZATION 4: Smart template selection - try best template first
           if (hasValidLeft && hasValidRight) {
             // Try left first (typically better quality)
-            debugPrint('[1:N] FAST ZKTeco verify (left) for learner $learnerId');
+            debugPrint(
+                '[1:N] FAST ZKTeco verify (left) for learner $learnerId');
             try {
               match = await _fingerprintService.verify('left', leftTemplate!);
               debugPrint('[1:N] FAST ZKTeco left verify result: $match');
@@ -856,7 +863,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
             // If left fails, try right
             if (!match) {
-              debugPrint('[1:N] FAST ZKTeco verify (right) for learner $learnerId');
+              debugPrint(
+                  '[1:N] FAST ZKTeco verify (right) for learner $learnerId');
               try {
                 match =
                     await _fingerprintService.verify('right', rightTemplate!);
@@ -902,7 +910,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
       debugPrint('[1:N] ZKTeco verification summary:');
       debugPrint('[1:N]   Total learners: ${currentLearners.length}');
-      debugPrint('[1:N]   Learners with ZKTeco templates: $learnersWithTemplates');
+      debugPrint(
+          '[1:N]   Learners with ZKTeco templates: $learnersWithTemplates');
       debugPrint('[1:N]   Match found: ${matchedLearnerId != null}');
 
       // SECURITY CHECK: Ensure we have templates before allowing any match
@@ -1005,7 +1014,8 @@ class _DashboardPageState extends State<DashboardPage> {
         await _performClockOut(learnerId, learnerName, existingAttendance);
         debugPrint('[HANDLE_MATCHED] Clock-out process completed');
       } else {
-        debugPrint('[HANDLE_MATCHED] Learner already completed clocking for today');
+        debugPrint(
+            '[HANDLE_MATCHED] Learner already completed clocking for today');
         debugPrint(
             '[HANDLE_MATCHED] Scanning dialog already closed: $scanningDialogAlreadyClosed');
 
@@ -1018,7 +1028,8 @@ class _DashboardPageState extends State<DashboardPage> {
             if (Navigator.of(context).canPop()) {
               debugPrint('[HANDLE_MATCHED] Can pop - closing scanning dialog');
               Navigator.of(context).pop(); // Close scanning dialog
-              debugPrint('[HANDLE_MATCHED] Scanning dialog closed successfully');
+              debugPrint(
+                  '[HANDLE_MATCHED] Scanning dialog closed successfully');
             } else {
               debugPrint('[HANDLE_MATCHED] Cannot pop - no dialog to close');
             }
@@ -1044,7 +1055,8 @@ class _DashboardPageState extends State<DashboardPage> {
         });
       }
 
-      debugPrint('[HANDLE_MATCHED] _handleMatchedLearner completed successfully');
+      debugPrint(
+          '[HANDLE_MATCHED] _handleMatchedLearner completed successfully');
     } catch (e, stackTrace) {
       debugPrint('[HANDLE_MATCHED] ERROR in _handleMatchedLearner: $e');
       debugPrint('[HANDLE_MATCHED] Stack trace: $stackTrace');
@@ -1673,7 +1685,8 @@ class _DashboardPageState extends State<DashboardPage> {
                           '[SUCCESS_DIALOG] Widget is not mounted, skipping setState');
                     }
                   } catch (e) {
-                    debugPrint('[SUCCESS_DIALOG] ERROR in OK button handler: $e');
+                    debugPrint(
+                        '[SUCCESS_DIALOG] ERROR in OK button handler: $e');
                     debugPrint(
                         '[SUCCESS_DIALOG] Stack trace: ${StackTrace.current}');
                   }
@@ -1754,7 +1767,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       '[ERROR_DIALOG] Dashboard widget still mounted: $mounted');
                 } catch (e) {
                   debugPrint('[ERROR_DIALOG] Error closing dialog: $e');
-                  debugPrint('[ERROR_DIALOG] Stack trace: ${StackTrace.current}');
+                  debugPrint(
+                      '[ERROR_DIALOG] Stack trace: ${StackTrace.current}');
                 }
               },
               icon: const Icon(Icons.close, color: Colors.red),
@@ -2056,7 +2070,8 @@ class _DashboardPageState extends State<DashboardPage> {
                             child: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
+                                color: const Color(0xFF4CAF50)
+                                    .withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Column(
@@ -2098,7 +2113,8 @@ class _DashboardPageState extends State<DashboardPage> {
                             child: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFEF5350).withValues(alpha: 0.1),
+                                color: const Color(0xFFEF5350)
+                                    .withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Column(
@@ -2535,15 +2551,21 @@ class _DashboardPageState extends State<DashboardPage> {
                         label: const Text('Face'),
                         onPressed: () {
                           Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => BackupClockInPage(
-                                classID: widget.classID,
-                                learners: currentLearners,
-                              ),
-                            ),
+                          // Temporarily disabled - BackupClockInPage import issue
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text(
+                                    'Backup clock-in temporarily disabled')),
                           );
+                          // Navigator.push(
+                          //   context,
+                          //   MaterialPageRoute(
+                          //     builder: (context) => BackupClockInPage(
+                          //       classID: widget.classID,
+                          //       learners: currentLearners,
+                          //     ),
+                          //   ),
+                          // );
                         },
                       ),
                       TextButton.icon(

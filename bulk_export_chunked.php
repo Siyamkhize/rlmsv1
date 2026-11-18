@@ -348,18 +348,59 @@ while (ob_get_level()) {
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-cache, must-revalidate');
 
+// Validate and sanitize action parameter
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
+$validActions = ['start', 'process_chunk', 'finalize'];
+
+if (!in_array($action, $validActions, true)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid action. Must be: start, process_chunk, or finalize']);
+    exit;
+}
 
 switch ($action) {
     case 'start':
-        // Start a new chunked export session
+        // Validate and decode learner IDs
         $learnerIds = json_decode($_POST['learner_ids'] ?? '[]', true);
-        $startDate = $_POST['start_date'] ?? date('Y-m-01');
-        $endDate = $_POST['end_date'] ?? date('Y-m-t');
-        $chunkSize = intval($_POST['chunk_size'] ?? 10); // Process 10 learners at a time
+        
+        if (!is_array($learnerIds) || empty($learnerIds)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid or empty learner IDs array']);
+            exit;
+        }
+        
+        // Validate each learner ID is a positive integer
+        $learnerIds = array_filter($learnerIds, function($id) {
+            return filter_var($id, FILTER_VALIDATE_INT) !== false && $id > 0;
+        });
         
         if (empty($learnerIds)) {
-            echo json_encode(['error' => 'No learner IDs provided']);
+            http_response_code(400);
+            echo json_encode(['error' => 'No valid learner IDs provided']);
+            exit;
+        }
+        
+        // Validate dates
+        $startDate = $_POST['start_date'] ?? date('Y-m-01');
+        $endDate = $_POST['end_date'] ?? date('Y-m-t');
+        
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid start date format (use YYYY-MM-DD)']);
+            exit;
+        }
+        
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $endDate)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid end date format (use YYYY-MM-DD)']);
+            exit;
+        }
+        
+        // Validate chunk size
+        $chunkSize = filter_var($_POST['chunk_size'] ?? 10, FILTER_VALIDATE_INT);
+        if ($chunkSize === false || $chunkSize < 1 || $chunkSize > 100) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid chunk size (must be 1-100)']);
             exit;
         }
         
@@ -397,12 +438,20 @@ switch ($action) {
         break;
         
     case 'process_chunk':
-        // Process next chunk
+        // Validate session ID
         $sessionId = $_POST['session_id'] ?? '';
-        $chunkIndex = intval($_POST['chunk_index'] ?? 0);
         
-        if (empty($sessionId)) {
-            echo json_encode(['error' => 'No session ID provided']);
+        if (empty($sessionId) || !preg_match('/^session_\d+_\d+$/', $sessionId)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid or missing session ID']);
+            exit;
+        }
+        
+        // Validate chunk index
+        $chunkIndex = filter_var($_POST['chunk_index'] ?? 0, FILTER_VALIDATE_INT);
+        if ($chunkIndex === false || $chunkIndex < 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid chunk index']);
             exit;
         }
         
@@ -442,11 +491,12 @@ switch ($action) {
         break;
         
     case 'finalize':
-        // Create final ZIP file
+        // Validate session ID
         $sessionId = $_POST['session_id'] ?? '';
         
-        if (empty($sessionId)) {
-            echo json_encode(['error' => 'No session ID provided']);
+        if (empty($sessionId) || !preg_match('/^session_\d+_\d+$/', $sessionId)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid or missing session ID']);
             exit;
         }
         

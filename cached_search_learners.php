@@ -71,9 +71,25 @@ try {
     $startTime = microtime(true);
     $cache = new SearchCache();
     
-    // Get parameters
+    // Get parameters with validation
     $classID = $_GET['classID'] ?? $_POST['classID'] ?? null;
+    
+    // Validate classID (must be alphanumeric)
+    if ($classID && !preg_match('/^[a-zA-Z0-9_-]+$/', $classID)) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid classID format']);
+        exit;
+    }
+    
     $searchQuery = trim($_GET['search'] ?? $_POST['search'] ?? '');
+    
+    // Validate search query length and basic sanitization
+    if (strlen($searchQuery) > 100) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Search query too long']);
+        exit;
+    }
+    
     $page = (int)($_GET['page'] ?? $_POST['page'] ?? 1);
     $limit = min((int)($_GET['limit'] ?? $_POST['limit'] ?? 20), 50);
     $forceRefresh = ($_GET['refresh'] ?? $_POST['refresh'] ?? 'false') === 'true';
@@ -81,6 +97,13 @@ try {
     if (!$classID) {
         http_response_code(400);
         echo json_encode(['status' => 'error', 'message' => 'classID parameter is required']);
+        exit;
+    }
+    
+    // Validate pagination values
+    if ($page < 1 || $limit < 1) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid pagination parameters']);
         exit;
     }
 
@@ -129,10 +152,12 @@ try {
     // Main query with smart ordering
     $orderBy = "l.Name, l.Surname";
     if (!empty($searchQuery)) {
+        // Sanitize search query for use in ORDER BY CASE (not parameterizable)
+        $safeSearchQuery = $conn->real_escape_string($searchQuery);
         $orderBy = "CASE 
-                        WHEN l.IDNumber LIKE '{$searchQuery}%' THEN 1
-                        WHEN l.Name LIKE '{$searchQuery}%' THEN 2
-                        WHEN l.Surname LIKE '{$searchQuery}%' THEN 3
+                        WHEN l.IDNumber LIKE '{$safeSearchQuery}%' THEN 1
+                        WHEN l.Name LIKE '{$safeSearchQuery}%' THEN 2
+                        WHEN l.Surname LIKE '{$safeSearchQuery}%' THEN 3
                         ELSE 4
                     END, l.Name, l.Surname";
     }

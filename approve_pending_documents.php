@@ -4,10 +4,15 @@ require_once 'mobile/connection.php';
 
 header('Content-Type: application/json');
 
-$learner_id = isset($_GET['learner_id']) ? intval($_GET['learner_id']) : null;
+// Validate learner_id input
+$learner_id = filter_var($_GET['learner_id'] ?? null, FILTER_VALIDATE_INT);
 
-if (!$learner_id) {
-    echo json_encode(['error' => 'learner_id required']);
+if ($learner_id === false || $learner_id === null || $learner_id <= 0) {
+    http_response_code(400);
+    echo json_encode([
+        'error' => 'Invalid learner_id parameter',
+        'message' => 'learner_id must be a positive integer'
+    ]);
     exit;
 }
 

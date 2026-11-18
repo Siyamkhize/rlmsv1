@@ -452,19 +452,66 @@ function deleteDirectory($dir) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
     
-    // Get parameters
+    // Validate and decode learner IDs
     $learnerIds = isset($_POST['learner_ids']) ? json_decode($_POST['learner_ids'], true) : [];
-    $startDate = isset($_POST['start_date']) ? $_POST['start_date'] : date('Y-m-01');
-    $endDate = isset($_POST['end_date']) ? $_POST['end_date'] : date('Y-m-t');
-    $projectId = isset($_POST['project_id']) ? $_POST['project_id'] : null;
     
-    // Validate inputs
-    if (empty($learnerIds) || !is_array($learnerIds)) {
+    if (!is_array($learnerIds) || empty($learnerIds)) {
+        http_response_code(400);
         echo json_encode([
             'success' => false,
             'error' => 'Invalid or missing learner_ids parameter'
         ]);
         exit;
+    }
+    
+    // Validate each learner ID is a positive integer
+    $learnerIds = array_filter($learnerIds, function($id) {
+        return filter_var($id, FILTER_VALIDATE_INT) !== false && $id > 0;
+    });
+    
+    if (empty($learnerIds)) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'error' => 'No valid learner IDs provided'
+        ]);
+        exit;
+    }
+    
+    // Validate dates
+    $startDate = isset($_POST['start_date']) ? $_POST['start_date'] : date('Y-m-01');
+    $endDate = isset($_POST['end_date']) ? $_POST['end_date'] : date('Y-m-t');
+    
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate)) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Invalid start date format (use YYYY-MM-DD)'
+        ]);
+        exit;
+    }
+    
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $endDate)) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Invalid end date format (use YYYY-MM-DD)'
+        ]);
+        exit;
+    }
+    
+    // Validate project ID if provided
+    $projectId = isset($_POST['project_id']) ? $_POST['project_id'] : null;
+    if ($projectId !== null) {
+        $projectId = filter_var($projectId, FILTER_VALIDATE_INT);
+        if ($projectId === false) {
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Invalid project_id - must be an integer'
+            ]);
+            exit;
+        }
     }
     
     // Generate reports

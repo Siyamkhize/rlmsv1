@@ -16,14 +16,45 @@ ini_set('log_errors', 1);
 header('Content-Type: application/json');
 
 try {
-    // Get parameters
+    // Validate and decode learner IDs
     $learnerIds = isset($_POST['learner_ids']) ? json_decode($_POST['learner_ids'], true) : [];
-    $startDate = isset($_POST['start_date']) ? $_POST['start_date'] : date('Y-m-01');
-    $endDate = isset($_POST['end_date']) ? $_POST['end_date'] : date('Y-m-t');
-    $siteName = isset($_POST['site_name']) ? $_POST['site_name'] : 'Site';
+    
+    if (!is_array($learnerIds) || empty($learnerIds)) {
+        http_response_code(400);
+        throw new Exception('Invalid or empty learner_ids array');
+    }
+    
+    // Validate each learner ID is a positive integer
+    $learnerIds = array_filter($learnerIds, function($id) {
+        return filter_var($id, FILTER_VALIDATE_INT) !== false && $id > 0;
+    });
     
     if (empty($learnerIds)) {
-        throw new Exception('No learner IDs provided');
+        http_response_code(400);
+        throw new Exception('No valid learner IDs provided');
+    }
+    
+    // Validate dates
+    $startDate = isset($_POST['start_date']) ? $_POST['start_date'] : date('Y-m-01');
+    $endDate = isset($_POST['end_date']) ? $_POST['end_date'] : date('Y-m-t');
+    
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate)) {
+        http_response_code(400);
+        throw new Exception('Invalid start date format (use YYYY-MM-DD)');
+    }
+    
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $endDate)) {
+        http_response_code(400);
+        throw new Exception('Invalid end date format (use YYYY-MM-DD)');
+    }
+    
+    // Validate and sanitize site name
+    $siteName = isset($_POST['site_name']) ? $_POST['site_name'] : 'Site';
+    $siteName = htmlspecialchars(trim($siteName), ENT_QUOTES, 'UTF-8');
+    
+    if (strlen($siteName) > 100) {
+        http_response_code(400);
+        throw new Exception('Site name too long (max 100 characters)');
     }
     
     error_log("Bulk document download requested for " . count($learnerIds) . " learners");

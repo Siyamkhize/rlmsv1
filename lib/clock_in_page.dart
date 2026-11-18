@@ -19,7 +19,7 @@ import 'services/fingerprint_service.dart';
 import 'services/secure_location_service.dart'; // Added for future location improvements
 import 'LearnerDetailsPage.dart';
 import 'sick_note_page.dart';
-import 'backup_clock_in_page.dart'; // Added for backup clock-in navigation
+// import 'backup_clock_in_page.dart'; // Temporarily commented - analyzer issue
 import 'signature_geofence_clock_in_page.dart'; // Added for signature+geofence clock-in
 import 'database_helper.dart';
 import 'sync_service.dart'
@@ -6309,15 +6309,20 @@ class _ClockInPageState extends State<ClockInPage>
           IconButton(
             icon: const Icon(Icons.edit, color: Colors.blue),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => BackupClockInPage(
-                    classID: widget.classID,
-                    learners: widget.learners,
-                  ),
-                ),
+              // Temporarily disabled - BackupClockInPage import issue
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text('Backup clock-in temporarily disabled')),
               );
+              // Navigator.push(
+              //   context,
+              //   MaterialPageRoute(
+              //     builder: (context) => BackupClockInPage(
+              //       classID: widget.classID,
+              //       learners: widget.learners,
+              //     ),
+              //   ),
+              // );
             },
             tooltip: 'Backup Clock-In (Face + Signature)',
           ),

@@ -12,18 +12,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Get classID from GET or POST
+// Get and validate classID from GET or POST
 $classID = null;
 if (isset($_GET['classID'])) {
-    $classID = intval($_GET['classID']);
+    $classID = filter_var($_GET['classID'], FILTER_VALIDATE_INT);
 } elseif (isset($_POST['classID'])) {
-    $classID = intval($_POST['classID']);
+    $classID = filter_var($_POST['classID'], FILTER_VALIDATE_INT);
 }
 
-if (!$classID || $classID <= 0) {
+if ($classID === false || $classID === null || $classID <= 0) {
+    http_response_code(400);
     echo json_encode([
         'success' => false,
-        'error' => 'Invalid or missing classID parameter'
+        'error' => 'Invalid or missing classID parameter - must be a positive integer'
     ]);
     exit;
 }

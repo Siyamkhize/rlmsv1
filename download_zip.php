@@ -13,12 +13,19 @@ while (ob_get_level()) {
 ini_set('output_buffering', 'off');
 ini_set('zlib.output_compression', 'Off');
 
-// Get filename from query parameter
+// Get and validate filename from query parameter
 $filename = isset($_GET['file']) ? basename($_GET['file']) : '';
 
 if (empty($filename)) {
     http_response_code(400);
     die('Error: No file specified');
+}
+
+// Additional validation: only allow alphanumeric, dash, underscore, and .zip extension
+if (!preg_match('/^[a-zA-Z0-9_-]+\.zip$/', $filename)) {
+    http_response_code(400);
+    error_log("Invalid filename format: $filename");
+    die('Error: Invalid filename format');
 }
 
 // Construct file path

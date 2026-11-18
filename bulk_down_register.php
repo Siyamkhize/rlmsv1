@@ -463,19 +463,38 @@ if ($districtResult) {
 
 // Fetch all distinct sites for the dropdown filter
 $sites = [];
-$siteQuery = "SELECT DISTINCT siteName FROM sites";
+// Fetch sites with prepared statement for security
+$sites = [];
 if (isset($_GET['district']) && !empty($_GET['district'])) {
-    $siteQuery .= " WHERE District = '" . $conn->real_escape_string($_GET['district']) . "'";
-}
-$siteQuery .= " ORDER BY siteName";
-$siteResult = $conn->query($siteQuery);
-if ($siteResult) {
+    // Use prepared statement to prevent SQL injection
+    $stmt = $conn->prepare("SELECT DISTINCT siteName FROM sites WHERE District = ? ORDER BY siteName");
+    if (!$stmt) {
+        error_log("Prepare failed: " . $conn->error);
+        die("Error preparing query. Please try again.");
+    }
+    $district = $_GET['district'];
+    $stmt->bind_param("s", $district);
+    if (!$stmt->execute()) {
+        error_log("Execute failed: " . $stmt->error);
+        die("Error executing query. Please try again.");
+    }
+    $siteResult = $stmt->get_result();
     while ($s = $siteResult->fetch_assoc()) {
         $sites[] = $s['siteName'];
     }
+    $stmt->close();
 } else {
-    error_log("Error fetching sites: " . $conn->error);
-    die("Error fetching sites. Please try again.");
+    // No district filter, get all sites
+    $siteQuery = "SELECT DISTINCT siteName FROM sites ORDER BY siteName";
+    $siteResult = $conn->query($siteQuery);
+    if ($siteResult) {
+        while ($s = $siteResult->fetch_assoc()) {
+            $sites[] = $s['siteName'];
+        }
+    } else {
+        error_log("Error fetching sites: " . $conn->error);
+        die("Error fetching sites. Please try again.");
+    }
 }
 
 // Get selected filters
@@ -543,7 +562,7 @@ if ($shouldLoadData && !empty($startDate) && !empty($endDate)) {
         $currentDate->modify('+1 day');
     }
 
-// Build the main query with activity_status filter
+// Build the main query with activity_status filter using prepared statements
 $sql = "
     SELECT
         s.District,
@@ -562,20 +581,30 @@ $sql = "
     LEFT JOIN (
         SELECT DISTINCT LearnerID, DATE(clock_date) as clock_date
         FROM learner_clocking 
-        WHERE DATE(clock_date) BETWEEN '{$startDate}' AND '{$endDate}'
+        WHERE DATE(clock_date) BETWEEN ? AND ?
     ) lc ON ld.LearnerID = lc.LearnerID
     WHERE (ld.activity_statu = '' OR ld.activity_statu IS NULL)
 ";
 
+// Build WHERE clauses dynamically with placeholders
 $whereClauses = [];
+$params = [$startDate, $endDate]; // First two params for the subquery dates
+$types = "ss"; // Two strings for dates
+
 if (!empty($selectedDistrict)) {
-    $whereClauses[] = "s.District = '" . $conn->real_escape_string($selectedDistrict) . "'";
+    $whereClauses[] = "s.District = ?";
+    $params[] = $selectedDistrict;
+    $types .= "s";
 }
 if (!empty($selectedSite)) {
-    $whereClauses[] = "s.siteName = '" . $conn->real_escape_string($selectedSite) . "'";
+    $whereClauses[] = "s.siteName = ?";
+    $params[] = $selectedSite;
+    $types .= "s";
 }
 if (isset($_GET['id_search']) && !empty($_GET['id_search'])) {
-    $whereClauses[] = "ld.IDNumber = '" . $conn->real_escape_string($_GET['id_search']) . "'";
+    $whereClauses[] = "ld.IDNumber = ?";
+    $params[] = $_GET['id_search'];
+    $types .= "s";
 }
 if (!empty($whereClauses)) {
     $sql .= " AND " . implode(" AND ", $whereClauses);
@@ -583,10 +612,25 @@ if (!empty($whereClauses)) {
 
 $sql .= " ORDER BY ld.Surname, ld.Name";
 
-$result = $conn->query($sql);
+// Execute with prepared statement
+$stmt = $conn->prepare($sql);
+if (!$stmt) {
+    error_log("Prepare failed: " . $conn->error);
+    die("Error preparing query. Please try again.");
+}
+
+// Bind parameters dynamically
+$stmt->bind_param($types, ...$params);
+
+if (!$stmt->execute()) {
+    error_log("Execute failed: " . $stmt->error);
+    die("Error executing query. Please try again.");
+}
+
+$result = $stmt->get_result();
 
 if (!$result) {
-    error_log("Error executing query: " . $conn->error);
+    error_log("Error getting result: " . $stmt->error);
     die("Error executing query. Please try again.");
 }
 
