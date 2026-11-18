@@ -480,6 +480,7 @@ class _AdminPageState extends State<AdminPage> {
         MaterialPageRoute(
           builder: (context) => Learnerlistpage(
             classID: classId,
+            learners: const [],
           ),
         ),
       );

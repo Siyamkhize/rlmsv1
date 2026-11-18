@@ -268,7 +268,8 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
       context,
       MaterialPageRoute(
         builder: (context) => Learnerlistpage(
-            classID: classID), // Pass classID to LearnerListPage
+            classID: classID,
+            learners: const []), // Pass classID to LearnerListPage
       ),
     );
   }
