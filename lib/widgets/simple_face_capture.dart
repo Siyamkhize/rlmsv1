@@ -805,20 +805,24 @@ class _SimpleFaceCaptureState extends State<SimpleFaceCapture>
                                 vertical: 12,
                               ),
                               decoration: BoxDecoration(
-                                color: _qualityColor.withOpacity(
-                                    _qualityColor == Colors.red ? 0.94 : 0.92),
+                                color: _qualityColor.withValues(
+                                    alpha: _qualityColor == Colors.red
+                                        ? 0.94
+                                        : 0.92),
                                 borderRadius: BorderRadius.circular(18),
                                 boxShadow: _qualityColor == Colors.green
                                     ? [
                                         BoxShadow(
-                                          color: Colors.green.withValues(alpha: 0.55),
+                                          color: Colors.green
+                                              .withValues(alpha: 0.55),
                                           blurRadius: 22,
                                           spreadRadius: 3,
                                         ),
                                       ]
                                     : [
                                         BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.18),
+                                          color: Colors.black
+                                              .withValues(alpha: 0.18),
                                           blurRadius: 10,
                                           spreadRadius: 1,
                                         ),
@@ -849,8 +853,8 @@ class _SimpleFaceCaptureState extends State<SimpleFaceCapture>
                                         Text(
                                           _alignmentHint,
                                           style: TextStyle(
-                                            color:
-                                                Colors.white.withValues(alpha: 0.95),
+                                            color: Colors.white
+                                                .withValues(alpha: 0.95),
                                             fontSize: 13.5,
                                             height: 1.2,
                                           ),
@@ -880,10 +884,12 @@ class _SimpleFaceCaptureState extends State<SimpleFaceCapture>
                                       vertical: 10,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.black.withValues(alpha: 0.75),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.75),
                                       borderRadius: BorderRadius.circular(24),
                                       border: Border.all(
-                                        color: Colors.white.withValues(alpha: 0.3),
+                                        color:
+                                            Colors.white.withValues(alpha: 0.3),
                                         width: 1.5,
                                       ),
                                     ),
@@ -914,7 +920,8 @@ class _SimpleFaceCaptureState extends State<SimpleFaceCapture>
                                         Icon(
                                           Icons.flip_camera_android,
                                           color: _isSwitchingCamera
-                                              ? Colors.white.withValues(alpha: 0.5)
+                                              ? Colors.white
+                                                  .withValues(alpha: 0.5)
                                               : Colors.white,
                                           size: 22,
                                         ),
@@ -1071,7 +1078,7 @@ class FaceGuidePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2
       ..color = (qualityColor == Colors.red ? Colors.white : Colors.white)
-          .withOpacity(isAligned ? 0.55 : 0.40);
+          .withValues(alpha: isAligned ? 0.55 : 0.40);
     canvas.drawLine(
       Offset(ovalRect.center.dx, ovalRect.top + 10),
       Offset(ovalRect.center.dx, ovalRect.bottom - 10),

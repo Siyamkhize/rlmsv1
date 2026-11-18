@@ -68,7 +68,7 @@ class _MonitoringPromptPageState extends State<MonitoringPromptPage>
         volume: 0.8,
       );
 
-      if (await Vibration.hasVibrator() ?? false) {
+      if (await Vibration.hasVibrator() == true) {
         await Vibration.vibrate(duration: 500);
       }
     } catch (e) {

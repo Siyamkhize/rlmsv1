@@ -207,10 +207,10 @@ class _ArplToolkitPlumberPageState extends State<ArplToolkitPlumberPage>
       for (int i = 0;
           i < _practicalTasks.length && i < f.practicalTasks.length;
           i++) {
-        _practicalTasks[i].text = f.practicalTasks[i].taskName ?? '';
-        _practicalScores[i].text = (f.practicalTasks[i].score ?? '').toString();
+        _practicalTasks[i].text = f.practicalTasks[i].taskName;
+        _practicalScores[i].text = f.practicalTasks[i].score.toString();
         _practicalPercentages[i].text =
-            (f.practicalTasks[i].percentage ?? '').toString();
+            f.practicalTasks[i].percentage.toString();
       }
 
       // Populate workplace observations (13 activities)
@@ -219,11 +219,11 @@ class _ArplToolkitPlumberPageState extends State<ArplToolkitPlumberPage>
               i < f.workplaceObservations.length;
           i++) {
         _workplaceObservationTechKnowledge[i].text =
-            f.workplaceObservations[i].technicalKnowledge ?? '';
+            f.workplaceObservations[i].technicalKnowledge;
         _workplaceObservationInterpretation[i].text =
-            f.workplaceObservations[i].interpretation ?? '';
+            f.workplaceObservations[i].interpretation;
         _workplaceObservationTeamWork[i].text =
-            f.workplaceObservations[i].teamWork ?? '';
+            f.workplaceObservations[i].teamWork;
       }
     }
   }

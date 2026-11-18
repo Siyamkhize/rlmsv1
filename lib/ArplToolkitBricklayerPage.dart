@@ -48,7 +48,7 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
   final Map<int, TextEditingController> _appendixEComments = {};
 
   // Appendix D controllers - for editable text inputs
-  final Map<String, TextEditingController> _appendixDInputs = {};
+  // final Map<String, TextEditingController> _appendixDInputs = {};
 
   // Appendix F controllers - Practical section (13 bricklaying tasks)
   final List<TextEditingController> _practicalTasks =
@@ -74,7 +74,7 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
   // Appendix H - Gap Closure Controllers
   final Map<int, String> _appendixHStatus = {};
   final Map<int, TextEditingController> _appendixHRemarks = {};
-  bool _showGapClosureSelection = false;
+  // bool _showGapClosureSelection = false;
   final Set<String> _selectedGapUnitStandards = {};
   bool _gapStandardsLoading = false;
   List<Map<String, dynamic>> _availableGapUnitStandards = [];
@@ -285,10 +285,10 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
       for (int i = 0;
           i < _practicalTasks.length && i < f.practicalTasks.length;
           i++) {
-        _practicalTasks[i].text = f.practicalTasks[i].taskName ?? '';
-        _practicalScores[i].text = (f.practicalTasks[i].score ?? '').toString();
+        _practicalTasks[i].text = f.practicalTasks[i].taskName;
+        _practicalScores[i].text = f.practicalTasks[i].score.toString();
         _practicalPercentages[i].text =
-            (f.practicalTasks[i].percentage ?? '').toString();
+            f.practicalTasks[i].percentage.toString();
       }
 
       // Populate workplace observations (13 activities)
@@ -297,11 +297,11 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
               i < f.workplaceObservations.length;
           i++) {
         _workplaceObservationTechKnowledge[i].text =
-            f.workplaceObservations[i].technicalKnowledge ?? '';
+            f.workplaceObservations[i].technicalKnowledge;
         _workplaceObservationInterpretation[i].text =
-            f.workplaceObservations[i].interpretation ?? '';
+            f.workplaceObservations[i].interpretation;
         _workplaceObservationTeamWork[i].text =
-            f.workplaceObservations[i].teamWork ?? '';
+            f.workplaceObservations[i].teamWork;
       }
     }
   }
@@ -413,7 +413,7 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
       for (var rec in _toolkitData!.appendixH.recommendations) {
         recommendationsData.add({
           'acrid': rec.acrId,
-          'status': _appendixHStatus[rec.acrId] ?? rec.status ?? '',
+          'status': _appendixHStatus[rec.acrId] ?? rec.status,
           'remarks': _appendixHRemarks[rec.acrId]?.text ?? '',
         });
       }
@@ -1161,8 +1161,7 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
           // ACR Items
           ...recommendations.map((rec) {
             final itemName = _getAcrItemName(rec.acrId);
-            final currentStatus =
-                _appendixHStatus[rec.acrId] ?? rec.status ?? '';
+            final currentStatus = _appendixHStatus[rec.acrId] ?? rec.status;
             final isOverallResult = rec.acrId == 4;
 
             return Column(

@@ -6996,7 +6996,7 @@ class _PotholeChecklistLearnerListPageState
                 final dbHelper = DatabaseHelper();
                 await dbHelper.saveScannedPotholeChecklist(
                   learnerId: learnerId,
-                  assessorId: widget.facilitatorId ?? '',
+                  assessorId: widget.facilitatorId,
                   documentPath: permanentPath,
                   assessmentDate: assessmentDate,
                 );
@@ -7081,7 +7081,7 @@ class _PotholeChecklistLearnerListPageState
       final request = http.MultipartRequest('POST', Uri.parse(url));
 
       request.fields['learner_id'] = learnerId;
-      request.fields['assessor_id'] = widget.facilitatorId ?? '';
+      request.fields['assessor_id'] = widget.facilitatorId;
       request.fields['assessment_date'] = assessmentDate;
 
       debugPrint('[SYNC] Adding file to request...');
@@ -7156,7 +7156,7 @@ class _PotholeChecklistLearnerListPageState
       final dbHelper = DatabaseHelper();
       final scannedDoc = await dbHelper.getScannedPotholeChecklist(
         learnerId: learnerId,
-        assessorId: widget.facilitatorId ?? '',
+        assessorId: widget.facilitatorId,
         assessmentDate: assessmentDate,
       );
 
@@ -12312,7 +12312,7 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
           _siteId!.isEmpty ||
           _projectId!.isEmpty) {
         await _fetchTraceabilityData(_selectedLearnerId!);
-      if (!context.mounted) return;
+        if (!context.mounted) return;
       }
       if (_classId == null ||
           _siteId == null ||

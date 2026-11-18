@@ -1618,8 +1618,9 @@ class _LearnerListPageState extends State<LearnerListPage> {
                                         return ElevatedButton(
                                           onPressed: hasDocuments
                                               ? () {
-                                                  if (!context.mounted)
+                                                  if (!context.mounted) {
                                                     return null;
+                                                  }
                                                   Navigator.push(
                                                     context,
                                                     MaterialPageRoute(
@@ -2958,8 +2959,9 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
         try {
           final responseData = json.decode(response.body);
           if (responseData['success'] == true) {
-            if (!context.mounted)
+            if (!context.mounted) {
               return {'success': false, 'message': 'Context no longer mounted'};
+            }
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(responseData['message'] ?? 'Success')),
             );
@@ -2972,8 +2974,9 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
               'message': responseData['message'] ?? 'Success'
             };
           } else {
-            if (!context.mounted)
+            if (!context.mounted) {
               return {'success': false, 'message': 'Context no longer mounted'};
+            }
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                   content:
@@ -2986,8 +2989,9 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           }
         } catch (e) {
           debugPrint('JSON parse error: $e');
-          if (!context.mounted)
+          if (!context.mounted) {
             return {'success': false, 'message': 'Context no longer mounted'};
+          }
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content: Text('Invalid server response: ${response.body}')),
@@ -2995,8 +2999,9 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           return {'success': false, 'message': 'Invalid server response'};
         }
       } else {
-        if (!context.mounted)
+        if (!context.mounted) {
           return {'success': false, 'message': 'Context no longer mounted'};
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -3009,8 +3014,9 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
       }
     } catch (e) {
       debugPrint('Network error: $e');
-      if (!context.mounted)
+      if (!context.mounted) {
         return {'success': false, 'message': 'Network error: $e'};
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Network error: $e')),
       );

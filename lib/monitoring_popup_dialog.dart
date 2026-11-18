@@ -303,7 +303,7 @@ class _MonitoringPopupDialogState extends State<MonitoringPopupDialog> {
     if (_isVerifying) return;
 
     final personId = widget.person['person_id'].toString();
-    final personType = widget.person['person_type'];
+    // final personType = widget.person['person_type'];
 
     setState(() {
       _isVerifying = true;

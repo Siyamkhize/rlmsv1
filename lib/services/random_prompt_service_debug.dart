@@ -8,12 +8,14 @@ import '../config.dart';
 import '../database_helper.dart';
 
 class RandomPromptServiceDebug {
-  static final RandomPromptServiceDebug _instance = RandomPromptServiceDebug._internal();
+  static final RandomPromptServiceDebug _instance =
+      RandomPromptServiceDebug._internal();
   factory RandomPromptServiceDebug() => _instance;
   RandomPromptServiceDebug._internal();
 
   Timer? _checkTimer;
-  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   bool _isInitialized = false;
   int? _currentLearnerId;
   bool _isAppInForeground = true;
@@ -24,10 +26,12 @@ class RandomPromptServiceDebug {
 
     try {
       debugPrint('[RANDOM_PROMPT_DEBUG] Initializing service...');
-      
+
       // Initialize notifications
-      const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-      const DarwinInitializationSettings iosSettings = DarwinInitializationSettings();
+      const AndroidInitializationSettings androidSettings =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const DarwinInitializationSettings iosSettings =
+          DarwinInitializationSettings();
       const InitializationSettings settings = InitializationSettings(
         android: androidSettings,
         iOS: iosSettings,
@@ -46,20 +50,22 @@ class RandomPromptServiceDebug {
   Future<void> startMonitoring(int learnerId) async {
     await initialize();
     _currentLearnerId = learnerId;
-    
-    debugPrint('[RANDOM_PROMPT_DEBUG] Starting monitoring for learner $learnerId');
-    
+
+    debugPrint(
+        '[RANDOM_PROMPT_DEBUG] Starting monitoring for learner $learnerId');
+
     // Check immediately
     await _checkForPrompts();
-    
+
     // Start periodic checking every 30 seconds
     _checkTimer?.cancel();
     _checkTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       debugPrint('[RANDOM_PROMPT_DEBUG] Periodic check for learner $learnerId');
       _checkForPrompts();
     });
-    
-    debugPrint('[RANDOM_PROMPT_DEBUG] Monitoring started for learner $learnerId');
+
+    debugPrint(
+        '[RANDOM_PROMPT_DEBUG] Monitoring started for learner $learnerId');
   }
 
   // Stop monitoring
@@ -84,35 +90,41 @@ class RandomPromptServiceDebug {
     }
 
     try {
-      debugPrint('[RANDOM_PROMPT_DEBUG] Checking for prompts for learner $_currentLearnerId');
-      
+      debugPrint(
+          '[RANDOM_PROMPT_DEBUG] Checking for prompts for learner $_currentLearnerId');
+
       final response = await http.post(
         Uri.parse('${AppConfig.baseUrl}/check_monitoring_prompts.php'),
         body: {'learner_id': _currentLearnerId.toString()},
       ).timeout(const Duration(seconds: 10));
 
-      debugPrint('[RANDOM_PROMPT_DEBUG] Server response status: ${response.statusCode}');
-      debugPrint('[RANDOM_PROMPT_DEBUG] Server response body: ${response.body}');
+      debugPrint(
+          '[RANDOM_PROMPT_DEBUG] Server response status: ${response.statusCode}');
+      debugPrint(
+          '[RANDOM_PROMPT_DEBUG] Server response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         debugPrint('[RANDOM_PROMPT_DEBUG] Parsed response: $data');
-        
+
         if (data['success'] == true && data['has_prompt'] == true) {
           final prompt = data['current_prompt'];
           final timeRemaining = prompt['time_remaining'];
-          
-          debugPrint('[RANDOM_PROMPT_DEBUG] Prompt found! Time remaining: $timeRemaining seconds');
-          
+
+          debugPrint(
+              '[RANDOM_PROMPT_DEBUG] Prompt found! Time remaining: $timeRemaining seconds');
+
           // Trigger notification and vibration if app is in background
           if (!_isAppInForeground) {
-            debugPrint('[RANDOM_PROMPT_DEBUG] App in background, showing notification and vibrating');
+            debugPrint(
+                '[RANDOM_PROMPT_DEBUG] App in background, showing notification and vibrating');
             await _showPromptNotification(prompt);
             await _vibratePhone();
           } else {
-            debugPrint('[RANDOM_PROMPT_DEBUG] App in foreground, notification not needed');
+            debugPrint(
+                '[RANDOM_PROMPT_DEBUG] App in foreground, notification not needed');
           }
-          
+
           // Store the prompt locally for when user opens the app
           await _storePromptLocally(prompt);
         } else {
@@ -130,7 +142,7 @@ class RandomPromptServiceDebug {
   Future<void> _vibratePhone() async {
     try {
       debugPrint('[RANDOM_PROMPT_DEBUG] Attempting to vibrate phone');
-      if (await Vibration.hasVibrator() ?? false) {
+      if (await Vibration.hasVibrator() == true) {
         await Vibration.vibrate(duration: 500);
         debugPrint('[RANDOM_PROMPT_DEBUG] Phone vibrated successfully');
       } else {
@@ -147,10 +159,12 @@ class RandomPromptServiceDebug {
       final timeRemaining = prompt['time_remaining'];
       final minutes = (timeRemaining / 60).floor();
       final seconds = timeRemaining % 60;
-      
-      debugPrint('[RANDOM_PROMPT_DEBUG] Showing notification: ${minutes}m ${seconds}s remaining');
-      
-      const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+
+      debugPrint(
+          '[RANDOM_PROMPT_DEBUG] Showing notification: ${minutes}m ${seconds}s remaining');
+
+      const AndroidNotificationDetails androidDetails =
+          AndroidNotificationDetails(
         'biometric_prompts',
         'Biometric Verification',
         channelDescription: 'Random biometric verification prompts',
@@ -164,19 +178,19 @@ class RandomPromptServiceDebug {
         ongoing: true,
         autoCancel: false,
       );
-      
+
       const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
         presentSound: true,
         badgeNumber: 1,
       );
-      
+
       const NotificationDetails details = NotificationDetails(
         android: androidDetails,
         iOS: iosDetails,
       );
-      
+
       await _notificationsPlugin.show(
         999,
         '⚠️ Biometric Verification Required',
@@ -184,7 +198,7 @@ class RandomPromptServiceDebug {
         details,
         payload: json.encode(prompt),
       );
-      
+
       debugPrint('[RANDOM_PROMPT_DEBUG] Notification shown successfully');
     } catch (e) {
       debugPrint('[RANDOM_PROMPT_DEBUG] Notification error: $e');
@@ -197,7 +211,7 @@ class RandomPromptServiceDebug {
       debugPrint('[RANDOM_PROMPT_DEBUG] Storing prompt locally');
       final dbHelper = DatabaseHelper();
       final db = await dbHelper.database;
-      
+
       // Store or update the prompt
       await db.execute('''
         CREATE TABLE IF NOT EXISTS pending_prompts (
@@ -210,7 +224,7 @@ class RandomPromptServiceDebug {
           status TEXT DEFAULT 'pending'
         )
       ''');
-      
+
       await db.rawInsert('''
         INSERT OR REPLACE INTO pending_prompts 
         (monitoring_id, learner_id, prompt_type, prompt_time, countdown_duration, time_remaining, status)
@@ -224,7 +238,7 @@ class RandomPromptServiceDebug {
         prompt['time_remaining'],
         'pending',
       ]);
-      
+
       debugPrint('[RANDOM_PROMPT_DEBUG] Prompt stored locally successfully');
     } catch (e) {
       debugPrint('[RANDOM_PROMPT_DEBUG] Error storing prompt: $e');
@@ -234,10 +248,11 @@ class RandomPromptServiceDebug {
   // Get pending prompt from local database
   Future<Map<String, dynamic>?> getPendingPrompt(int learnerId) async {
     try {
-      debugPrint('[RANDOM_PROMPT_DEBUG] Getting pending prompt for learner $learnerId');
+      debugPrint(
+          '[RANDOM_PROMPT_DEBUG] Getting pending prompt for learner $learnerId');
       final dbHelper = DatabaseHelper();
       final db = await dbHelper.database;
-      
+
       final results = await db.query(
         'pending_prompts',
         where: 'learner_id = ? AND status = ?',
@@ -245,9 +260,10 @@ class RandomPromptServiceDebug {
         orderBy: 'prompt_time DESC',
         limit: 1,
       );
-      
+
       if (results.isNotEmpty) {
-        debugPrint('[RANDOM_PROMPT_DEBUG] Found pending prompt: ${results.first}');
+        debugPrint(
+            '[RANDOM_PROMPT_DEBUG] Found pending prompt: ${results.first}');
         return results.first;
       } else {
         debugPrint('[RANDOM_PROMPT_DEBUG] No pending prompt found');

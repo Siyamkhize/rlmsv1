@@ -199,7 +199,8 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
   void _handleAppPaused() {
     // App is paused - scanner is likely in foreground
     if (_isScanning) {
-      debugPrint('[DOC_SCAN] App paused while scanning - scanner should be active');
+      debugPrint(
+          '[DOC_SCAN] App paused while scanning - scanner should be active');
     }
   }
 
@@ -333,7 +334,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
                   final scanCount = status['scanCount'] as int;
                   final scansUntilReset = status['scansUntilReset'] as int;
                   final isInCriticalState = status['isInCriticalState'] as bool;
-                  final isScanning = status['isScanning'] as bool;
+                  // final isScanning = status['isScanning'] as bool;
                   final scanAttempts = status['scanAttempts'] as int;
                   final cooldownRemaining = status['cooldownRemaining'] as int;
 

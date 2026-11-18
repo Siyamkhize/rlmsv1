@@ -79,7 +79,7 @@ class _AttendancePageState extends State<AttendancePage> {
   }
 
   int _calculateWorkingDays(int year, int month) {
-    final firstDay = DateTime(year, month, 1);
+    // final firstDay = DateTime(year, month, 1);
     final lastDay = DateTime(year, month + 1, 0);
     int workingDays = 0;
 
@@ -96,7 +96,7 @@ class _AttendancePageState extends State<AttendancePage> {
   }
 
   int _countHolidaysInMonth(int year, int month) {
-    final firstDay = DateTime(year, month, 1);
+    // final firstDay = DateTime(year, month, 1);
     final lastDay = DateTime(year, month + 1, 0);
     int holidayCount = 0;
 
@@ -227,7 +227,8 @@ class _AttendancePageState extends State<AttendancePage> {
         ORDER BY l.Surname, l.Name
       ''', ['$monthStr%', widget.classID]);
 
-      debugPrint('[ATTENDANCE] Found ${localRecords.length} local learner records');
+      debugPrint(
+          '[ATTENDANCE] Found ${localRecords.length} local learner records');
 
       if (localRecords.isNotEmpty) {
         debugPrint('[ATTENDANCE] First local record: ${localRecords.first}');
@@ -277,7 +278,8 @@ class _AttendancePageState extends State<AttendancePage> {
       final isOffline = connectivityResult.contains(ConnectivityResult.none);
 
       if (isOffline) {
-        debugPrint('[ATTENDANCE] No internet connection - skipping server sync');
+        debugPrint(
+            '[ATTENDANCE] No internet connection - skipping server sync');
         if (showMessage && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -346,7 +348,8 @@ class _AttendancePageState extends State<AttendancePage> {
           }
         }
       } else {
-        debugPrint('[ATTENDANCE] Server returned status: ${response.statusCode}');
+        debugPrint(
+            '[ATTENDANCE] Server returned status: ${response.statusCode}');
         if (showMessage && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -403,7 +406,8 @@ class _AttendancePageState extends State<AttendancePage> {
 
       if (serverData != null && serverData.isNotEmpty) {
         // Use server data (most up-to-date)
-        debugPrint('[ATTENDANCE] ✅ Using server data: ${serverData.length} records');
+        debugPrint(
+            '[ATTENDANCE] ✅ Using server data: ${serverData.length} records');
 
         for (final record in serverData) {
           final totalDaysAttended = (record['total_days_attended'] is int)
@@ -440,7 +444,8 @@ class _AttendancePageState extends State<AttendancePage> {
         }
       } else if (localData.isNotEmpty) {
         // Fallback to local data when server is unavailable
-        debugPrint('[ATTENDANCE] 📱 Using local data: ${localData.length} records');
+        debugPrint(
+            '[ATTENDANCE] 📱 Using local data: ${localData.length} records');
 
         for (final record in localData) {
           final localDaysClocked = record['local_days_clocked'] ?? 0;
@@ -487,7 +492,8 @@ class _AttendancePageState extends State<AttendancePage> {
         isLoading = false;
       });
 
-      debugPrint('[ATTENDANCE] ✅ Loaded ${finalData.length} attendance records');
+      debugPrint(
+          '[ATTENDANCE] ✅ Loaded ${finalData.length} attendance records');
       if (finalData.isNotEmpty) {
         final source = finalData.first['data_source'];
         debugPrint('[ATTENDANCE] Data source: $source');
@@ -742,8 +748,8 @@ class _AttendancePageState extends State<AttendancePage> {
     final sickNoteDays = record['sick_note_days'] as int;
     final manualDaysClocked = record['manual_days_clocked'] ?? 0;
     final expectedDays = record['expected_days'] as int;
-    final dailyRate = record['daily_rate'] as double;
-    final totalDue = record['total_due'] as double;
+    // final dailyRate = record['daily_rate'] as double;
+    // final totalDue = record['total_due'] as double;
     final holidays = record['holidays'] as int;
     final dataSource = record['data_source'] ?? 'unknown';
 

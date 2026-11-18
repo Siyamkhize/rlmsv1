@@ -437,7 +437,7 @@ class _DashboardPageState extends State<DashboardPage> {
         'Scanning completed! Verifying against class learners...', Colors.blue);
 
     try {
-      final dbHelper = DatabaseHelper();
+      // final dbHelper = DatabaseHelper();
       String? matchedLearnerId;
       String? matchedLearnerName;
 
@@ -550,7 +550,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
       for (final candidate in limitedFutronicCandidates) {
         final learnerId = candidate['learnerId'];
-        final learnerIdInt = candidate['learnerIdInt'];
+        // final learnerIdInt = candidate['learnerIdInt'];
         final learnerName = candidate['name'];
         final leftTemplate = candidate['leftTemplate'];
         final rightTemplate = candidate['rightTemplate'];
@@ -698,7 +698,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
     try {
       // This is for ZKTeco scanner - use template-based matching
-      final dbHelper = DatabaseHelper();
+      // final dbHelper = DatabaseHelper();
       String? matchedLearnerId;
       String? matchedLearnerName;
 
@@ -823,7 +823,7 @@ class _DashboardPageState extends State<DashboardPage> {
       // OPTIMIZATION 3: Single-attempt verification with best template selection
       for (final candidate in candidateLearners) {
         final learnerId = candidate['learnerId'];
-        final learnerIdInt = candidate['learnerIdInt'];
+        // final learnerIdInt = candidate['learnerIdInt'];
         final learnerName = candidate['name'];
         final leftTemplate = candidate['leftTemplate'];
         final rightTemplate = candidate['rightTemplate'];

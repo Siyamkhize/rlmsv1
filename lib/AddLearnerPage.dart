@@ -75,7 +75,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
   List<String> _municipalities = [];
 
   // ID validation state
-  bool _isValidSAId = false;
+  // bool _isValidSAId = false;
 
   // Dropdown Options
   final List<String> _titles = ['Mr', 'Mrs', 'Miss', 'Dr', 'Prof'];
@@ -577,7 +577,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
     // Extract context refs BEFORE any awaits
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    
+
     try {
       final dbHelper = DatabaseHelper();
 
@@ -629,8 +629,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
       }
 
       // Insert into local database first (offline-first)
-      final learnerId =
-          await dbHelper.insertOrUpdateLearner(learnerData, bankData);
+      await dbHelper.insertOrUpdateLearner(learnerData, bankData);
 
       // Sync with backend when online
       final isOnline = await _checkConnectivity();
@@ -731,7 +730,8 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
           return false;
         }
       } else {
-        debugPrint('Backend sync failed with status code: ${response.statusCode}');
+        debugPrint(
+            'Backend sync failed with status code: ${response.statusCode}');
         return false;
       }
     } catch (e) {
@@ -975,7 +975,8 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
                 // Auto-populate bank code when bank is selected
                 if (value != null && _bankCodes.containsKey(value)) {
                   _bankBranchCodeController.text = _bankCodes[value]!;
-                  debugPrint('🏦 DEBUG: Bank code set to: ${_bankCodes[value]}');
+                  debugPrint(
+                      '🏦 DEBUG: Bank code set to: ${_bankCodes[value]}');
                 } else {
                   _bankBranchCodeController.text = '';
                   debugPrint('🏦 DEBUG: Bank code cleared (bank not in map)');

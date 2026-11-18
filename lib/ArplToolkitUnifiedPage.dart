@@ -30,8 +30,8 @@ class _ArplToolkitUnifiedPageState extends State<ArplToolkitUnifiedPage>
   bool _isLoading = true;
   String? _errorMessage;
   TabController? _tabController;
-  final bool _isEditing = false;
-  final bool _isSaving = false;
+  // final bool _isEditing = false;
+  // final bool _isSaving = false;
 
   // Form controllers for editable fields
   final TextEditingController _tradeSpecializationController =

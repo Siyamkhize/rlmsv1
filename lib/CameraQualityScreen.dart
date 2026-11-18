@@ -19,7 +19,7 @@ class _CameraQualityScreenState extends State<CameraQualityScreen> {
   List<CameraDescription>? _cameras;
   bool _isProcessing = false;
   String? _qualityMessage;
-  XFile? _capturedFile;
+  // XFile? _capturedFile;
   bool _isCameraInitialized = false;
 
   @override

@@ -663,7 +663,7 @@ class _ClockInPageState extends State<ClockInPage>
         }
 
         // Get ALL templates for this learner to check scanner-specific columns
-        final templates = await DatabaseHelper().getAllTemplates(learnerIdInt);
+        await DatabaseHelper().getAllTemplates(learnerIdInt);
 
         String? leftTemplate;
         String? rightTemplate;
@@ -1202,7 +1202,7 @@ class _ClockInPageState extends State<ClockInPage>
 
   // Calculate working days in a month (excluding weekends AND holidays)
   int _getWorkingDaysInMonth(DateTime date) {
-    final firstDay = DateTime(date.year, date.month, 1);
+    // final firstDay = DateTime(date.year, date.month, 1);
     final lastDay = DateTime(date.year, date.month + 1, 0);
 
     // Get South African holidays for the year
@@ -1598,10 +1598,10 @@ class _ClockInPageState extends State<ClockInPage>
     final clockingData = await _getEnhancedClockingDaysCount(learnerId,
         includeToday: action == 'out');
     final clockingDays = clockingData['count'] as int;
-    final localCount = clockingData['local_count'] as int;
-    final serverCount = clockingData['server_count'] as int;
-    final serverAvailable = clockingData['server_available'] as bool;
-    final source = clockingData['source'] as String;
+    // final localCount = clockingData['local_count'] as int;
+    // final serverCount = clockingData['server_count'] as int;
+    // final serverAvailable = clockingData['server_available'] as bool;
+    // final source = clockingData['source'] as String;
 
     // Get attendance breakdown (regular, manual, sick)
     final attendanceBreakdown = await _getTotalAttendanceBreakdown(learnerId);
@@ -1947,7 +1947,7 @@ class _ClockInPageState extends State<ClockInPage>
       }
 
       try {
-        final strictBankOk = await _ensureLearnerBankDetailsComplete(
+        await _ensureLearnerBankDetailsComplete(
           learnerId,
           await _getLearnerForValidation(learnerId),
         );
@@ -4684,7 +4684,7 @@ class _ClockInPageState extends State<ClockInPage>
         );
       }
 
-      final scanner = FlutterDocScanner();
+      // final scanner = FlutterDocScanner();
       debugPrint('[DOC_SCAN] Scanner initialized, calling getScanDocuments...');
 
       // CRITICAL FIX: Use DocumentScannerManager for proper state management

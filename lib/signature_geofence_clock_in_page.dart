@@ -727,7 +727,7 @@ class _SignatureGeofenceClockInPageState
     // This method is called AFTER photo capture is complete
     // It only handles geofencing validation and signature capture
 
-    final learnerIdInt = int.parse(learnerID);
+    // final learnerIdInt = int.parse(learnerID);
 
     // Step 1: STRICT GEOFENCING - Check if location is available and within range
     if (_currentPosition == null || _siteLat == null || _siteLon == null) {
@@ -823,7 +823,7 @@ class _SignatureGeofenceClockInPageState
     _signatureController.clear();
 
     if (!context.mounted) return;
-    final result = await showDialog<bool>(
+    await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
@@ -1009,7 +1009,7 @@ class _SignatureGeofenceClockInPageState
     debugPrint('[SIGNATURE_GEO] ✓ Device time OK');
 
     // Check if learner already clocked in today (prevent duplicates)
-    final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    // final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     if (clockInTimes[learnerID]?.isNotEmpty == true) {
       debugPrint(
           '[SIGNATURE_GEO] ⚠️ Already clocked in at ${clockInTimes[learnerID]}');
@@ -1057,7 +1057,7 @@ class _SignatureGeofenceClockInPageState
       final learnerName = '${learnerData['Name']} ${learnerData['Surname']}';
 
       if (!context.mounted) return;
-      final faceResult = await Navigator.push<Map<String, dynamic>>(
+      await Navigator.push<Map<String, dynamic>>(
         context,
         MaterialPageRoute(
           builder: (context) => SmartFramedCameraCapture(
@@ -1198,7 +1198,7 @@ class _SignatureGeofenceClockInPageState
       final learnerName = '${learnerData['Name']} ${learnerData['Surname']}';
 
       if (!context.mounted) return;
-      final faceResult = await Navigator.push<Map<String, dynamic>>(
+      await Navigator.push<Map<String, dynamic>>(
         context,
         MaterialPageRoute(
           builder: (context) => SmartFramedCameraCapture(
@@ -1314,7 +1314,7 @@ class _SignatureGeofenceClockInPageState
       (l) => l['LearnerID'].toString() == learnerID,
       orElse: () => {'Name': 'Unknown', 'Surname': 'Learner'},
     );
-    final learnerName = '${learner['Name']} ${learner['Surname']}';
+    // final learnerName = '${learner['Name']} ${learner['Surname']}';
 
     // Step 2: Get the already-captured data from current session
     final learnerIdInt = int.parse(learnerID);
@@ -2414,9 +2414,9 @@ class _SignatureGeofenceClockInPageState
 
                       // Check evidence status for this learner
                       final learnerIdInt = int.tryParse(learnerID) ?? 0;
-                      final hasPhoto = _learnerHasPhoto[learnerIdInt] == true;
-                      final hasSignature =
-                          _learnerHasSignature[learnerIdInt] == true;
+                      // final hasPhoto = _learnerHasPhoto[learnerIdInt] == true;
+                      // final hasSignature =
+                      //     _learnerHasSignature[learnerIdInt] == true;
 
                       return Card(
                         margin: const EdgeInsets.symmetric(

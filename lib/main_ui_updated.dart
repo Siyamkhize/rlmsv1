@@ -71,7 +71,7 @@ void callbackDispatcher() {
 
       if (task == syncTask) {
         // Sync task: Runs when network is available
-        final dbHelper = DatabaseHelper();
+        // final dbHelper = DatabaseHelper();
         final syncService = SyncService();
 
         final connectivityResult = await Connectivity().checkConnectivity();
