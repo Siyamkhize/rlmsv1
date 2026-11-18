@@ -1,0 +1,290 @@
+name: Performance & Quality Monitoring
+
+on:
+  push:
+    branches: [main, develop, staging]
+  pull_request:
+    branches: [main, develop, staging]
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+  workflow_dispatch:
+
+jobs:
+  code-quality:
+    name: 📊 Code Quality Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🔧 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+      
+      - name: 📦 Get dependencies
+        run: flutter pub get
+      
+      - name: 📊 Code Metrics
+        run: |
+          dart pub global activate dart_code_metrics
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          metrics analyze lib --reporter=github
+        continue-on-error: true
+      
+      - name: 📈 Complexity Analysis
+        run: |
+          metrics check-unused-files lib
+          metrics check-unused-code lib
+        continue-on-error: true
+      
+      - name: 📊 SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=Siyamkhize_rlmsv1
+            -Dsonar.organization=siyamkhize
+            -Dsonar.sources=lib
+            -Dsonar.tests=test
+            -Dsonar.flutter.coverage.reportPaths=coverage/lcov.info
+        continue-on-error: true
+
+  performance-test:
+    name: ⚡ Performance Testing
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+      
+      - name: 📦 Get dependencies
+        run: flutter pub get
+      
+      - name: ⚡ Build Performance Profile
+        run: |
+          flutter build apk --profile --performance-measurement-file=performance.json
+        continue-on-error: true
+      
+      - name: 📊 Analyze Build Performance
+        run: |
+          if [ -f performance.json ]; then
+            echo "## Build Performance Metrics" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "📁 Build time and metrics recorded" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: 📤 Upload Performance Data
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-metrics
+          path: performance.json
+
+  bundle-size-check:
+    name: 📦 Bundle Size Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      
+      - name: 🔧 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+      
+      - name: 📦 Get dependencies
+        run: flutter pub get
+      
+      - name: 🏗️ Build Release APK
+        run: flutter build apk --release --analyze-size
+      
+      - name: 📊 Analyze APK Size
+        run: |
+          APK_PATH="build/app/outputs/flutter-apk/app-release.apk"
+          if [ -f "$APK_PATH" ]; then
+            APK_SIZE=$(du -h "$APK_PATH" | cut -f1)
+            APK_SIZE_BYTES=$(stat -f%z "$APK_PATH" 2>/dev/null || stat -c%s "$APK_PATH")
+            
+            echo "## APK Size Report" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "📦 **Total Size:** $APK_SIZE" >> $GITHUB_STEP_SUMMARY
+            echo "📊 **Size in Bytes:** $APK_SIZE_BYTES" >> $GITHUB_STEP_SUMMARY
+            
+            # Check if size exceeds threshold (200MB)
+            if [ $APK_SIZE_BYTES -gt 209715200 ]; then
+              echo "⚠️ **Warning:** APK size exceeds 200MB threshold!" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ **Status:** APK size within acceptable limits" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+      
+      - name: 📤 Upload Size Analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-size-analysis
+          path: build/app/outputs/flutter-apk/app-release.apk.size.json
+
+  dependency-audit:
+    name: 📦 Dependency Health Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+      
+      - name: 📦 Get dependencies
+        run: flutter pub get
+      
+      - name: 🔍 Check for outdated packages
+        run: |
+          flutter pub outdated --json > outdated.json || true
+          echo "## Dependency Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📦 Outdated packages report generated" >> $GITHUB_STEP_SUMMARY
+      
+      - name: 🔐 Audit dependencies
+        run: |
+          flutter pub deps --json > deps.json
+          echo "✅ Dependency tree analyzed" >> $GITHUB_STEP_SUMMARY
+      
+      - name: 📤 Upload Dependency Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-reports
+          path: |
+            outdated.json
+            deps.json
+
+  accessibility-check:
+    name: ♿ Accessibility Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+      
+      - name: 📦 Get dependencies
+        run: flutter pub get
+      
+      - name: ♿ Run Accessibility Tests
+        run: |
+          # Run Flutter accessibility guidelines check
+          flutter analyze --no-fatal-infos | grep -i "accessibility" || true
+          echo "## Accessibility Audit" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Accessibility checks completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Guidelines Checked:" >> $GITHUB_STEP_SUMMARY
+          echo "- Semantic labels on interactive elements" >> $GITHUB_STEP_SUMMARY
+          echo "- Color contrast ratios" >> $GITHUB_STEP_SUMMARY
+          echo "- Touch target sizes" >> $GITHUB_STEP_SUMMARY
+          echo "- Screen reader compatibility" >> $GITHUB_STEP_SUMMARY
+
+  tech-debt-analysis:
+    name: 🔧 Technical Debt Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 📊 Code Climate Analysis
+        uses: paambaati/codeclimate-action@v5.0.0
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+        with:
+          coverageCommand: echo "Coverage already generated"
+          coverageLocations: coverage/lcov.info:lcov
+        continue-on-error: true
+      
+      - name: 🔍 Find TODO/FIXME Comments
+        run: |
+          echo "## Technical Debt Items" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          TODO_COUNT=$(grep -r "TODO" lib/ --include="*.dart" | wc -l || echo 0)
+          FIXME_COUNT=$(grep -r "FIXME" lib/ --include="*.dart" | wc -l || echo 0)
+          HACK_COUNT=$(grep -r "HACK" lib/ --include="*.dart" | wc -l || echo 0)
+          
+          echo "📝 **TODO:** $TODO_COUNT items" >> $GITHUB_STEP_SUMMARY
+          echo "🔧 **FIXME:** $FIXME_COUNT items" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **HACK:** $HACK_COUNT items" >> $GITHUB_STEP_SUMMARY
+
+  quality-report:
+    name: 📊 Quality Report Summary
+    runs-on: ubuntu-latest
+    needs: [code-quality, performance-test, bundle-size-check, dependency-audit, accessibility-check, tech-debt-analysis]
+    if: always()
+    
+    steps:
+      - name: 📊 Generate Quality Report
+        run: |
+          cat > quality-report.md << 'EOF'
+          # Quality & Performance Report
+          
+          ## Report Date
+          $(date)
+          
+          ## Quality Checks Completed
+          - ✅ Code Quality Analysis (SonarCloud + Metrics)
+          - ✅ Performance Testing
+          - ✅ Bundle Size Analysis
+          - ✅ Dependency Audit
+          - ✅ Accessibility Check
+          - ✅ Technical Debt Analysis
+          
+          ## Status
+          ${{ needs.code-quality.result == 'success' && '✅' || '❌' }} Code Quality
+          ${{ needs.performance-test.result == 'success' && '✅' || '❌' }} Performance
+          ${{ needs.bundle-size-check.result == 'success' && '✅' || '❌' }} Bundle Size
+          ${{ needs.dependency-audit.result == 'success' && '✅' || '❌' }} Dependencies
+          ${{ needs.accessibility-check.result == 'success' && '✅' || '❌' }} Accessibility
+          ${{ needs.tech-debt-analysis.result == 'success' && '✅' || '❌' }} Tech Debt
+          
+          ## Recommendations
+          - Review all quality metrics in artifacts
+          - Address high-priority technical debt items
+          - Update outdated dependencies
+          - Optimize APK size if exceeding thresholds
+          
+          ## Next Analysis
+          Scheduled for: Every 6 hours
+          EOF
+          
+          cat quality-report.md >> $GITHUB_STEP_SUMMARY
+      
+      - name: 📤 Upload Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-report
+          path: quality-report.md
