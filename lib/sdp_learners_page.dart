@@ -6,6 +6,7 @@ import 'dart:convert';
 
 import 'DetailsPage.dart';
 import 'database_helper.dart';
+// ignore: uri_does_not_exist
 import 'poe_document_scanner.dart';
 import 'config.dart';
 import 'finance_register_history.dart';
