@@ -19,12 +19,18 @@ linter:
   rules:
     # avoid_print: false  # Uncomment to disable the `avoid_print` rule
     # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
-    - avoid_print
+    # - avoid_print  # Commented out - we use print for debugging
     - prefer_const_constructors
     - avoid_unused_constructor_parameters
 
 analyzer:
   errors:
+    # Suppress avoid_print rule - we use print for debugging
+    avoid_print: ignore
+    
+    # Suppress deprecated member warnings
+    deprecated_member_use: ignore
+    
     # Suppress architectural warnings that are standard Flutter patterns
     library_private_types_in_public_api: ignore
     file_names: ignore

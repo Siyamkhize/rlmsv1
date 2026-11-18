@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'LearnerListPage.dart';
-import 'learning_material_form_page.dart';
+import 'logistics_learning_material_form_page.dart';
 import 'database_helper.dart';
 import 'FacilitatorProfile.dart';
 import 'materialForm.dart';
@@ -2853,7 +2853,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => LearningMaterialFormPage(
+                          builder: (context) =>
+                              LogisticsLearningMaterialFormPage(
                             classID: widget.classID,
                           ),
                         ),
