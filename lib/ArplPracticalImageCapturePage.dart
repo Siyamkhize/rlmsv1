@@ -430,7 +430,7 @@ class _ArplPracticalImageCapturePageState
                                             icon: const Icon(Icons.delete),
                                             style: IconButton.styleFrom(
                                               backgroundColor: Colors.red
-                                                  .withValues(alpha: 0.8),
+                                                  .withOpacity(0.8),
                                               foregroundColor: Colors.white,
                                             ),
                                           ),
@@ -444,7 +444,7 @@ class _ArplPracticalImageCapturePageState
                                             child: Container(
                                               padding: const EdgeInsets.all(4),
                                               color: Colors.black
-                                                  .withValues(alpha: 0.7),
+                                                  .withOpacity(0.7),
                                               child: Text(
                                                 image['caption'],
                                                 style: const TextStyle(

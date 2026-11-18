@@ -6139,8 +6139,8 @@ class _ClockInPageState extends State<ClockInPage>
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: _isConnected
-                    ? Colors.green.withValues(alpha: 0.1)
-                    : Colors.red.withValues(alpha: 0.1),
+                    ? Colors.green.withOpacity(0.1)
+                    : Colors.red.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: _isConnected ? Colors.green : Colors.red,
@@ -6373,14 +6373,14 @@ class _ClockInPageState extends State<ClockInPage>
                           horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: _currentGpsAccuracy == null
-                            ? Colors.grey.withValues(alpha: 0.1)
+                            ? Colors.grey.withOpacity(0.1)
                             : (!_isWithinRange && _siteLat != null
-                                ? Colors.red.withValues(alpha: 0.1)
+                                ? Colors.red.withOpacity(0.1)
                                 : (_currentGpsAccuracy! <= 25
-                                    ? Colors.green.withValues(alpha: 0.1)
+                                    ? Colors.green.withOpacity(0.1)
                                     : (_currentGpsAccuracy! <= 60
-                                        ? Colors.orange.withValues(alpha: 0.1)
-                                        : Colors.red.withValues(alpha: 0.1)))),
+                                        ? Colors.orange.withOpacity(0.1)
+                                        : Colors.red.withOpacity(0.1)))),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: _currentGpsAccuracy == null
@@ -6449,8 +6449,8 @@ class _ClockInPageState extends State<ClockInPage>
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
                           color: _isSensorConnected
-                              ? Colors.green.withValues(alpha: 0.1)
-                              : Colors.red.withValues(alpha: 0.1),
+                              ? Colors.green.withOpacity(0.1)
+                              : Colors.red.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color:
@@ -6524,7 +6524,7 @@ class _ClockInPageState extends State<ClockInPage>
                           margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.orange.withValues(alpha: 0.1),
+                            color: Colors.orange.withOpacity(0.1),
                             border: Border.all(color: Colors.orange),
                             borderRadius: BorderRadius.circular(8),
                           ),

@@ -56,7 +56,7 @@ analyzer:
     prefer_const_constructors: ignore
     
     # Parameter usage
-    unused_element_parameter: ignore
+    # unused_element_parameter: ignore  # Not recognized in this Flutter version
     
     # Package configuration issues
     include_file_not_found: ignore

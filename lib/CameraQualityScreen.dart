@@ -575,7 +575,7 @@ class _FingerprintOverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.8)
+      ..color = Colors.white.withOpacity(0.8)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3;
 
@@ -585,7 +585,7 @@ class _FingerprintOverlayPainter extends CustomPainter {
     canvas.drawCircle(center, radius, paint);
 
     final cornerPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.6)
+      ..color = Colors.white.withOpacity(0.6)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 

@@ -1,4 +1,4 @@
-ï»¿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'config.dart';
@@ -147,7 +147,7 @@ if (!context.mounted) return;
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('âœ… Security questions saved successfully!'),
+              content: Text('? Security questions saved successfully!'),
               backgroundColor: Colors.green,
             ),
           );
@@ -287,9 +287,9 @@ if (!context.mounted) return;
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'â€¢ Select 3-5 questions below\n'
-                    'â€¢ Provide honest answers you will remember\n'
-                    'â€¢ Answers are case-insensitive',
+                    '• Select 3-5 questions below\n'
+                    '• Provide honest answers you will remember\n'
+                    '• Answers are case-insensitive',
                     style: TextStyle(fontSize: 13, color: Colors.black87),
                   ),
                 ],
@@ -401,7 +401,7 @@ if (!context.mounted) return;
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 4,
             offset: const Offset(0, -2),
           ),

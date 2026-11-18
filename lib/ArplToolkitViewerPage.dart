@@ -3282,7 +3282,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFF006341).withValues(alpha: 0.1),
+              color: const Color(0xFF006341).withOpacity(0.1),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
@@ -3623,7 +3623,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
                   headingRowColor: WidgetStateProperty.all(
-                      const Color(0xFF006341).withValues(alpha: 0.1)),
+                      const Color(0xFF006341).withOpacity(0.1)),
                   border: TableBorder.all(color: Colors.grey.shade300),
                   columns: const [
                     DataColumn(
@@ -3778,7 +3778,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
                   headingRowColor: WidgetStateProperty.all(
-                      const Color(0xFF006341).withValues(alpha: 0.1)),
+                      const Color(0xFF006341).withOpacity(0.1)),
                   border: TableBorder.all(color: Colors.grey.shade300),
                   columns: const [
                     DataColumn(
@@ -3915,7 +3915,7 @@ class _ArplToolkitViewerPageState extends State<ArplToolkitViewerPage>
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
                   headingRowColor: WidgetStateProperty.all(
-                      const Color(0xFF006341).withValues(alpha: 0.1)),
+                      const Color(0xFF006341).withOpacity(0.1)),
                   border: TableBorder.all(color: Colors.grey.shade300),
                   columnSpacing: 16,
                   columns: const [

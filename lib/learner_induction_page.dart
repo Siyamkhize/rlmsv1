@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -1220,7 +1220,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
                                 return DataRow(
                                   color: isSearchedLearner
                                       ? WidgetStateProperty.all(
-                                          Colors.teal.withValues(alpha: 0.2))
+                                          Colors.teal.withOpacity(0.2))
                                       : null,
                                   cells: [
                                     DataCell(
@@ -1344,7 +1344,7 @@ class _LearnerInductionPageState extends State<LearnerInductionPage> {
         ),
         if (_isVerifying)
           Container(
-            color: Colors.black.withValues(alpha: 0.4),
+            color: Colors.black.withOpacity(0.4),
             child: Center(
               child: AlertDialog(
                 content: Row(

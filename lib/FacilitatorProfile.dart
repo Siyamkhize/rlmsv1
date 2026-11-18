@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -755,7 +755,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
               width: 140,
               height: 140,
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.5),
+                color: Colors.black.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(70),
               ),
               child: const Center(
@@ -1056,7 +1056,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.1),
+                      color: Colors.grey.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
@@ -1132,9 +1132,9 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                       decoration: BoxDecoration(
                         color: isClockedIn
                             ? (isClockedOut
-                                ? Colors.grey.withValues(alpha: 0.1)
-                                : Colors.green.withValues(alpha: 0.1))
-                            : Colors.orange.withValues(alpha: 0.1),
+                                ? Colors.grey.withOpacity(0.1)
+                                : Colors.green.withOpacity(0.1))
+                            : Colors.orange.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: isClockedIn
@@ -1352,8 +1352,8 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: hasFingerprints
-                              ? Colors.green.withValues(alpha: 0.1)
-                              : Colors.orange.withValues(alpha: 0.1),
+                              ? Colors.green.withOpacity(0.1)
+                              : Colors.orange.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color:
@@ -1412,7 +1412,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.1),
+                      color: Colors.grey.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
@@ -1619,7 +1619,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: Colors.black.withOpacity(0.1),
               spreadRadius: 2,
               blurRadius: 8),
         ],
@@ -1705,7 +1705,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: Colors.black.withOpacity(0.1),
               spreadRadius: 2,
               blurRadius: 8),
         ],
@@ -1935,7 +1935,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                '⚠️ Certificate has expired! Please renew your assessor certificate.'),
+                '?? Certificate has expired! Please renew your assessor certificate.'),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 4),
           ),
@@ -1945,7 +1945,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                '⚠️ Certificate expires in $daysUntilExpiry days. Consider renewing soon.'),
+                '?? Certificate expires in $daysUntilExpiry days. Consider renewing soon.'),
             backgroundColor: Colors.orange,
             duration: const Duration(seconds: 4),
           ),

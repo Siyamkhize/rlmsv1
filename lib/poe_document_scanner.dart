@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'dart:math';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -67,7 +67,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
 
   @override
   void dispose() {
-    debugPrint('🔄 POE Document Scanner disposing...');
+    debugPrint('?? POE Document Scanner disposing...');
 
     // Remove lifecycle observer
     WidgetsBinding.instance.removeObserver(this);
@@ -84,24 +84,24 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
     // Enhanced cleanup to prevent crashes
     try {
       _cameraManager.markMLKitScannerInactive();
-      debugPrint('✅ Camera manager cleaned up');
+      debugPrint('? Camera manager cleaned up');
     } catch (e) {
-      debugPrint('❌ Error cleaning up camera manager: $e');
+      debugPrint('? Error cleaning up camera manager: $e');
     }
 
     // Cancel any ongoing operations
     try {
       if (_isScanning || _isUploading) {
         debugPrint(
-            '⚠️ Disposing while operations are active - this may cause crashes');
+            '?? Disposing while operations are active - this may cause crashes');
         _crashRecovery.forceReset();
       }
     } catch (e) {
-      debugPrint('❌ Error checking operation state: $e');
+      debugPrint('? Error checking operation state: $e');
     }
 
     super.dispose();
-    debugPrint('✅ POE Document Scanner disposed');
+    debugPrint('? POE Document Scanner disposed');
   }
 
   @override
@@ -136,7 +136,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
     // CRITICAL FIX: Check if we were scanning when app was paused
     if (_isScanning) {
       debugPrint(
-          '[DOC_SCAN] ⚠️  App resumed while _isScanning=true — scanner was interrupted');
+          '[DOC_SCAN] ??  App resumed while _isScanning=true � scanner was interrupted');
       debugPrint(
           '[DOC_SCAN] This is likely an OOM kill of the GMS scanner process');
       debugPrint(
@@ -158,17 +158,17 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
       // Show user-friendly message about the interruption
       if (mounted) {
         _showErrorDialog(
-          'Scanner Interrupted — Low Memory',
+          'Scanner Interrupted � Low Memory',
           'The document scanner was killed by Android because the device ran low on memory.\n\n'
               'This happens when:\n'
-              '• The device has too many apps open\n'
-              '• The scanned document is very large\n'
-              '• Available RAM drops below Android\'s threshold\n\n'
-              '✅ Solutions:\n'
-              '• Close other apps before scanning\n'
-              '• Restart the device to free memory\n'
-              '• Scan fewer pages per batch (20-30 pages)\n'
-              '• Avoid scanning while other heavy apps are running',
+              '� The device has too many apps open\n'
+              '� The scanned document is very large\n'
+              '� Available RAM drops below Android\'s threshold\n\n'
+              '? Solutions:\n'
+              '� Close other apps before scanning\n'
+              '� Restart the device to free memory\n'
+              '� Scan fewer pages per batch (20-30 pages)\n'
+              '� Avoid scanning while other heavy apps are running',
         );
       }
     }
@@ -181,7 +181,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
           'Scanner Crash Detected',
           'The crash recovery system detected that the document scanner may have crashed.\n\n'
               'Recovery recommendations:\n'
-              '${_crashRecovery.getRecoveryRecommendations().map((r) => '• $r').join('\n')}',
+              '${_crashRecovery.getRecoveryRecommendations().map((r) => '� $r').join('\n')}',
         );
       }
       _crashRecovery.forceReset();
@@ -286,7 +286,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
                           color: Colors.red, size: 48),
                       const SizedBox(height: 12),
                       const Text(
-                        '🔴 MAXIMUM: 80 Pages Per Batch',
+                        '?? MAXIMUM: 80 Pages Per Batch',
                         style: TextStyle(
                           color: Colors.red,
                           fontSize: 18,
@@ -305,8 +305,8 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
                           'Scanner may struggle if you scan 80+ pages!\n\n'
                           'Why? Google ML Kit runs out of memory.\n\n'
                           'SOLUTION for 80+ pages:\n'
-                          '1. Scan pages 1-80 → Upload\n'
-                          '2. Scan pages 81-160 → Upload\n\n'
+                          '1. Scan pages 1-80 ? Upload\n'
+                          '2. Scan pages 81-160 ? Upload\n\n'
                           'This is a scanner plugin limitation.',
                           style: TextStyle(
                             color: Colors.black87,
@@ -361,7 +361,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
                   }
 
                   return Card(
-                    color: statusColor.withValues(alpha: 0.1),
+                    color: statusColor.withOpacity(0.1),
                     child: Padding(
                       padding: const EdgeInsets.all(12.0),
                       child: Row(
@@ -382,10 +382,10 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
                                 ),
                                 Text(
                                   cooldownRemaining > 0
-                                      ? 'Attempts: $scanAttempts/2 • Cooldown active'
-                                      : 'Scans: $scanCount/3 • Attempts: $scanAttempts/2',
+                                      ? 'Attempts: $scanAttempts/2 � Cooldown active'
+                                      : 'Scans: $scanCount/3 � Attempts: $scanAttempts/2',
                                   style: TextStyle(
-                                    color: statusColor.withValues(alpha: 0.8),
+                                    color: statusColor.withOpacity(0.8),
                                     fontSize: 12,
                                   ),
                                 ),
@@ -561,7 +561,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '🔴 MAXIMUM: 80 pages per batch',
+                  '?? MAXIMUM: 80 pages per batch',
                   style: TextStyle(
                     color: Colors.red,
                     fontWeight: FontWeight.bold,
@@ -573,13 +573,13 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
                   'The scanner may crash if you scan too many pages at once!\n\n'
                   'Why? Google ML Kit runs out of memory processing too many pages.\n\n'
                   'SOLUTION:\n'
-                  '✓ Scan 50-80 pages maximum per batch\n'
-                  '✓ Upload each batch immediately\n'
-                  '✓ Then scan the next batch\n'
-                  '✓ Repeat until all pages scanned\n\n'
+                  '? Scan 50-80 pages maximum per batch\n'
+                  '? Upload each batch immediately\n'
+                  '? Then scan the next batch\n'
+                  '? Repeat until all pages scanned\n\n'
                   'Example for 160 pages:\n'
-                  '• Batch 1: Scan pages 1-80, upload\n'
-                  '• Batch 2: Scan pages 81-160, upload\n\n'
+                  '� Batch 1: Scan pages 1-80, upload\n'
+                  '� Batch 2: Scan pages 81-160, upload\n\n'
                   'This is a limitation of the scanner plugin, not our app.',
                   style: TextStyle(fontSize: 14),
                 ),
@@ -646,16 +646,16 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
       _crashRecovery.markScannerActive();
 
       // MEMORY MANAGEMENT: Stop the periodic cleanup timer while scanning.
-      // The timer fires every 2 minutes and calls GC 3x — this competes with
+      // The timer fires every 2 minutes and calls GC 3x � this competes with
       // the ML Kit scanner process for memory and can trigger OOM kills.
       _ultimateCrashPrevention.dispose();
       debugPrint(
-          '[DOC_SCAN] ⏸️  Paused background cleanup timer to free memory for scanner');
+          '[DOC_SCAN] ??  Paused background cleanup timer to free memory for scanner');
 
       // ULTIMATE + ENHANCED CRASH PREVENTION: Use dual protection systems
       dynamic scanResult;
       try {
-        debugPrint('🔄 Starting DUAL crash-protected scanner...');
+        debugPrint('?? Starting DUAL crash-protected scanner...');
 
         // Get system status before scanning
         final systemStatus = _ultimateCrashPrevention.getSystemStatus();
@@ -695,7 +695,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
                 ],
               ),
               content: const Text(
-                  '⚠️ WARNING: Scanner approaching reset limit\n\n'
+                  '?? WARNING: Scanner approaching reset limit\n\n'
                   'After this scan, the scanner will need to be reset to prevent crashes.\n\n'
                   'This is normal behavior to keep your app stable.\n\n'
                   'Continue with this scan?'),
@@ -734,9 +734,9 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
         // Also update ultimate crash prevention counter
         _ultimateCrashPrevention.resetSystem();
 
-        debugPrint('✅ DUAL crash-protected scanner completed successfully');
+        debugPrint('? DUAL crash-protected scanner completed successfully');
       } on TimeoutException catch (e) {
-        debugPrint('❌ DUAL Scanner timeout: $e');
+        debugPrint('? DUAL Scanner timeout: $e');
         if (mounted) {
           setState(() {
             _isScanning = false;
@@ -750,8 +750,8 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
         }
         return;
       } catch (e, stackTrace) {
-        debugPrint('❌ DUAL Scanner crashed with error: $e');
-        debugPrint('❌ Stack trace: $stackTrace');
+        debugPrint('? DUAL Scanner crashed with error: $e');
+        debugPrint('? Stack trace: $stackTrace');
 
         if (mounted) {
           setState(() {
@@ -775,26 +775,26 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
           _isScanning = false;
           _statusMessage =
               'Scanner session ended without saving. This happens when:\n'
-              '• You take long pauses (Android kills the scanner)\n'
-              '• The document is too large (memory issues)\n'
-              '• The app was backgrounded during scanning';
+              '� You take long pauses (Android kills the scanner)\n'
+              '� The document is too large (memory issues)\n'
+              '� The app was backgrounded during scanning';
         });
 
         // Show helpful message for large documents
         _showErrorDialog(
           'Scanner Session Lost',
           'The scanner session was terminated by Android. This commonly happens when:\n\n'
-              '❌ Taking long pauses between pages (>2-3 minutes)\n'
-              '❌ Scanning 80+ pages in one session\n'
-              '❌ Switching to other apps during scanning\n'
-              '❌ Device running low on memory\n\n'
-              '✅ Solutions:\n'
-              '• Scan continuously without long pauses\n'
-              '• Scan in batches of 50-80 pages\n'
-              '• Keep this app in foreground\n'
-              '• Close other apps to free memory\n'
-              '• Restart device if problem persists\n\n'
-              '🛡️ Your app was protected from crashing by our ultimate crash prevention system!',
+              '? Taking long pauses between pages (>2-3 minutes)\n'
+              '? Scanning 80+ pages in one session\n'
+              '? Switching to other apps during scanning\n'
+              '? Device running low on memory\n\n'
+              '? Solutions:\n'
+              '� Scan continuously without long pauses\n'
+              '� Scan in batches of 50-80 pages\n'
+              '� Keep this app in foreground\n'
+              '� Close other apps to free memory\n'
+              '� Restart device if problem persists\n\n'
+              '??? Your app was protected from crashing by our ultimate crash prevention system!',
         );
         return;
       }
@@ -843,9 +843,9 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
         _showErrorDialog(
           'Scanner Session Lost',
           'The scanner failed to save the PDF file. This happens when:\n\n'
-              '• Android returned a content URI we could not read\n'
-              '• Android terminated the scanner due to long idle time\n'
-              '• The app was backgrounded during scanning\n\n'
+              '� Android returned a content URI we could not read\n'
+              '� Android terminated the scanner due to long idle time\n'
+              '� The app was backgrounded during scanning\n\n'
               'Solution: Try again; scan in smaller batches if needed.',
         );
       }
@@ -864,9 +864,9 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
             'Scanner Plugin Error',
             'The scanner plugin encountered an error. This can happen when scanning multiple times.\n\n'
                 'Solutions:\n'
-                '• Close this screen and open it again\n'
-                '• Restart the app\n'
-                '• If problem persists, restart your device\n\n'
+                '� Close this screen and open it again\n'
+                '� Restart the app\n'
+                '� If problem persists, restart your device\n\n'
                 'Your previous scan was saved successfully.',
           );
         } else if (e.toString().contains('FileNotFoundException') ||
@@ -875,10 +875,10 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
             'Scanner Cache Error',
             'The document scanner ran out of cache space. This typically happens with very large documents (80+ pages).\n\n'
                 'Solutions:\n'
-                '• Scan in smaller batches (50-80 pages)\n'
-                '• Clear app cache and try again\n'
-                '• Restart the device\n'
-                '• Free up device storage',
+                '� Scan in smaller batches (50-80 pages)\n'
+                '� Clear app cache and try again\n'
+                '� Restart the device\n'
+                '� Free up device storage',
           );
         } else {
           _showErrorDialog('Scanning Error', 'Error: $e');
@@ -895,7 +895,7 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
       // the scanner has finished and memory pressure is reduced.
       _ultimateCrashPrevention.initialize();
       debugPrint(
-          '[DOC_SCAN] ▶️  Restarted background cleanup timer after scan');
+          '[DOC_SCAN] ??  Restarted background cleanup timer after scan');
 
       if (mounted) {
         setState(() => _isScanning = false);

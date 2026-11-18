@@ -2342,7 +2342,7 @@ if (!context.mounted) return;
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-              color: Colors.blue.shade100.withValues(alpha: 0.3),
+              color: Colors.blue.shade100.withOpacity(0.3),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),

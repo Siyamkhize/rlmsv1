@@ -145,7 +145,7 @@ class _FacilitatorSimpleCameraCaptureState
 
     // Draw semi-transparent background
     final bgPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.7)
+      ..color = Colors.black.withOpacity(0.7)
       ..style = PaintingStyle.fill;
 
     canvas.drawRect(
@@ -317,7 +317,7 @@ class _FacilitatorSimpleCameraCaptureState
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
+                  color: Colors.black.withOpacity(0.6),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Row(
@@ -396,7 +396,7 @@ class _OvalGuidePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // Semi-transparent overlay
     final overlayPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.5)
+      ..color = Colors.black.withOpacity(0.5)
       ..style = PaintingStyle.fill;
 
     final path = Path()
@@ -424,7 +424,7 @@ class _OvalGuidePainter extends CustomPainter {
 
     // Draw crosshair
     final crosshairPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.5)
+      ..color = Colors.white.withOpacity(0.5)
       ..strokeWidth = 1;
 
     // Vertical line

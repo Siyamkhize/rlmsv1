@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -830,7 +830,7 @@ class _LoginPageState extends State<LoginPage> {
             }
 
             debugPrint(
-                '[LOGIN] ✅ Fingerprint enrollment completed for assessor $facilitatorIdInt');
+                '[LOGIN] ? Fingerprint enrollment completed for assessor $facilitatorIdInt');
           }
 
           // Step 2: Check if assessor has clocked in today (daily requirement)
@@ -876,7 +876,7 @@ class _LoginPageState extends State<LoginPage> {
             }
 
             debugPrint(
-                '[LOGIN] ✅ Clock-in completed for assessor $facilitatorIdInt');
+                '[LOGIN] ? Clock-in completed for assessor $facilitatorIdInt');
           } else {
             // Already clocked in today, show confirmation
             final clockInTime =
@@ -1163,7 +1163,7 @@ class _LoginPageState extends State<LoginPage> {
                                   boxShadow: [
                                     BoxShadow(
                                       color: const Color(0xFF5BA4DE)
-                                          .withValues(alpha: 0.25),
+                                          .withOpacity(0.25),
                                       blurRadius: 18,
                                       offset: const Offset(0, 9),
                                     ),
@@ -1290,7 +1290,7 @@ class _LoginPageState extends State<LoginPage> {
         borderRadius: BorderRadius.circular(23),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.025),
+            color: Colors.black.withOpacity(0.025),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -1733,7 +1733,7 @@ class _LoginPageState extends State<LoginPage> {
                       if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('✓ Clocked in successfully'),
+                          content: Text('? Clocked in successfully'),
                           backgroundColor: Colors.green,
                           duration: Duration(seconds: 2),
                         ),

@@ -715,7 +715,7 @@ class _FacilitatorCameraSignatureWidgetState
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withValues(alpha: 0.9),
+                    color: Colors.blue.withOpacity(0.9),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
@@ -902,7 +902,7 @@ class _FacilitatorCameraSignatureWidgetState
                             vertical: 4, // Reduced from 6
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
+                            color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -935,7 +935,7 @@ class _FacilitatorCameraSignatureWidgetState
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
+                            color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -1016,7 +1016,7 @@ class _FacilitatorCameraSignatureWidgetState
                       Container(
                         padding: const EdgeInsets.all(6), // Reduced from 8
                         decoration: BoxDecoration(
-                          color: Colors.teal.withValues(alpha: 0.1),
+                          color: Colors.teal.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
@@ -1075,7 +1075,7 @@ class _FacilitatorCameraSignatureWidgetState
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
+                          color: Colors.black.withOpacity(0.05),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
@@ -12,7 +12,7 @@ import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'PotholeChecklistPage.dart';
+import 'potholeChecklistpage.dart';
 import 'database_helper.dart';
 import 'config.dart';
 import 'utils/scanner_pdf_resolver.dart';
@@ -257,7 +257,7 @@ class _AssessorPageState extends State<AssessorPage> {
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         leading: CircleAvatar(
-          backgroundColor: color.withValues(alpha: 0.1),
+          backgroundColor: color.withOpacity(0.1),
           child: Icon(icon, color: color),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -694,10 +694,10 @@ class _AssessmentPreparationPageState extends State<AssessmentPreparationPage> {
                         padding: const EdgeInsets.all(12),
                         margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          color: Colors.indigo.withValues(alpha: 0.1),
+                          color: Colors.indigo.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                              color: Colors.indigo.withValues(alpha: 0.3)),
+                          border:
+                              Border.all(color: Colors.indigo.withOpacity(0.3)),
                         ),
                         child: Text(
                           'Candidate: ${selectedLearner['Name']} ${selectedLearner['Surname']}',
@@ -2190,7 +2190,7 @@ class _PotholeChecklistTabState extends State<PotholeChecklistTab> {
 
     _items = [
       {
-        'section': 'PRE – OPERATIONAL SAFETY',
+        'section': 'PRE � OPERATIONAL SAFETY',
         'entries': [
           {'label': 'Wears appropriate PPE', 'value': null, 'notes': ''},
         ],
@@ -2257,7 +2257,7 @@ class _PotholeChecklistTabState extends State<PotholeChecklistTab> {
         ],
       },
       {
-        'section': 'POST – OPERATION',
+        'section': 'POST � OPERATION',
         'entries': [
           {'label': 'Housekeeping', 'value': null, 'notes': ''},
         ],
@@ -3913,7 +3913,7 @@ class _ExerciseTileState extends State<ExerciseTile> {
   String _displayExerciseName(String raw) {
     var s = raw.trim();
     final re = RegExp(
-      r'^(FormativeRemedial|SummativeRemedial)\s*[-–—]\s*\d+\s*[-–—]\s*',
+      r'^(FormativeRemedial|SummativeRemedial)\s*[-��]\s*\d+\s*[-��]\s*',
       caseSensitive: false,
     );
     s = s.replaceFirst(re, '');
@@ -4622,10 +4622,10 @@ class _AssessmentReviewPageState extends State<AssessmentReviewPage> {
                         padding: const EdgeInsets.all(12),
                         margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          color: Colors.indigo.withValues(alpha: 0.1),
+                          color: Colors.indigo.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                              color: Colors.indigo.withValues(alpha: 0.3)),
+                          border:
+                              Border.all(color: Colors.indigo.withOpacity(0.3)),
                         ),
                         child: Text(
                           'Candidate: ${selectedLearner['Name']} ${selectedLearner['Surname']}',
@@ -6921,14 +6921,14 @@ class _PotholeChecklistLearnerListPageState
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
         debugPrint('[SYNC] Response body: $responseBody');
-        debugPrint('[SYNC] ✅ Document synced successfully');
+        debugPrint('[SYNC] ? Document synced successfully');
       } else {
         final responseBody = await response.stream.bytesToString();
-        debugPrint('[SYNC] ❌ Upload failed with status ${response.statusCode}');
+        debugPrint('[SYNC] ? Upload failed with status ${response.statusCode}');
         debugPrint('[SYNC] Response: $responseBody');
       }
     } catch (e) {
-      debugPrint('[SYNC] ❌ Error syncing document: $e');
+      debugPrint('[SYNC] ? Error syncing document: $e');
     }
   }
 
@@ -7810,7 +7810,7 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
                                                         CrossAxisAlignment
                                                             .start,
                                                     children: [
-                                                      const Text('• ',
+                                                      const Text('� ',
                                                           style: TextStyle(
                                                               fontSize: 14,
                                                               fontWeight:
@@ -8073,7 +8073,7 @@ class _PotholeChecklistViewPageState extends State<PotholeChecklistViewPage> {
                                                         const EdgeInsets.all(
                                                             8.0),
                                                     child: const Text(
-                                                      'Pinch to zoom • Drag to pan • Tap close to exit',
+                                                      'Pinch to zoom � Drag to pan � Tap close to exit',
                                                       style: TextStyle(
                                                           fontSize: 10,
                                                           color: Colors.grey),
@@ -8777,7 +8777,7 @@ class _PotholeChecklistScannedViewPageState
                                                         const EdgeInsets.all(
                                                             8.0),
                                                     child: const Text(
-                                                      'Pinch to zoom • Drag to pan • Tap close to exit',
+                                                      'Pinch to zoom � Drag to pan � Tap close to exit',
                                                       style: TextStyle(
                                                           fontSize: 10,
                                                           color: Colors.grey),
@@ -8940,7 +8940,7 @@ class _PotholeChecklistScannedViewPageState
                                                         CrossAxisAlignment
                                                             .start,
                                                     children: [
-                                                      const Text('• ',
+                                                      const Text('� ',
                                                           style: TextStyle(
                                                               fontSize: 14,
                                                               fontWeight:
@@ -9181,10 +9181,10 @@ class _ARPLEvidenceChecklistPageState extends State<ARPLEvidenceChecklistPage> {
                       padding: const EdgeInsets.all(16),
                       margin: const EdgeInsets.only(bottom: 24),
                       decoration: BoxDecoration(
-                        color: Colors.indigo.withValues(alpha: 0.1),
+                        color: Colors.indigo.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                            color: Colors.indigo.withValues(alpha: 0.3)),
+                        border:
+                            Border.all(color: Colors.indigo.withOpacity(0.3)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -9327,7 +9327,7 @@ class DualSignaturePad extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.indigo.withValues(alpha: 0.2)),
+        border: Border.all(color: Colors.indigo.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -9934,10 +9934,10 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                           padding: const EdgeInsets.all(12),
                           margin: const EdgeInsets.only(bottom: 16),
                           decoration: BoxDecoration(
-                            color: Colors.indigo.withValues(alpha: 0.1),
+                            color: Colors.indigo.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                                color: Colors.indigo.withValues(alpha: 0.3)),
+                                color: Colors.indigo.withOpacity(0.3)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -10045,9 +10045,9 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.amber.withValues(alpha: 0.1),
+              color: Colors.amber.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+              border: Border.all(color: Colors.amber.withOpacity(0.3)),
             ),
             child: const Row(
               children: [
@@ -10100,9 +10100,9 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.05),
+              color: Colors.green.withOpacity(0.05),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
+              border: Border.all(color: Colors.green.withOpacity(0.2)),
             ),
             child: CheckboxListTile(
               title: const Text(
@@ -10177,7 +10177,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
             children: [
               TableRow(
                 decoration:
-                    BoxDecoration(color: Colors.indigo.withValues(alpha: 0.08)),
+                    BoxDecoration(color: Colors.indigo.withOpacity(0.08)),
                 children: const [
                   TableCell(
                     verticalAlignment: TableCellVerticalAlignment.middle,
@@ -10315,7 +10315,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                 border: Border.all(color: Colors.grey[200]!),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
+                    color: Colors.black.withOpacity(0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -10330,7 +10330,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
                     children: [
                       CircleAvatar(
                         radius: 12,
-                        backgroundColor: Colors.indigo.withValues(alpha: 0.1),
+                        backgroundColor: Colors.indigo.withOpacity(0.1),
                         child: Text('${index + 1}',
                             style: const TextStyle(
                                 fontSize: 12,
@@ -10525,7 +10525,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
         border: Border.all(color: Colors.grey[200]!),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withOpacity(0.02),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -10537,7 +10537,7 @@ class _ARPLAssessorReviewPageState extends State<ARPLAssessorReviewPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.05),
+              color: color.withOpacity(0.05),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(12)),
             ),
@@ -10765,10 +10765,10 @@ class _ARPLAppendixHPageState extends State<ARPLAppendixHPage> {
                       padding: const EdgeInsets.all(16),
                       margin: const EdgeInsets.only(bottom: 24),
                       decoration: BoxDecoration(
-                        color: Colors.indigo.withValues(alpha: 0.1),
+                        color: Colors.indigo.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                            color: Colors.indigo.withValues(alpha: 0.3)),
+                        border:
+                            Border.all(color: Colors.indigo.withOpacity(0.3)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

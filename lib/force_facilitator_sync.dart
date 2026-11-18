@@ -293,8 +293,8 @@ class _ForceSyncDialogState extends State<_ForceSyncDialog> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: (_result!['success'] ?? false) 
-                    ? Colors.green.withValues(alpha: 0.1)
-                    : Colors.red.withValues(alpha: 0.1),
+                    ? Colors.green.withOpacity(0.1)
+                    : Colors.red.withOpacity(0.1),
                 border: Border.all(
                   color: (_result!['success'] ?? false) ? Colors.green : Colors.red,
                 ),

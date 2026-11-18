@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:rlmss/services/fingerprint_service.dart';
 import 'package:rlmss/database_helper.dart';
@@ -161,7 +161,7 @@ class _FacilitatorFingerprintPageState
 
       if (alreadyClockedIn) {
         debugPrint(
-            '[FAC_CHECK] ✅ Already clocked in today - navigating to dashboard');
+            '[FAC_CHECK] ? Already clocked in today - navigating to dashboard');
 
         setState(() {
           _isCheckingClockIn = false;
@@ -185,7 +185,7 @@ class _FacilitatorFingerprintPageState
           }
         }
       } else {
-        debugPrint('[FAC_CHECK] ❌ Not clocked in yet - syncing data first...');
+        debugPrint('[FAC_CHECK] ? Not clocked in yet - syncing data first...');
 
         // First sync fingerprint data from server, then show scanner dialog
         await _checkEnrolledThumbs();
@@ -345,7 +345,7 @@ class _FacilitatorFingerprintPageState
       debugPrint('[FAC_SYNC] Connectivity: $connectivityResult');
 
       if (connectivityResult.first == ConnectivityResult.none) {
-        debugPrint('[FAC_SYNC] ❌ No internet connection');
+        debugPrint('[FAC_SYNC] ? No internet connection');
         return false;
       }
 
@@ -387,26 +387,26 @@ class _FacilitatorFingerprintPageState
           debugPrint('[FAC_SYNC] Parsed result: $result');
 
           if (result['success'] == true) {
-            debugPrint('[FAC_SYNC] ✅ Server sync successful');
+            debugPrint('[FAC_SYNC] ? Server sync successful');
             return true;
           } else {
             debugPrint(
-                '[FAC_SYNC] ❌ Server returned error: ${result['message']}');
+                '[FAC_SYNC] ? Server returned error: ${result['message']}');
             return false;
           }
         } catch (parseError) {
-          debugPrint('[FAC_SYNC] ❌ JSON parse error: $parseError');
+          debugPrint('[FAC_SYNC] ? JSON parse error: $parseError');
           debugPrint('[FAC_SYNC] Raw response: ${response.body}');
           return false;
         }
       } else {
         debugPrint(
-            '[FAC_SYNC] ❌ Server returned status ${response.statusCode}');
+            '[FAC_SYNC] ? Server returned status ${response.statusCode}');
         debugPrint('[FAC_SYNC] Response body: ${response.body}');
         return false;
       }
     } catch (e) {
-      debugPrint('[FAC_SYNC] ❌ Sync error: $e');
+      debugPrint('[FAC_SYNC] ? Sync error: $e');
       debugPrint('[FAC_SYNC] Stack trace: ${StackTrace.current}');
       return false;
     } finally {
@@ -608,10 +608,10 @@ class _FacilitatorFingerprintPageState
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
 
-          debugPrint('[FAC_SYNC] ✅ Synced facilitator data to local database');
+          debugPrint('[FAC_SYNC] ? Synced facilitator data to local database');
         } else {
           debugPrint(
-              '[FAC_SYNC] ⚠️ Facilitator ${widget.facilitatorId} not found on server');
+              '[FAC_SYNC] ?? Facilitator ${widget.facilitatorId} not found on server');
         }
       } else {
         debugPrint('[FAC_SYNC] Server returned status ${response.statusCode}');
@@ -1057,7 +1057,7 @@ class _FacilitatorFingerprintPageState
         // Save to local database first
         debugPrint('[FAC_CLOCK] Step 1: Saving to local database...');
         await _databaseHelper.insertFacilitatorClocking(attendance);
-        debugPrint('[FAC_CLOCK] ✅ Saved clock-in to local database');
+        debugPrint('[FAC_CLOCK] ? Saved clock-in to local database');
 
         // Check connectivity
         debugPrint('[FAC_CLOCK] Step 2: Checking connectivity...');
@@ -1085,19 +1085,19 @@ class _FacilitatorFingerprintPageState
               if (todayAttendance != null) {
                 await _databaseHelper.updateFacilitatorClocking(
                     todayAttendance['clocking_id'], {'synced': 1});
-                debugPrint('[FAC_CLOCK] ✅ Updated local record as synced');
+                debugPrint('[FAC_CLOCK] ? Updated local record as synced');
               } else {
                 debugPrint(
-                    '[FAC_CLOCK] ⚠️ No attendance record found to update');
+                    '[FAC_CLOCK] ?? No attendance record found to update');
               }
               debugPrint(
-                  '[FAC_CLOCK] ✅ Clock-in synced to server successfully');
+                  '[FAC_CLOCK] ? Clock-in synced to server successfully');
             } else {
               debugPrint(
-                  '[FAC_CLOCK] ❌ Server sync failed - saved locally only');
+                  '[FAC_CLOCK] ? Server sync failed - saved locally only');
             }
           } catch (e) {
-            debugPrint('[FAC_CLOCK] ❌ Error syncing to server: $e');
+            debugPrint('[FAC_CLOCK] ? Error syncing to server: $e');
             debugPrint('[FAC_CLOCK] Stack trace: ${StackTrace.current}');
           }
         } else {
@@ -1259,14 +1259,14 @@ class _FacilitatorFingerprintPageState
       });
 
       if (isConnected) {
-        debugPrint('[FAC_FP] ✅ Scanner initialized: $detectedScanner');
+        debugPrint('[FAC_FP] ? Scanner initialized: $detectedScanner');
         FingerprintErrorHandler.showSuccess(
             context, 'Scanner connected: $detectedScanner');
 
         // Check enrolled thumbs after scanner is confirmed
         await _checkEnrolledThumbs();
       } else {
-        debugPrint('[FAC_FP] ❌ No scanner detected');
+        debugPrint('[FAC_FP] ? No scanner detected');
         FingerprintErrorHandler.showError(context,
             'Scanner not connected. Please check USB connection and try again.');
       }
@@ -1343,7 +1343,7 @@ class _FacilitatorFingerprintPageState
         '[FAC_CLOCK] Current state - isClocking: $_isClocking, isEnrolling: $_isEnrolling, enrollmentInProgress: $_enrollmentInProgress');
 
     if (_isClocking || _isEnrolling || _enrollmentInProgress) {
-      debugPrint('[FAC_CLOCK] ❌ Operation already in progress');
+      debugPrint('[FAC_CLOCK] ? Operation already in progress');
       FingerprintErrorHandler.showInfo(
           context, 'Please wait for current operation to complete');
       return;
@@ -1357,7 +1357,7 @@ class _FacilitatorFingerprintPageState
     debugPrint('[FAC_CLOCK] Has fingerprints: $hasFingerprints');
 
     if (!hasFingerprints) {
-      debugPrint('[FAC_CLOCK] ❌ No fingerprints enrolled');
+      debugPrint('[FAC_CLOCK] ? No fingerprints enrolled');
       FingerprintErrorHandler.showError(
           context, 'Please enroll at least one fingerprint first');
       return;
@@ -1389,12 +1389,12 @@ class _FacilitatorFingerprintPageState
         debugPrint(
             '[FAC_CLOCK] Futronic template selected: ${template != null ? 'Found (${template.length} chars)' : 'Not found'}');
       } else {
-        debugPrint('[FAC_CLOCK] ❌ No active scanner detected: $_activeScanner');
+        debugPrint('[FAC_CLOCK] ? No active scanner detected: $_activeScanner');
       }
 
       if (template == null || template.isEmpty) {
         debugPrint(
-            '[FAC_CLOCK] ❌ No fingerprint template found for active scanner');
+            '[FAC_CLOCK] ? No fingerprint template found for active scanner');
         throw Exception('No fingerprint template found for active scanner');
       }
 
@@ -1409,7 +1409,7 @@ class _FacilitatorFingerprintPageState
               await _fingerprintService.verify('left', template).timeout(
             const Duration(seconds: 30),
             onTimeout: () {
-              debugPrint('[FAC_CLOCK] ❌ ZKTeco verification timeout');
+              debugPrint('[FAC_CLOCK] ? ZKTeco verification timeout');
               throw Exception('Verification timeout - please try again');
             },
           );
@@ -1417,11 +1417,11 @@ class _FacilitatorFingerprintPageState
           debugPrint('[FAC_CLOCK] ZKTeco verification result: $verifyResult');
 
           if (verifyResult == true) {
-            debugPrint('[FAC_CLOCK] ✅ ZKTeco verification successful!');
+            debugPrint('[FAC_CLOCK] ? ZKTeco verification successful!');
             // Manually trigger the clocking process since we got the result directly
             await _performClocking();
           } else {
-            debugPrint('[FAC_CLOCK] ❌ ZKTeco verification failed');
+            debugPrint('[FAC_CLOCK] ? ZKTeco verification failed');
             if (mounted) {
               setState(() {
                 _isClocking = false;
@@ -1433,7 +1433,7 @@ class _FacilitatorFingerprintPageState
             }
           }
         } catch (e) {
-          debugPrint('[FAC_CLOCK] ❌ ZKTeco verification error: $e');
+          debugPrint('[FAC_CLOCK] ? ZKTeco verification error: $e');
           if (mounted) {
             setState(() {
               _isClocking = false;
@@ -1465,7 +1465,7 @@ class _FacilitatorFingerprintPageState
               .timeout(
             const Duration(seconds: 30),
             onTimeout: () {
-              debugPrint('[FAC_CLOCK] ❌ Futronic verification timeout');
+              debugPrint('[FAC_CLOCK] ? Futronic verification timeout');
               throw Exception('Verification timeout - please try again');
             },
           );
@@ -1473,11 +1473,11 @@ class _FacilitatorFingerprintPageState
           debugPrint('[FAC_CLOCK] Futronic verification result: $verifyResult');
 
           if (verifyResult == true) {
-            debugPrint('[FAC_CLOCK] ✅ Futronic verification successful!');
+            debugPrint('[FAC_CLOCK] ? Futronic verification successful!');
             // Manually trigger the clocking process since we got the result directly
             await _performClocking();
           } else {
-            debugPrint('[FAC_CLOCK] ❌ Futronic verification failed');
+            debugPrint('[FAC_CLOCK] ? Futronic verification failed');
             if (mounted) {
               setState(() {
                 _isClocking = false;
@@ -1489,7 +1489,7 @@ class _FacilitatorFingerprintPageState
             }
           }
         } catch (e) {
-          debugPrint('[FAC_CLOCK] ❌ Futronic verification error: $e');
+          debugPrint('[FAC_CLOCK] ? Futronic verification error: $e');
           if (mounted) {
             setState(() {
               _isClocking = false;
@@ -1520,7 +1520,7 @@ class _FacilitatorFingerprintPageState
     debugPrint('[FAC_SIGNATURE] Facilitator ID: ${widget.facilitatorId}');
 
     if (_isClocking || _isEnrolling || _enrollmentInProgress) {
-      debugPrint('[FAC_SIGNATURE] ❌ Operation already in progress');
+      debugPrint('[FAC_SIGNATURE] ? Operation already in progress');
       FingerprintErrorHandler.showInfo(
           context, 'Please wait for current operation to complete');
       return;
@@ -1630,9 +1630,9 @@ class _FacilitatorFingerprintPageState
         // Perform the clocking without fingerprint verification
         await _performClocking();
         debugPrint(
-            '[FAC_SIGNATURE] ✅ Signature clock $action completed successfully');
+            '[FAC_SIGNATURE] ? Signature clock $action completed successfully');
       } catch (e) {
-        debugPrint('[FAC_SIGNATURE] ❌ Error during signature clocking: $e');
+        debugPrint('[FAC_SIGNATURE] ? Error during signature clocking: $e');
         if (mounted) {
           setState(() {
             _isClocking = false;
@@ -1774,8 +1774,8 @@ class _FacilitatorFingerprintPageState
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: _isSensorConnected
-                            ? Colors.green.withValues(alpha: 0.1)
-                            : Colors.red.withValues(alpha: 0.1),
+                            ? Colors.green.withOpacity(0.1)
+                            : Colors.red.withOpacity(0.1),
                         border: Border.all(
                           color: _isSensorConnected ? Colors.green : Colors.red,
                         ),
