@@ -74,7 +74,7 @@ class _ArplToolkitBricklayerPageState extends State<ArplToolkitBricklayerPage>
   // Appendix H - Gap Closure Controllers
   final Map<int, String> _appendixHStatus = {};
   final Map<int, TextEditingController> _appendixHRemarks = {};
-  // bool _showGapClosureSelection = false;
+  bool _showGapClosureSelection = false;
   final Set<String> _selectedGapUnitStandards = {};
   bool _gapStandardsLoading = false;
   List<Map<String, dynamic>> _availableGapUnitStandards = [];

@@ -75,7 +75,7 @@ class _AddLearnerPageState extends State<AddLearnerPage> {
   List<String> _municipalities = [];
 
   // ID validation state
-  // bool _isValidSAId = false;
+  bool _isValidSAId = false;
 
   // Dropdown Options
   final List<String> _titles = ['Mr', 'Mrs', 'Miss', 'Dr', 'Prof'];
