@@ -6,7 +6,7 @@ import 'dart:convert';
 
 import 'DetailsPage.dart';
 import 'database_helper.dart';
-import 'package:rlmss/poe_document_scanner.dart';
+import 'poe_document_scanner.dart';
 import 'config.dart';
 import 'finance_register_history.dart';
 
@@ -619,6 +619,7 @@ class _SdpLearnersPageState extends State<SdpLearnersPage> {
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
+          // ignore: undefined_method
           builder: (context) => PoeDocumentScanner(
             learnerId: learnerId,
             learnerName: learnerName,

@@ -6,7 +6,8 @@ import 'dart:async';
 
 import 'DetailsPage.dart';
 import 'database_helper.dart';
-import 'package:rlmss/poe_document_scanner.dart';
+// ignore: uri_does_not_exist
+import 'poe_document_scanner.dart';
 
 class SdpLearnersPagePaginated extends StatefulWidget {
   final String sdpIdentifier;
@@ -497,6 +498,7 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
+          // ignore: undefined_method
           builder: (context) => PoeDocumentScanner(
             learnerId: learnerId,
             learnerName: learnerName,
