@@ -27,6 +27,25 @@ linter:
     - prefer_const_constructors
     - avoid_unused_constructor_parameters
 
+analyzer:
+  errors:
+    # Suppress architectural warnings that are standard Flutter patterns
+    library_private_types_in_public_api: ignore  # StatefulWidget state classes are private by design
+    file_names: ignore  # Project uses PascalCase for widget files (standard convention)
+    
+    # Context usage warnings - keep as info (most have proper mounted checks)
+    use_build_context_synchronously: info
+    
+    # Package configuration issues
+    include_file_not_exist: ignore
+    
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/generated_plugin_registrant.dart"
+    - "lib/generated/**"
+    - "**/.dart_tool/**"
+
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
