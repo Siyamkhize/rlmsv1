@@ -1220,14 +1220,14 @@ if (!empty($whereClauses)) {
 if (isset($_GET['debug']) || isset($_GET['debug_missing'])) {
     echo "<div style='background: #e7f3ff; border: 1px solid #b3d9ff; padding: 10px; margin: 10px 0; border-radius: 5px;'>";
     echo "<h5>🔍 Applied Filters Debug:</h5>";
-    echo "<p><strong>Selected Project:</strong> " . ($selectedProject ?: 'None') . "</p>";
-    echo "<p><strong>Selected District:</strong> " . ($selectedDistrict ?: 'None') . "</p>";
-    echo "<p><strong>Selected Site:</strong> " . ($selectedSite ?: 'None') . "</p>";
-    echo "<p><strong>Document Status Filter:</strong> " . ($documentStatusFilter ?: 'None') . "</p>";
-    echo "<p><strong>Signature Status Filter:</strong> " . ($signatureStatusFilter ?: 'None') . "</p>";
-    echo "<p><strong>Document Type Filter:</strong> " . ($documentTypeFilter ?: 'None') . "</p>";
-    echo "<p><strong>ID Search:</strong> " . ($_GET['id_search'] ?? 'None') . "</p>";
-    echo "<p><strong>WHERE Clauses Applied:</strong> " . (empty($whereClauses) ? 'None' : implode(' AND ', $whereClauses)) . "</p>";
+    echo "<p><strong>Selected Project:</strong> " . htmlspecialchars($selectedProject ?: 'None', ENT_QUOTES, 'UTF-8') . "</p>";
+    echo "<p><strong>Selected District:</strong> " . htmlspecialchars($selectedDistrict ?: 'None', ENT_QUOTES, 'UTF-8') . "</p>";
+    echo "<p><strong>Selected Site:</strong> " . htmlspecialchars($selectedSite ?: 'None', ENT_QUOTES, 'UTF-8') . "</p>";
+    echo "<p><strong>Document Status Filter:</strong> " . htmlspecialchars($documentStatusFilter ?: 'None', ENT_QUOTES, 'UTF-8') . "</p>";
+    echo "<p><strong>Signature Status Filter:</strong> " . htmlspecialchars($signatureStatusFilter ?: 'None', ENT_QUOTES, 'UTF-8') . "</p>";
+    echo "<p><strong>Document Type Filter:</strong> " . htmlspecialchars($documentTypeFilter ?: 'None', ENT_QUOTES, 'UTF-8') . "</p>";
+    echo "<p><strong>ID Search:</strong> " . htmlspecialchars($_GET['id_search'] ?? 'None', ENT_QUOTES, 'UTF-8') . "</p>";
+    echo "<p><strong>WHERE Clauses Applied:</strong> " . (empty($whereClauses) ? 'None' : htmlspecialchars(implode(' AND ', $whereClauses), ENT_QUOTES, 'UTF-8')) . "</p>";
     echo "</div>";
 }
 
