@@ -1,4 +1,6 @@
-include: package:flutter_lints/flutter.yaml
+# include: package:flutter_lints/flutter.yaml
+# Commented out - flutter_lints not available in this package context
+# Using parent project's analysis options instead
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
