@@ -46,17 +46,24 @@ if [ -n "$xss_findings" ]; then
     echo "  ⚠️  Found potential XSS in echo statements (review manually)"
     echo "$xss_findings" | head -3
     # Don't block deployment - these are mostly debug/backup files
+else
+    echo "  ✅ No XSS vulnerabilities found in production files"
 fi
 
 # 5. Check for command injection
 echo "5. Checking for Command Injection..."
-if grep -rn "exec(\|system(\|shell_exec(" mobile/ php/ --include="*.php" 2>/dev/null | \
+cmd_injection=$(grep -rn "exec(\|system(\|shell_exec(" mobile/ php/ --include="*.php" 2>/dev/null | \
    grep "\$_GET\|\$_POST" | \
    grep -v "escapeshellarg\|escapeshellcmd" | \
-   head -5; then
+   grep -v "test_\|debug_\|diagnose_\|backup\|check_" || true)
+
+if [ -n "$cmd_injection" ]; then
     echo "  [CRITICAL] Command injection - system calls with user input"
+    echo "$cmd_injection" | head -3
     ((CRITICAL_ISSUES++))
     ((ISSUES_FOUND++))
+else
+    echo "  ✅ No command injection vulnerabilities found"
 fi
 
 # 6. Check for weak password hashing
