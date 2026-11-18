@@ -6,7 +6,7 @@ import 'dart:convert';
 
 import 'DetailsPage.dart';
 import 'database_helper.dart';
-import 'poe_document_scanner.dart';
+import 'package:rlmss/poe_document_scanner.dart';
 import 'config.dart';
 import 'finance_register_history.dart';
 

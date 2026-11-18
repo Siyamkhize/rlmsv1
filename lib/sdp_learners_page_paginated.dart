@@ -6,7 +6,7 @@ import 'dart:async';
 
 import 'DetailsPage.dart';
 import 'database_helper.dart';
-import 'poe_document_scanner.dart';
+import 'package:rlmss/poe_document_scanner.dart';
 
 class SdpLearnersPagePaginated extends StatefulWidget {
   final String sdpIdentifier;
@@ -19,7 +19,8 @@ class SdpLearnersPagePaginated extends StatefulWidget {
   });
 
   @override
-  State<SdpLearnersPagePaginated> createState() => _SdpLearnersPagePaginatedState();
+  State<SdpLearnersPagePaginated> createState() =>
+      _SdpLearnersPagePaginatedState();
 }
 
 class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
@@ -47,7 +48,7 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
   List<String> _availableSites = [];
   List<String> _availableClasses = [];
   String _searchQuery = '';
-  
+
   // Sorting
   bool _sortBySurname = false;
 
@@ -74,7 +75,8 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       if (!_isLoadingMore && _hasNextPage) {
         _loadMoreLearners();
       }
@@ -169,7 +171,8 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
         queryParams['class'] = _selectedClass!;
       }
 
-      final uri = Uri.parse('https://rlms.rlms.co.za/mobile/get_sdp_learners_paginated.php')
+      final uri = Uri.parse(
+              'https://rlms.rlms.co.za/mobile/get_sdp_learners_paginated.php')
           .replace(queryParameters: queryParams);
 
       debugPrint('Fetching learners from: $uri');
@@ -193,9 +196,13 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
 
           setState(() {
             if (append) {
-              _learners.addAll(learnersData.map((item) => Map<String, dynamic>.from(item)).toList());
+              _learners.addAll(learnersData
+                  .map((item) => Map<String, dynamic>.from(item))
+                  .toList());
             } else {
-              _learners = learnersData.map((item) => Map<String, dynamic>.from(item)).toList();
+              _learners = learnersData
+                  .map((item) => Map<String, dynamic>.from(item))
+                  .toList();
             }
 
             // Sort by surname if enabled
@@ -209,15 +216,18 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
 
             // Update filter options only on first load or reset
             if (!append) {
-              _availableSites = List<String>.from(filters['available_sites'] ?? []);
-              _availableClasses = List<String>.from(filters['available_classes'] ?? []);
+              _availableSites =
+                  List<String>.from(filters['available_sites'] ?? []);
+              _availableClasses =
+                  List<String>.from(filters['available_classes'] ?? []);
             }
 
             _isLoading = false;
             _isLoadingMore = false;
           });
 
-          debugPrint('Loaded ${learnersData.length} learners (page $_currentPage of $_totalPages)');
+          debugPrint(
+              'Loaded ${learnersData.length} learners (page $_currentPage of $_totalPages)');
         } else {
           throw Exception(jsonData['message'] ?? 'Failed to load learners');
         }
@@ -240,12 +250,12 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
       final data = await _dbHelper.getLearnersBySdp(widget.sdpIdentifier);
       setState(() {
         _learners = data;
-        
+
         // Sort by surname if enabled
         if (_sortBySurname) {
           _sortLearnersBySurname();
         }
-        
+
         _totalRecords = data.length;
         _totalPages = 1;
         _hasNextPage = false;
@@ -287,14 +297,14 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
     _learners.sort((a, b) {
       final surnameA = (a['Surname']?.toString() ?? '').toLowerCase();
       final surnameB = (b['Surname']?.toString() ?? '').toLowerCase();
-      
+
       // If surnames are the same, sort by name
       if (surnameA == surnameB) {
         final nameA = (a['Name']?.toString() ?? '').toLowerCase();
         final nameB = (b['Name']?.toString() ?? '').toLowerCase();
         return nameA.compareTo(nameB);
       }
-      
+
       return surnameA.compareTo(surnameB);
     });
   }
@@ -314,10 +324,10 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
   // Smart search functionality
   void _onSearchChanged() {
     final query = _searchController.text.trim();
-    
+
     // Cancel previous timer
     _searchDebounceTimer?.cancel();
-    
+
     if (query.isEmpty) {
       setState(() {
         _searchSuggestions.clear();
@@ -343,7 +353,7 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
 
     try {
       final int? sdpId = int.tryParse(widget.sdpIdentifier);
-      
+
       final Map<String, String> queryParams = {
         'search': query,
         'limit': '8',
@@ -355,7 +365,8 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
         queryParams['sdp_name'] = widget.sdpIdentifier;
       }
 
-      final uri = Uri.parse('https://rlms.rlms.co.za/mobile/get_sdp_learners_autocomplete.php')
+      final uri = Uri.parse(
+              'https://rlms.rlms.co.za/mobile/get_sdp_learners_autocomplete.php')
           .replace(queryParameters: queryParams);
 
       final response = await http.get(uri).timeout(
@@ -369,8 +380,10 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
         final data = json.decode(response.body);
         if (data['status'] == 'success' && mounted) {
           setState(() {
-            _searchSuggestions = List<Map<String, dynamic>>.from(data['suggestions'] ?? []);
-            _showSuggestions = _searchSuggestions.isNotEmpty && _searchFocusNode.hasFocus;
+            _searchSuggestions =
+                List<Map<String, dynamic>>.from(data['suggestions'] ?? []);
+            _showSuggestions =
+                _searchSuggestions.isNotEmpty && _searchFocusNode.hasFocus;
           });
         }
       }
@@ -394,11 +407,13 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
   void _selectSearchSuggestion(Map<String, dynamic> suggestion) {
     // Extract ID number from suggestion - backend should get (ID) only 9301156789012
     String extractedId = '';
-    
+
     // Try multiple fields to get the ID number (same logic as test file)
-    if (suggestion['id_number'] != null && suggestion['id_number'].toString().isNotEmpty) {
+    if (suggestion['id_number'] != null &&
+        suggestion['id_number'].toString().isNotEmpty) {
       extractedId = suggestion['id_number'].toString();
-    } else if (suggestion['search_value'] != null && suggestion['search_value'].toString().isNotEmpty) {
+    } else if (suggestion['search_value'] != null &&
+        suggestion['search_value'].toString().isNotEmpty) {
       extractedId = suggestion['search_value'].toString();
     } else if (suggestion['display_text'] != null) {
       // Extract ID from display text like "Doe John (9301156789012)"
@@ -408,18 +423,18 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
         extractedId = match.group(1) ?? '';
       }
     }
-    
+
     // Clean the ID number (remove any non-digits)
     extractedId = extractedId.replaceAll(RegExp(r'[^\d]'), '');
-    
+
     // Use the extracted ID number in the search field
     _searchController.text = extractedId;
-    
+
     setState(() {
       _showSuggestions = false;
       _searchQuery = extractedId;
     });
-    
+
     _searchFocusNode.unfocus();
     _loadLearners(reset: true);
   }
@@ -475,10 +490,10 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
         (l) => l['LearnerID'].toString() == learnerId.toString(),
         orElse: () => <String, dynamic>{},
       );
-      
+
       final classId = learnerData['classID']?.toString();
       final siteName = learnerData['siteName']?.toString();
-      
+
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
@@ -495,7 +510,8 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
       if (mounted && result == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('POE document uploaded successfully for $learnerName'),
+            content:
+                Text('POE document uploaded successfully for $learnerName'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 3),
           ),
@@ -603,37 +619,45 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
               final idNumber = learner['IDNumber']?.toString() ?? '--';
               final name = learner['Name']?.toString() ?? '';
               final surname = learner['Surname']?.toString() ?? '';
-              
-              // Ensure correct format: "Surname Name (ID)" 
-              final displayName = learner['displayName']?.toString() ?? '$surname $name ($idNumber)';
-              
-              final isMatch = _searchQuery.isNotEmpty && (
-                idNumber.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                displayName.toLowerCase().contains(_searchQuery.toLowerCase())
-              );
+
+              // Ensure correct format: "Surname Name (ID)"
+              final displayName = learner['displayName']?.toString() ??
+                  '$surname $name ($idNumber)';
+
+              final isMatch = _searchQuery.isNotEmpty &&
+                  (idNumber
+                          .toLowerCase()
+                          .contains(_searchQuery.toLowerCase()) ||
+                      displayName
+                          .toLowerCase()
+                          .contains(_searchQuery.toLowerCase()));
 
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 elevation: isMatch ? 3 : 1,
                 color: isMatch ? Colors.blue.shade50 : null,
                 child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  leading: isMatch ? Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade100,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blue.shade300),
-                    ),
-                    child: Text(
-                      'Match',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue.shade700,
-                      ),
-                    ),
-                  ) : null,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  leading: isMatch
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade100,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.blue.shade300),
+                          ),
+                          child: Text(
+                            'Match',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue.shade700,
+                            ),
+                          ),
+                        )
+                      : null,
                   title: Text(
                     displayName,
                     style: TextStyle(
@@ -653,7 +677,7 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                         style: TextStyle(
-                          fontSize: 12, 
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: isMatch ? Colors.blue.shade700 : null,
                         ),
@@ -721,357 +745,397 @@ class _SdpLearnersPagePaginatedState extends State<SdpLearnersPagePaginated> {
         });
       },
       child: Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'SDP Learners - $displayName',
-          overflow: TextOverflow.ellipsis,
-        ),
-        actions: [
-          if (!_isLoading)
-            Flexible(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 4.0),
-                child: Center(
-                  child: Chip(
-                    avatar: Icon(
-                      _isOnlineMode ? Icons.cloud_done : Icons.cloud_off,
-                      size: 14,
-                      color: _isOnlineMode ? Colors.green : Colors.orange,
+        appBar: AppBar(
+          title: Text(
+            'SDP Learners - $displayName',
+            overflow: TextOverflow.ellipsis,
+          ),
+          actions: [
+            if (!_isLoading)
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 4.0),
+                  child: Center(
+                    child: Chip(
+                      avatar: Icon(
+                        _isOnlineMode ? Icons.cloud_done : Icons.cloud_off,
+                        size: 14,
+                        color: _isOnlineMode ? Colors.green : Colors.orange,
+                      ),
+                      label: Text(
+                        _isOnlineMode ? 'Online' : 'Offline',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      backgroundColor: Colors.white.withOpacity(0.9),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    label: Text(
-                      _isOnlineMode ? 'Online' : 'Offline',
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                    backgroundColor: Colors.white.withOpacity(0.9),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
               ),
-            ),
-          IconButton(
-            tooltip: _sortBySurname ? 'Disable surname sort' : 'Sort by surname A-Z',
-            icon: Icon(
-              _sortBySurname ? Icons.sort_by_alpha : Icons.sort_by_alpha_outlined,
-              color: _sortBySurname ? Colors.blue : null,
-            ),
-            onPressed: _toggleSurnameSort,
-          ),
-          if (_searchQuery.isNotEmpty)
             IconButton(
-              tooltip: 'Clear search',
-              icon: const Icon(Icons.clear),
-              onPressed: () {
-                setState(() {
-                  _searchQuery = '';
-                  _searchController.clear();
-                });
-                _loadLearners(reset: true);
-              },
+              tooltip: _sortBySurname
+                  ? 'Disable surname sort'
+                  : 'Sort by surname A-Z',
+              icon: Icon(
+                _sortBySurname
+                    ? Icons.sort_by_alpha
+                    : Icons.sort_by_alpha_outlined,
+                color: _sortBySurname ? Colors.blue : null,
+              ),
+              onPressed: _toggleSurnameSort,
             ),
-          IconButton(
-            tooltip: 'Refresh learners',
-            icon: const Icon(Icons.refresh),
-            onPressed: () => _loadLearners(reset: true),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Search and filters section - fixed height to prevent overflow
-            Container(
-              constraints: const BoxConstraints(maxHeight: 300), // Prevent overflow
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // Search bar
-                    Container(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        children: [
-                          TextField(
-                            controller: _searchController,
-                            focusNode: _searchFocusNode,
-                            decoration: InputDecoration(
-                              labelText: 'Smart Search by ID Number or Name',
-                              hintText: 'Start typing for suggestions...',
-                              prefixIcon: const Icon(Icons.search),
-                              suffixIcon: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (_isSearching)
-                                    const Padding(
-                                      padding: EdgeInsets.all(12.0),
-                                      child: SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
-                                      ),
-                                    ),
-                                  if (_searchController.text.isNotEmpty)
-                                    IconButton(
-                                      icon: const Icon(Icons.clear),
-                                      onPressed: () {
-                                        _searchController.clear();
-                                        setState(() {
-                                          _searchQuery = '';
-                                          _searchSuggestions.clear();
-                                          _showSuggestions = false;
-                                        });
-                                        _loadLearners(reset: true);
-                                      },
-                                    ),
-                                  IconButton(
-                                    icon: const Icon(Icons.search, color: Colors.blue),
-                                    onPressed: _performSmartSearch,
-                                    tooltip: 'Search',
-                                  ),
-                                ],
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            ),
-                            onChanged: (_) => _onSearchChanged(),
-                            onSubmitted: (_) => _performSmartSearch(),
-                            onTap: () {
-                              if (_searchSuggestions.isNotEmpty) {
-                                setState(() {
-                                  _showSuggestions = true;
-                                });
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Smart search suggestions
-                    if (_showSuggestions && _searchSuggestions.isNotEmpty)
+            if (_searchQuery.isNotEmpty)
+              IconButton(
+                tooltip: 'Clear search',
+                icon: const Icon(Icons.clear),
+                onPressed: () {
+                  setState(() {
+                    _searchQuery = '';
+                    _searchController.clear();
+                  });
+                  _loadLearners(reset: true);
+                },
+              ),
+            IconButton(
+              tooltip: 'Refresh learners',
+              icon: const Icon(Icons.refresh),
+              onPressed: () => _loadLearners(reset: true),
+            ),
+          ],
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Search and filters section - fixed height to prevent overflow
+              Container(
+                constraints:
+                    const BoxConstraints(maxHeight: 300), // Prevent overflow
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Search bar
                       Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 12.0),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          children: [
+                            TextField(
+                              controller: _searchController,
+                              focusNode: _searchFocusNode,
+                              decoration: InputDecoration(
+                                labelText: 'Smart Search by ID Number or Name',
+                                hintText: 'Start typing for suggestions...',
+                                prefixIcon: const Icon(Icons.search),
+                                suffixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (_isSearching)
+                                      const Padding(
+                                        padding: EdgeInsets.all(12.0),
+                                        child: SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2),
+                                        ),
+                                      ),
+                                    if (_searchController.text.isNotEmpty)
+                                      IconButton(
+                                        icon: const Icon(Icons.clear),
+                                        onPressed: () {
+                                          _searchController.clear();
+                                          setState(() {
+                                            _searchQuery = '';
+                                            _searchSuggestions.clear();
+                                            _showSuggestions = false;
+                                          });
+                                          _loadLearners(reset: true);
+                                        },
+                                      ),
+                                    IconButton(
+                                      icon: const Icon(Icons.search,
+                                          color: Colors.blue),
+                                      onPressed: _performSmartSearch,
+                                      tooltip: 'Search',
+                                    ),
+                                  ],
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                              ),
+                              onChanged: (_) => _onSearchChanged(),
+                              onSubmitted: (_) => _performSmartSearch(),
+                              onTap: () {
+                                if (_searchSuggestions.isNotEmpty) {
+                                  setState(() {
+                                    _showSuggestions = true;
+                                  });
+                                }
+                              },
                             ),
                           ],
                         ),
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _searchSuggestions.length,
-                          itemBuilder: (context, index) {
-                            final suggestion = _searchSuggestions[index];
-                            final displayText = suggestion['display_text'] ?? '';
-                            final className = suggestion['class_name'] ?? '';
-                            
-                            return ListTile(
-                              dense: true,
-                              leading: const Icon(Icons.person_search, size: 18),
-                              title: Text(
-                                displayText,
-                                style: const TextStyle(fontSize: 14),
+                      ),
+
+                      // Smart search suggestions
+                      if (_showSuggestions && _searchSuggestions.isNotEmpty)
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 12.0),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
                               ),
-                              subtitle: className.isNotEmpty ? Text(
-                                'Class: $className',
-                                style: const TextStyle(fontSize: 12),
-                              ) : null,
-                              onTap: () => _selectSearchSuggestion(suggestion),
-                              hoverColor: Colors.blue.withOpacity(0.1),
-                            );
-                          },
+                            ],
+                          ),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _searchSuggestions.length,
+                            itemBuilder: (context, index) {
+                              final suggestion = _searchSuggestions[index];
+                              final displayText =
+                                  suggestion['display_text'] ?? '';
+                              final className = suggestion['class_name'] ?? '';
+
+                              return ListTile(
+                                dense: true,
+                                leading:
+                                    const Icon(Icons.person_search, size: 18),
+                                title: Text(
+                                  displayText,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                subtitle: className.isNotEmpty
+                                    ? Text(
+                                        'Class: $className',
+                                        style: const TextStyle(fontSize: 12),
+                                      )
+                                    : null,
+                                onTap: () =>
+                                    _selectSearchSuggestion(suggestion),
+                                hoverColor: Colors.blue.withOpacity(0.1),
+                              );
+                            },
+                          ),
+                        ),
+
+                      // Filter dropdowns
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        child: Row(
+                          children: [
+                            // Site filter
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  border:
+                                      Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    isExpanded: true,
+                                    hint: const Text('Site',
+                                        style: TextStyle(fontSize: 14)),
+                                    value: _selectedSite,
+                                    items: [
+                                      const DropdownMenuItem<String>(
+                                        value: null,
+                                        child: Text('All Sites',
+                                            style: TextStyle(fontSize: 14)),
+                                      ),
+                                      ..._availableSites.map(
+                                          (site) => DropdownMenuItem<String>(
+                                                value: site,
+                                                child: Text(site,
+                                                    style: const TextStyle(
+                                                        fontSize: 14)),
+                                              )),
+                                    ],
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _selectedSite = value;
+                                      });
+                                      _applyFilters();
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Class filter
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  border:
+                                      Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    isExpanded: true,
+                                    hint: const Text('Class',
+                                        style: TextStyle(fontSize: 14)),
+                                    value: _selectedClass,
+                                    items: [
+                                      const DropdownMenuItem<String>(
+                                        value: null,
+                                        child: Text('All Classes',
+                                            style: TextStyle(fontSize: 14)),
+                                      ),
+                                      ..._availableClasses.map((className) =>
+                                          DropdownMenuItem<String>(
+                                            value: className,
+                                            child: Text(className,
+                                                style: const TextStyle(
+                                                    fontSize: 14)),
+                                          )),
+                                    ],
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _selectedClass = value;
+                                      });
+                                      _applyFilters();
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
 
-                    // Filter dropdowns
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: Row(
-                        children: [
-                          // Site filter
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  isExpanded: true,
-                                  hint: const Text('Site', style: TextStyle(fontSize: 14)),
-                                  value: _selectedSite,
-                                  items: [
-                                    const DropdownMenuItem<String>(
-                                      value: null,
-                                      child: Text('All Sites', style: TextStyle(fontSize: 14)),
-                                    ),
-                                    ..._availableSites.map((site) => DropdownMenuItem<String>(
-                                      value: site,
-                                      child: Text(site, style: const TextStyle(fontSize: 14)),
-                                    )),
-                                  ],
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _selectedSite = value;
-                                    });
-                                    _applyFilters();
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          // Class filter
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  isExpanded: true,
-                                  hint: const Text('Class', style: TextStyle(fontSize: 14)),
-                                  value: _selectedClass,
-                                  items: [
-                                    const DropdownMenuItem<String>(
-                                      value: null,
-                                      child: Text('All Classes', style: TextStyle(fontSize: 14)),
-                                    ),
-                                    ..._availableClasses.map((className) => DropdownMenuItem<String>(
-                                      value: className,
-                                      child: Text(className, style: const TextStyle(fontSize: 14)),
-                                    )),
-                                  ],
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _selectedClass = value;
-                                    });
-                                    _applyFilters();
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                      const SizedBox(height: 8),
 
-                    const SizedBox(height: 8),
-
-                    // Results summary
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-                      child: Column(
-                        children: [
-                          // Status indicators row
-                          if (_sortBySurname)
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.shade50,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.green.shade200),
+                      // Results summary
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12.0, vertical: 4.0),
+                        child: Column(
+                          children: [
+                            // Status indicators row
+                            if (_sortBySurname)
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green.shade50,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                          color: Colors.green.shade200),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.sort_by_alpha,
+                                            size: 14,
+                                            color: Colors.green.shade700),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'A-Z',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.green.shade700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.sort_by_alpha, size: 14, color: Colors.green.shade700),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'A-Z',
+                                  const Spacer(),
+                                  if (_searchQuery.isNotEmpty ||
+                                      _selectedSite != null ||
+                                      _selectedClass != null)
+                                    TextButton.icon(
+                                      onPressed: _clearFilters,
+                                      icon:
+                                          const Icon(Icons.clear_all, size: 14),
+                                      label: const Text('Clear',
+                                          style: TextStyle(fontSize: 11)),
+                                      style: TextButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 2),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                    ),
+                                ],
+                              ),
+
+                            // Search query and results summary
+                            if (_searchQuery.isNotEmpty ||
+                                (!_isLoading && _learners.isNotEmpty))
+                              const SizedBox(height: 4),
+                            if (_searchQuery.isNotEmpty ||
+                                (!_isLoading && _learners.isNotEmpty))
+                              Row(
+                                children: [
+                                  if (_searchQuery.isNotEmpty) ...[
+                                    Flexible(
+                                      child: Text(
+                                        'Search: "$_searchQuery"',
                                         style: TextStyle(
                                           fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.green.shade700,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.blue.shade700,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                  if (!_isLoading && _learners.isNotEmpty) ...[
+                                    Text(
+                                      'Showing ${_learners.length} of $_totalRecords',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                    if (_currentPage > 1) ...[
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '(Page $_currentPage/$_totalPages)',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.grey.shade500,
                                         ),
                                       ),
                                     ],
-                                  ),
-                                ),
-                                const Spacer(),
-                                if (_searchQuery.isNotEmpty || _selectedSite != null || _selectedClass != null)
-                                  TextButton.icon(
-                                    onPressed: _clearFilters,
-                                    icon: const Icon(Icons.clear_all, size: 14),
-                                    label: const Text('Clear', style: TextStyle(fontSize: 11)),
-                                    style: TextButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      minimumSize: Size.zero,
-                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          
-                          // Search query and results summary
-                          if (_searchQuery.isNotEmpty || (!_isLoading && _learners.isNotEmpty))
-                            const SizedBox(height: 4),
-                          if (_searchQuery.isNotEmpty || (!_isLoading && _learners.isNotEmpty))
-                            Row(
-                              children: [
-                                if (_searchQuery.isNotEmpty) ...[
-                                  Flexible(
-                                    child: Text(
-                                      'Search: "$_searchQuery"',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.blue.shade700,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                ],
-                                if (!_isLoading && _learners.isNotEmpty) ...[
-                                  Text(
-                                    'Showing ${_learners.length} of $_totalRecords',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-                                  if (_currentPage > 1) ...[
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '(Page $_currentPage/$_totalPages)',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: Colors.grey.shade500,
-                                      ),
-                                    ),
                                   ],
                                 ],
-                              ],
-                            ),
-                        ],
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Divider
-            if (_learners.isNotEmpty || _isLoading)
-              Divider(height: 1, color: Colors.grey.shade300),
+              // Divider
+              if (_learners.isNotEmpty || _isLoading)
+                Divider(height: 1, color: Colors.grey.shade300),
 
-            // Body - learners list (takes remaining space)
-            Expanded(child: _buildBody()),
-          ],
+              // Body - learners list (takes remaining space)
+              Expanded(child: _buildBody()),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

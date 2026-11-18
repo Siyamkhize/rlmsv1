@@ -1299,3 +1299,4 @@ class _PoeDocumentScannerState extends State<PoeDocumentScanner>
     );
   }
 }
+
