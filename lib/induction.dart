@@ -72,7 +72,7 @@ class _InductionPageState extends State<InductionPage> {
         });
       } else {
         debugPrint('No cameras available');
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No cameras available')),
         );
@@ -114,7 +114,7 @@ class _InductionPageState extends State<InductionPage> {
         _capturedImage = await _cameraController!.takePicture();
         debugPrint('Image captured: ${_capturedImage!.path}');
         if (mounted) {
-          if (!context.mounted) return null;
+          if (!context.mounted) return;
           Navigator.of(context).pop(true);
         }
       }
@@ -456,7 +456,7 @@ class _InductionPageState extends State<InductionPage> {
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      if (!context.mounted) return null;
+                      if (!context.mounted) return;
                       Navigator.of(context).pop(false);
                     },
                     child: const Text('Cancel'),
@@ -560,7 +560,7 @@ class _InductionPageState extends State<InductionPage> {
           clockOutTimes[learnerID] = result['clock_out_time'] ?? '';
           contactTimes[learnerID] = result['contact_time'] ?? '';
         });
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result['message'])),
         );
@@ -698,7 +698,7 @@ class _InductionPageState extends State<InductionPage> {
           clockOutTimes[learnerID] = result['clock_out_time'] ?? '';
           contactTimes[learnerID] = contactTime ?? '';
         });
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result['message'])),
         );
@@ -722,7 +722,7 @@ class _InductionPageState extends State<InductionPage> {
       // Validate location services
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Location services are disabled.')),
         );
@@ -733,7 +733,7 @@ class _InductionPageState extends State<InductionPage> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          if (!context.mounted) return null;
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Location permissions are denied.')),
           );
@@ -742,7 +742,7 @@ class _InductionPageState extends State<InductionPage> {
       }
 
       if (permission == LocationPermission.deniedForever) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Location permissions are permanently denied.')),
@@ -771,7 +771,7 @@ class _InductionPageState extends State<InductionPage> {
 
       final signatureImage = await _signatureController.toPngBytes();
       if (signatureImage == null) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to generate signature image.')),
         );
@@ -832,7 +832,7 @@ class _InductionPageState extends State<InductionPage> {
       );
 
       if (existingRecords.isEmpty) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No clock-in record found for today.')),
         );
@@ -934,10 +934,10 @@ class _InductionPageState extends State<InductionPage> {
                     ElevatedButton(
                       onPressed: () {
                         if (_signatureController.isNotEmpty) {
-                          if (!context.mounted) return null;
+                          if (!context.mounted) return;
                           Navigator.of(context).pop(true);
                         } else {
-                          if (!context.mounted) return null;
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                                 content: Text('Please provide a signature')),
@@ -1008,10 +1008,10 @@ class _InductionPageState extends State<InductionPage> {
                   ElevatedButton(
                     onPressed: () {
                       if (_signatureController.isNotEmpty) {
-                        if (!context.mounted) return null;
+                        if (!context.mounted) return;
                         Navigator.of(context).pop(true);
                       } else {
-                        if (!context.mounted) return null;
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text('Please provide a signature')),

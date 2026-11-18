@@ -692,7 +692,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
           clockOutTimes[learnerID] = result['clock_out_time'] ?? '';
           contactTimes[learnerID] = contactTime ?? '';
         });
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result['message'])),
         );
@@ -792,7 +792,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
       );
 
       if (existingRecords.isEmpty) {
-        if (!context.mounted) return null;
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No clock-in record found for today.')),
         );
@@ -833,14 +833,14 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
         }
       });
 
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Clock-out saved locally. Will sync when online.')),
       );
     } catch (e) {
       debugPrint('Offline clock-out error: $e');
-      if (!context.mounted) return null;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving offline clock-out: $e')),
       );
@@ -1177,7 +1177,7 @@ class _LearnerlistpageState extends State<Learnerlistpage> {
                                             'Upload a sick note for this learner',
                                         child: ElevatedButton.icon(
                                           onPressed: () {
-                                            if (!context.mounted) return null;
+                                            if (!context.mounted) return;
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
