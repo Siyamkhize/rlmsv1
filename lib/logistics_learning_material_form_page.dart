@@ -2227,10 +2227,6 @@ class _LogisticsUnitStandardsDialogState
         ],
       ),
     );
-          },
-        ),
-      ),
-    );
   }
 }
 

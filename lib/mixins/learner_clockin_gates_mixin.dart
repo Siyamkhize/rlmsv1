@@ -31,7 +31,7 @@ mixin LearnerClockInGatesMixin<T extends StatefulWidget> on State<T> {
     }
 
     if (int.tryParse(learnerId) == null) {
-      if (!context.mounted) return null;
+      if (!context.mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Invalid learner ID for profile completion.'),

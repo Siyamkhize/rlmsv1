@@ -898,7 +898,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       final url = AppConfig.buildUrl('poe_collection_submit.php');
 
       // Step 1: Mark learner as received in material_receipt_form
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Row(
@@ -932,7 +932,7 @@ class _POESubmitPageState extends State<POESubmitPage> {
       );
 
       // Step 2: Submit the POE form data with signatures to material_forms
-      if (!context.mounted) return false;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Row(
