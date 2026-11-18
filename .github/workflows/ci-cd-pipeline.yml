@@ -58,18 +58,25 @@ jobs:
           bash scripts/security-audit-simple.sh
       
       - name: 📊 SonarQube Scan
+        if: ${{ secrets.SONAR_TOKEN != '' }}
         uses: sonarsource/sonarqube-scan-action@master
-        continue-on-error: true  # Temporarily non-blocking until SonarCloud project is created
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
           args: >
             -Dsonar.projectKey=Siyamkhize_rlmsv1
             -Dsonar.organization=siyamkhize
             -Dsonar.branch.name=${{ github.ref_name }}
       
+      - name: ℹ️ SonarQube Skipped
+        if: ${{ secrets.SONAR_TOKEN == '' }}
+        run: |
+          echo "⚠️ SonarQube scan skipped - SONAR_TOKEN not configured"
+          echo "To enable: Add SONAR_TOKEN secret in repository settings"
+          echo "Sign up at: https://sonarcloud.io"
+      
       - name: 🔐 Snyk Code Test (BLOCKING - Must Pass)
+        if: ${{ secrets.SNYK_TOKEN != '' }}
         run: |
           snyk code test --severity-threshold=high --json > snyk-code.json || SNYK_EXIT=$?
           if [ ! -z "$SNYK_EXIT" ] && [ $SNYK_EXIT -ne 0 ]; then
@@ -80,7 +87,15 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       
+      - name: ℹ️ Snyk Code Test Skipped
+        if: ${{ secrets.SNYK_TOKEN == '' }}
+        run: |
+          echo "⚠️ Snyk code test skipped - SNYK_TOKEN not configured"
+          echo "To enable: Add SNYK_TOKEN secret in repository settings"
+          echo "Sign up at: https://snyk.io"
+      
       - name: 📦 Snyk Dependency Test (BLOCKING - Must Pass)
+        if: ${{ secrets.SNYK_TOKEN != '' }}
         run: |
           snyk test --severity-threshold=high --json > snyk-report.json || SNYK_EXIT=$?
           if [ ! -z "$SNYK_EXIT" ] && [ $SNYK_EXIT -ne 0 ]; then
@@ -91,7 +106,13 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       
+      - name: ℹ️ Snyk Dependency Test Skipped
+        if: ${{ secrets.SNYK_TOKEN == '' }}
+        run: |
+          echo "⚠️ Snyk dependency test skipped - SNYK_TOKEN not configured"
+      
       - name: 🔐 Snyk Monitor
+        if: ${{ secrets.SNYK_TOKEN != '' }}
         run: snyk monitor --project-name=rlmsv1
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
