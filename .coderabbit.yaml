@@ -1,0 +1,157 @@
+# CodeRabbit Configuration for RLMSS Project
+# AI-powered code review on every pull request
+
+# Language settings
+language: en-US
+
+# Review settings
+reviews:
+  # Request changes on high severity issues
+  request_changes_workflow: true
+  
+  # Auto-review on every commit to PR
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+      - develop
+      - staging
+  
+  # Review profile
+  profile: chill  # Options: chill, assertive
+  
+  # High level summary
+  high_level_summary: true
+  
+  # Review every commit in PR
+  review_status: true
+  
+  # Collapse file list in review comment
+  collapse_walkthrough: false
+  
+  # Enable poem in review summary (fun!)
+  poem: true
+  
+  # Auto-approve safe changes
+  auto_approve:
+    enabled: false  # Set to true if you want auto-approval
+
+# File patterns to focus on
+path_filters:
+  # Dart/Flutter files (high priority)
+  - "lib/**/*.dart"
+  - "test/**/*.dart"
+  
+  # PHP backend files
+  - "mobile/**/*.php"
+  - "php/**/*.php"
+  
+  # Configuration files
+  - "*.yaml"
+  - "*.yml"
+  - "*.json"
+  - "pubspec.yaml"
+  - "analysis_options.yaml"
+
+# Ignore patterns
+path_ignore:
+  - "**/*.g.dart"  # Generated files
+  - "**/*.freezed.dart"  # Generated files
+  - "**/generated_*.dart"  # Generated plugin files
+  - "**/.dart_tool/**"
+  - "**/build/**"
+  - "**/coverage/**"
+  - "**/*.min.js"
+  - "**/*.min.css"
+  - "**/node_modules/**"
+  - "**/vendor/**"
+  - "**/*_backup.php"  # Backup files
+  - "**/*_old.php"  # Old files
+  - "**/test_*.php"  # Test files
+
+# Code review focus areas
+checks:
+  # Security checks (HIGH priority for your project)
+  security:
+    enabled: true
+    severity: high
+    
+  # Performance checks
+  performance:
+    enabled: true
+    severity: medium
+    
+  # Code quality
+  code_quality:
+    enabled: true
+    severity: medium
+    
+  # Best practices
+  best_practices:
+    enabled: true
+    severity: low
+    
+  # Documentation
+  documentation:
+    enabled: true
+    severity: low
+
+# Custom instructions for AI reviewer
+custom_instructions: |
+  This is a Flutter mobile app (RLMSS - Learner Management System) with PHP backend.
+  
+  Key security concerns:
+  - SQL injection prevention (use prepared statements)
+  - XSS prevention (sanitize all outputs)
+  - Authentication and authorization
+  - File upload validation
+  - SSL/TLS certificate validation (should be enabled in production)
+  - Sensitive data storage (use flutter_secure_storage, not SharedPreferences)
+  
+  Flutter/Dart specific:
+  - BuildContext usage after async gaps (check mounted property)
+  - State management patterns
+  - Memory leaks (dispose controllers)
+  - Null safety
+  
+  PHP backend:
+  - Use password_hash() not MD5 for passwords
+  - Validate file uploads (type, size, content)
+  - Use parameterized queries
+  - Sanitize outputs with htmlspecialchars()
+  
+  Database:
+  - Check for N+1 query problems
+  - Index usage
+  - Transaction safety
+
+# Chat settings
+chat:
+  # Enable interactive chat for clarifications
+  enabled: true
+  
+  # Auto-reply to questions
+  auto_reply: true
+
+# Knowledge base - project context
+knowledge_base:
+  - "This is a Flutter 3.24.0 mobile application"
+  - "Backend is PHP with MySQL database"
+  - "Security is critical - handles learner personal data"
+  - "Offline-first architecture with sync to server"
+  - "Geofencing and biometric authentication features"
+  - "CI/CD pipeline requires passing flutter analyze and security audit"
+
+# Early access features
+early_access: true
+
+# Tools integration
+tools:
+  # GitHub Actions integration
+  github:
+    enabled: true
+    
+  # SonarQube integration (if available)
+  sonarqube:
+    enabled: true

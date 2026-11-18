@@ -1,0 +1,79 @@
+name: CodeRabbit AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+      - develop
+      - staging
+  pull_request_review_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  coderabbit-review:
+    name: CodeRabbit AI Review
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better context
+      
+      - name: 🐰 CodeRabbit Review
+        uses: coderabbitai/ai-pr-reviewer@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}  # Optional: for enhanced reviews
+        with:
+          debug: false
+          review_simple_changes: false
+          review_comment_lgtm: true
+          path_filters: |
+            lib/**/*.dart
+            mobile/**/*.php
+            php/**/*.php
+            test/**/*.dart
+          system_message: |
+            You are CodeRabbit, an AI code reviewer for the RLMSS Flutter/PHP project.
+            Focus on security (SQL injection, XSS, auth), Flutter best practices,
+            and database performance. Be concise and actionable.
+
+  # Post review summary
+  review-summary:
+    name: Review Summary
+    runs-on: ubuntu-latest
+    needs: coderabbit-review
+    if: always()
+    
+    steps:
+      - name: 📊 Post Summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const comment = `## 🐰 CodeRabbit Review Complete
+            
+            CodeRabbit has finished reviewing this PR. Check the comments above for detailed feedback.
+            
+            **Next Steps:**
+            1. Review CodeRabbit's suggestions
+            2. Address any security or critical issues
+            3. Respond to questions in review comments
+            4. Request re-review after changes
+            
+            *CodeRabbit is AI-powered and may occasionally miss context. Always use your judgment.*
+            `;
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: comment
+            });
