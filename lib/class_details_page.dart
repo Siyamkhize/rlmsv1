@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert'; // For JSON decoding
 import 'package:http/http.dart' as http;
-import 'learner_list_page.dart'; // Import your LearnerListPage
+import 'LearnerListPage.dart'; // Import your LearnerListPage
 import 'fingerprint_induction.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:io'; // For checking network status
@@ -107,7 +107,8 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
 
                 enrichedClassData.add(enrichedClass);
               } catch (e) {
-                debugPrint('Error processing class ${classItem['classID']}: $e');
+                debugPrint(
+                    'Error processing class ${classItem['classID']}: $e');
                 // Add the original class data without attendance calculations
                 enrichedClassData.add(classItem);
               }
@@ -266,7 +267,7 @@ class _ClassDetailsPageState extends State<ClassDetailsPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => LearnerListPage(
+        builder: (context) => Learnerlistpage(
             classID: classID), // Pass classID to LearnerListPage
       ),
     );

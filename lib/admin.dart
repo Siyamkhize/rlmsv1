@@ -7,7 +7,7 @@ import 'package:permission_handler/permission_handler.dart'; // For camera permi
 import 'class_details_page.dart'; // Import the class details page
 import 'database_helper.dart'; // Import your DatabaseHelper class
 import 'sdp_learners_page.dart';
-import 'learner_list_page.dart'; // Import LearnerListPage for class navigation
+import 'LearnerListPage.dart'; // Import LearnerListPage for class navigation
 import 'LearnerDetailsPage.dart'; // Import for View button
 import 'finance_register_history.dart'; // Import for Attendance button
 import 'learner_induction_page.dart'; // Import for Induction button
@@ -478,7 +478,7 @@ class _AdminPageState extends State<AdminPage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => LearnerListPage(
+          builder: (context) => Learnerlistpage(
             classID: classId,
           ),
         ),
@@ -1013,7 +1013,8 @@ class _AdminPageState extends State<AdminPage> {
     debugPrint('[ADMIN] ❌ Cache MISS for ID: $idNumber');
 
     // Try local database first (faster!) - PROJECT-FILTERED SEARCH
-    debugPrint('[ADMIN] 🔍 Searching local database first (PROJECT-FILTERED)...');
+    debugPrint(
+        '[ADMIN] 🔍 Searching local database first (PROJECT-FILTERED)...');
     final localResult = await _searchLearnerOffline(idNumber);
     if (localResult != null) {
       debugPrint('[ADMIN] ✅ Found in local database!');
@@ -1139,7 +1140,8 @@ class _AdminPageState extends State<AdminPage> {
               '[ADMIN] ⚠️ Server returned success=false or no learners field');
         }
       } else {
-        debugPrint('[ADMIN] ❌ Server returned status code: ${response.statusCode}');
+        debugPrint(
+            '[ADMIN] ❌ Server returned status code: ${response.statusCode}');
       }
 
       debugPrint('[ADMIN] ❌ No learner found on server');
@@ -1352,7 +1354,8 @@ class _AdminPageState extends State<AdminPage> {
           }
         }
       } else {
-        debugPrint('No internet connection, skipping server check for $learnerId');
+        debugPrint(
+            'No internet connection, skipping server check for $learnerId');
       }
 
       debugPrint('Combined existing documents for $learnerId: $existingDocs');
@@ -1378,7 +1381,7 @@ class _AdminPageState extends State<AdminPage> {
       String learnerId, String documentName, String filePath) async {
     try {
       final dbHelper = DatabaseHelper();
-      
+
       // Step 1: Save to local database first
       final document = {
         'learner_id': learnerId,
@@ -1394,11 +1397,13 @@ class _AdminPageState extends State<AdminPage> {
 
       // Step 2: Immediately try to sync to server
       if (await _checkConnectivity()) {
-        debugPrint('[DOCUMENT_UPLOAD] Network available - syncing to server...');
+        debugPrint(
+            '[DOCUMENT_UPLOAD] Network available - syncing to server...');
         try {
           await _syncDocument(document);
-          debugPrint('[DOCUMENT_UPLOAD] ✅ Document synced to server successfully');
-          
+          debugPrint(
+              '[DOCUMENT_UPLOAD] ✅ Document synced to server successfully');
+
           if (!mounted) return;
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1415,7 +1420,8 @@ class _AdminPageState extends State<AdminPage> {
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('$documentName saved locally (will sync when online)'),
+              content:
+                  Text('$documentName saved locally (will sync when online)'),
               backgroundColor: Colors.orange,
               duration: const Duration(seconds: 3),
             ),
@@ -1456,14 +1462,14 @@ class _AdminPageState extends State<AdminPage> {
       }
 
       var request = http.MultipartRequest('POST', Uri.parse(_uploadUrl));
-      
+
       // SECURITY: Add authentication token
       final authToken = await AppConfig.getAuthToken();
       if (authToken != null) {
         request.headers['Authorization'] = 'Bearer $authToken';
         debugPrint('[DOCUMENT_SYNC] Added auth token to upload request');
       }
-      
+
       request.fields['learner_id'] = document['learner_id'].toString();
       request.fields['documentName'] = document['documentName'];
       request.fields['status'] = document['status'];
@@ -1690,7 +1696,7 @@ class _AdminPageState extends State<AdminPage> {
                                 if (!mounted) return;
                                 if (!context.mounted) return;
                                 Navigator.pop(context);
-                                
+
                                 // Note: Success message is now shown inside uploadDocument()
                                 // based on whether sync to server succeeded or not
                               } catch (e) {
@@ -1725,7 +1731,8 @@ class _AdminPageState extends State<AdminPage> {
       final resolved = _resolveSdpIdentifier();
       if (resolved != null && resolved.isNotEmpty) {
         identifier = resolved;
-        debugPrint('[ADMIN] Resolved SDP identifier from site data: $identifier');
+        debugPrint(
+            '[ADMIN] Resolved SDP identifier from site data: $identifier');
       }
     }
 
