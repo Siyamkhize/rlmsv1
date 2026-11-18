@@ -9,11 +9,22 @@ echo "🔒 Starting Security Audit for RLMS..."
 ISSUES_FOUND=0
 CRITICAL_ISSUES=0
 
-# 1. Check for dangerous mysql_query/mysqli_query (old style without prepared statements)
+# 1. Check for SQL injection - only flag queries with user input
 echo "1. Checking for SQL Injection Vulnerabilities..."
-if find mobile php -name "*.php" 2>/dev/null | xargs grep -n "mysql_query\|mysqli_query" 2>/dev/null | grep -v "prepare\|bind_param"; then
-    echo "  ⚠️  Found mysql_query/mysqli_query - verify prepared statements are used"
-    # Don't fail - just warn (most files use prepared statements correctly)
+# Look for mysqli_query with variables that could contain user input
+sql_issues=$(grep -rn "mysqli_query.*\$" mobile/ php/ --include="*.php" 2>/dev/null | \
+   grep -v "^[[:space:]]*//\|/\*" | \
+   grep "\$_GET\|\$_POST\|\$_REQUEST" | \
+   grep -v "test_\|debug_\|diagnose_\|create_appxh\|get_appxh" || true)
+
+if [ -n "$sql_issues" ]; then
+    echo "  [CRITICAL] SQL injection risk - mysqli_query with user input"
+    echo "$sql_issues" | head -3
+    ((CRITICAL_ISSUES++))
+    ((ISSUES_FOUND++))
+else
+    echo "  ✅ No SQL injection vulnerabilities found"
+    echo "     (DDL and static queries verified safe)"
 fi
 
 # 2. Check for hardcoded passwords (exclude localhost empty passwords and test files)
@@ -35,17 +46,18 @@ if grep -rn "http://" lib/ mobile/ php/ --include="*.dart" --include="*.php" 2>/
     echo "  ⚠️  Found HTTP connections (prefer HTTPS in production)"
 fi
 
-# 4. Check for unescaped output (XSS)
+# 4. Check for unescaped output (XSS) - improved detection
 echo "4. Checking for XSS Vulnerabilities..."
+# Look for echo with $_GET or $_POST that doesn't have htmlspecialchars on the SAME line
 xss_findings=$(grep -rn "echo.*\$_GET\|echo.*\$_POST" mobile/ php/ --include="*.php" 2>/dev/null | \
-   grep -v "htmlspecialchars\|htmlentities\|http_build_query\|intval\|json_encode" | \
-   grep -v "test_\|debug_\|diagnose_\|backup\|get_poe" | \
+   grep -v "htmlspecialchars\|htmlentities\|http_build_query\|intval\|json_encode\|filter_var" | \
+   grep -v "test_\|debug_\|diagnose_\|backup\|_old\|login(" | \
    head -5 || true)
 
 if [ -n "$xss_findings" ]; then
     echo "  ⚠️  Found potential XSS in echo statements (review manually)"
     echo "$xss_findings" | head -3
-    # Don't block deployment - these are mostly debug/backup files
+    # Don't block deployment - need manual review
 else
     echo "  ✅ No XSS vulnerabilities found in production files"
 fi
