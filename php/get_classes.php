@@ -44,7 +44,7 @@ if (!isset($_GET['facilitator_id']) || empty($_GET['facilitator_id'])) {
 $facilitator_id = $conn->real_escape_string($_GET['facilitator_id']);
 
 try {
-        SELECT DISTINCT
+    $sql = "SELECT DISTINCT
             c.classID,
             c.className,
             c.siteID,
@@ -60,7 +60,7 @@ try {
         LEFT JOIN learnerdetails ld ON c.classID = ld.classID
         WHERE f.facilitator_id = ?
         GROUP BY c.classID, c.className, c.siteID, s.siteName, s.project_id, s.Project_pathway, p.Project_name
-        ORDER BY c.className
+        ORDER BY c.className";
     
     $stmt = $conn->prepare($sql);
     
