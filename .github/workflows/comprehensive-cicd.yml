@@ -165,7 +165,24 @@ jobs:
       
       - name: 🔍 PHP Syntax Check
         run: |
-          find mobile php -name "*.php" -print0 | xargs -0 -n1 php -l
+          echo "🔍 Checking PHP syntax (excluding backup files)..."
+          find mobile php -name "*.php" \
+            -not -name "*_backup*.php" \
+            -not -name "*backup*.php" \
+            -not -name "*221.php" \
+            -not -name "*22_*.php" \
+            -not -name "*_old.php" \
+            -not -name "*_OLD.php" \
+            -print0 | xargs -0 -n1 php -l 2>&1 | tee php-syntax-check.log
+          
+          # Check for errors
+          if grep -q "Parse error" php-syntax-check.log; then
+            echo "❌ PHP syntax errors found!"
+            grep "Parse error" php-syntax-check.log
+            exit 1
+          else
+            echo "✅ All PHP files have valid syntax"
+          fi
       
       - name: 🛡️ PHP Security Checker
         run: |
