@@ -114,7 +114,9 @@ jobs:
         run: flutter pub get
       
       - name: 🏗️ Build Release APK
-        run: flutter build apk --release --analyze-size
+        run: |
+          # Build for single ABI to enable size analysis
+          flutter build apk --release --target-platform android-arm64 --analyze-size
       
       - name: 📊 Analyze APK Size
         run: |
