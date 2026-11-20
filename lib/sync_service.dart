@@ -22,7 +22,7 @@ Future<bool> syncSingleClockIn(Map<String, dynamic> attendance) async {
   final connectivityResult = await Connectivity().checkConnectivity();
   debugPrint('Connectivity result: $connectivityResult');
 
-  final isOffline = connectivityResult.contains(ConnectivityResult.none);
+  final isOffline = connectivityResult == ConnectivityResult.none;
 
   if (isOffline) {
     debugPrint('No internet connection - returning false');
@@ -132,7 +132,7 @@ Future<bool> syncSingleClockOut(Map<String, dynamic> attendance) async {
   final connectivityResult = await Connectivity().checkConnectivity();
   debugPrint('Connectivity result: $connectivityResult');
 
-  final isOffline = connectivityResult.contains(ConnectivityResult.none);
+  final isOffline = connectivityResult == ConnectivityResult.none;
 
   if (isOffline) {
     debugPrint('No internet connection - returning false');
@@ -499,8 +499,8 @@ class SyncService extends ChangeNotifier {
     try {
       // Verify connectivity
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (!connectivityResult.contains(ConnectivityResult.wifi) &&
-          !connectivityResult.contains(ConnectivityResult.mobile)) {
+      if (connectivityResult != ConnectivityResult.wifi &&
+          connectivityResult != ConnectivityResult.mobile) {
         debugPrint("No network available, skipping learner details sync");
         return;
       }
@@ -570,7 +570,10 @@ class SyncService extends ChangeNotifier {
               learner['DateOfBirth'] == null ||
               learner['Name'] == null ||
               learner['Surname'] == null) {
-            debugPrint("WARNING: Server returned incomplete data for learner ${learner['IDNumber']}: " "Title=${learner['Title']}, Name=${learner['Name']}, " "Surname=${learner['Surname']}, DateOfBirth=${learner['DateOfBirth']}");
+            debugPrint(
+                "WARNING: Server returned incomplete data for learner ${learner['IDNumber']}: "
+                "Title=${learner['Title']}, Name=${learner['Name']}, "
+                "Surname=${learner['Surname']}, DateOfBirth=${learner['DateOfBirth']}");
           }
 
           // Extract bank details before inserting learner
@@ -622,7 +625,8 @@ class SyncService extends ChangeNotifier {
           }
         }
 
-        debugPrint("Successfully synchronized ${learners.length} learner records");
+        debugPrint(
+            "Successfully synchronized ${learners.length} learner records");
       } else {
         throw Exception(
             "Failed to sync learner details. Status code: ${response.statusCode}");
@@ -835,7 +839,8 @@ class SyncService extends ChangeNotifier {
               "[SYNC] Fetching ALL learner_clocking records for classID: $classID");
         }
       } else if (!currentDayOnly) {
-        debugPrint("[SYNC] Fetching ALL learner_clocking records (all classes)");
+        debugPrint(
+            "[SYNC] Fetching ALL learner_clocking records (all classes)");
       } else {
         debugPrint(
             "[SYNC] Fetching learner_clocking for date: $today (SAST), all classes");
@@ -963,7 +968,8 @@ class SyncService extends ChangeNotifier {
     try {
       debugPrint("[SYNC] Syncing ALL clocking data for classID: $classID");
       await _syncLearnerClocking(classID: classID, currentDayOnly: false);
-      debugPrint("[SYNC] All class clocking sync completed for classID: $classID");
+      debugPrint(
+          "[SYNC] All class clocking sync completed for classID: $classID");
     } catch (e) {
       debugPrint("[SYNC] Error syncing all class clocking: $e");
     }
@@ -1103,7 +1109,8 @@ class SyncService extends ChangeNotifier {
               continue;
             }
           } catch (e) {
-            debugPrint('Attempt $attempt: Error for clocking_id $clockingId: $e');
+            debugPrint(
+                'Attempt $attempt: Error for clocking_id $clockingId: $e');
             syncMessage = 'Error syncing record $clockingId: $e';
             if (attempt == maxRetries) {
               syncMessage = 'Max retries reached for record $clockingId: $e';
@@ -1333,7 +1340,8 @@ class SyncService extends ChangeNotifier {
 
           // Query the local class table to check if data is inserted
           final localClassData = await db.query('class');
-          debugPrint("Class in local database: ${localClassData.length} records");
+          debugPrint(
+              "Class in local database: ${localClassData.length} records");
 
           debugPrint("Class table synchronized successfully.");
         } else {
@@ -1487,7 +1495,7 @@ class SyncService extends ChangeNotifier {
 
   Future<bool> isConnected() async {
     final connectivityResult = await Connectivity().checkConnectivity();
-    return !connectivityResult.contains(ConnectivityResult.none);
+    return connectivityResult != ConnectivityResult.none;
   }
 
   void showSyncError(String message) {
@@ -1794,7 +1802,8 @@ class SyncService extends ChangeNotifier {
           );
         }
 
-        debugPrint("Qualification unitstandard table synchronized successfully.");
+        debugPrint(
+            "Qualification unitstandard table synchronized successfully.");
       } else {
         debugPrint(
             "Failed to sync qualification unitstandard. Status code: ${response.statusCode}");
@@ -2281,7 +2290,8 @@ class SyncService extends ChangeNotifier {
             // Update sync status in local database
             await dbHelper.updateSyncStatus(form['id']);
           } else {
-            debugPrint('Failed to sync material form: ${responseJson['message']}');
+            debugPrint(
+                'Failed to sync material form: ${responseJson['message']}');
           }
         } else {
           debugPrint('Server error: ${response.statusCode}');
@@ -2319,7 +2329,8 @@ class SyncService extends ChangeNotifier {
               try {
                 // Check for missing fields and log the specific ones
                 if (receiptForm['student_id_number'] == null) {
-                  debugPrint('Skipping record due to missing student_id_number');
+                  debugPrint(
+                      'Skipping record due to missing student_id_number');
                   continue;
                 }
                 if (receiptForm['class_name'] == null) {
@@ -2460,7 +2471,8 @@ class SyncService extends ChangeNotifier {
 
             debugPrint('Materials received data synced successfully.');
           } else {
-            debugPrint('Error syncing materials received data: ${data['message']}');
+            debugPrint(
+                'Error syncing materials received data: ${data['message']}');
           }
         } catch (e) {
           debugPrint('Error decoding JSON response: $e');
@@ -2601,7 +2613,8 @@ class SyncService extends ChangeNotifier {
             final projectCount =
                 await db.rawQuery('SELECT COUNT(*) as count FROM project');
             final count = projectCount.first['count'] as int? ?? 0;
-            debugPrint('[PROJECT_SYNC] 📊 Total projects in local database: $count');
+            debugPrint(
+                '[PROJECT_SYNC] 📊 Total projects in local database: $count');
           } else {
             debugPrint(
                 '[PROJECT_SYNC] ❌ Server response status not success: ${data['status']}');
@@ -2765,7 +2778,8 @@ class SyncService extends ChangeNotifier {
         whereArgs: [0],
       );
       if (kDebugMode) {
-        debugPrint('DEBUG: Retrieved ${result.length} unsynced learners: $result');
+        debugPrint(
+            'DEBUG: Retrieved ${result.length} unsynced learners: $result');
       }
       return result;
     } catch (e) {
@@ -2916,7 +2930,8 @@ class SyncService extends ChangeNotifier {
               }
             } else {
               if (kDebugMode) {
-                debugPrint('DEBUG: Excluding field $key = $value (empty/default value)');
+                debugPrint(
+                    'DEBUG: Excluding field $key = $value (empty/default value)');
               }
             }
           }
@@ -2967,14 +2982,16 @@ class SyncService extends ChangeNotifier {
           );
 
           if (kDebugMode) {
-            debugPrint('DEBUG: Response status for $learnerId: ${response.statusCode}');
+            debugPrint(
+                'DEBUG: Response status for $learnerId: ${response.statusCode}');
             debugPrint('DEBUG: Response headers: ${response.headers}');
           }
 
           String responseBody = await response.stream.bytesToString();
-          
+
           if (kDebugMode) {
-            debugPrint('DEBUG: Raw response body for $learnerId: "$responseBody"');
+            debugPrint(
+                'DEBUG: Raw response body for $learnerId: "$responseBody"');
           }
 
           if (response.statusCode != 200) {
@@ -3157,7 +3174,8 @@ class SyncService extends ChangeNotifier {
       }
 
       // Add valid records as JSON to the request
-      debugPrint("Sending sick note data to server: ${json.encode(validRecords)}");
+      debugPrint(
+          "Sending sick note data to server: ${json.encode(validRecords)}");
       request.fields['data'] = json.encode(validRecords);
 
       // Send the request
@@ -3379,7 +3397,8 @@ class SyncService extends ChangeNotifier {
               continue;
             }
           } catch (e) {
-            debugPrint('Attempt $attempt: Error for clocking_id $clockingId: $e');
+            debugPrint(
+                'Attempt $attempt: Error for clocking_id $clockingId: $e');
             syncMessage = 'Error syncing record $clockingId: $e';
             if (attempt == maxRetries) {
               syncMessage = 'Max retries reached for record $clockingId: $e';
@@ -3500,7 +3519,8 @@ class SyncService extends ChangeNotifier {
                 // Insert new record
                 await _dbHelper.insertData(
                     'induction_clocking', mappedClocking);
-                debugPrint("Inserted new record for ${mappedClocking['learnerId']}");
+                debugPrint(
+                    "Inserted new record for ${mappedClocking['learnerId']}");
               }
             } catch (e) {
               debugPrint("Error merging record $mappedClocking: $e");

@@ -2831,11 +2831,10 @@ updated_at TIMESTAMP
   // Connectivity Listener
   void initConnectivityListener() {
     try {
-      Connectivity().onConnectivityChanged.listen(
-          (List<ConnectivityResult> resultList) {
+      Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
         try {
           _updateConnectionStatus(
-              resultList); // Pass the entire list to the update method
+              result); // Pass the result to the update method
         } catch (e) {
           debugPrint('Error in connectivity listener: $e');
           // Don't let connectivity errors crash the app
@@ -2850,12 +2849,8 @@ updated_at TIMESTAMP
     }
   }
 
-  void _updateConnectionStatus(List<ConnectivityResult> results) {
+  void _updateConnectionStatus(ConnectivityResult result) {
     try {
-      // Assuming the first result is the relevant one (since the list may contain multiple results)
-      ConnectivityResult result =
-          results.isNotEmpty ? results.first : ConnectivityResult.none;
-
       if (result != ConnectivityResult.none) {
         debugPrint('Internet available - syncing offline data...');
         // Sync unsynced learners (profile, images, etc.) when back online
@@ -5384,7 +5379,7 @@ updated_at TIMESTAMP
     try {
       // Check connectivity first
       var connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult.contains(ConnectivityResult.none)) {
+      if (connectivityResult == ConnectivityResult.none) {
         debugPrint("No internet connection, skipping server check");
         return null;
       }
@@ -7435,8 +7430,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       bool hasInternet = false;
       try {
         final connectivityResult = await Connectivity().checkConnectivity();
-        hasInternet = connectivityResult.isNotEmpty &&
-            connectivityResult.first != ConnectivityResult.none;
+        hasInternet = connectivityResult != ConnectivityResult.none;
       } catch (e) {
         debugPrint('[SYNC-LEARNER-PROFILE] Error checking connectivity: $e');
       }
@@ -7708,7 +7702,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       try {
         // Check connectivity first
         final connectivityResult = await Connectivity().checkConnectivity();
-        if (!connectivityResult.contains(ConnectivityResult.none)) {
+        if (connectivityResult != ConnectivityResult.none) {
           debugPrint(
               '[SYNC] Internet available, attempting immediate sync for $scannerType template');
 
@@ -8347,7 +8341,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
       // Check connectivity
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult.first == ConnectivityResult.none) {
+      if (connectivityResult == ConnectivityResult.none) {
         debugPrint('[FAC_FP_SYNC] No internet connection');
         return false;
       }
@@ -9050,7 +9044,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     Timer.periodic(const Duration(seconds: 30), (timer) async {
       try {
         final connectivityResult = await Connectivity().checkConnectivity();
-        if (!connectivityResult.contains(ConnectivityResult.none)) {
+        if (connectivityResult != ConnectivityResult.none) {
           await syncUnsyncedFingerprints();
         }
       } catch (e) {

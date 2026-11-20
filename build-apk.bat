@@ -9,15 +9,17 @@ set PATH=%JAVA_HOME%\bin;%PATH%
 echo.
 echo Java version:
 java -version
+echo.
+javac -version
 
 echo.
-echo Building Flutter APK (Production Release)...
-flutter build apk --release --flavor production -t lib/main.dart
+echo Building Flutter APK (Standard Release - no flavors)...
+flutter build apk --release
 
 echo.
 if %ERRORLEVEL% EQU 0 (
     echo ✅ Build successful!
-    echo APK location: build\app\outputs\flutter-apk\app-production-release.apk
+    echo APK location: build\app\outputs\flutter-apk\app-release.apk
 ) else (
     echo ❌ Build failed with error code %ERRORLEVEL%
 )

@@ -214,11 +214,13 @@ class _MaterialFormState extends State<MaterialForm> {
           _setNoRegularMaterialSubmissionsFound();
         }
       } else {
-        debugPrint('❌ Server request failed with status: ${response.statusCode}');
+        debugPrint(
+            '❌ Server request failed with status: ${response.statusCode}');
         _setNoRegularMaterialSubmissionsFound();
       }
     } catch (e) {
-      debugPrint('💥 Error loading regular material quantities from server: $e');
+      debugPrint(
+          '💥 Error loading regular material quantities from server: $e');
       _setNoRegularMaterialSubmissionsFound();
     }
   }
@@ -520,7 +522,8 @@ class _MaterialFormState extends State<MaterialForm> {
           final Map<String, dynamic> representatives =
               data['representatives'] ?? {};
 
-          debugPrint('✅ Server returned ${checkboxStatus.length} checkbox statuses');
+          debugPrint(
+              '✅ Server returned ${checkboxStatus.length} checkbox statuses');
 
           // DEBUG: Print the raw API data
           debugPrint('🔍 DEBUG - Raw API Response:');
@@ -614,7 +617,8 @@ class _MaterialFormState extends State<MaterialForm> {
               debugPrint('✅ Learner Guide $lgId: Qty=$quantityLG, Rep=$repLG');
             }
             if (quantityFORM > 0) {
-              debugPrint('✅ Formative $formId: Qty=$quantityFORM, Rep=$repFORM');
+              debugPrint(
+                  '✅ Formative $formId: Qty=$quantityFORM, Rep=$repFORM');
             }
             if (quantitySUM > 0) {
               debugPrint('✅ Summative $sumId: Qty=$quantitySUM, Rep=$repSUM');
@@ -626,7 +630,8 @@ class _MaterialFormState extends State<MaterialForm> {
           debugPrint('❌ Server returned error: ${data['error']}');
         }
       } else {
-        debugPrint('❌ Server request failed with status: ${response.statusCode}');
+        debugPrint(
+            '❌ Server request failed with status: ${response.statusCode}');
         // Fallback to show no previous submissions
         _setNoSubmissionsFound();
       }
@@ -706,7 +711,7 @@ class _MaterialFormState extends State<MaterialForm> {
       final response = await http.get(Uri.parse(AppConfig.buildUrl(
           'getFacilitatordetails.php?classID=${widget.classID}')));
 
-if (!context.mounted) return;
+      if (!context.mounted) return;
 
       debugPrint('API Response Status: ${response.statusCode}');
       debugPrint('API Response Body: ${response.body}');
@@ -1754,7 +1759,7 @@ if (!context.mounted) return;
 
     // Check connectivity
     final connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult.contains(ConnectivityResult.none)) {
+    if (connectivityResult == ConnectivityResult.none) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -1803,7 +1808,8 @@ if (!context.mounted) return;
               'representativeSignature': base64Encode(representativeSignature!),
             };
 
-            debugPrint('📤 [SUBMISSION] Sending data: ${json.encode(formData)}');
+            debugPrint(
+                '📤 [SUBMISSION] Sending data: ${json.encode(formData)}');
 
             try {
               // Send HTTP request for this unit standard
@@ -1815,7 +1821,8 @@ if (!context.mounted) return;
                   )
                   .timeout(const Duration(seconds: 30));
 
-              debugPrint('📥 [SUBMISSION] Response Status: ${response.statusCode}');
+              debugPrint(
+                  '📥 [SUBMISSION] Response Status: ${response.statusCode}');
               debugPrint('📥 [SUBMISSION] Response Body: ${response.body}');
 
               final responseBody = json.decode(response.body);
@@ -1944,7 +1951,8 @@ if (!context.mounted) return;
 
               debugPrint(
                   '📥 [SUBMISSION] FORM Response Status: ${response.statusCode}');
-              debugPrint('📥 [SUBMISSION] FORM Response Body: ${response.body}');
+              debugPrint(
+                  '📥 [SUBMISSION] FORM Response Body: ${response.body}');
 
               final responseBody = json.decode(response.body);
               if (!responseBody['success']) {
@@ -2096,7 +2104,8 @@ if (!context.mounted) return;
         'representativeSignature': base64Encode(representativeSignature!),
       };
       debugPrint('Form Data: $formData');
-      debugPrint('Facilitator Signature Length: ${facilitatorSignature!.length}');
+      debugPrint(
+          'Facilitator Signature Length: ${facilitatorSignature!.length}');
       debugPrint(
           'Representative Signature Length: ${representativeSignature!.length}');
 
@@ -2135,7 +2144,8 @@ if (!context.mounted) return;
           });
 
           // Navigate to the same page
-          debugPrint('Navigating to MaterialForm with classID: ${widget.classID}');
+          debugPrint(
+              'Navigating to MaterialForm with classID: ${widget.classID}');
           if (!context.mounted) return;
           Navigator.pushReplacement(
             context,

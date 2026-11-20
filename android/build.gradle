@@ -15,6 +15,12 @@ allprojects {
         google()
         mavenCentral()
     }
+    
+    // Force Java 11 for all subprojects (including plugins)
+    tasks.withType(JavaCompile).configureEach {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
 }
 
 // Custom buildDir configuration removed to fix Flutter APK detection
@@ -28,7 +34,19 @@ subprojects {
         if (project.hasProperty('android')) {
             android {
                 compileSdkVersion 35
+                
+                // Force Java 11 for ALL plugins, overriding their own settings
+                compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_11
+                    targetCompatibility JavaVersion.VERSION_11
+                }
             }
+        }
+        
+        // Also force Java 11 at task level for any JavaCompile tasks
+        tasks.withType(JavaCompile).configureEach {
+            sourceCompatibility = '11'
+            targetCompatibility = '11'
         }
     }
 }

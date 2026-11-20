@@ -320,8 +320,7 @@ class _ClockInPageState extends State<ClockInPage>
     debugPrint('[INIT] Checking initial connectivity...');
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
-      final isConnected = connectivityResult.isNotEmpty &&
-          connectivityResult.first != ConnectivityResult.none;
+      final isConnected = connectivityResult != ConnectivityResult.none;
 
       debugPrint('[INIT] Connectivity result: $connectivityResult');
       debugPrint('[INIT] Initial connection status: $isConnected');
@@ -432,8 +431,7 @@ class _ClockInPageState extends State<ClockInPage>
   Future<void> _refreshConnectivityStatus() async {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
-      final isConnected = connectivityResult.isNotEmpty &&
-          connectivityResult.first != ConnectivityResult.none;
+      final isConnected = connectivityResult != ConnectivityResult.none;
       if (mounted) {
         setState(() {
           _isConnected = isConnected;
@@ -455,9 +453,7 @@ class _ClockInPageState extends State<ClockInPage>
 
   void _setupConnectivityListener() {
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
-        (List<ConnectivityResult> results) async {
-      final result =
-          results.isNotEmpty ? results.first : ConnectivityResult.none;
+        (ConnectivityResult result) async {
       final isConnected = result != ConnectivityResult.none;
       final wasOffline = !_isConnected;
 

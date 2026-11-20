@@ -142,7 +142,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
 
   Future<bool> _checkConnectivity() async {
     final connectivityResult = await Connectivity().checkConnectivity();
-    return !connectivityResult.contains(ConnectivityResult.none);
+    return connectivityResult != ConnectivityResult.none;
   }
 
   /// Fetch paginated learners from server
@@ -606,8 +606,9 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
                                   throw 'Invalid scan result';
                                 }
 
-                                final file = await resolveFlutterDocScannerPdfFile(
-                                    scanResult['pdfUri'] as String?);
+                                final file =
+                                    await resolveFlutterDocScannerPdfFile(
+                                        scanResult['pdfUri'] as String?);
                                 if (file == null ||
                                     !await isReadablePdfFile(file)) {
                                   throw 'Invalid or missing PDF file (try again; if this persists, update the app)';

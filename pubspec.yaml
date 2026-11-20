@@ -11,9 +11,9 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.6
-  js: ^0.7.1
+  js: ^0.6.7  # Required for connectivity_plus 5.x compatibility
   sqflite: ^2.3.3+1
-  connectivity_plus: ^6.0.5
+  connectivity_plus: ^5.0.2  # Java 11 compatible version
   sqflite_common_ffi: ^2.3.3+1
   signature: ^5.5.0
   camera: ^0.11.0+2
@@ -44,7 +44,7 @@ dependencies:
   path_provider: ^2.1.5
   geolocator: ^13.0.2
   crypto: ^3.0.3
-  device_info_plus: ^11.0.0
+  device_info_plus: ^11.0.0  # Forced to Java 11 via gradle override
   retry: ^3.1.2
   workmanager: ^0.7.0
   flutter_ringtone_player: ^4.0.0+2

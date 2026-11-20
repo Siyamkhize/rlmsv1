@@ -139,11 +139,13 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
           _setNoRegularMaterialSubmissionsFound();
         }
       } else {
-        debugPrint('❌ Server request failed with status: ${response.statusCode}');
+        debugPrint(
+            '❌ Server request failed with status: ${response.statusCode}');
         _setNoRegularMaterialSubmissionsFound();
       }
     } catch (e) {
-      debugPrint('💥 Error loading regular material quantities from server: $e');
+      debugPrint(
+          '💥 Error loading regular material quantities from server: $e');
       _setNoRegularMaterialSubmissionsFound();
     }
   }
@@ -415,7 +417,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
           final Map<String, dynamic> representatives =
               data['representatives'] ?? {};
 
-          debugPrint('✅ Server returned ${checkboxStatus.length} checkbox statuses');
+          debugPrint(
+              '✅ Server returned ${checkboxStatus.length} checkbox statuses');
 
           // DEBUG: Print the raw API data
           debugPrint('🔍 DEBUG - Raw API Response:');
@@ -538,11 +541,13 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
           debugPrint('❌ Server returned error: ${data['error']}');
         }
       } else {
-        debugPrint('❌ Server request failed with status: ${response.statusCode}');
+        debugPrint(
+            '❌ Server request failed with status: ${response.statusCode}');
         _setNoSubmissionsFound();
       }
     } catch (e) {
-      debugPrint('💥 Error loading facilitator material status from server: $e');
+      debugPrint(
+          '💥 Error loading facilitator material status from server: $e');
       _setNoSubmissionsFound();
     }
   }
@@ -1140,13 +1145,16 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
                   selectedUnitStandards[usId] = value ?? false;
 
                   // Enhanced debug logging for formative and summative
-                  debugPrint('🔄 Checkbox changed for $usId: ${value ?? false}');
+                  debugPrint(
+                      '🔄 Checkbox changed for $usId: ${value ?? false}');
                   if (usId.contains('_FORM')) {
-                    debugPrint('   ✅ FORMATIVE checkbox: $usId = ${value ?? false}');
+                    debugPrint(
+                        '   ✅ FORMATIVE checkbox: $usId = ${value ?? false}');
                     debugPrint(
                         '   📊 Current formative state: ${selectedUnitStandards[usId]}');
                   } else if (usId.contains('_SUM')) {
-                    debugPrint('   ✅ SUMMATIVE checkbox: $usId = ${value ?? false}');
+                    debugPrint(
+                        '   ✅ SUMMATIVE checkbox: $usId = ${value ?? false}');
                     debugPrint(
                         '   📊 Current summative state: ${selectedUnitStandards[usId]}');
                   }
@@ -2019,7 +2027,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
 
     // Check connectivity
     final connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult.contains(ConnectivityResult.none)) {
+    if (connectivityResult == ConnectivityResult.none) {
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2113,7 +2121,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             } catch (e) {
               allSuccessful = false;
               failedSubmissions.add(usName);
-              debugPrint('💥 [FACILITATOR SUBMISSION] EXCEPTION for $usName: $e');
+              debugPrint(
+                  '💥 [FACILITATOR SUBMISSION] EXCEPTION for $usName: $e');
             }
           }
 
@@ -2181,7 +2190,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             } catch (e) {
               allSuccessful = false;
               failedSubmissions.add(lgName);
-              debugPrint('💥 [FACILITATOR SUBMISSION] EXCEPTION for $lgName: $e');
+              debugPrint(
+                  '💥 [FACILITATOR SUBMISSION] EXCEPTION for $lgName: $e');
             }
           }
 
@@ -2202,7 +2212,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             int quantityFORM = unitStandardQuantities[formId] ?? 1;
             String formName = '$usId - Formative';
 
-            debugPrint('🔄 [FACILITATOR SUBMISSION] Starting Formative submission:');
+            debugPrint(
+                '🔄 [FACILITATOR SUBMISSION] Starting Formative submission:');
             debugPrint('   - ID: $formId');
             debugPrint('   - Name: $formName');
             debugPrint('   - Quantity: $quantityFORM');
@@ -2255,7 +2266,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             } catch (e) {
               allSuccessful = false;
               failedSubmissions.add(formName);
-              debugPrint('💥 [FACILITATOR SUBMISSION] EXCEPTION for $formName: $e');
+              debugPrint(
+                  '💥 [FACILITATOR SUBMISSION] EXCEPTION for $formName: $e');
             }
           }
 
@@ -2276,7 +2288,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             int quantitySUM = unitStandardQuantities[sumId] ?? 1;
             String sumName = '$usId - Summative';
 
-            debugPrint('🔄 [FACILITATOR SUBMISSION] Starting Summative submission:');
+            debugPrint(
+                '🔄 [FACILITATOR SUBMISSION] Starting Summative submission:');
             debugPrint('   - ID: $sumId');
             debugPrint('   - Name: $sumName');
             debugPrint('   - Quantity: $quantitySUM');
@@ -2329,7 +2342,8 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
             } catch (e) {
               allSuccessful = false;
               failedSubmissions.add(sumName);
-              debugPrint('💥 [FACILITATOR SUBMISSION] EXCEPTION for $sumName: $e');
+              debugPrint(
+                  '💥 [FACILITATOR SUBMISSION] EXCEPTION for $sumName: $e');
             }
           }
         }

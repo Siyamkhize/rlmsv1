@@ -116,11 +116,11 @@ class _SignatureGeofenceClockInPageState
 
   void _startConnectivityMonitoring() {
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
-      List<ConnectivityResult> results,
+      ConnectivityResult result,
     ) {
       final wasOffline = !_isOnline;
       setState(() {
-        _isOnline = isDeviceOnline(results);
+        _isOnline = isDeviceOnline(result);
       });
 
       // If just came online, trigger sync of offline records

@@ -175,7 +175,7 @@ class _FacilitatorFaceClockOutPageState
 
       // 2. Check server if online
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult.first != ConnectivityResult.none) {
+      if (connectivityResult != ConnectivityResult.none) {
         debugPrint('[FAC_FACE_CLOCKOUT] Checking server for clocking status');
         final serverStatus = await _checkServerForClockingStatus(today);
 
@@ -245,7 +245,7 @@ class _FacilitatorFaceClockOutPageState
           }
         }
       }
-      
+
       // No record found - not clocked in
       return 'not_clocked_in';
     } catch (e) {
@@ -410,7 +410,7 @@ class _FacilitatorFaceClockOutPageState
     try {
       // Check connectivity
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult.first == ConnectivityResult.none) {
+      if (connectivityResult == ConnectivityResult.none) {
         debugPrint('[FAC_FACE_CLOCKOUT] Offline - will sync later');
         return;
       }

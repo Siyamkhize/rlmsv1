@@ -134,11 +134,13 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
           _setNoRegularMaterialSubmissionsFound();
         }
       } else {
-        debugPrint('❌ Server request failed with status: ${response.statusCode}');
+        debugPrint(
+            '❌ Server request failed with status: ${response.statusCode}');
         _setNoRegularMaterialSubmissionsFound();
       }
     } catch (e) {
-      debugPrint('💥 Error loading regular material quantities from server: $e');
+      debugPrint(
+          '💥 Error loading regular material quantities from server: $e');
       _setNoRegularMaterialSubmissionsFound();
     }
   }
@@ -410,7 +412,8 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
           final Map<String, dynamic> representatives =
               data['representatives'] ?? {};
 
-          debugPrint('✅ Server returned ${checkboxStatus.length} checkbox statuses');
+          debugPrint(
+              '✅ Server returned ${checkboxStatus.length} checkbox statuses');
 
           // Apply server data to unit standards
           for (var us in unitStandards) {
@@ -493,7 +496,8 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
           debugPrint('❌ Server returned error: ${data['error']}');
         }
       } else {
-        debugPrint('❌ Server request failed with status: ${response.statusCode}');
+        debugPrint(
+            '❌ Server request failed with status: ${response.statusCode}');
         _setNoSubmissionsFound();
       }
     } catch (e) {
@@ -564,14 +568,15 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
   // Fetch data online
   Future<void> fetchDataOnline() async {
     try {
-      debugPrint('[FETCH_ONLINE] Starting fetch for classID: ${widget.classID}');
+      debugPrint(
+          '[FETCH_ONLINE] Starting fetch for classID: ${widget.classID}');
       final url =
           AppConfig.buildUrl('get_learners.php?classID=${widget.classID}');
       debugPrint('[FETCH_ONLINE] URL: $url');
 
       final response = await http.get(Uri.parse(url));
 
-if (!context.mounted) return;
+      if (!context.mounted) return;
 
       debugPrint('[FETCH_ONLINE] API Response Status: ${response.statusCode}');
       debugPrint('[FETCH_ONLINE] API Response Body: ${response.body}');
@@ -582,7 +587,8 @@ if (!context.mounted) return;
         // Check if response is an array or error object
         if (responseData is List) {
           final List<dynamic> data = responseData;
-          debugPrint('[FETCH_ONLINE] Received ${data.length} learners from API');
+          debugPrint(
+              '[FETCH_ONLINE] Received ${data.length} learners from API');
 
           setState(() {
             learners = data.map((learner) {
@@ -796,9 +802,10 @@ if (!context.mounted) return;
                                 setState(() {
                                   selectedLearnerID = newValue;
                                   // Find the selected learner and update the name
-                                  final selectedLearner = learners.any((learner) =>
-                                          learner['LearnerID'].toString() ==
-                                          newValue)
+                                  final selectedLearner = learners.any(
+                                          (learner) =>
+                                              learner['LearnerID'].toString() ==
+                                              newValue)
                                       ? learners.firstWhere((learner) =>
                                           learner['LearnerID'].toString() ==
                                           newValue)
@@ -2048,7 +2055,7 @@ if (!context.mounted) return;
 
     // Check connectivity
     final connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult.contains(ConnectivityResult.none)) {
+    if (connectivityResult == ConnectivityResult.none) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -2074,7 +2081,8 @@ if (!context.mounted) return;
           int quantityUS = unitStandardQuantities[usId] ?? 0;
           // ⚠️ VALIDATION: Skip if quantity is 0
           if ((isSelectedUS || existingUS > 0) && quantityUS > 0) {
-            debugPrint('🔄 [LEARNER SUBMISSION] Starting Unit Standard submission:');
+            debugPrint(
+                '🔄 [LEARNER SUBMISSION] Starting Unit Standard submission:');
             debugPrint('   - ID: $usId');
             debugPrint('   - Name: $usName');
             debugPrint('   - Quantity: $quantityUS');
@@ -2113,7 +2121,8 @@ if (!context.mounted) return;
 
               debugPrint(
                   '📥 [LEARNER SUBMISSION] Response Status: ${response.statusCode}');
-              debugPrint('📥 [LEARNER SUBMISSION] Response Body: ${response.body}');
+              debugPrint(
+                  '📥 [LEARNER SUBMISSION] Response Body: ${response.body}');
 
               final responseBody = json.decode(response.body);
               if (!responseBody['success']) {

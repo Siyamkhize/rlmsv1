@@ -13,8 +13,8 @@ class SyncServiceNullSafe {
     try {
       // Verify connectivity
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (!connectivityResult.contains(ConnectivityResult.wifi) &&
-          !connectivityResult.contains(ConnectivityResult.mobile)) {
+      if (connectivityResult != ConnectivityResult.wifi &&
+          connectivityResult != ConnectivityResult.mobile) {
         debugPrint("No network available, skipping learner details sync");
         return;
       }

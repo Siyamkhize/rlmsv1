@@ -75,9 +75,8 @@ void callbackDispatcher() {
         final syncService = SyncService();
 
         final connectivityResult = await Connectivity().checkConnectivity();
-        final hasNetwork =
-            connectivityResult.contains(ConnectivityResult.wifi) ||
-                connectivityResult.contains(ConnectivityResult.mobile);
+        final hasNetwork = connectivityResult == ConnectivityResult.wifi ||
+            connectivityResult == ConnectivityResult.mobile;
 
         if (hasNetwork) {
           debugPrint("Background sync: Network available, starting sync...");
@@ -97,9 +96,8 @@ void callbackDispatcher() {
         debugPrint("Connectivity check task started at ${DateTime.now()}");
         final connectivityResult = await Connectivity().checkConnectivity();
         debugPrint("Connectivity result: $connectivityResult");
-        final hasNetwork =
-            connectivityResult.contains(ConnectivityResult.wifi) ||
-                connectivityResult.contains(ConnectivityResult.mobile);
+        final hasNetwork = connectivityResult == ConnectivityResult.wifi ||
+            connectivityResult == ConnectivityResult.mobile;
         debugPrint("Has network: $hasNetwork");
 
         if (!hasNetwork) {
@@ -329,12 +327,12 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _checkConnectivity() async {
     try {
-      final List<ConnectivityResult> results =
+      final ConnectivityResult result =
           await Connectivity().checkConnectivity();
       setState(() {
-        _isOffline = !results.contains(ConnectivityResult.wifi) &&
-            !results.contains(ConnectivityResult.mobile);
-        _connectivityStatus = _getStatusMessage(results);
+        _isOffline = result != ConnectivityResult.wifi &&
+            result != ConnectivityResult.mobile;
+        _connectivityStatus = _getStatusMessage(result);
       });
     } catch (e) {
       setState(() {
@@ -343,11 +341,11 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  String _getStatusMessage(List<ConnectivityResult> results) {
-    if (results.isEmpty) return 'No Internet Connection';
-    if (results.contains(ConnectivityResult.wifi)) {
+  String _getStatusMessage(ConnectivityResult result) {
+    if (result == ConnectivityResult.none) return 'No Internet Connection';
+    if (result == ConnectivityResult.wifi) {
       return 'Connected via Wi-Fi';
-    } else if (results.contains(ConnectivityResult.mobile)) {
+    } else if (result == ConnectivityResult.mobile) {
       return 'Connected via Mobile Data';
     } else {
       return 'No Internet Connection';

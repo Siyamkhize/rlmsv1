@@ -625,9 +625,7 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
   void _setupConnectivityListener() {
     _connectivitySubscription = Connectivity()
         .onConnectivityChanged
-        .listen((List<ConnectivityResult> results) {
-      final result =
-          results.isNotEmpty ? results.first : ConnectivityResult.none;
+        .listen((ConnectivityResult result) {
       if (result != ConnectivityResult.none) {
         debugPrint(
             '[CONNECTIVITY] Internet available, attempting to sync fingerprints');

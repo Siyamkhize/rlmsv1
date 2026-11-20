@@ -23,8 +23,7 @@ class PersistentSyncService {
     try {
       // Check connectivity
       final connectivityResult = await Connectivity().checkConnectivity();
-      final isOnline = connectivityResult.isNotEmpty &&
-          connectivityResult.first != ConnectivityResult.none;
+      final isOnline = connectivityResult != ConnectivityResult.none;
 
       if (!isOnline) {
         debugPrint('[PERSISTENT_SYNC] Offline - using cached local data');
@@ -236,8 +235,7 @@ class PersistentSyncService {
 
       // Check connectivity first
       final connectivityResult = await Connectivity().checkConnectivity();
-      final isOnline = connectivityResult.isNotEmpty &&
-          connectivityResult.first != ConnectivityResult.none;
+      final isOnline = connectivityResult != ConnectivityResult.none;
 
       if (!isOnline) {
         return {

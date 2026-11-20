@@ -122,7 +122,7 @@ class _FacilitatorFaceClockInPageState
 
       // 2. Check server if online
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult.first != ConnectivityResult.none) {
+      if (connectivityResult != ConnectivityResult.none) {
         debugPrint('[FAC_FACE_CLOCKIN] Checking server for existing clock-in');
         final serverHasRecord = await _checkServerForClockIn(today);
 
@@ -352,7 +352,7 @@ class _FacilitatorFaceClockInPageState
     try {
       // Check connectivity
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult.first == ConnectivityResult.none) {
+      if (connectivityResult == ConnectivityResult.none) {
         debugPrint('[FAC_FACE_CLOCKIN] Offline - will sync later');
         return;
       }

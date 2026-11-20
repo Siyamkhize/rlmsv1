@@ -17,7 +17,7 @@ class PersistentSyncService {
   factory PersistentSyncService() => _instance;
   PersistentSyncService._internal();
 
-  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+  StreamSubscription<ConnectivityResult>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
   bool _isSyncing = false;
   DateTime? _lastSyncTime;
@@ -29,9 +29,7 @@ class PersistentSyncService {
 
     // Listen for connectivity changes
     _connectivitySubscription =
-        Connectivity().onConnectivityChanged.listen((results) {
-      final result =
-          results.isNotEmpty ? results.first : ConnectivityResult.none;
+        Connectivity().onConnectivityChanged.listen((result) {
       if (result != ConnectivityResult.none) {
         debugPrint('[PERSISTENT_SYNC] Connectivity restored: $result');
         _triggerBackgroundSync();
@@ -62,8 +60,7 @@ class PersistentSyncService {
 
     // Check connectivity first to avoid unnecessary work
     final connectivityResult = await Connectivity().checkConnectivity();
-    final isConnected = connectivityResult.isNotEmpty &&
-        connectivityResult.first != ConnectivityResult.none;
+    final isConnected = connectivityResult != ConnectivityResult.none;
 
     if (!isConnected) {
       debugPrint('[PERSISTENT_SYNC] No connectivity, skipping sync');
@@ -101,8 +98,7 @@ class PersistentSyncService {
 
       // Check connectivity
       final connectivityResult = await Connectivity().checkConnectivity();
-      final isConnected = connectivityResult.isNotEmpty &&
-          connectivityResult.first != ConnectivityResult.none;
+      final isConnected = connectivityResult != ConnectivityResult.none;
 
       if (!isConnected) {
         result.success = false;

@@ -63,7 +63,7 @@ class _PPESizesPageState extends State<PPESizesPage> {
 
       // If online, also check server for latest data
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult.first != ConnectivityResult.none) {
+      if (connectivityResult != ConnectivityResult.none) {
         await _loadFromServer();
       }
     } catch (e) {
@@ -189,7 +189,7 @@ class _PPESizesPageState extends State<PPESizesPage> {
 
       // Try to sync to server if online
       final connectivityResult = await Connectivity().checkConnectivity();
-      final isOnline = connectivityResult.first != ConnectivityResult.none;
+      final isOnline = connectivityResult != ConnectivityResult.none;
 
       bool synced = false;
       if (isOnline) {

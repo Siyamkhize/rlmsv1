@@ -126,7 +126,7 @@ class _FacilitatorFingerprintPageState
       if (!alreadyClockedIn) {
         debugPrint('[FAC_CHECK] Not found locally, checking server...');
         final connectivityResult = await Connectivity().checkConnectivity();
-        if (connectivityResult.first != ConnectivityResult.none) {
+        if (connectivityResult != ConnectivityResult.none) {
           try {
             final url = Uri.parse(
                 '${AppConfig.baseUrl}/get_facilitator_attendance.php?facilitator_id=${widget.facilitatorId}&date=$today');
@@ -344,7 +344,7 @@ class _FacilitatorFingerprintPageState
       final connectivityResult = await Connectivity().checkConnectivity();
       debugPrint('[FAC_SYNC] Connectivity: $connectivityResult');
 
-      if (connectivityResult.first == ConnectivityResult.none) {
+      if (connectivityResult == ConnectivityResult.none) {
         debugPrint('[FAC_SYNC] ? No internet connection');
         return false;
       }
@@ -418,7 +418,7 @@ class _FacilitatorFingerprintPageState
   Future<bool> _syncClockOutToServer(Map<String, dynamic> attendance) async {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult.first == ConnectivityResult.none) {
+      if (connectivityResult == ConnectivityResult.none) {
         debugPrint('[FAC_SYNC] No internet connection');
         return false;
       }
@@ -549,7 +549,7 @@ class _FacilitatorFingerprintPageState
           '[FAC_SYNC] Checking connectivity for facilitator data sync...');
       final connectivityResult = await Connectivity().checkConnectivity();
 
-      if (connectivityResult.first == ConnectivityResult.none) {
+      if (connectivityResult == ConnectivityResult.none) {
         debugPrint('[FAC_SYNC] Offline - using local data only');
         return;
       }
@@ -1066,7 +1066,7 @@ class _FacilitatorFingerprintPageState
 
         // Try to sync to server
         bool synced = false;
-        if (connectivityResult.first != ConnectivityResult.none) {
+        if (connectivityResult != ConnectivityResult.none) {
           debugPrint('[FAC_CLOCK] Step 3: Online - attempting server sync...');
           try {
             synced = await _syncClockInToServer(attendance);
@@ -1578,7 +1578,7 @@ class _FacilitatorFingerprintPageState
             TextButton(
               onPressed: () {
                 _signatureController?.clear();
-              if (!context.mounted) return;
+                if (!context.mounted) return;
               },
               child: const Text('Clear'),
             ),

@@ -1,12 +1,11 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-/// connectivity_plus 6.x returns [List<ConnectivityResult>], not a single value.
-bool isDeviceOnline(List<ConnectivityResult> results) {
-  if (results.isEmpty) return false;
-  return results.any((r) => r != ConnectivityResult.none);
+/// connectivity_plus 5.x returns single ConnectivityResult, not a list.
+bool isDeviceOnline(ConnectivityResult result) {
+  return result != ConnectivityResult.none;
 }
 
 Future<bool> hasNetworkConnectivity() async {
-  final results = await Connectivity().checkConnectivity();
-  return isDeviceOnline(results);
+  final result = await Connectivity().checkConnectivity();
+  return isDeviceOnline(result);
 }

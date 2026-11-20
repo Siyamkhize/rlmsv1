@@ -116,7 +116,7 @@ class _PoeBulkScanPageState extends State<PoeBulkScanPage> {
     try {
       // Check connectivity first
       final connectivityResult = await Connectivity().checkConnectivity();
-      final isOnline = connectivityResult.first != ConnectivityResult.none;
+      final isOnline = connectivityResult != ConnectivityResult.none;
 
       if (isOnline) {
         // ONLINE: Save locally first, then sync to server immediately

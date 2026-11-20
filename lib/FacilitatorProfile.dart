@@ -200,7 +200,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
   Future<void> _loadAssessorExpiryFromServer(
       Map<String, dynamic> localData) async {
     var connectivityResult = await Connectivity().checkConnectivity();
-    if (!connectivityResult.contains(ConnectivityResult.none)) {
+    if (connectivityResult != ConnectivityResult.none) {
       try {
         final response = await http.get(
           Uri.parse(
@@ -247,7 +247,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
   // }
   Future<void> _loadOnlineProfileImage() async {
     var connectivityResult = await Connectivity().checkConnectivity();
-    if (!connectivityResult.contains(ConnectivityResult.none)) {
+    if (connectivityResult != ConnectivityResult.none) {
       try {
         final response = await http.get(
           Uri.parse(
@@ -569,7 +569,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
     if (profileImagePath == null ||
         !await Connectivity()
             .checkConnectivity()
-            .then((r) => !r.contains(ConnectivityResult.none))) {
+            .then((r) => r != ConnectivityResult.none)) {
       return;
     }
     int maxRetries = 3;
@@ -623,7 +623,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
   Future<void> _syncDataOnline() async {
     if (!await Connectivity()
         .checkConnectivity()
-        .then((r) => !r.contains(ConnectivityResult.none))) {
+        .then((r) => r != ConnectivityResult.none)) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

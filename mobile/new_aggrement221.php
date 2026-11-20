@@ -2434,6 +2434,7 @@ $IDNumbers = $_GET['IDNumbers'] ?? null;
 if ($LearnerID && is_numeric($LearnerID)) {
 
     // Single learner processing
+    try {
 
     $sql = "
 
