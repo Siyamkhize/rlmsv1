@@ -3,7 +3,7 @@
     "description": "POE Document Management System",
     "type": "project",
     "require": {
-        "php": ">=7.4 <8.2",
+        "php": ">=7.4",
         "setasign/fpdf": "^1.8",
         "setasign/fpdi": "2.3.7"
     },
