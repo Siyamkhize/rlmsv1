@@ -5,7 +5,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.3.1'  // AGP 7.3.1 works with Gradle 7.4+
+        classpath 'com.android.tools.build:gradle:7.3.1'  // AGP 7.3.1 compatible with Java 11
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22"  // Compatible with AGP 7.3.1
     }
 }
