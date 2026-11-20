@@ -7,10 +7,11 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 class EnrollmentPage extends StatefulWidget {
   final int learnerId;
   final bool returnToClockAfterEnroll;
-  const EnrollmentPage(
-      {super.key,
-      required this.learnerId,
-      this.returnToClockAfterEnroll = false});
+  const EnrollmentPage({
+    super.key,
+    required this.learnerId,
+    this.returnToClockAfterEnroll = false,
+  });
 
   @override
   _EnrollmentPageState createState() => _EnrollmentPageState();
@@ -59,14 +60,16 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
 
   Future<void> _checkEnrolledThumbs() async {
     debugPrint(
-        '[CHECK_THUMBS] Starting enrollment check for learner ${widget.learnerId}');
+      '[CHECK_THUMBS] Starting enrollment check for learner ${widget.learnerId}',
+    );
     // First detect the currently connected scanner
     final scanner = await _detectScanner();
 
     // If scanner changed, clean up the previous scanner's state
     if (_activeScanner != scanner && _activeScanner != 'auto') {
       debugPrint(
-          '[SCANNER_SWITCH] Switching from $_activeScanner to $scanner - cleaning up previous scanner');
+        '[SCANNER_SWITCH] Switching from $_activeScanner to $scanner - cleaning up previous scanner',
+      );
       await _cleanupPreviousScanner(_activeScanner);
     }
 
@@ -81,8 +84,9 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
 
     // Also try the getFingerprints method for comparison
     debugPrint('[CHECK_THUMBS] Calling getFingerprints for comparison');
-    final fingerprintTemplates =
-        await _databaseHelper.getFingerprints(widget.learnerId);
+    final fingerprintTemplates = await _databaseHelper.getFingerprints(
+      widget.learnerId,
+    );
     debugPrint('[CHECK_THUMBS] getFingerprints result: $fingerprintTemplates');
 
     bool leftEnrolled = false;
@@ -90,32 +94,41 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
 
     if (scanner == 'zkteco') {
       // Check ZKTeco templates
-      leftEnrolled = templates['zkteco_left_template'] != null &&
+      leftEnrolled =
+          templates['zkteco_left_template'] != null &&
           templates['zkteco_left_template']!.isNotEmpty;
-      rightEnrolled = templates['zkteco_right_template'] != null &&
+      rightEnrolled =
+          templates['zkteco_right_template'] != null &&
           templates['zkteco_right_template']!.isNotEmpty;
       debugPrint(
-          '[DB] ZKTeco enrollment status: left=$leftEnrolled, right=$rightEnrolled');
+        '[DB] ZKTeco enrollment status: left=$leftEnrolled, right=$rightEnrolled',
+      );
     } else if (scanner == 'futronic') {
       // Check Futronic templates
-      leftEnrolled = templates['futronic_left_template'] != null &&
+      leftEnrolled =
+          templates['futronic_left_template'] != null &&
           templates['futronic_left_template']!.isNotEmpty;
-      rightEnrolled = templates['futronic_right_template'] != null &&
+      rightEnrolled =
+          templates['futronic_right_template'] != null &&
           templates['futronic_right_template']!.isNotEmpty;
       debugPrint(
-          '[DB] Futronic enrollment status: left=$leftEnrolled, right=$rightEnrolled');
+        '[DB] Futronic enrollment status: left=$leftEnrolled, right=$rightEnrolled',
+      );
     } else {
       // No scanner connected - check if any templates exist
-      leftEnrolled = (templates['zkteco_left_template'] != null &&
+      leftEnrolled =
+          (templates['zkteco_left_template'] != null &&
               templates['zkteco_left_template']!.isNotEmpty) ||
           (templates['futronic_left_template'] != null &&
               templates['futronic_left_template']!.isNotEmpty);
-      rightEnrolled = (templates['zkteco_right_template'] != null &&
+      rightEnrolled =
+          (templates['zkteco_right_template'] != null &&
               templates['zkteco_right_template']!.isNotEmpty) ||
           (templates['futronic_right_template'] != null &&
               templates['futronic_right_template']!.isNotEmpty);
       debugPrint(
-          '[DB] No scanner - any enrollment status: left=$leftEnrolled, right=$rightEnrolled');
+        '[DB] No scanner - any enrollment status: left=$leftEnrolled, right=$rightEnrolled',
+      );
     }
 
     setState(() {
@@ -146,24 +159,28 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
   }
 
   void _setupStreamListeners() {
-    _enrollStatusSubscription =
-        _fingerprintService.enrollStatusStream.listen((status) {
+    _enrollStatusSubscription = _fingerprintService.enrollStatusStream.listen((
+      status,
+    ) {
       debugPrint('[ENROLL_STATUS_STREAM] $status'); // Debug log
       if (!mounted) return;
 
       // Check if this status will clear enrollment state
-      bool willClearState = status.toLowerCase().contains('error') ||
+      bool willClearState =
+          status.toLowerCase().contains('error') ||
           status.toLowerCase().contains('failed');
       if (willClearState) {
         debugPrint(
-            '[ENROLL_STATUS_STREAM] Status will clear enrollment state: $status');
+          '[ENROLL_STATUS_STREAM] Status will clear enrollment state: $status',
+        );
       }
 
       setState(() {
         _enrollmentStatus = status;
         if (willClearState) {
           debugPrint(
-              '[ENROLL_STATUS_STREAM] Clearing enrollment state due to error/failed status');
+            '[ENROLL_STATUS_STREAM] Clearing enrollment state due to error/failed status',
+          );
           _isEnrolling = false;
           _enrollmentInProgress = false; // Clear lock on error
           _lastEnrollmentStart = null; // Clear enrollment protection
@@ -179,18 +196,21 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
       });
     });
 
-    _enrollSuccessSubscription =
-        _fingerprintService.enrollSuccessStream.listen((result) async {
+    _enrollSuccessSubscription = _fingerprintService.enrollSuccessStream.listen((
+      result,
+    ) async {
       debugPrint('[ENROLL_SUCCESS_STREAM] $result'); // Debug log
       if (!mounted) return;
 
       debugPrint(
-          '[ENROLL_SUCCESS_STREAM] State before processing: _isEnrolling=$_isEnrolling, _enrollmentInProgress=$_enrollmentInProgress');
+        '[ENROLL_SUCCESS_STREAM] State before processing: _isEnrolling=$_isEnrolling, _enrollmentInProgress=$_enrollmentInProgress',
+      );
 
       final finger = result['finger'] as String?;
       final template = result['template'];
       debugPrint(
-          '[ENROLL] Received enrollSuccessStream: finger=$finger, template type=${template?.runtimeType}, template length=${template != null ? template.toString().length : 0}');
+        '[ENROLL] Received enrollSuccessStream: finger=$finger, template type=${template?.runtimeType}, template length=${template != null ? template.toString().length : 0}',
+      );
 
       if (finger == null || template == null) {
         setState(() {
@@ -199,7 +219,8 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
         });
         _showSnackBar('Invalid enrollment data');
         debugPrint(
-            '[ENROLL] Invalid enrollment data: finger=$finger, template=$template');
+          '[ENROLL] Invalid enrollment data: finger=$finger, template=$template',
+        );
         return;
       }
 
@@ -208,16 +229,22 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
         // Keep ZKTeco acceptance more permissive and rely on device's own quality metrics.
 
         final bool isSynced = await _databaseHelper.saveFingerprintSmart(
-            widget.learnerId, finger, template,
-            scannerType: 'zkteco');
+          widget.learnerId,
+          finger,
+          template,
+          scannerType: 'zkteco',
+        );
         debugPrint(
-            '[ENROLL] Saved ZKTeco fingerprint for learnerId= ${widget.learnerId}, finger=$finger, template length=${template.toString().length}, synced=$isSynced');
+          '[ENROLL] Saved ZKTeco fingerprint for learnerId= ${widget.learnerId}, finger=$finger, template length=${template.toString().length}, synced=$isSynced',
+        );
         debugPrint(
-            '[ENROLL] ZKTeco template preview: ${template.toString().isNotEmpty ? template.toString().substring(0, template.toString().length > 50 ? 50 : template.toString().length) : 'EMPTY'}');
+          '[ENROLL] ZKTeco template preview: ${template.toString().isNotEmpty ? template.toString().substring(0, template.toString().length > 50 ? 50 : template.toString().length) : 'EMPTY'}',
+        );
         debugPrint('[ENROLL] ZKTeco template type: ${template.runtimeType}');
         debugPrint('[ENROLL] ZKTeco template is null: ${template == null}');
         debugPrint(
-            '[ENROLL] ZKTeco template is empty string: ${template.toString().isEmpty}');
+          '[ENROLL] ZKTeco template is empty string: ${template.toString().isEmpty}',
+        );
 
         if (!mounted) return;
 
@@ -230,8 +257,9 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
             _leftEnrollCooldown = 5; // Reduced from 20 to 5 seconds
             _leftCooldownTimer?.cancel();
             debugPrint('[TIMER] Starting left thumb cooldown');
-            _leftCooldownTimer =
-                Timer.periodic(const Duration(seconds: 1), (timer) {
+            _leftCooldownTimer = Timer.periodic(const Duration(seconds: 1), (
+              timer,
+            ) {
               if (!mounted) return;
               setState(() {
                 if (_leftEnrollCooldown > 0) {
@@ -251,8 +279,9 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
             _rightEnrollCooldown = 5; // Reduced from 20 to 5 seconds
             _rightCooldownTimer?.cancel();
             debugPrint('[TIMER] Starting right thumb cooldown');
-            _rightCooldownTimer =
-                Timer.periodic(const Duration(seconds: 1), (timer) {
+            _rightCooldownTimer = Timer.periodic(const Duration(seconds: 1), (
+              timer,
+            ) {
               if (!mounted) return;
               setState(() {
                 if (_rightEnrollCooldown > 0) {
@@ -289,10 +318,12 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
         // Show appropriate message based on sync status
         if (isSynced) {
           _showSnackBar(
-              'Fingerprint enrolled and synced to server for $finger thumb');
+            'Fingerprint enrolled and synced to server for $finger thumb',
+          );
         } else {
           _showSnackBar(
-              'Fingerprint enrolled locally for $finger thumb (will sync when online)');
+            'Fingerprint enrolled locally for $finger thumb (will sync when online)',
+          );
         }
 
         // If requested, navigate back automatically once at least one thumb is enrolled
@@ -300,8 +331,9 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
             (_leftThumbEnrolled || _rightThumbEnrolled)) {
           Future.delayed(const Duration(milliseconds: 300), () {
             if (mounted && Navigator.of(context).canPop()) {
-              Navigator.of(context)
-                  .pop(true); // return true to indicate enrollment happened
+              Navigator.of(
+                context,
+              ).pop(true); // return true to indicate enrollment happened
             }
           });
         }
@@ -322,27 +354,31 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
       }
     });
 
-    _sensorStatusSubscription =
-        _fingerprintService.sensorStatusStream.listen((status) {
+    _sensorStatusSubscription = _fingerprintService.sensorStatusStream.listen((
+      status,
+    ) {
       debugPrint('[SENSOR_STATUS_STREAM] Received: $status');
       debugPrint(
-          '[SENSOR_STATUS_STREAM] Current state: _isEnrolling=$_isEnrolling, _enrollmentInProgress=$_enrollmentInProgress');
+        '[SENSOR_STATUS_STREAM] Current state: _isEnrolling=$_isEnrolling, _enrollmentInProgress=$_enrollmentInProgress',
+      );
 
       if (!mounted) return;
 
       // Check independent protection window first
       bool inIndependentProtection = false;
       if (_enrollmentProtectionStart != null) {
-        final timeSinceProtectionStart =
-            DateTime.now().difference(_enrollmentProtectionStart!);
+        final timeSinceProtectionStart = DateTime.now().difference(
+          _enrollmentProtectionStart!,
+        );
         inIndependentProtection = timeSinceProtectionStart.inSeconds < 15;
       }
 
       // Check if we're within enrollment protection window
       bool inProtectionWindow = false;
       if (_lastEnrollmentStart != null) {
-        final timeSinceEnrollment =
-            DateTime.now().difference(_lastEnrollmentStart!);
+        final timeSinceEnrollment = DateTime.now().difference(
+          _lastEnrollmentStart!,
+        );
         inProtectionWindow = timeSinceEnrollment.inSeconds < 10;
       }
 
@@ -356,12 +392,14 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
           _isSensorConnected = status == 'Sensor initialized';
         });
         debugPrint(
-            '[SENSOR_STATUS] During enrollment/protection: $status (ignored status update, independent=${inIndependentProtection ? 'active' : 'inactive'}, regular=${inProtectionWindow ? 'active' : 'inactive'})');
+          '[SENSOR_STATUS] During enrollment/protection: $status (ignored status update, independent=${inIndependentProtection ? 'active' : 'inactive'}, regular=${inProtectionWindow ? 'active' : 'inactive'})',
+        );
         return;
       }
 
       debugPrint(
-          '[SENSOR_STATUS_STREAM] Not protected, will update enrollment status');
+        '[SENSOR_STATUS_STREAM] Not protected, will update enrollment status',
+      );
       setState(() {
         _isSensorConnected = status == 'Sensor initialized';
         // Only update enrollment status if we're not actively enrolling or initializing
@@ -380,12 +418,14 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
   Future<void> _initializeSensor() async {
     // Check independent protection window first (most important)
     if (_enrollmentProtectionStart != null) {
-      final timeSinceProtectionStart =
-          DateTime.now().difference(_enrollmentProtectionStart!);
+      final timeSinceProtectionStart = DateTime.now().difference(
+        _enrollmentProtectionStart!,
+      );
       if (timeSinceProtectionStart.inSeconds < 15) {
         // 15 second independent protection window
         debugPrint(
-            '[INIT] Skipping initialization: Within independent protection window (${timeSinceProtectionStart.inSeconds}s since protection start)');
+          '[INIT] Skipping initialization: Within independent protection window (${timeSinceProtectionStart.inSeconds}s since protection start)',
+        );
         return;
       } else {
         // Clear expired protection
@@ -396,18 +436,21 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
 
     if (_isInitializing || _isEnrolling || _enrollmentInProgress) {
       debugPrint(
-          '[INIT] Skipping initialization: _isInitializing=$_isInitializing, _isEnrolling=$_isEnrolling, _enrollmentInProgress=$_enrollmentInProgress');
+        '[INIT] Skipping initialization: _isInitializing=$_isInitializing, _isEnrolling=$_isEnrolling, _enrollmentInProgress=$_enrollmentInProgress',
+      );
       return; // Prevent concurrent initialization or during enrollment
     }
 
     // Check if we're still within the enrollment protection window
     if (_lastEnrollmentStart != null) {
-      final timeSinceEnrollment =
-          DateTime.now().difference(_lastEnrollmentStart!);
+      final timeSinceEnrollment = DateTime.now().difference(
+        _lastEnrollmentStart!,
+      );
       if (timeSinceEnrollment.inSeconds < 10) {
         // 10 second protection window
         debugPrint(
-            '[INIT] Skipping initialization: Still within enrollment protection window (${timeSinceEnrollment.inSeconds}s since start)');
+          '[INIT] Skipping initialization: Still within enrollment protection window (${timeSinceEnrollment.inSeconds}s since start)',
+        );
         return;
       }
     }
@@ -456,13 +499,15 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
   Future<void> _startEnrollment(String finger) async {
     debugPrint('[ENROLL] _startEnrollment called for $finger');
     debugPrint(
-        '[ENROLL] State check: _isEnrolling=$_isEnrolling, _isSensorConnected=$_isSensorConnected, _isInitializing=$_isInitializing');
+      '[ENROLL] State check: _isEnrolling=$_isEnrolling, _isSensorConnected=$_isSensorConnected, _isInitializing=$_isInitializing',
+    );
 
     try {
       // More robust state checking
       if (_isEnrolling || _enrollmentInProgress) {
         debugPrint(
-            '[ENROLL] Cannot start - enrollment already in progress: _isEnrolling=$_isEnrolling, _enrollmentInProgress=$_enrollmentInProgress');
+          '[ENROLL] Cannot start - enrollment already in progress: _isEnrolling=$_isEnrolling, _enrollmentInProgress=$_enrollmentInProgress',
+        );
         _showSnackBar('Enrollment already in progress. Please wait.');
         return;
       }
@@ -477,14 +522,16 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
       if (finger == 'left' && _leftEnrollCooldown > 0) {
         debugPrint('[ENROLL] Cannot start - left finger in cooldown');
         _showSnackBar(
-            'Please wait ${_leftEnrollCooldown}s before enrolling left thumb again.');
+          'Please wait ${_leftEnrollCooldown}s before enrolling left thumb again.',
+        );
         return;
       }
 
       if (finger == 'right' && _rightEnrollCooldown > 0) {
         debugPrint('[ENROLL] Cannot start - right finger in cooldown');
         _showSnackBar(
-            'Please wait ${_rightEnrollCooldown}s before enrolling right thumb again.');
+          'Please wait ${_rightEnrollCooldown}s before enrolling right thumb again.',
+        );
         return;
       }
 
@@ -492,7 +539,8 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
       if ((finger == 'left' && _leftThumbEnrolled) ||
           (finger == 'right' && _rightThumbEnrolled)) {
         debugPrint(
-            '[ENROLL] Updating existing $finger thumb on $_activeScanner scanner');
+          '[ENROLL] Updating existing $finger thumb on $_activeScanner scanner',
+        );
         _showSnackBar('Updating existing $finger thumb fingerprint...');
         // Continue with enrollment to update the existing fingerprint
       }
@@ -502,7 +550,8 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
     } catch (unexpectedError) {
       // Catch any unexpected errors that might be causing silent failures
       debugPrint(
-          '[ENROLL] UNEXPECTED ERROR in _startEnrollment: $unexpectedError');
+        '[ENROLL] UNEXPECTED ERROR in _startEnrollment: $unexpectedError',
+      );
       debugPrint('[ENROLL] Stack trace: ${StackTrace.current}');
 
       if (mounted) {
@@ -562,11 +611,14 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
       await Future.delayed(const Duration(milliseconds: 300));
 
       // Reset sensor to ensure clean state, but don't await to avoid blocking
-      _fingerprintService.resetSensor().then((_) {
-        debugPrint('[RESET] Background sensor reset completed');
-      }).catchError((e) {
-        debugPrint('[RESET] Background sensor reset error: $e');
-      });
+      _fingerprintService
+          .resetSensor()
+          .then((_) {
+            debugPrint('[RESET] Background sensor reset completed');
+          })
+          .catchError((e) {
+            debugPrint('[RESET] Background sensor reset error: $e');
+          });
 
       // Just update the status without extensive sensor checking
       if (!mounted) return;
@@ -619,22 +671,27 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
     _lastEnrollmentStart = null;
     // DON'T clear _enrollmentProtectionStart here - let it timeout naturally
     debugPrint(
-        '[LOCKS] Standard enrollment locks cleared (independent protection remains)');
+      '[LOCKS] Standard enrollment locks cleared (independent protection remains)',
+    );
   }
 
   void _setupConnectivityListener() {
-    _connectivitySubscription = Connectivity()
-        .onConnectivityChanged
-        .listen((ConnectivityResult result) {
-      if (result != ConnectivityResult.none) {
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      List<ConnectivityResult> result,
+    ) {
+      if (!result.contains(ConnectivityResult.none)) {
         debugPrint(
-            '[CONNECTIVITY] Internet available, attempting to sync fingerprints');
+          '[CONNECTIVITY] Internet available, attempting to sync fingerprints',
+        );
         // Auto-sync when internet becomes available
-        _databaseHelper.syncUnsyncedFingerprints().then((_) {
-          debugPrint('[CONNECTIVITY] Auto-sync completed');
-        }).catchError((e) {
-          debugPrint('[CONNECTIVITY] Auto-sync failed: $e');
-        });
+        _databaseHelper
+            .syncUnsyncedFingerprints()
+            .then((_) {
+              debugPrint('[CONNECTIVITY] Auto-sync completed');
+            })
+            .catchError((e) {
+              debugPrint('[CONNECTIVITY] Auto-sync failed: $e');
+            });
       }
     });
   }
@@ -694,7 +751,8 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
       // If still busy, manually reset the service state
       if (isStillBusy) {
         debugPrint(
-            '[CLEANUP] Regular cleanup failed, manually resetting service state');
+          '[CLEANUP] Regular cleanup failed, manually resetting service state',
+        );
 
         // Use simple manual reset to clear stuck states
         _fingerprintService.manualReset();
@@ -709,7 +767,8 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
       }
 
       debugPrint(
-          '[CLEANUP] FingerprintService cleanup complete, final busy state: $isStillBusy');
+        '[CLEANUP] FingerprintService cleanup complete, final busy state: $isStillBusy',
+      );
     } catch (e) {
       debugPrint('[CLEANUP] Error during FingerprintService cleanup: $e');
     }
@@ -718,10 +777,7 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
   void _showSnackBar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 3),
-      ),
+      SnackBar(content: Text(message), duration: const Duration(seconds: 3)),
     );
   }
 
@@ -748,7 +804,9 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                   child: Text(
                     thumbName,
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -761,13 +819,15 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                   const Icon(Icons.check_circle, color: Colors.green, size: 32),
                   const SizedBox(height: 8),
                   ElevatedButton(
-                    onPressed: !_isEnrolling &&
+                    onPressed:
+                        !_isEnrolling &&
                             !_isInitializing &&
                             !_enrollmentInProgress &&
                             cooldown == 0
                         ? () {
                             debugPrint(
-                                '[UI] Re-enroll $thumbName button pressed');
+                              '[UI] Re-enroll $thumbName button pressed',
+                            );
                             // Force re-check scanner connection before re-enrollment
                             _initializeSensor().then((_) {
                               _startEnrollment(thumb);
@@ -776,12 +836,15 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                         : () {
                             // DEBUG: Log why button is disabled
                             debugPrint(
-                                '[UI] Re-enroll button DISABLED - Reasons:');
+                              '[UI] Re-enroll button DISABLED - Reasons:',
+                            );
                             debugPrint('[UI]   _isEnrolling: $_isEnrolling');
                             debugPrint(
-                                '[UI]   _isInitializing: $_isInitializing');
+                              '[UI]   _isInitializing: $_isInitializing',
+                            );
                             debugPrint(
-                                '[UI]   _enrollmentInProgress: $_enrollmentInProgress');
+                              '[UI]   _enrollmentInProgress: $_enrollmentInProgress',
+                            );
                             debugPrint('[UI]   cooldown: $cooldown');
 
                             // Force reset all blocking states
@@ -805,11 +868,13 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                             _enrollmentProtectionStart = null;
 
                             debugPrint(
-                                '[UI] Force unblocked re-enrollment button');
+                              '[UI] Force unblocked re-enrollment button',
+                            );
 
                             // Show message to user
                             _showSnackBar(
-                                'Re-enrollment unblocked. Try again.');
+                              'Re-enrollment unblocked. Try again.',
+                            );
                           },
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(140, 45),
@@ -821,7 +886,9 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                   Text(
                     '$thumbName enrolled. Tap Re-enroll to update.',
                     style: TextStyle(
-                        color: Colors.green[800], fontWeight: FontWeight.bold),
+                      color: Colors.green[800],
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -829,8 +896,11 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
             else if (cooldown > 0 && !_isEnrolling && !_isInitializing)
               Column(
                 children: [
-                  const Icon(Icons.hourglass_bottom,
-                      color: Colors.orange, size: 32),
+                  const Icon(
+                    Icons.hourglass_bottom,
+                    color: Colors.orange,
+                    size: 32,
+                  ),
                   const SizedBox(height: 8),
                   ElevatedButton(
                     onPressed: null,
@@ -844,7 +914,9 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                   const Text(
                     'Please wait before enrolling again.',
                     style: TextStyle(
-                        color: Colors.orange, fontWeight: FontWeight.bold),
+                      color: Colors.orange,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               )
@@ -854,7 +926,8 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                   const Icon(Icons.cancel, color: Colors.red, size: 32),
                   const SizedBox(height: 8),
                   ElevatedButton(
-                    onPressed: !isEnrolled &&
+                    onPressed:
+                        !isEnrolled &&
                             !_isEnrolling &&
                             !_isInitializing &&
                             !_enrollmentInProgress &&
@@ -869,18 +942,22 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                         : () {
                             // DEBUG: Log why button is disabled
                             debugPrint(
-                                '[UI] Enroll button DISABLED - Reasons:');
+                              '[UI] Enroll button DISABLED - Reasons:',
+                            );
                             debugPrint('[UI]   isEnrolled: $isEnrolled');
                             debugPrint('[UI]   _isEnrolling: $_isEnrolling');
                             debugPrint(
-                                '[UI]   _isInitializing: $_isInitializing');
+                              '[UI]   _isInitializing: $_isInitializing',
+                            );
                             debugPrint(
-                                '[UI]   _enrollmentInProgress: $_enrollmentInProgress');
+                              '[UI]   _enrollmentInProgress: $_enrollmentInProgress',
+                            );
                             debugPrint('[UI]   cooldown: $cooldown');
 
                             if (isEnrolled) {
                               _showSnackBar(
-                                  'This thumb is enrolled. You can update it by tapping the enrollment button.');
+                                'This thumb is enrolled. You can update it by tapping the enrollment button.',
+                              );
                             } else {
                               // Force reset all blocking states
                               setState(() {
@@ -903,7 +980,8 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                               _enrollmentProtectionStart = null;
 
                               debugPrint(
-                                  '[UI] Force unblocked enrollment button');
+                                '[UI] Force unblocked enrollment button',
+                              );
 
                               // Show message to user
                               _showSnackBar('Enrollment unblocked. Try again.');
@@ -919,7 +997,9 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                   Text(
                     '$thumbName not enrolled.',
                     style: const TextStyle(
-                        color: Colors.red, fontWeight: FontWeight.bold),
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -939,7 +1019,8 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
         const Duration(seconds: 10),
         onTimeout: () {
           debugPrint(
-              '[DETECT_SAFE] Scanner detection timed out, returning none');
+            '[DETECT_SAFE] Scanner detection timed out, returning none',
+          );
           return 'none';
         },
       );
@@ -979,21 +1060,25 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
         debugPrint('[DETECT] Futronic attempt $attempt/$maxAttempts...');
 
         // Add timeout and crash protection for Futronic detection
-        final isFutronicConnected =
-            await _futronicService.isFutronicConnected().timeout(
-          const Duration(seconds: 5),
-          onTimeout: () {
-            debugPrint(
-                '[DETECT] Futronic detection attempt $attempt timed out');
-            return false;
-          },
-        );
+        final isFutronicConnected = await _futronicService
+            .isFutronicConnected()
+            .timeout(
+              const Duration(seconds: 5),
+              onTimeout: () {
+                debugPrint(
+                  '[DETECT] Futronic detection attempt $attempt timed out',
+                );
+                return false;
+              },
+            );
         debugPrint(
-            '[DETECT] Futronic attempt $attempt result: $isFutronicConnected');
+          '[DETECT] Futronic attempt $attempt result: $isFutronicConnected',
+        );
 
         if (isFutronicConnected) {
           debugPrint(
-              '[DETECT] ✅ Futronic scanner detected on attempt $attempt!');
+            '[DETECT] ✅ Futronic scanner detected on attempt $attempt!',
+          );
           return 'futronic';
         }
 
@@ -1058,21 +1143,27 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
         });
 
         debugPrint(
-            '[FUTRONIC_ENROLL] Starting Futronic enrollment for $finger finger');
+          '[FUTRONIC_ENROLL] Starting Futronic enrollment for $finger finger',
+        );
         final template = await _futronicService.enroll(finger);
 
         if (template != null && template.isNotEmpty) {
           // Rely on native Futronic partial detection; no additional Dart-side length check
           debugPrint(
-              '[FUTRONIC_ENROLL] Successfully got template, length: ${template.length}');
+            '[FUTRONIC_ENROLL] Successfully got template, length: ${template.length}',
+          );
 
           // Save to database using the same method as ZKTeco for consistency
           try {
             final bool isSynced = await _databaseHelper.saveFingerprintSmart(
-                widget.learnerId, finger, template,
-                scannerType: 'futronic');
+              widget.learnerId,
+              finger,
+              template,
+              scannerType: 'futronic',
+            );
             debugPrint(
-                '[FUTRONIC_ENROLL] Saved Futronic fingerprint for learnerId=${widget.learnerId}, finger=$finger, synced=$isSynced');
+              '[FUTRONIC_ENROLL] Saved Futronic fingerprint for learnerId=${widget.learnerId}, finger=$finger, synced=$isSynced',
+            );
 
             if (!mounted) return;
 
@@ -1084,36 +1175,40 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                     'Left thumb enrolled successfully with Futronic!';
                 _leftEnrollCooldown = 5;
                 _leftCooldownTimer?.cancel();
-                _leftCooldownTimer =
-                    Timer.periodic(const Duration(seconds: 1), (timer) {
-                  if (!mounted) return;
-                  setState(() {
-                    if (_leftEnrollCooldown > 0) {
-                      _leftEnrollCooldown--;
-                    }
-                    if (_leftEnrollCooldown == 0) {
-                      _leftCooldownTimer?.cancel();
-                    }
-                  });
-                });
+                _leftCooldownTimer = Timer.periodic(
+                  const Duration(seconds: 1),
+                  (timer) {
+                    if (!mounted) return;
+                    setState(() {
+                      if (_leftEnrollCooldown > 0) {
+                        _leftEnrollCooldown--;
+                      }
+                      if (_leftEnrollCooldown == 0) {
+                        _leftCooldownTimer?.cancel();
+                      }
+                    });
+                  },
+                );
               } else if (finger == 'right') {
                 _rightThumbEnrolled = true;
                 _enrollmentStatus =
                     'Right thumb enrolled successfully with Futronic!';
                 _rightEnrollCooldown = 5;
                 _rightCooldownTimer?.cancel();
-                _rightCooldownTimer =
-                    Timer.periodic(const Duration(seconds: 1), (timer) {
-                  if (!mounted) return;
-                  setState(() {
-                    if (_rightEnrollCooldown > 0) {
-                      _rightEnrollCooldown--;
-                    }
-                    if (_rightEnrollCooldown == 0) {
-                      _rightCooldownTimer?.cancel();
-                    }
-                  });
-                });
+                _rightCooldownTimer = Timer.periodic(
+                  const Duration(seconds: 1),
+                  (timer) {
+                    if (!mounted) return;
+                    setState(() {
+                      if (_rightEnrollCooldown > 0) {
+                        _rightEnrollCooldown--;
+                      }
+                      if (_rightEnrollCooldown == 0) {
+                        _rightCooldownTimer?.cancel();
+                      }
+                    });
+                  },
+                );
               }
               _isEnrolling = false;
               _enrollmentInProgress = false;
@@ -1124,14 +1219,17 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
             // Show success message
             if (isSynced) {
               _showSnackBar(
-                  'Futronic fingerprint enrolled and synced to server for $finger thumb');
+                'Futronic fingerprint enrolled and synced to server for $finger thumb',
+              );
             } else {
               _showSnackBar(
-                  'Futronic fingerprint enrolled locally for $finger thumb (will sync when online)');
+                'Futronic fingerprint enrolled locally for $finger thumb (will sync when online)',
+              );
             }
 
             debugPrint(
-                '[FUTRONIC_ENROLL] Successfully completed Futronic enrollment for $finger finger');
+              '[FUTRONIC_ENROLL] Successfully completed Futronic enrollment for $finger finger',
+            );
           } catch (saveError) {
             debugPrint('[FUTRONIC_ENROLL] Error saving template: $saveError');
             setState(() {
@@ -1146,7 +1244,8 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
           }
         } else {
           debugPrint(
-              '[FUTRONIC_ENROLL] No template received from Futronic service');
+            '[FUTRONIC_ENROLL] No template received from Futronic service',
+          );
           setState(() {
             _enrollmentStatus =
                 'Futronic enrollment failed - no template captured';
@@ -1200,7 +1299,8 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
   @override
   Widget build(BuildContext context) {
     debugPrint(
-        '[BUILD] leftThumbEnrolled=$_leftThumbEnrolled, rightThumbEnrolled=$_rightThumbEnrolled, leftCooldown=$_leftEnrollCooldown, rightCooldown=$_rightEnrollCooldown, isEnrolling=$_isEnrolling, isInitializing=$_isInitializing, enrollmentInProgress=$_enrollmentInProgress, isSensorConnected=$_isSensorConnected, activeScanner=$_activeScanner');
+      '[BUILD] leftThumbEnrolled=$_leftThumbEnrolled, rightThumbEnrolled=$_rightThumbEnrolled, leftCooldown=$_leftEnrollCooldown, rightCooldown=$_rightEnrollCooldown, isEnrolling=$_isEnrolling, isInitializing=$_isInitializing, enrollmentInProgress=$_enrollmentInProgress, isSensorConnected=$_isSensorConnected, activeScanner=$_activeScanner',
+    );
     return Scaffold(
       appBar: AppBar(
         title: const Text('Fingerprint Enrollment'),
@@ -1214,14 +1314,16 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                 });
 
                 // Get classID for this learner first
-                final classID = await _databaseHelper
-                    .getClassIDForLearner(widget.learnerId);
+                final classID = await _databaseHelper.getClassIDForLearner(
+                  widget.learnerId,
+                );
                 if (classID != null) {
                   // Trigger a full learner sync to get fingerprint data from server
                   await _databaseHelper.syncLearnersFromServer(classID);
                 } else {
                   debugPrint(
-                      '[SYNC_ERROR] Could not find classID for learner ${widget.learnerId}');
+                    '[SYNC_ERROR] Could not find classID for learner ${widget.learnerId}',
+                  );
                 }
 
                 await _databaseHelper.syncUnsyncedFingerprints();
@@ -1277,13 +1379,17 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                     Text(
                       _enrollmentStatus,
                       style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w500),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: _activeScanner == 'none'
                             ? Colors.red[100]
@@ -1349,7 +1455,9 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.orange,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 12),
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -1366,7 +1474,8 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
               const SizedBox(height: 20),
               // Require both thumbs enrolled before leaving the page
               ElevatedButton.icon(
-                onPressed: (_leftThumbEnrolled &&
+                onPressed:
+                    (_leftThumbEnrolled &&
                         _rightThumbEnrolled &&
                         !_isEnrolling &&
                         !_isInitializing)
@@ -1376,8 +1485,9 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                     : null,
                 icon: const Icon(Icons.check),
                 label: const Text('Done (Both thumbs must be enrolled)'),
-                style:
-                    ElevatedButton.styleFrom(minimumSize: const Size(220, 44)),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(220, 44),
+                ),
               ),
               const SizedBox(height: 12),
               // Debug info section
@@ -1391,21 +1501,37 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Debug Info:',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 12)),
-                      Text('Scanner: $_activeScanner',
-                          style: const TextStyle(fontSize: 10)),
-                      Text('Connected: $_isSensorConnected',
-                          style: const TextStyle(fontSize: 10)),
-                      Text('Left Enrolled: $_leftThumbEnrolled',
-                          style: const TextStyle(fontSize: 10)),
-                      Text('Right Enrolled: $_rightThumbEnrolled',
-                          style: const TextStyle(fontSize: 10)),
-                      Text('Is Enrolling: $_isEnrolling',
-                          style: const TextStyle(fontSize: 10)),
-                      Text('Is Initializing: $_isInitializing',
-                          style: const TextStyle(fontSize: 10)),
+                      const Text(
+                        'Debug Info:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        'Scanner: $_activeScanner',
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                      Text(
+                        'Connected: $_isSensorConnected',
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                      Text(
+                        'Left Enrolled: $_leftThumbEnrolled',
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                      Text(
+                        'Right Enrolled: $_rightThumbEnrolled',
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                      Text(
+                        'Is Enrolling: $_isEnrolling',
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                      Text(
+                        'Is Initializing: $_isInitializing',
+                        style: const TextStyle(fontSize: 10),
+                      ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
@@ -1423,27 +1549,36 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                             },
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               minimumSize: const Size(0, 30),
                             ),
-                            child: const Text('Force Reset',
-                                style: TextStyle(fontSize: 10)),
+                            child: const Text(
+                              'Force Reset',
+                              style: TextStyle(fontSize: 10),
+                            ),
                           ),
                           const SizedBox(width: 8),
                           ElevatedButton(
                             onPressed: () async {
                               debugPrint(
-                                  '[FORCE_CLEANUP] Force cleanup requested');
+                                '[FORCE_CLEANUP] Force cleanup requested',
+                              );
                               await _cleanupPreviousScanner(_activeScanner);
                               _showSnackBar('Force cleanup completed');
                             },
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               minimumSize: const Size(0, 30),
                             ),
-                            child: const Text('Force Cleanup',
-                                style: TextStyle(fontSize: 10)),
+                            child: const Text(
+                              'Force Cleanup',
+                              style: TextStyle(fontSize: 10),
+                            ),
                           ),
                         ],
                       ),

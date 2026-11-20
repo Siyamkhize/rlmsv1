@@ -2027,7 +2027,7 @@ class _FacilitatorIssueFormPageState extends State<FacilitatorIssueFormPage> {
 
     // Check connectivity
     final connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult == ConnectivityResult.none) {
+    if (connectivityResult.contains(ConnectivityResult.none)) {
       if (!mounted) return;
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

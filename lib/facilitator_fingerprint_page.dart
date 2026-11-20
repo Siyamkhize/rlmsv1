@@ -126,7 +126,7 @@ class _FacilitatorFingerprintPageState
       if (!alreadyClockedIn) {
         debugPrint('[FAC_CHECK] Not found locally, checking server...');
         final connectivityResult = await Connectivity().checkConnectivity();
-        if (connectivityResult != ConnectivityResult.none) {
+        if (!connectivityResult.contains(ConnectivityResult.none)) {
           try {
             final url = Uri.parse(
                 '${AppConfig.baseUrl}/get_facilitator_attendance.php?facilitator_id=${widget.facilitatorId}&date=$today');
@@ -418,7 +418,7 @@ class _FacilitatorFingerprintPageState
   Future<bool> _syncClockOutToServer(Map<String, dynamic> attendance) async {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      if (connectivityResult.contains(ConnectivityResult.none)) {
         debugPrint('[FAC_SYNC] No internet connection');
         return false;
       }

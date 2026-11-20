@@ -200,7 +200,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
   Future<void> _loadAssessorExpiryFromServer(
       Map<String, dynamic> localData) async {
     var connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult != ConnectivityResult.none) {
+    if (!connectivityResult.contains(ConnectivityResult.none)) {
       try {
         final response = await http.get(
           Uri.parse(
@@ -226,7 +226,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
   /// Loads profile image and signature from the server.
   // Future<void> _loadOnlineProfileImage() async {
   //   var connectivityResult = await Connectivity().checkConnectivity();
-  //   if (connectivityResult != ConnectivityResult.none) {
+  //   if (!connectivityResult.contains(ConnectivityResult.none)) {
   //     try {
   //       final response = await http.get(
   //         Uri.parse('${Config.baseUrl}/get_facilitator_profile.php?classID=${widget.classID}'),
@@ -247,7 +247,7 @@ class _FacilitatorProfileState extends State<FacilitatorProfile> {
   // }
   Future<void> _loadOnlineProfileImage() async {
     var connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult != ConnectivityResult.none) {
+    if (!connectivityResult.contains(ConnectivityResult.none)) {
       try {
         final response = await http.get(
           Uri.parse(

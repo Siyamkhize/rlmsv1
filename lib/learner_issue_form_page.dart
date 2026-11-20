@@ -1,4 +1,4 @@
-﻿import 'dart:typed_data';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:signature/signature.dart';
 import 'package:http/http.dart' as http;
@@ -70,7 +70,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
   Future<void> _loadExistingRegularMaterialQuantities() async {
     try {
       debugPrint(
-          '🌐 Loading learner material quantities from SERVER for classID: ${widget.classID}');
+          '?? Loading learner material quantities from SERVER for classID: ${widget.classID}');
 
       // Query server for all material data (including regular materials) using learner checkbox status
       final response = await http.get(
@@ -78,8 +78,8 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
             'get_learner_checkbox_status.php?classID=${widget.classID}')),
       );
 
-      debugPrint('📡 Server Response Status: ${response.statusCode}');
-      debugPrint('📡 Server Response Body: ${response.body}');
+      debugPrint('?? Server Response Status: ${response.statusCode}');
+      debugPrint('?? Server Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -89,7 +89,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
               data['regularMaterials'] ?? {};
 
           debugPrint(
-              '✅ Server returned ${regularMaterials.length} regular material types');
+              '? Server returned ${regularMaterials.length} regular material types');
 
           // List of regular material types to check
           List<String> regularMaterialTypes = [
@@ -116,7 +116,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
 
               if (quantity > 0) {
                 debugPrint(
-                    '✅ Regular Material $materialType: Qty=$quantity, Rep=$representative');
+                    '? Regular Material $materialType: Qty=$quantity, Rep=$representative');
               }
             } else {
               // No submissions found for this material type
@@ -128,19 +128,19 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
           }
 
           debugPrint(
-              '🎯 Regular material loading from server completed successfully!');
+              '?? Regular material loading from server completed successfully!');
         } else {
-          debugPrint('❌ Server returned error: ${data['error']}');
+          debugPrint('? Server returned error: ${data['error']}');
           _setNoRegularMaterialSubmissionsFound();
         }
       } else {
         debugPrint(
-            '❌ Server request failed with status: ${response.statusCode}');
+            '? Server request failed with status: ${response.statusCode}');
         _setNoRegularMaterialSubmissionsFound();
       }
     } catch (e) {
       debugPrint(
-          '💥 Error loading regular material quantities from server: $e');
+          '?? Error loading regular material quantities from server: $e');
       _setNoRegularMaterialSubmissionsFound();
     }
   }
@@ -162,7 +162,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
       }
     });
     debugPrint(
-        'ℹ️ Set all regular materials to no previous submissions (no server data available)');
+        '?? Set all regular materials to no previous submissions (no server data available)');
   }
 
   // Debug method to help troubleshoot database relationships
@@ -391,7 +391,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
   Future<void> _loadExistingUnitStandardQuantities() async {
     try {
       debugPrint(
-          '🌐 Loading learner material status from SERVER for classID: ${widget.classID}');
+          '?? Loading learner material status from SERVER for classID: ${widget.classID}');
 
       // Query server for learner checkbox status (same as learner guide approach)
       final response = await http.get(
@@ -399,8 +399,8 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
             'get_learner_checkbox_status.php?classID=${widget.classID}')),
       );
 
-      debugPrint('📡 Server Response Status: ${response.statusCode}');
-      debugPrint('📡 Server Response Body: ${response.body}');
+      debugPrint('?? Server Response Status: ${response.statusCode}');
+      debugPrint('?? Server Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -413,7 +413,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
               data['representatives'] ?? {};
 
           debugPrint(
-              '✅ Server returned ${checkboxStatus.length} checkbox statuses');
+              '? Server returned ${checkboxStatus.length} checkbox statuses');
 
           // Apply server data to unit standards
           for (var us in unitStandards) {
@@ -474,34 +474,34 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
 
             if (quantityUS > 0) {
               debugPrint(
-                  '✅ Unit Standard $usId: Qty=$quantityUS, Rep=$repUS, Selected=${selectedUnitStandards[usId]}');
+                  '? Unit Standard $usId: Qty=$quantityUS, Rep=$repUS, Selected=${selectedUnitStandards[usId]}');
             }
             if (quantityLG > 0) {
               debugPrint(
-                  '✅ Learner Guide $lgId: Qty=$quantityLG, Rep=$repLG, Selected=${selectedUnitStandards[lgId]}');
+                  '? Learner Guide $lgId: Qty=$quantityLG, Rep=$repLG, Selected=${selectedUnitStandards[lgId]}');
             }
             if (quantityFORM > 0) {
               debugPrint(
-                  '✅ Formative $formId: Qty=$quantityFORM, Rep=$repFORM, Selected=${selectedUnitStandards[formId]}');
+                  '? Formative $formId: Qty=$quantityFORM, Rep=$repFORM, Selected=${selectedUnitStandards[formId]}');
             }
             if (quantitySUM > 0) {
               debugPrint(
-                  '✅ Summative $sumId: Qty=$quantitySUM, Rep=$repSUM, Selected=${selectedUnitStandards[sumId]}');
+                  '? Summative $sumId: Qty=$quantitySUM, Rep=$repSUM, Selected=${selectedUnitStandards[sumId]}');
             }
           }
 
           debugPrint(
-              '🎯 Learner material status loading from server completed successfully!');
+              '?? Learner material status loading from server completed successfully!');
         } else {
-          debugPrint('❌ Server returned error: ${data['error']}');
+          debugPrint('? Server returned error: ${data['error']}');
         }
       } else {
         debugPrint(
-            '❌ Server request failed with status: ${response.statusCode}');
+            '? Server request failed with status: ${response.statusCode}');
         _setNoSubmissionsFound();
       }
     } catch (e) {
-      debugPrint('💥 Error loading learner material status from server: $e');
+      debugPrint('?? Error loading learner material status from server: $e');
       _setNoSubmissionsFound();
     }
   }
@@ -532,7 +532,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
         selectedUnitStandards[sumId] = false;
       }
     });
-    debugPrint('ℹ️ Set all checkboxes to unchecked (no server data available)');
+    debugPrint('?? Set all checkboxes to unchecked (no server data available)');
   }
 
   // Function to check the connectivity state by pinging Google
@@ -605,12 +605,12 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
               debugPrint(
                   '[FETCH_ONLINE] Successfully loaded ${learners.length} learners');
             } else {
-              debugPrint('[FETCH_ONLINE] ⚠️ API returned empty array');
+              debugPrint('[FETCH_ONLINE] ?? API returned empty array');
             }
           });
         } else {
           debugPrint(
-              '[FETCH_ONLINE] ❌ API returned non-array response: $responseData');
+              '[FETCH_ONLINE] ? API returned non-array response: $responseData');
           throw Exception('API returned invalid response format');
         }
       } else {
@@ -618,7 +618,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
             'Failed to load learners from API - Status: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('[FETCH_ONLINE] ❌ Error fetching online data: $e');
+      debugPrint('[FETCH_ONLINE] ? Error fetching online data: $e');
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading data from API: $e')),
@@ -740,7 +740,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Tip: Go to Dashboard → Sync to download learner data',
+                      'Tip: Go to Dashboard ? Sync to download learner data',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
@@ -1767,7 +1767,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
         bool isSelectedUS = selectedUnitStandards[usId] ?? false;
         int existingUS = existingUnitStandardQuantities[usId] ?? 0;
         int quantityUS = unitStandardQuantities[usId] ?? 0;
-        // ⚠️ VALIDATION: Only count if quantity > 0
+        // ?? VALIDATION: Only count if quantity > 0
         if ((isSelectedUS || existingUS > 0) && quantityUS > 0) {
           selectedUnitStandardsCount++;
           totalQuantity += quantityUS;
@@ -1779,7 +1779,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
         bool isSelectedLG = selectedUnitStandards[lgId] ?? false;
         int existingLG = existingUnitStandardQuantities[lgId] ?? 0;
         int quantityLG = unitStandardQuantities[lgId] ?? 0;
-        // ⚠️ VALIDATION: Only count if quantity > 0
+        // ?? VALIDATION: Only count if quantity > 0
         if ((isSelectedLG || existingLG > 0) && quantityLG > 0) {
           selectedUnitStandardsCount++;
           totalQuantity += quantityLG;
@@ -1791,7 +1791,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
         bool isSelectedFORM = selectedUnitStandards[formId] ?? false;
         int existingFORM = existingUnitStandardQuantities[formId] ?? 0;
         int quantityFORM = unitStandardQuantities[formId] ?? 0;
-        // ⚠️ VALIDATION: Only count if quantity > 0
+        // ?? VALIDATION: Only count if quantity > 0
         if ((isSelectedFORM || existingFORM > 0) && quantityFORM > 0) {
           selectedUnitStandardsCount++;
           totalQuantity += quantityFORM;
@@ -1803,7 +1803,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
         bool isSelectedSUM = selectedUnitStandards[sumId] ?? false;
         int existingSUM = existingUnitStandardQuantities[sumId] ?? 0;
         int quantitySUM = unitStandardQuantities[sumId] ?? 0;
-        // ⚠️ VALIDATION: Only count if quantity > 0
+        // ?? VALIDATION: Only count if quantity > 0
         if ((isSelectedSUM || existingSUM > 0) && quantitySUM > 0) {
           selectedUnitStandardsCount++;
           totalQuantity += quantitySUM;
@@ -2055,7 +2055,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
 
     // Check connectivity
     final connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult == ConnectivityResult.none) {
+    if (connectivityResult.contains(ConnectivityResult.none)) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -2079,10 +2079,10 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
           bool isSelectedUS = selectedUnitStandards[usId] ?? false;
           int existingUS = existingUnitStandardQuantities[usId] ?? 0;
           int quantityUS = unitStandardQuantities[usId] ?? 0;
-          // ⚠️ VALIDATION: Skip if quantity is 0
+          // ?? VALIDATION: Skip if quantity is 0
           if ((isSelectedUS || existingUS > 0) && quantityUS > 0) {
             debugPrint(
-                '🔄 [LEARNER SUBMISSION] Starting Unit Standard submission:');
+                '?? [LEARNER SUBMISSION] Starting Unit Standard submission:');
             debugPrint('   - ID: $usId');
             debugPrint('   - Name: $usName');
             debugPrint('   - Quantity: $quantityUS');
@@ -2106,7 +2106,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
             };
 
             debugPrint(
-                '📤 [LEARNER SUBMISSION] Sending data: ${json.encode(formData)}');
+                '?? [LEARNER SUBMISSION] Sending data: ${json.encode(formData)}');
 
             try {
               // Send HTTP request for this unit standard
@@ -2120,23 +2120,23 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
                   .timeout(const Duration(seconds: 30));
 
               debugPrint(
-                  '📥 [LEARNER SUBMISSION] Response Status: ${response.statusCode}');
+                  '?? [LEARNER SUBMISSION] Response Status: ${response.statusCode}');
               debugPrint(
-                  '📥 [LEARNER SUBMISSION] Response Body: ${response.body}');
+                  '?? [LEARNER SUBMISSION] Response Body: ${response.body}');
 
               final responseBody = json.decode(response.body);
               if (!responseBody['success']) {
                 allSuccessful = false;
                 failedSubmissions.add(usName);
                 debugPrint(
-                    '❌ [LEARNER SUBMISSION] FAILED for $usName: ${responseBody['message']}');
+                    '? [LEARNER SUBMISSION] FAILED for $usName: ${responseBody['message']}');
               } else {
-                debugPrint('✅ [LEARNER SUBMISSION] SUCCESS for $usName');
+                debugPrint('? [LEARNER SUBMISSION] SUCCESS for $usName');
               }
             } catch (e) {
               allSuccessful = false;
               failedSubmissions.add(usName);
-              debugPrint('💥 [LEARNER SUBMISSION] EXCEPTION for $usName: $e');
+              debugPrint('?? [LEARNER SUBMISSION] EXCEPTION for $usName: $e');
             }
           }
 
@@ -2145,7 +2145,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
           bool isSelectedLG = selectedUnitStandards[lgId] ?? false;
           int existingLG = existingUnitStandardQuantities[lgId] ?? 0;
           int quantityLG = unitStandardQuantities[lgId] ?? 0;
-          // ⚠️ VALIDATION: Skip if quantity is 0
+          // ?? VALIDATION: Skip if quantity is 0
           if ((isSelectedLG || existingLG > 0) && quantityLG > 0) {
             String lgName = '$usId - Learner Guide';
 
@@ -2187,7 +2187,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
           bool isSelectedFORM = selectedUnitStandards[formId] ?? false;
           int existingFORM = existingUnitStandardQuantities[formId] ?? 0;
           int quantityFORM = unitStandardQuantities[formId] ?? 0;
-          // ⚠️ VALIDATION: Skip if quantity is 0
+          // ?? VALIDATION: Skip if quantity is 0
           if ((isSelectedFORM || existingFORM > 0) && quantityFORM > 0) {
             String formName = '$usId - Formative';
 
@@ -2229,7 +2229,7 @@ class _LearnerIssueFormPageState extends State<LearnerIssueFormPage> {
           bool isSelectedSUM = selectedUnitStandards[sumId] ?? false;
           int existingSUM = existingUnitStandardQuantities[sumId] ?? 0;
           int quantitySUM = unitStandardQuantities[sumId] ?? 0;
-          // ⚠️ VALIDATION: Skip if quantity is 0
+          // ?? VALIDATION: Skip if quantity is 0
           if ((isSelectedSUM || existingSUM > 0) && quantitySUM > 0) {
             String sumName = '$usId - Summative';
 

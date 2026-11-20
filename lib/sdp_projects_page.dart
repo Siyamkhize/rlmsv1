@@ -158,8 +158,7 @@ class _SdpProjectsPageState extends State<SdpProjectsPage> {
 
   Future<bool> _checkConnectivity() async {
     final connectivityResult = await Connectivity().checkConnectivity();
-    return connectivityResult == ConnectivityResult.wifi ||
-        connectivityResult == ConnectivityResult.mobile;
+    return connectivityResult.contains(ConnectivityResult.wifi) || connectivityResult.contains(ConnectivityResult.mobile);
   }
 
   /// Filter projects by SDP identifier using database logic (match backend exactly)

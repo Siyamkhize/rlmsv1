@@ -17,7 +17,7 @@ class PersistentSyncService {
   factory PersistentSyncService() => _instance;
   PersistentSyncService._internal();
 
-  StreamSubscription<ConnectivityResult>? _connectivitySubscription;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
   bool _isSyncing = false;
   DateTime? _lastSyncTime;
@@ -28,9 +28,10 @@ class PersistentSyncService {
     debugPrint('[PERSISTENT_SYNC] Starting auto-sync service');
 
     // Listen for connectivity changes
-    _connectivitySubscription =
-        Connectivity().onConnectivityChanged.listen((result) {
-      if (result != ConnectivityResult.none) {
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      List<ConnectivityResult> result,
+    ) {
+      if (!result.contains(ConnectivityResult.none)) {
         debugPrint('[PERSISTENT_SYNC] Connectivity restored: $result');
         _triggerBackgroundSync();
       }
@@ -53,14 +54,15 @@ class PersistentSyncService {
   Future<void> _triggerBackgroundSync() async {
     // Check if enough time has passed since last sync
     if (!_coordinator.shouldAllowSync(
-        minInterval: const Duration(minutes: 2))) {
+      minInterval: const Duration(minutes: 2),
+    )) {
       debugPrint('[PERSISTENT_SYNC] Skipping sync - too soon since last sync');
       return;
     }
 
     // Check connectivity first to avoid unnecessary work
     final connectivityResult = await Connectivity().checkConnectivity();
-    final isConnected = connectivityResult != ConnectivityResult.none;
+    final isConnected = !connectivityResult.contains(ConnectivityResult.none);
 
     if (!isConnected) {
       debugPrint('[PERSISTENT_SYNC] No connectivity, skipping sync');
@@ -98,7 +100,7 @@ class PersistentSyncService {
 
       // Check connectivity
       final connectivityResult = await Connectivity().checkConnectivity();
-      final isConnected = connectivityResult != ConnectivityResult.none;
+      final isConnected = !connectivityResult.contains(ConnectivityResult.none);
 
       if (!isConnected) {
         result.success = false;
@@ -135,13 +137,16 @@ class PersistentSyncService {
 
   /// Sync learners for all classes in local database
   Future<void> _syncAllLearners(
-      DatabaseHelper dbHelper, SyncResult result) async {
+    DatabaseHelper dbHelper,
+    SyncResult result,
+  ) async {
     try {
       final db = await dbHelper.database;
 
       // Get all unique class IDs from local database
       final classes = await db.rawQuery(
-          'SELECT DISTINCT classID FROM learnerdetails WHERE classID IS NOT NULL');
+        'SELECT DISTINCT classID FROM learnerdetails WHERE classID IS NOT NULL',
+      );
 
       debugPrint('[PERSISTENT_SYNC] Found ${classes.length} classes to sync');
 
@@ -165,14 +170,15 @@ class PersistentSyncService {
 
   /// Sync learners for a specific class using UPSERT logic
   Future<void> _syncLearnersForClass(
-      String classID, DatabaseHelper dbHelper) async {
+    String classID,
+    DatabaseHelper dbHelper,
+  ) async {
     debugPrint('[PERSISTENT_SYNC] Syncing learners for class: $classID');
 
     try {
       final response = await HttpClientService.makeRequest(
-        () => http.get(
-          Uri.parse('${AppConfig.getLearnersUrl}?classID=$classID'),
-        ),
+        () =>
+            http.get(Uri.parse('${AppConfig.getLearnersUrl}?classID=$classID')),
         endpoint: 'learners_by_class',
         maxRetries: NetworkConfig.syncOperationsMaxRetries,
         timeout: const Duration(seconds: NetworkConfig.lightweightTimeout),
@@ -184,7 +190,8 @@ class PersistentSyncService {
 
       final List<dynamic> serverLearners = json.decode(response.body);
       debugPrint(
-          '[PERSISTENT_SYNC] Received ${serverLearners.length} learners from server for class $classID');
+        '[PERSISTENT_SYNC] Received ${serverLearners.length} learners from server for class $classID',
+      );
 
       final db = await dbHelper.database;
 
@@ -194,83 +201,95 @@ class PersistentSyncService {
       for (int i = 0; i < serverLearners.length; i += batchSize) {
         final batch = serverLearners.skip(i).take(batchSize).toList();
 
-        await db.transaction((txn) async {
-          for (var learner in batch) {
-            final learnerID = learner['LearnerID']?.toString();
-            if (learnerID == null || learnerID.isEmpty) continue;
+        await db
+            .transaction((txn) async {
+              for (var learner in batch) {
+                final learnerID = learner['LearnerID']?.toString();
+                if (learnerID == null || learnerID.isEmpty) continue;
 
-            // Check if learner exists
-            final existing = await txn.query(
-              'learnerdetails',
-              where: 'LearnerID = ?',
-              whereArgs: [learnerID],
-            );
+                // Check if learner exists
+                final existing = await txn.query(
+                  'learnerdetails',
+                  where: 'LearnerID = ?',
+                  whereArgs: [learnerID],
+                );
 
-            // Prepare learner data
-            final learnerData = {
-              'LearnerID': learnerID,
-              'Name': learner['Name']?.toString() ?? '',
-              'Surname': learner['Surname']?.toString() ?? '',
-              'IDNumber': learner['IDNumber']?.toString() ?? '',
-              'DateOfBirth': learner['DateOfBirth']?.toString() ?? '',
-              'PhoneNumber': learner['PhoneNumber']?.toString() ?? '',
-              'Email': learner['Email']?.toString() ?? '',
-              'Title': learner['Title']?.toString() ?? '',
-              'classID': classID,
-              'synced': 1,
-              // Preserve fingerprint templates from server
-              'zkteco_left_template':
-                  learner['zkteco_left_template']?.toString() ?? '',
-              'zkteco_right_template':
-                  learner['zkteco_right_template']?.toString() ?? '',
-              'futronic_left_template':
-                  learner['futronic_left_template']?.toString() ?? '',
-              'futronic_right_template':
-                  learner['futronic_right_template']?.toString() ?? '',
-              'sourceafis_template':
-                  learner['sourceafis_template']?.toString() ?? '',
-            };
+                // Prepare learner data
+                final learnerData = {
+                  'LearnerID': learnerID,
+                  'Name': learner['Name']?.toString() ?? '',
+                  'Surname': learner['Surname']?.toString() ?? '',
+                  'IDNumber': learner['IDNumber']?.toString() ?? '',
+                  'DateOfBirth': learner['DateOfBirth']?.toString() ?? '',
+                  'PhoneNumber': learner['PhoneNumber']?.toString() ?? '',
+                  'Email': learner['Email']?.toString() ?? '',
+                  'Title': learner['Title']?.toString() ?? '',
+                  'classID': classID,
+                  'synced': 1,
+                  // Preserve fingerprint templates from server
+                  'zkteco_left_template':
+                      learner['zkteco_left_template']?.toString() ?? '',
+                  'zkteco_right_template':
+                      learner['zkteco_right_template']?.toString() ?? '',
+                  'futronic_left_template':
+                      learner['futronic_left_template']?.toString() ?? '',
+                  'futronic_right_template':
+                      learner['futronic_right_template']?.toString() ?? '',
+                  'sourceafis_template':
+                      learner['sourceafis_template']?.toString() ?? '',
+                };
 
-            if (existing.isEmpty) {
-              // Insert new learner
-              await txn.insert('learnerdetails', learnerData);
-              debugPrint('[PERSISTENT_SYNC] Inserted new learner: $learnerID');
-            } else {
-              // Update existing learner (merge with local data)
-              final existingData = existing.first;
+                if (existing.isEmpty) {
+                  // Insert new learner
+                  await txn.insert('learnerdetails', learnerData);
+                  debugPrint(
+                    '[PERSISTENT_SYNC] Inserted new learner: $learnerID',
+                  );
+                } else {
+                  // Update existing learner (merge with local data)
+                  final existingData = existing.first;
 
-              // Preserve local fingerprint templates if server doesn't have them
-              if (learnerData['zkteco_left_template']!.toString().isEmpty &&
-                  existingData['zkteco_left_template'] != null) {
-                learnerData['zkteco_left_template'] =
-                    existingData['zkteco_left_template'].toString();
+                  // Preserve local fingerprint templates if server doesn't have them
+                  if (learnerData['zkteco_left_template']!.toString().isEmpty &&
+                      existingData['zkteco_left_template'] != null) {
+                    learnerData['zkteco_left_template'] =
+                        existingData['zkteco_left_template'].toString();
+                  }
+                  if (learnerData['zkteco_right_template']!
+                          .toString()
+                          .isEmpty &&
+                      existingData['zkteco_right_template'] != null) {
+                    learnerData['zkteco_right_template'] =
+                        existingData['zkteco_right_template'].toString();
+                  }
+                  if (learnerData['futronic_left_template']!
+                          .toString()
+                          .isEmpty &&
+                      existingData['futronic_left_template'] != null) {
+                    learnerData['futronic_left_template'] =
+                        existingData['futronic_left_template'].toString();
+                  }
+                  if (learnerData['futronic_right_template']!
+                          .toString()
+                          .isEmpty &&
+                      existingData['futronic_right_template'] != null) {
+                    learnerData['futronic_right_template'] =
+                        existingData['futronic_right_template'].toString();
+                  }
+
+                  await txn.update(
+                    'learnerdetails',
+                    learnerData,
+                    where: 'LearnerID = ?',
+                    whereArgs: [learnerID],
+                  );
+                  debugPrint('[PERSISTENT_SYNC] Updated learner: $learnerID');
+                }
               }
-              if (learnerData['zkteco_right_template']!.toString().isEmpty &&
-                  existingData['zkteco_right_template'] != null) {
-                learnerData['zkteco_right_template'] =
-                    existingData['zkteco_right_template'].toString();
-              }
-              if (learnerData['futronic_left_template']!.toString().isEmpty &&
-                  existingData['futronic_left_template'] != null) {
-                learnerData['futronic_left_template'] =
-                    existingData['futronic_left_template'].toString();
-              }
-              if (learnerData['futronic_right_template']!.toString().isEmpty &&
-                  existingData['futronic_right_template'] != null) {
-                learnerData['futronic_right_template'] =
-                    existingData['futronic_right_template'].toString();
-              }
-
-              await txn.update(
-                'learnerdetails',
-                learnerData,
-                where: 'LearnerID = ?',
-                whereArgs: [learnerID],
-              );
-              debugPrint('[PERSISTENT_SYNC] Updated learner: $learnerID');
-            }
-          }
-        }).timeout(const Duration(seconds: 5)); // Add timeout to prevent locks
+            })
+            .timeout(
+              const Duration(seconds: 5),
+            ); // Add timeout to prevent locks
 
         // Small delay between batches to allow other operations
         if (i + batchSize < serverLearners.length) {
@@ -279,7 +298,8 @@ class PersistentSyncService {
       }
 
       debugPrint(
-          '[PERSISTENT_SYNC] Successfully synced ${serverLearners.length} learners for class $classID');
+        '[PERSISTENT_SYNC] Successfully synced ${serverLearners.length} learners for class $classID',
+      );
     } catch (e) {
       debugPrint('[PERSISTENT_SYNC] Error syncing class $classID: $e');
       rethrow;
@@ -288,7 +308,9 @@ class PersistentSyncService {
 
   /// Sync offline clocking records to server
   Future<void> _syncOfflineClockingRecords(
-      DatabaseHelper dbHelper, SyncResult result) async {
+    DatabaseHelper dbHelper,
+    SyncResult result,
+  ) async {
     try {
       final db = await dbHelper.database;
 
@@ -300,7 +322,8 @@ class PersistentSyncService {
       );
 
       debugPrint(
-          '[PERSISTENT_SYNC] Found ${unsyncedRecords.length} unsynced clocking records');
+        '[PERSISTENT_SYNC] Found ${unsyncedRecords.length} unsynced clocking records',
+      );
 
       for (var record in unsyncedRecords) {
         try {
@@ -309,7 +332,8 @@ class PersistentSyncService {
           result.clockingRecordsSynced++;
         } catch (e) {
           debugPrint(
-              '[PERSISTENT_SYNC] Failed to sync clocking record ${record['clocking_id']}: $e');
+            '[PERSISTENT_SYNC] Failed to sync clocking record ${record['clocking_id']}: $e',
+          );
           result.errors.add('Clocking ${record['clocking_id']}: $e');
         }
       }
@@ -321,9 +345,12 @@ class PersistentSyncService {
 
   /// Sync a single clocking record
   Future<void> _syncSingleClockingRecord(
-      Map<String, dynamic> record, DatabaseHelper dbHelper) async {
+    Map<String, dynamic> record,
+    DatabaseHelper dbHelper,
+  ) async {
     // Determine if it's clock-in or clock-out
-    final hasClockOut = record['clock_out_time'] != null &&
+    final hasClockOut =
+        record['clock_out_time'] != null &&
         record['clock_out_time'].toString().isNotEmpty;
 
     final endpoint = hasClockOut ? AppConfig.clockoutUrl : AppConfig.clockinUrl;
@@ -342,8 +369,9 @@ class PersistentSyncService {
           'user_accuracy': record['user_accuracy']?.toString() ?? '',
         },
       ),
-      endpoint:
-          hasClockOut ? 'clocking_clockout_sync' : 'clocking_clockin_sync',
+      endpoint: hasClockOut
+          ? 'clocking_clockout_sync'
+          : 'clocking_clockin_sync',
       maxRetries: NetworkConfig.syncOperationsMaxRetries,
       timeout: const Duration(seconds: NetworkConfig.lightweightTimeout),
     );
@@ -358,7 +386,8 @@ class PersistentSyncService {
         whereArgs: [record['clocking_id']],
       );
       debugPrint(
-          '[PERSISTENT_SYNC] Synced clocking record ${record['clocking_id']}');
+        '[PERSISTENT_SYNC] Synced clocking record ${record['clocking_id']}',
+      );
     } else {
       throw Exception('Server returned ${response.statusCode}');
     }
@@ -366,7 +395,9 @@ class PersistentSyncService {
 
   /// Sync other pending data (POE, documents, etc.)
   Future<void> _syncOtherPendingData(
-      DatabaseHelper dbHelper, SyncResult result) async {
+    DatabaseHelper dbHelper,
+    SyncResult result,
+  ) async {
     // Add other sync operations as needed
     debugPrint('[PERSISTENT_SYNC] Syncing other pending data...');
   }

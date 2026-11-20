@@ -275,7 +275,7 @@ class _AttendancePageState extends State<AttendancePage> {
 
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
-      final isOffline = connectivityResult == ConnectivityResult.none;
+      final isOffline = connectivityResult.contains(ConnectivityResult.none);
 
       if (isOffline) {
         debugPrint(

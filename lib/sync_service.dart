@@ -22,7 +22,7 @@ Future<bool> syncSingleClockIn(Map<String, dynamic> attendance) async {
   final connectivityResult = await Connectivity().checkConnectivity();
   debugPrint('Connectivity result: $connectivityResult');
 
-  final isOffline = connectivityResult == ConnectivityResult.none;
+  final isOffline = connectivityResult.contains(ConnectivityResult.none);
 
   if (isOffline) {
     debugPrint('No internet connection - returning false');
@@ -132,7 +132,7 @@ Future<bool> syncSingleClockOut(Map<String, dynamic> attendance) async {
   final connectivityResult = await Connectivity().checkConnectivity();
   debugPrint('Connectivity result: $connectivityResult');
 
-  final isOffline = connectivityResult == ConnectivityResult.none;
+  final isOffline = connectivityResult.contains(ConnectivityResult.none);
 
   if (isOffline) {
     debugPrint('No internet connection - returning false');
@@ -499,8 +499,7 @@ class SyncService extends ChangeNotifier {
     try {
       // Verify connectivity
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult != ConnectivityResult.wifi &&
-          connectivityResult != ConnectivityResult.mobile) {
+      if (!connectivityResult.contains(ConnectivityResult.wifi) && !connectivityResult.contains(ConnectivityResult.mobile)) {
         debugPrint("No network available, skipping learner details sync");
         return;
       }
@@ -1495,7 +1494,7 @@ class SyncService extends ChangeNotifier {
 
   Future<bool> isConnected() async {
     final connectivityResult = await Connectivity().checkConnectivity();
-    return connectivityResult != ConnectivityResult.none;
+    return !connectivityResult.contains(ConnectivityResult.none);
   }
 
   void showSyncError(String message) {

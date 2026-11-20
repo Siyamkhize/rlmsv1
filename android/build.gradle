@@ -5,8 +5,8 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.3.1'  // AGP 7.3.1 compatible with Java 11
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22"  // Compatible with AGP 7.3.1
+        classpath 'com.android.tools.build:gradle:8.3.0'  // AGP 8.3.0 for Java 17
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24"  // Compatible with AGP 8.3.0
     }
 }
 
@@ -15,38 +15,14 @@ allprojects {
         google()
         mavenCentral()
     }
-    
-    // Force Java 11 for all subprojects (including plugins)
-    tasks.withType(JavaCompile).configureEach {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
 }
-
-// Custom buildDir configuration removed to fix Flutter APK detection
-// rootProject.buildDir = 'C:/temp/gradle-build'
-// subprojects {
-//     project.buildDir = "${rootProject.buildDir}/${project.name}"
-// }
 
 subprojects {
     afterEvaluate {
         if (project.hasProperty('android')) {
             android {
                 compileSdkVersion 35
-                
-                // Force Java 11 for ALL plugins, overriding their own settings
-                compileOptions {
-                    sourceCompatibility JavaVersion.VERSION_11
-                    targetCompatibility JavaVersion.VERSION_11
-                }
             }
-        }
-        
-        // Also force Java 11 at task level for any JavaCompile tasks
-        tasks.withType(JavaCompile).configureEach {
-            sourceCompatibility = '11'
-            targetCompatibility = '11'
         }
     }
 }

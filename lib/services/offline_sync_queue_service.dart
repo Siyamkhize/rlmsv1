@@ -88,8 +88,9 @@ class OfflineSyncQueueService {
 
       if (files.isEmpty) return;
 
-      files
-          .sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
+      files.sort(
+        (a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()),
+      );
 
       // Delete files older than 7 days
       for (final file in files.skip(7)) {
@@ -276,8 +277,11 @@ class OfflineSyncQueueService {
   }
 
   /// Process action immediately when online
-  Future<Map<String, dynamic>> _processActionOnline(String action,
-      Map<String, dynamic> payload, String idempotencyKey) async {
+  Future<Map<String, dynamic>> _processActionOnline(
+    String action,
+    Map<String, dynamic> payload,
+    String idempotencyKey,
+  ) async {
     final token = await _getAuthToken();
     final url = _getEndpointUrl(action);
 
@@ -297,9 +301,9 @@ class OfflineSyncQueueService {
           },
           body: jsonEncode(payload),
         )
-        .timeout(const Duration(
-            seconds:
-                90)); // Increased for 2G connectivity - see IMAGE_UPLOAD_AUDIT.md
+        .timeout(
+          const Duration(seconds: 90),
+        ); // Increased for 2G connectivity - see IMAGE_UPLOAD_AUDIT.md
 
     _log('info', 'http_response', {
       'action': action,
@@ -349,7 +353,8 @@ class OfflineSyncQueueService {
     if (learnerClockings.length > maxBatchSize) {
       return {
         'success': false,
-        'error': 'Batch size exceeds maximum of $maxBatchSize learners. '
+        'error':
+            'Batch size exceeds maximum of $maxBatchSize learners. '
             'Current batch: ${learnerClockings.length} learners. '
             'Please submit this batch before adding more learners.',
         'batch_size': learnerClockings.length,
@@ -420,7 +425,10 @@ class OfflineSyncQueueService {
       try {
         // Process batch immediately while online
         final result = await _processBatchOnline(
-            'class_batch_clocking', batchPayload, batchKey);
+          'class_batch_clocking',
+          batchPayload,
+          batchKey,
+        );
 
         // Mark batch as completed in local queue
         await _db.update(
@@ -491,7 +499,10 @@ class OfflineSyncQueueService {
 
   /// Process batch immediately when online
   Future<Map<String, dynamic>> _processBatchOnline(
-      String action, Map<String, dynamic> batchPayload, String batchKey) async {
+    String action,
+    Map<String, dynamic> batchPayload,
+    String batchKey,
+  ) async {
     final token = await _getAuthToken();
     final url = _getBatchEndpointUrl(action);
 
@@ -513,9 +524,9 @@ class OfflineSyncQueueService {
           },
           body: jsonEncode(batchPayload),
         )
-        .timeout(const Duration(
-            seconds:
-                180)); // Increased for 2G connectivity - see IMAGE_UPLOAD_AUDIT.md
+        .timeout(
+          const Duration(seconds: 180),
+        ); // Increased for 2G connectivity - see IMAGE_UPLOAD_AUDIT.md
 
     _log('info', 'batch_http_response', {
       'batch_id': batchKey.substring(0, 8),
@@ -594,8 +605,9 @@ class OfflineSyncQueueService {
   /// Get pending actions count for UI display
   Future<int> getPendingCount() async {
     final result = await _db.rawQuery(
-        'SELECT COUNT(*) as count FROM $_tableName WHERE status = ?',
-        ['pending']);
+      'SELECT COUNT(*) as count FROM $_tableName WHERE status = ?',
+      ['pending'],
+    );
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
@@ -629,9 +641,7 @@ class OfflineSyncQueueService {
       }
 
       final queueDepth = rows.length;
-      _log('info', 'sync_start', {
-        'queue_depth': queueDepth,
-      });
+      _log('info', 'sync_start', {'queue_depth': queueDepth});
 
       for (final row in rows) {
         try {
@@ -669,10 +679,7 @@ class OfflineSyncQueueService {
       final payload = jsonDecode(payloadJson) as Map<String, dynamic>;
 
       // Add client timestamp to payload
-      final requestBody = {
-        ...payload,
-        'client_timestamp': clientTimestamp,
-      };
+      final requestBody = {...payload, 'client_timestamp': clientTimestamp};
 
       _log('info', 'queue_dispatch', {
         'action': action,
@@ -765,7 +772,9 @@ class OfflineSyncQueueService {
 
   Future<void> _updateAttempts(String key) async {
     await _db.rawUpdate(
-        'UPDATE $_tableName SET attempts = attempts + 1 WHERE id = ?', [key]);
+      'UPDATE $_tableName SET attempts = attempts + 1 WHERE id = ?',
+      [key],
+    );
   }
 
   Future<void> _markAsSynced(String key) async {
@@ -826,9 +835,10 @@ class OfflineSyncQueueService {
   }
 
   void _startConnectivityListener() {
-    _connectivitySubscription =
-        Connectivity().onConnectivityChanged.listen((result) {
-      bool isOnline = result != ConnectivityResult.none;
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      List<ConnectivityResult> result,
+    ) {
+      bool isOnline = !result.contains(ConnectivityResult.none);
 
       _log('info', 'connectivity_change', {
         'current_state': result.toString(),

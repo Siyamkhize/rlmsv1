@@ -8,11 +8,7 @@ class SyncStatusWidget extends StatefulWidget {
   final String? classID;
   final VoidCallback? onSyncComplete;
 
-  const SyncStatusWidget({
-    super.key,
-    this.classID,
-    this.onSyncComplete,
-  });
+  const SyncStatusWidget({super.key, this.classID, this.onSyncComplete});
 
   @override
   State<SyncStatusWidget> createState() => _SyncStatusWidgetState();
@@ -31,10 +27,12 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
     _updateSyncStatus();
 
     // Listen for connectivity changes
-    Connectivity().onConnectivityChanged.listen((result) {
+    Connectivity().onConnectivityChanged.listen((
+      List<ConnectivityResult> result,
+    ) {
       if (mounted) {
         setState(() {
-          _isOnline = result != ConnectivityResult.none;
+          _isOnline = !result.contains(ConnectivityResult.none);
         });
       }
     });
@@ -189,10 +187,7 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
                 ),
                 Text(
                   'Last sync: ${_formatLastSyncTime()}',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
                 ),
               ],
             ),
@@ -204,9 +199,7 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : IconButton(
                     icon: const Icon(Icons.sync),
@@ -226,10 +219,7 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> {
 class CompactSyncStatusWidget extends StatefulWidget {
   final VoidCallback? onTap;
 
-  const CompactSyncStatusWidget({
-    super.key,
-    this.onTap,
-  });
+  const CompactSyncStatusWidget({super.key, this.onTap});
 
   @override
   State<CompactSyncStatusWidget> createState() =>
@@ -244,10 +234,12 @@ class _CompactSyncStatusWidgetState extends State<CompactSyncStatusWidget> {
     super.initState();
     _checkConnectivity();
 
-    Connectivity().onConnectivityChanged.listen((result) {
+    Connectivity().onConnectivityChanged.listen((
+      List<ConnectivityResult> result,
+    ) {
       if (mounted) {
         setState(() {
-          _isOnline = result != ConnectivityResult.none;
+          _isOnline = !result.contains(ConnectivityResult.none);
         });
       }
     });
@@ -286,8 +278,9 @@ class _CompactSyncStatusWidgetState extends State<CompactSyncStatusWidget> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color:
-                    _isOnline ? Colors.green.shade700 : Colors.orange.shade700,
+                color: _isOnline
+                    ? Colors.green.shade700
+                    : Colors.orange.shade700,
               ),
             ),
           ],

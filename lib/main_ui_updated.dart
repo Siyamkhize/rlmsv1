@@ -75,8 +75,7 @@ void callbackDispatcher() {
         final syncService = SyncService();
 
         final connectivityResult = await Connectivity().checkConnectivity();
-        final hasNetwork = connectivityResult == ConnectivityResult.wifi ||
-            connectivityResult == ConnectivityResult.mobile;
+        final hasNetwork = connectivityResult.contains(ConnectivityResult.wifi) || connectivityResult.contains(ConnectivityResult.mobile);
 
         if (hasNetwork) {
           debugPrint("Background sync: Network available, starting sync...");
@@ -96,8 +95,7 @@ void callbackDispatcher() {
         debugPrint("Connectivity check task started at ${DateTime.now()}");
         final connectivityResult = await Connectivity().checkConnectivity();
         debugPrint("Connectivity result: $connectivityResult");
-        final hasNetwork = connectivityResult == ConnectivityResult.wifi ||
-            connectivityResult == ConnectivityResult.mobile;
+        final hasNetwork = connectivityResult.contains(ConnectivityResult.wifi) || connectivityResult.contains(ConnectivityResult.mobile);
         debugPrint("Has network: $hasNetwork");
 
         if (!hasNetwork) {

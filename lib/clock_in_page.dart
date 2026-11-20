@@ -50,11 +50,7 @@ class ClockInPage extends StatefulWidget {
   final String classID;
   final List<dynamic> learners;
 
-  const ClockInPage({
-    super.key,
-    required this.classID,
-    required this.learners,
-  });
+  const ClockInPage({super.key, required this.classID, required this.learners});
 
   @override
   State<ClockInPage> createState() => _ClockInPageState();
@@ -79,8 +75,9 @@ class _ClockInPageState extends State<ClockInPage>
   final Queue<Map<String, dynamic>> _requestQueue =
       Queue<Map<String, dynamic>>();
   bool _isProcessingQueue = false;
-  final Duration _requestDelay =
-      const Duration(milliseconds: 500); // 500ms between requests
+  final Duration _requestDelay = const Duration(
+    milliseconds: 500,
+  ); // 500ms between requests
   DateTime? _lastRequestTime;
   final int _maxConcurrentRequests = 3;
   int _activeRequests = 0;
@@ -126,8 +123,10 @@ class _ClockInPageState extends State<ClockInPage>
     WidgetsBinding.instance.addObserver(this);
     ensureSqflitePlatformInitialized();
     ClockingLogger.instance.initialize();
-    ClockingLogger.instance.logAppLifecycle('Clock-in page initialized',
-        details: 'ClassID: ${widget.classID}');
+    ClockingLogger.instance.logAppLifecycle(
+      'Clock-in page initialized',
+      details: 'ClassID: ${widget.classID}',
+    );
     _initializeData();
     // _initializeCamera();  // Temporarily disabled due to Java 21 compatibility issues
     _initializeSensor(); // Add sensor initialization
@@ -141,8 +140,9 @@ class _ClockInPageState extends State<ClockInPage>
 
   void _setupGpsListener() {
     // Listen to the shared accuracy stream from the service
-    _serviceAccuracySub =
-        SecureLocationService.accuracyStream.listen((accuracy) {
+    _serviceAccuracySub = SecureLocationService.accuracyStream.listen((
+      accuracy,
+    ) {
       if (mounted) {
         setState(() {
           _currentGpsAccuracy = accuracy;
@@ -155,42 +155,54 @@ class _ClockInPageState extends State<ClockInPage>
   }
 
   void _startLiveGpsTracking() {
-    _liveGpsSub = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 5, // Update every 5 meters
-      ),
-    ).listen((pos) {
-      if (mounted) {
-        bool withinRange = false;
-        if (_siteLat != null && _siteLon != null) {
-          final distance = _calculateDistance(
-              pos.latitude, pos.longitude, _siteLat!, _siteLon!);
-          // Use the same dynamic radius logic as the geofence check
-          final effectiveRadius = (50.0 + pos.accuracy).clamp(50.0, 60.0);
-          withinRange = distance <= effectiveRadius;
-        }
+    _liveGpsSub =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 5, // Update every 5 meters
+          ),
+        ).listen(
+          (pos) {
+            if (mounted) {
+              bool withinRange = false;
+              if (_siteLat != null && _siteLon != null) {
+                final distance = _calculateDistance(
+                  pos.latitude,
+                  pos.longitude,
+                  _siteLat!,
+                  _siteLon!,
+                );
+                // Use the same dynamic radius logic as the geofence check
+                final effectiveRadius = (50.0 + pos.accuracy).clamp(50.0, 60.0);
+                withinRange = distance <= effectiveRadius;
+              }
 
-        setState(() {
-          _currentGpsAccuracy = pos.accuracy;
-          _isWithinRange = withinRange;
-        });
-      }
-    }, onError: (e) {
-      debugPrint('[GPS_LIVE] Tracking error: $e');
-    });
+              setState(() {
+                _currentGpsAccuracy = pos.accuracy;
+                _isWithinRange = withinRange;
+              });
+            }
+          },
+          onError: (e) {
+            debugPrint('[GPS_LIVE] Tracking error: $e');
+          },
+        );
   }
 
   void _warmUpGPS() {
     // Start getting position in background so it's ready when they click
     debugPrint('[GPS_WARMUP] Proactively warming up GPS for clock-in...');
-    SecureLocationService.getSecurePosition().then((result) {
-      debugPrint(
-          '[GPS_WARMUP] Warm-up complete: ${result.position.accuracy.toStringAsFixed(1)}m');
-    }).catchError((e) {
-      debugPrint(
-          '[GPS_WARMUP] Warm-up failed (expected if permissions missing): $e');
-    });
+    SecureLocationService.getSecurePosition()
+        .then((result) {
+          debugPrint(
+            '[GPS_WARMUP] Warm-up complete: ${result.position.accuracy.toStringAsFixed(1)}m',
+          );
+        })
+        .catchError((e) {
+          debugPrint(
+            '[GPS_WARMUP] Warm-up failed (expected if permissions missing): $e',
+          );
+        });
   }
 
   @override
@@ -289,7 +301,8 @@ class _ClockInPageState extends State<ClockInPage>
       // CRITICAL FIX: Check if scanner was in problematic state
       if (scannerManager.isInProblematicState()) {
         debugPrint(
-            '[DOC_SCAN] WARNING: Scanner was in problematic state - potential plugin crash');
+          '[DOC_SCAN] WARNING: Scanner was in problematic state - potential plugin crash',
+        );
         scannerManager.recoverFromProblematicState();
 
         // Show user-friendly message about the interruption
@@ -320,7 +333,7 @@ class _ClockInPageState extends State<ClockInPage>
     debugPrint('[INIT] Checking initial connectivity...');
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
-      final isConnected = connectivityResult != ConnectivityResult.none;
+      final isConnected = !connectivityResult.contains(ConnectivityResult.none);
 
       debugPrint('[INIT] Connectivity result: $connectivityResult');
       debugPrint('[INIT] Initial connection status: $isConnected');
@@ -354,14 +367,15 @@ class _ClockInPageState extends State<ClockInPage>
 
     _isProcessingQueue = true;
 
-    while (
-        _requestQueue.isNotEmpty && _activeRequests < _maxConcurrentRequests) {
+    while (_requestQueue.isNotEmpty &&
+        _activeRequests < _maxConcurrentRequests) {
       final request = _requestQueue.removeFirst();
 
       // Rate limiting: ensure minimum delay between requests
       if (_lastRequestTime != null) {
-        final timeSinceLastRequest =
-            DateTime.now().difference(_lastRequestTime!);
+        final timeSinceLastRequest = DateTime.now().difference(
+          _lastRequestTime!,
+        );
         if (timeSinceLastRequest < _requestDelay) {
           await Future.delayed(_requestDelay - timeSinceLastRequest);
         }
@@ -371,22 +385,24 @@ class _ClockInPageState extends State<ClockInPage>
       _lastRequestTime = DateTime.now();
 
       // Process the request
-      _processRequest(request).then((_) {
-        _activeRequests--;
-        // Continue processing queue
-        if (_requestQueue.isNotEmpty &&
-            _activeRequests < _maxConcurrentRequests) {
-          _processRequestQueue();
-        }
-      }).catchError((error) {
-        _activeRequests--;
-        debugPrint('[QUEUE] Error processing request: $error');
-        // Continue processing queue even if one request fails
-        if (_requestQueue.isNotEmpty &&
-            _activeRequests < _maxConcurrentRequests) {
-          _processRequestQueue();
-        }
-      });
+      _processRequest(request)
+          .then((_) {
+            _activeRequests--;
+            // Continue processing queue
+            if (_requestQueue.isNotEmpty &&
+                _activeRequests < _maxConcurrentRequests) {
+              _processRequestQueue();
+            }
+          })
+          .catchError((error) {
+            _activeRequests--;
+            debugPrint('[QUEUE] Error processing request: $error');
+            // Continue processing queue even if one request fails
+            if (_requestQueue.isNotEmpty &&
+                _activeRequests < _maxConcurrentRequests) {
+              _processRequestQueue();
+            }
+          });
     }
 
     _isProcessingQueue = false;
@@ -418,12 +434,16 @@ class _ClockInPageState extends State<ClockInPage>
   }
 
   Future<bool> _performClockInSync(
-      String learnerId, Map<String, dynamic> attendance) async {
+    String learnerId,
+    Map<String, dynamic> attendance,
+  ) async {
     return await syncSingleClockIn(attendance);
   }
 
   Future<bool> _performClockOutSync(
-      String learnerId, Map<String, dynamic> attendance) async {
+    String learnerId,
+    Map<String, dynamic> attendance,
+  ) async {
     return await syncSingleClockOut(attendance);
   }
 
@@ -431,7 +451,7 @@ class _ClockInPageState extends State<ClockInPage>
   Future<void> _refreshConnectivityStatus() async {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
-      final isConnected = connectivityResult != ConnectivityResult.none;
+      final isConnected = !connectivityResult.contains(ConnectivityResult.none);
       if (mounted) {
         setState(() {
           _isConnected = isConnected;
@@ -439,7 +459,8 @@ class _ClockInPageState extends State<ClockInPage>
 
         // Connectivity status tracked silently - no distracting messages
         debugPrint(
-            '[CONNECTIVITY] Connection status: ${isConnected ? "Online" : "Offline"}');
+          '[CONNECTIVITY] Connection status: ${isConnected ? "Online" : "Offline"}',
+        );
       }
     } catch (e) {
       debugPrint('Error refreshing connectivity status: $e');
@@ -453,41 +474,46 @@ class _ClockInPageState extends State<ClockInPage>
 
   void _setupConnectivityListener() {
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
-        (ConnectivityResult result) async {
-      final isConnected = result != ConnectivityResult.none;
-      final wasOffline = !_isConnected;
+      (List<ConnectivityResult> result) async {
+        final isConnected = !result.contains(ConnectivityResult.none);
+        final wasOffline = !_isConnected;
 
-      debugPrint(
-          '[CONNECTIVITY] Status changed: $result, isConnected: $isConnected');
+        debugPrint(
+          '[CONNECTIVITY] Status changed: $result, isConnected: $isConnected',
+        );
 
-      if (mounted) {
-        setState(() {
-          _isConnected = isConnected;
-        });
+        if (mounted) {
+          setState(() {
+            _isConnected = isConnected;
+          });
 
-        if (isConnected && wasOffline) {
-          debugPrint(
-              '[CONNECTIVITY] Internet available - syncing offline records from previous days');
-          // CRITICAL FIX: When coming back online, sync ALL offline records (including previous days)
-          // This ensures previous day's records are uploaded before allowing new clock-ins
-          await _syncOfflineClockIns(showMessages: false);
-          debugPrint('[CONNECTIVITY] Offline records sync completed');
-        } else if (isConnected) {
-          debugPrint('[CONNECTIVITY] Internet available');
-        } else {
-          debugPrint(
-              '[CONNECTIVITY] Internet connection lost - switching to offline mode');
-          // No UI notification - tracked silently to avoid distraction
+          if (isConnected && wasOffline) {
+            debugPrint(
+              '[CONNECTIVITY] Internet available - syncing offline records from previous days',
+            );
+            // CRITICAL FIX: When coming back online, sync ALL offline records (including previous days)
+            // This ensures previous day's records are uploaded before allowing new clock-ins
+            await _syncOfflineClockIns(showMessages: false);
+            debugPrint('[CONNECTIVITY] Offline records sync completed');
+          } else if (isConnected) {
+            debugPrint('[CONNECTIVITY] Internet available');
+          } else {
+            debugPrint(
+              '[CONNECTIVITY] Internet connection lost - switching to offline mode',
+            );
+            // No UI notification - tracked silently to avoid distraction
+          }
         }
-      }
-    }, onError: (error) {
-      debugPrint('[CONNECTIVITY] Error in connectivity listener: $error');
-      if (mounted) {
-        setState(() {
-          _isConnected = false;
-        });
-      }
-    });
+      },
+      onError: (error) {
+        debugPrint('[CONNECTIVITY] Error in connectivity listener: $error');
+        if (mounted) {
+          setState(() {
+            _isConnected = false;
+          });
+        }
+      },
+    );
   }
 
   // Set up periodic auto-sync (every 3 minutes) with database coordination
@@ -497,7 +523,8 @@ class _ClockInPageState extends State<ClockInPage>
 
       // Check if enough time has passed since last sync to prevent conflicts
       if (!_dbCoordinator.shouldAllowSync(
-          minInterval: const Duration(minutes: 2))) {
+        minInterval: const Duration(minutes: 2),
+      )) {
         debugPrint('[AUTO_SYNC] ⏭️ Skipping sync - too soon since last sync');
         return;
       }
@@ -527,7 +554,8 @@ class _ClockInPageState extends State<ClockInPage>
     });
 
     debugPrint(
-        '[AUTO_SYNC] ⏰ Periodic auto-sync enabled (every 3 minutes) with coordination');
+      '[AUTO_SYNC] ⏰ Periodic auto-sync enabled (every 3 minutes) with coordination',
+    );
   }
 
   Future<void> _initializeSensor() async {
@@ -542,7 +570,8 @@ class _ClockInPageState extends State<ClockInPage>
       // Cancel any ongoing operations to free up the sensor
       await _fingerprintService.cancelEnrollment().catchError((e) {
         debugPrint(
-            '[INIT] Cancel enrollment error (expected on first run): $e');
+          '[INIT] Cancel enrollment error (expected on first run): $e',
+        );
       });
 
       await Future.delayed(const Duration(milliseconds: 500));
@@ -552,14 +581,17 @@ class _ClockInPageState extends State<ClockInPage>
 
       setState(() {
         _isSensorConnected = isConnected;
-        _statusMessage =
-            isConnected ? 'Sensor connected' : 'Sensor not connected';
+        _statusMessage = isConnected
+            ? 'Sensor connected'
+            : 'Sensor not connected';
         _isInitializing = false;
       });
 
       if (!isConnected) {
         FingerprintErrorHandler.showError(
-            context, 'Scanner not connected. Please check USB connection.');
+          context,
+          'Scanner not connected. Please check USB connection.',
+        );
       }
     } catch (e) {
       if (!mounted) return;
@@ -569,13 +601,16 @@ class _ClockInPageState extends State<ClockInPage>
         _isInitializing = false;
       });
       FingerprintErrorHandler.showError(
-          context, 'Scanner initialization failed: $e');
+        context,
+        'Scanner initialization failed: $e',
+      );
     }
   }
 
   void _setupStreams() {
-    _enrollStatusSubscription =
-        _fingerprintService.enrollStatusStream.listen((status) {
+    _enrollStatusSubscription = _fingerprintService.enrollStatusStream.listen((
+      status,
+    ) {
       if (mounted) {
         setState(() {
           _statusMessage = status;
@@ -595,7 +630,8 @@ class _ClockInPageState extends State<ClockInPage>
             _hideProgressDialog();
             if (_currentLearnerIdForClocking != null) {
               setState(
-                  () => _isClockingIn[_currentLearnerIdForClocking!] = false);
+                () => _isClockingIn[_currentLearnerIdForClocking!] = false,
+              );
             }
             FingerprintErrorHandler.showError(context, status);
             // Only reset sensor on real error, not after every operation
@@ -604,8 +640,9 @@ class _ClockInPageState extends State<ClockInPage>
       }
     });
 
-    _enrollSuccessSubscription =
-        _fingerprintService.enrollSuccessStream.listen((capturedData) async {
+    _enrollSuccessSubscription = _fingerprintService.enrollSuccessStream.listen((
+      capturedData,
+    ) async {
       debugPrint('[CLOCK_IN] enrollSuccessStream received: $capturedData');
 
       // CRITICAL FIX #1: Ignore fingerprints if no learner is actively clocking
@@ -613,7 +650,8 @@ class _ClockInPageState extends State<ClockInPage>
           _currentLearnerIdForClocking == null ||
           _currentClockingAction == null) {
         debugPrint(
-            '[CLOCK_IN] ❌ IGNORED: No active clocking session. CurrentLearner=$_currentLearnerIdForClocking, Action=$_currentClockingAction');
+          '[CLOCK_IN] ❌ IGNORED: No active clocking session. CurrentLearner=$_currentLearnerIdForClocking, Action=$_currentClockingAction',
+        );
         return;
       }
 
@@ -629,18 +667,21 @@ class _ClockInPageState extends State<ClockInPage>
       _currentClockingAction = null;
 
       debugPrint(
-          '[CLOCK_IN] Processing fingerprint for learner: $learnerId, action: $action');
+        '[CLOCK_IN] Processing fingerprint for learner: $learnerId, action: $action',
+      );
 
       // CRITICAL FIX #4: Verify this learner is still in the clocking process
       if (!_isClockingIn.containsKey(learnerId) ||
           _isClockingIn[learnerId] != true) {
         debugPrint(
-            '[CLOCK_IN] ❌ SAFETY CHECK FAILED: Learner $learnerId is no longer in clocking process');
+          '[CLOCK_IN] ❌ SAFETY CHECK FAILED: Learner $learnerId is no longer in clocking process',
+        );
         return;
       }
 
       debugPrint(
-          '[CLOCK_IN] Scanned template length: ${scannedTemplate?.length}');
+        '[CLOCK_IN] Scanned template length: ${scannedTemplate?.length}',
+      );
 
       if (scannedTemplate == null) {
         if (!mounted) return;
@@ -654,7 +695,9 @@ class _ClockInPageState extends State<ClockInPage>
         if (learnerIdInt == null) {
           debugPrint('[CLOCK_IN] Error: Invalid learner ID: $learnerId');
           FingerprintErrorHandler.showError(
-              context, 'Invalid learner ID: $learnerId');
+            context,
+            'Invalid learner ID: $learnerId',
+          );
           return;
         }
 
@@ -666,42 +709,53 @@ class _ClockInPageState extends State<ClockInPage>
 
         // Use the appropriate scanner templates based on the scanner type
         // Use the old getFingerprints method which returns the best available templates
-        final storedTemplates =
-            await DatabaseHelper().getFingerprints(learnerIdInt);
+        final storedTemplates = await DatabaseHelper().getFingerprints(
+          learnerIdInt,
+        );
         leftTemplate = storedTemplates['left'];
         rightTemplate = storedTemplates['right'];
 
         debugPrint('[CLOCK_IN] Using available templates');
         debugPrint('[CLOCK_IN] Left template length: ${leftTemplate?.length}');
         debugPrint(
-            '[CLOCK_IN] Right template length: ${rightTemplate?.length}');
+          '[CLOCK_IN] Right template length: ${rightTemplate?.length}',
+        );
         debugPrint(
-            '[CLOCK_IN] Left template exists: ${leftTemplate != null && leftTemplate.isNotEmpty}');
+          '[CLOCK_IN] Left template exists: ${leftTemplate != null && leftTemplate.isNotEmpty}',
+        );
         debugPrint(
-            '[CLOCK_IN] Right template exists: ${rightTemplate != null && rightTemplate.isNotEmpty}');
+          '[CLOCK_IN] Right template exists: ${rightTemplate != null && rightTemplate.isNotEmpty}',
+        );
 
         // Check if any fingerprints exist for this learner for the specific scanner
         if ((leftTemplate == null || leftTemplate.isEmpty) &&
             (rightTemplate == null || rightTemplate.isEmpty)) {
           debugPrint('[CLOCK_IN] No fingerprints found for learner $learnerId');
           if (!mounted) return;
-          FingerprintErrorHandler.showError(context,
-              'No fingerprints enrolled for this learner. Please enroll fingerprints first.');
+          FingerprintErrorHandler.showError(
+            context,
+            'No fingerprints enrolled for this learner. Please enroll fingerprints first.',
+          );
           return;
         }
 
         bool match = false;
         debugPrint(
-            '[CLOCK_IN] ========== FINGERPRINT MATCHING STARTED ==========');
+          '[CLOCK_IN] ========== FINGERPRINT MATCHING STARTED ==========',
+        );
         debugPrint('[CLOCK_IN] Learner ID: $learnerId');
         debugPrint(
-            '[CLOCK_IN] Scanned template size: ${scannedTemplate.length} bytes');
+          '[CLOCK_IN] Scanned template size: ${scannedTemplate.length} bytes',
+        );
 
         if (leftTemplate != null && leftTemplate.isNotEmpty) {
           debugPrint(
-              '[CLOCK_IN] Attempting match with LEFT template (size: ${leftTemplate.length} bytes)...');
+            '[CLOCK_IN] Attempting match with LEFT template (size: ${leftTemplate.length} bytes)...',
+          );
           match = await _fingerprintService.matchTemplates(
-              leftTemplate, scannedTemplate);
+            leftTemplate,
+            scannedTemplate,
+          );
           debugPrint('[CLOCK_IN] LEFT template match result: $match');
         } else {
           debugPrint('[CLOCK_IN] No left template available for matching');
@@ -709,20 +763,25 @@ class _ClockInPageState extends State<ClockInPage>
 
         if (!match && rightTemplate != null && rightTemplate.isNotEmpty) {
           debugPrint(
-              '[CLOCK_IN] Attempting match with RIGHT template (size: ${rightTemplate.length} bytes)...');
+            '[CLOCK_IN] Attempting match with RIGHT template (size: ${rightTemplate.length} bytes)...',
+          );
           match = await _fingerprintService.matchTemplates(
-              rightTemplate, scannedTemplate);
+            rightTemplate,
+            scannedTemplate,
+          );
           debugPrint('[CLOCK_IN] RIGHT template match result: $match');
         } else if (!match) {
           debugPrint('[CLOCK_IN] No right template available for matching');
         }
 
         debugPrint(
-            '[CLOCK_IN] ========== FINAL MATCH RESULT: $match ==========');
+          '[CLOCK_IN] ========== FINAL MATCH RESULT: $match ==========',
+        );
 
         if (match) {
           debugPrint(
-              '[CLOCK_IN] ✅ FINGERPRINT MATCH CONFIRMED for Learner $learnerId');
+            '[CLOCK_IN] ✅ FINGERPRINT MATCH CONFIRMED for Learner $learnerId',
+          );
           if (action == 'in') {
             // GEOFENCING CHECK: Verify user is within 50 meters before allowing clock-in
             debugPrint('[CLOCK_IN] Fingerprint matched - checking geofence...');
@@ -730,28 +789,33 @@ class _ClockInPageState extends State<ClockInPage>
 
             if (!withinRadius) {
               debugPrint(
-                  '[CLOCK_IN] ❌ Geofence check failed - user not within 50 meters');
+                '[CLOCK_IN] ❌ Geofence check failed - user not within 50 meters',
+              );
               setState(() => _isClockingIn[learnerId] = false);
               return;
             }
 
             debugPrint(
-                '[CLOCK_IN] ✅ Geofence check passed - proceeding with clock-in');
+              '[CLOCK_IN] ✅ Geofence check passed - proceeding with clock-in',
+            );
 
             final now = _getCurrentTimeString();
             final date = _getCurrentDateString();
 
             // FIRST: Check if learner already clocked in today
-            final existingAttendance =
-                await DatabaseHelper().getAttendanceForDay(learnerId, date);
+            final existingAttendance = await DatabaseHelper()
+                .getAttendanceForDay(learnerId, date);
             if (existingAttendance != null &&
                 existingAttendance['clock_in_time'] != null &&
                 existingAttendance['clock_in_time'].toString().isNotEmpty) {
               debugPrint(
-                  '[CLOCK_IN] ❌ Learner $learnerId already clocked in today at ${existingAttendance['clock_in_time']}');
+                '[CLOCK_IN] ❌ Learner $learnerId already clocked in today at ${existingAttendance['clock_in_time']}',
+              );
               if (!mounted) return;
-              FingerprintErrorHandler.showInfo(context,
-                  'Already clocked in today at ${existingAttendance['clock_in_time']}');
+              FingerprintErrorHandler.showInfo(
+                context,
+                'Already clocked in today at ${existingAttendance['clock_in_time']}',
+              );
               setState(() => _isClockingIn[learnerId] = false);
               return;
             }
@@ -800,33 +864,40 @@ class _ClockInPageState extends State<ClockInPage>
 
             debugPrint('[CLOCK_IN] Starting sync for clock-in...');
             debugPrint(
-                '[CLOCK_IN] Location: ${position.latitude}, ${position.longitude} (accuracy: ${position.accuracy}m)');
+              '[CLOCK_IN] Location: ${position.latitude}, ${position.longitude} (accuracy: ${position.accuracy}m)',
+            );
             ClockingLogger.instance.logClockInAttempt(
-                learnerId, 'Manual user action',
-                additionalData: attendance);
+              learnerId,
+              'Manual user action',
+              additionalData: attendance,
+            );
 
             bool synced = false;
 
             // Check if online - if so, try immediate sync first
             final connectivityCheck = await _checkConnectivity();
             debugPrint(
-                '[CLOCK_IN] Connectivity check result: $connectivityCheck');
+              '[CLOCK_IN] Connectivity check result: $connectivityCheck',
+            );
             debugPrint('[CLOCK_IN] _isConnected state: $_isConnected');
 
             if (connectivityCheck) {
               debugPrint(
-                  '[CLOCK_IN] ========== ONLINE MODE - SYNCING TO SERVER ==========');
+                '[CLOCK_IN] ========== ONLINE MODE - SYNCING TO SERVER ==========',
+              );
               try {
                 synced = await syncSingleClockIn(attendance);
                 debugPrint(
-                    '[CLOCK_IN] ========== SYNC RESULT: $synced ==========');
+                  '[CLOCK_IN] ========== SYNC RESULT: $synced ==========',
+                );
               } catch (e) {
                 debugPrint('[CLOCK_IN] ========== SYNC FAILED: $e ==========');
                 synced = false;
               }
             } else {
               debugPrint(
-                  '[CLOCK_IN] ========== OFFLINE MODE - WILL SYNC LATER ==========');
+                '[CLOCK_IN] ========== OFFLINE MODE - WILL SYNC LATER ==========',
+              );
               synced = false;
             }
 
@@ -855,12 +926,14 @@ class _ClockInPageState extends State<ClockInPage>
               'clock_out_time': '', // Empty for clock-in
               'contact_time': '', // Empty for clock-in
               'clock_date': date,
-              'synced':
-                  synced ? 1 : 0, // Mark as synced if server sync succeeded
+              'synced': synced
+                  ? 1
+                  : 0, // Mark as synced if server sync succeeded
             };
             await DatabaseHelper().insertClocking(dbData);
             debugPrint(
-                '[CLOCK_IN] ✅ Saved to local database with synced=${synced ? 1 : 0}');
+              '[CLOCK_IN] ✅ Saved to local database with synced=${synced ? 1 : 0}',
+            );
 
             // Start monitoring service for this learner
             initMonitoring(int.parse(learnerId));
@@ -871,14 +944,19 @@ class _ClockInPageState extends State<ClockInPage>
             if (synced) {
               debugPrint('[CLOCK_IN] ✅ Clock-in synced to server successfully');
               FingerprintErrorHandler.showSuccess(
-                  context, 'Clock-in synced to server!',
-                  duration: const Duration(seconds: 2));
+                context,
+                'Clock-in synced to server!',
+                duration: const Duration(seconds: 2),
+              );
             } else {
               debugPrint(
-                  '[CLOCK_IN] 📱 Clock-in saved locally (will sync when online)');
+                '[CLOCK_IN] 📱 Clock-in saved locally (will sync when online)',
+              );
               FingerprintErrorHandler.showInfo(
-                  context, 'Saved locally (will sync when online)',
-                  duration: const Duration(seconds: 2));
+                context,
+                'Saved locally (will sync when online)',
+                duration: const Duration(seconds: 2),
+              );
             }
 
             // Update UI immediately (DON'T wait for sync - update UI first!)
@@ -888,11 +966,14 @@ class _ClockInPageState extends State<ClockInPage>
                   false; // Reset loading state immediately
             });
             debugPrint(
-                '[CLOCK_IN] ✅ UI updated IMMEDIATELY with clock-in time: $now');
+              '[CLOCK_IN] ✅ UI updated IMMEDIATELY with clock-in time: $now',
+            );
             debugPrint(
-                '[CLOCK_IN] ✅ clockInTimes[$learnerId] = ${clockInTimes[learnerId]}');
+              '[CLOCK_IN] ✅ clockInTimes[$learnerId] = ${clockInTimes[learnerId]}',
+            );
             debugPrint(
-                '[CLOCK_IN] ✅ clockOutTimes[$learnerId] = ${clockOutTimes[learnerId]}');
+              '[CLOCK_IN] ✅ clockOutTimes[$learnerId] = ${clockOutTimes[learnerId]}',
+            );
 
             // Show success message immediately
             if (mounted) {
@@ -912,41 +993,49 @@ class _ClockInPageState extends State<ClockInPage>
                 existingAttendance['clock_in_time'] == null) {
               if (!mounted) return;
               FingerprintErrorHandler.showInfo(
-                  context, 'Cannot clock out. No prior clock-in found.');
+                context,
+                'Cannot clock out. No prior clock-in found.',
+              );
               setState(() => _isClockingIn[learnerId] = false);
             } else {
               // MONITORING CHECK: Verify if learner missed all 3 random monitoring attempts
-              final missedMonitoring =
-                  await DatabaseHelper().hasMissedAllMonitoring(learnerId);
+              final missedMonitoring = await DatabaseHelper()
+                  .hasMissedAllMonitoring(learnerId);
 
               if (missedMonitoring) {
                 debugPrint(
-                    '[CLOCK_OUT] ❌ Clock-out blocked: Learner $learnerId missed all monitoring attempts');
+                  '[CLOCK_OUT] ❌ Clock-out blocked: Learner $learnerId missed all monitoring attempts',
+                );
                 if (!mounted) return;
-                FingerprintErrorHandler.showError(context,
-                    'You missed monitoring for the day. You cannot clock out. Next time make sure you are in the class full day.');
+                FingerprintErrorHandler.showError(
+                  context,
+                  'You missed monitoring for the day. You cannot clock out. Next time make sure you are in the class full day.',
+                );
                 setState(() => _isClockingIn[learnerId] = false);
                 return;
               }
 
               // GEOFENCING CHECK: Verify user is within 50 meters before allowing clock-out
               debugPrint(
-                  '[CLOCK_OUT] Fingerprint matched - checking geofence...');
+                '[CLOCK_OUT] Fingerprint matched - checking geofence...',
+              );
               bool withinRadius = await _checkLocationAndRadius();
 
               if (!withinRadius) {
                 debugPrint(
-                    '[CLOCK_OUT] ❌ Geofence check failed - user not within 50 meters');
+                  '[CLOCK_OUT] ❌ Geofence check failed - user not within 50 meters',
+                );
                 setState(() => _isClockingIn[learnerId] = false);
                 return;
               }
 
               debugPrint(
-                  '[CLOCK_OUT] ✅ Geofence check passed - proceeding with clock-out');
+                '[CLOCK_OUT] ✅ Geofence check passed - proceeding with clock-out',
+              );
 
               final now = _getCurrentTimeString();
-              final clockInTime =
-                  existingAttendance['clock_in_time'].toString();
+              final clockInTime = existingAttendance['clock_in_time']
+                  .toString();
               final contactTime = _calculateContactTime(clockInTime, now);
 
               // Get current position for storing with attendance (with fallback)
@@ -960,7 +1049,8 @@ class _ClockInPageState extends State<ClockInPage>
                 );
               } catch (e) {
                 debugPrint(
-                    '[CLOCK_OUT] High accuracy failed, trying cached: $e');
+                  '[CLOCK_OUT] High accuracy failed, trying cached: $e',
+                );
                 position = await Geolocator.getLastKnownPosition();
                 if (position != null) {
                   final age = DateTime.now().difference(position.timestamp);
@@ -996,14 +1086,16 @@ class _ClockInPageState extends State<ClockInPage>
               // Try to sync to server first
               debugPrint('[CLOCK_OUT] Starting sync for clock-out...');
               debugPrint(
-                  '[CLOCK_OUT] Location: ${position.latitude}, ${position.longitude} (accuracy: ${position.accuracy}m)');
+                '[CLOCK_OUT] Location: ${position.latitude}, ${position.longitude} (accuracy: ${position.accuracy}m)',
+              );
 
               bool synced = false;
 
               // Check if online - if so, try immediate sync first
               if (_isConnected) {
                 debugPrint(
-                    '[CLOCK_OUT] Online - attempting immediate server sync...');
+                  '[CLOCK_OUT] Online - attempting immediate server sync...',
+                );
                 try {
                   synced = await syncSingleClockOut(attendance);
                   debugPrint('[CLOCK_OUT] Immediate sync result: $synced');
@@ -1032,7 +1124,8 @@ class _ClockInPageState extends State<ClockInPage>
 
               if (synced) {
                 debugPrint(
-                    '[CLOCK_OUT] Sync SUCCESS - updating local DB with synced=1');
+                  '[CLOCK_OUT] Sync SUCCESS - updating local DB with synced=1',
+                );
                 // Sync successful - update local database with synced=1
                 final updatedAttendance = {
                   'clock_out_time': now,
@@ -1040,14 +1133,19 @@ class _ClockInPageState extends State<ClockInPage>
                   'synced': 1, // Mark as synced
                 };
                 await DatabaseHelper().updateClocking(
-                    existingAttendance['clocking_id'], updatedAttendance);
+                  existingAttendance['clocking_id'],
+                  updatedAttendance,
+                );
                 if (!mounted) return;
                 if (!context.mounted) return;
                 FingerprintErrorHandler.showSuccess(
-                    context, 'Clock-out synced to server!');
+                  context,
+                  'Clock-out synced to server!',
+                );
               } else {
                 debugPrint(
-                    '[CLOCK_OUT] Sync FAILED - updating local DB with synced=0');
+                  '[CLOCK_OUT] Sync FAILED - updating local DB with synced=0',
+                );
                 // Sync failed - update local database with synced=0 for later sync
                 final updatedAttendance = {
                   'clock_out_time': now,
@@ -1055,11 +1153,15 @@ class _ClockInPageState extends State<ClockInPage>
                   'synced': 0, // Mark as not synced
                 };
                 await DatabaseHelper().updateClocking(
-                    existingAttendance['clocking_id'], updatedAttendance);
+                  existingAttendance['clocking_id'],
+                  updatedAttendance,
+                );
                 if (!mounted) return;
                 if (!context.mounted) return;
                 FingerprintErrorHandler.showInfo(
-                    context, 'Clock-out saved locally (will sync when online)');
+                  context,
+                  'Clock-out saved locally (will sync when online)',
+                );
               }
 
               // Update UI immediately with clock-out time and contact time
@@ -1070,7 +1172,8 @@ class _ClockInPageState extends State<ClockInPage>
                     false; // Reset loading state immediately
               });
               debugPrint(
-                  '[CLOCK_OUT] ✅ UI updated IMMEDIATELY with clock-out time: $now, contact: $contactTime');
+                '[CLOCK_OUT] ✅ UI updated IMMEDIATELY with clock-out time: $now, contact: $contactTime',
+              );
 
               // Show success message immediately
               if (mounted) {
@@ -1086,13 +1189,17 @@ class _ClockInPageState extends State<ClockInPage>
           }
         } else {
           debugPrint(
-              '[CLOCK_IN] ❌ NO FINGERPRINT MATCH FOUND for Learner $learnerId!');
+            '[CLOCK_IN] ❌ NO FINGERPRINT MATCH FOUND for Learner $learnerId!',
+          );
           debugPrint(
-              '[CLOCK_IN] ❌ This fingerprint does NOT belong to this learner');
+            '[CLOCK_IN] ❌ This fingerprint does NOT belong to this learner',
+          );
           debugPrint('[CLOCK_IN] ❌ CLOCKING DENIED - Fingerprint mismatch');
           if (!mounted) return;
-          FingerprintErrorHandler.showError(context,
-              'Fingerprint does NOT match this learner! Clocking denied.');
+          FingerprintErrorHandler.showError(
+            context,
+            'Fingerprint does NOT match this learner! Clocking denied.',
+          );
           setState(() => _isClockingIn[learnerId] = false);
         }
       } catch (e) {
@@ -1178,11 +1285,23 @@ class _ClockInPageState extends State<ClockInPage>
 
       // If one has date and the other doesn't, align date parts to the one that has it
       if (inHasDate && !outHasDate) {
-        outTime = DateTime(inTime.year, inTime.month, inTime.day, outTime.hour,
-            outTime.minute, outTime.second);
+        outTime = DateTime(
+          inTime.year,
+          inTime.month,
+          inTime.day,
+          outTime.hour,
+          outTime.minute,
+          outTime.second,
+        );
       } else if (!inHasDate && outHasDate) {
-        inTime = DateTime(outTime.year, outTime.month, outTime.day, inTime.hour,
-            inTime.minute, inTime.second);
+        inTime = DateTime(
+          outTime.year,
+          outTime.month,
+          outTime.day,
+          inTime.hour,
+          inTime.minute,
+          inTime.second,
+        );
       }
 
       final duration = outTime.difference(inTime);
@@ -1284,14 +1403,18 @@ class _ClockInPageState extends State<ClockInPage>
   }
 
   // Get clocking days count from server
-  Future<int> _getServerClockingDaysCount(String learnerId,
-      {bool includeToday = false}) async {
+  Future<int> _getServerClockingDaysCount(
+    String learnerId, {
+    bool includeToday = false,
+  }) async {
     try {
       final url = '${AppConfig.baseUrl}/get_clocking_days_count.php';
-      final uri = Uri.parse(url).replace(queryParameters: {
-        'learner_id': learnerId,
-        'include_today': includeToday.toString(),
-      });
+      final uri = Uri.parse(url).replace(
+        queryParameters: {
+          'learner_id': learnerId,
+          'include_today': includeToday.toString(),
+        },
+      );
 
       debugPrint('[SERVER_COUNT] Requesting: $uri');
 
@@ -1318,20 +1441,24 @@ class _ClockInPageState extends State<ClockInPage>
   }
 
   // Get clocking days count from local database
-  Future<int> _getLocalClockingDaysCount(String learnerId,
-      {bool includeToday = false}) async {
+  Future<int> _getLocalClockingDaysCount(
+    String learnerId, {
+    bool includeToday = false,
+  }) async {
     try {
-      final now = DateTime.now()
-          .toUtc()
-          .add(const Duration(hours: 2)); // South African time
+      final now = DateTime.now().toUtc().add(
+        const Duration(hours: 2),
+      ); // South African time
       final firstDayOfMonth = DateTime(now.year, now.month, 1);
-      final lastDayOfMonth =
-          includeToday ? now : DateTime(now.year, now.month, now.day - 1);
+      final lastDayOfMonth = includeToday
+          ? now
+          : DateTime(now.year, now.month, now.day - 1);
 
       final dbHelper = DatabaseHelper();
       final db = await dbHelper.database;
 
-      final result = await db.rawQuery('''
+      final result = await db.rawQuery(
+        '''
         SELECT COUNT(DISTINCT clock_date) as count
         FROM learner_clocking 
         WHERE LearnerID = ? 
@@ -1339,14 +1466,17 @@ class _ClockInPageState extends State<ClockInPage>
         AND clock_in_time != ''
         AND clock_date >= ? 
         AND clock_date <= ?
-      ''', [
-        learnerId,
-        DateFormat('yyyy-MM-dd').format(firstDayOfMonth),
-        DateFormat('yyyy-MM-dd').format(lastDayOfMonth),
-      ]);
+      ''',
+        [
+          learnerId,
+          DateFormat('yyyy-MM-dd').format(firstDayOfMonth),
+          DateFormat('yyyy-MM-dd').format(lastDayOfMonth),
+        ],
+      );
 
-      final localCount =
-          result.isNotEmpty ? (result.first['count'] as int? ?? 0) : 0;
+      final localCount = result.isNotEmpty
+          ? (result.first['count'] as int? ?? 0)
+          : 0;
       debugPrint('[LOCAL_COUNT] Local database returned: $localCount days');
       return localCount;
     } catch (e) {
@@ -1356,14 +1486,19 @@ class _ClockInPageState extends State<ClockInPage>
   }
 
   // Enhanced clocking days count that combines local and server data
-  Future<Map<String, dynamic>> _getEnhancedClockingDaysCount(String learnerId,
-      {bool includeToday = false}) async {
+  Future<Map<String, dynamic>> _getEnhancedClockingDaysCount(
+    String learnerId, {
+    bool includeToday = false,
+  }) async {
     debugPrint(
-        '[ENHANCED_COUNT] Getting clocking days for learner $learnerId (includeToday: $includeToday)');
+      '[ENHANCED_COUNT] Getting clocking days for learner $learnerId (includeToday: $includeToday)',
+    );
 
     // Get local count (always available)
-    final localCount =
-        await _getLocalClockingDaysCount(learnerId, includeToday: includeToday);
+    final localCount = await _getLocalClockingDaysCount(
+      learnerId,
+      includeToday: includeToday,
+    );
 
     // Try to get server count if online
     int serverCount = 0;
@@ -1371,9 +1506,12 @@ class _ClockInPageState extends State<ClockInPage>
 
     if (_isConnected) {
       debugPrint('[ENHANCED_COUNT] Online - fetching server count...');
-      serverCount = await _getServerClockingDaysCount(learnerId,
-          includeToday: includeToday);
-      serverAvailable = serverCount > 0 ||
+      serverCount = await _getServerClockingDaysCount(
+        learnerId,
+        includeToday: includeToday,
+      );
+      serverAvailable =
+          serverCount > 0 ||
           localCount ==
               0; // Consider server available if it returns data or if local is empty
     } else {
@@ -1381,11 +1519,13 @@ class _ClockInPageState extends State<ClockInPage>
     }
 
     // Use the higher count (server data is more comprehensive)
-    final finalCount =
-        serverAvailable ? math.max(localCount, serverCount) : localCount;
+    final finalCount = serverAvailable
+        ? math.max(localCount, serverCount)
+        : localCount;
 
     debugPrint(
-        '[ENHANCED_COUNT] Final result - Local: $localCount, Server: $serverCount, Final: $finalCount');
+      '[ENHANCED_COUNT] Final result - Local: $localCount, Server: $serverCount, Final: $finalCount',
+    );
 
     return {
       'count': finalCount,
@@ -1398,7 +1538,8 @@ class _ClockInPageState extends State<ClockInPage>
 
   // Get total attendance breakdown including manual and sick days from server API
   Future<Map<String, int>> _getTotalAttendanceBreakdown(
-      String learnerId) async {
+    String learnerId,
+  ) async {
     final now = DateTime.now();
     final monthStr = '${now.year}-${now.month.toString().padLeft(2, '0')}';
 
@@ -1415,7 +1556,8 @@ class _ClockInPageState extends State<ClockInPage>
 
       if (learnerResult.isEmpty) {
         debugPrint(
-            '[ATTENDANCE_BREAKDOWN] Learner not found in local database');
+          '[ATTENDANCE_BREAKDOWN] Learner not found in local database',
+        );
         return _getFallbackAttendanceBreakdown(learnerId, monthStr);
       }
 
@@ -1426,18 +1568,21 @@ class _ClockInPageState extends State<ClockInPage>
         try {
           final timestamp = DateTime.now().millisecondsSinceEpoch;
           final url = Uri.parse(
-              '${AppConfig.getAttendanceUrl}?classID=$classID&month=$monthStr&learnerID=$learnerId&_t=$timestamp');
+            '${AppConfig.getAttendanceUrl}?classID=$classID&month=$monthStr&learnerID=$learnerId&_t=$timestamp',
+          );
 
           debugPrint('[ATTENDANCE_BREAKDOWN] Fetching from API: $url');
 
-          final response = await http.get(
-            url,
-            headers: {
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache',
-              'Expires': '0',
-            },
-          ).timeout(const Duration(seconds: 10));
+          final response = await http
+              .get(
+                url,
+                headers: {
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  'Pragma': 'no-cache',
+                  'Expires': '0',
+                },
+              )
+              .timeout(const Duration(seconds: 10));
 
           if (response.statusCode == 200) {
             final data = json.decode(response.body);
@@ -1454,7 +1599,8 @@ class _ClockInPageState extends State<ClockInPage>
               final totalDays = learnerData['total_days_attended'] ?? 0;
 
               debugPrint(
-                  '[ATTENDANCE_BREAKDOWN] From API - Regular: $regularDays, Manual: $manualDays, Sick: $sickDays, Total: $totalDays');
+                '[ATTENDANCE_BREAKDOWN] From API - Regular: $regularDays, Manual: $manualDays, Sick: $sickDays, Total: $totalDays',
+              );
 
               return {
                 'regular': regularDays is int
@@ -1481,30 +1627,30 @@ class _ClockInPageState extends State<ClockInPage>
       return _getFallbackAttendanceBreakdown(learnerId, monthStr);
     } catch (e) {
       debugPrint('[ATTENDANCE_BREAKDOWN] Error: $e');
-      return {
-        'regular': 0,
-        'manual': 0,
-        'sick': 0,
-        'total': 0,
-      };
+      return {'regular': 0, 'manual': 0, 'sick': 0, 'total': 0};
     }
   }
 
   // Fallback method to get attendance from local database
   Future<Map<String, int>> _getFallbackAttendanceBreakdown(
-      String learnerId, String monthStr) async {
+    String learnerId,
+    String monthStr,
+  ) async {
     try {
       final db = await DatabaseHelper().database;
 
       // Get regular clocking days
-      final clockingResult = await db.rawQuery('''
+      final clockingResult = await db.rawQuery(
+        '''
         SELECT COUNT(DISTINCT DATE(clock_date)) as count
         FROM learner_clocking
         WHERE LearnerID = ?
         AND clock_date LIKE ?
         AND clock_in_time IS NOT NULL
         AND clock_out_time IS NOT NULL
-      ''', [learnerId, '$monthStr%']);
+      ''',
+        [learnerId, '$monthStr%'],
+      );
 
       final regularDays = clockingResult.isNotEmpty
           ? (clockingResult.first['count'] as int?) ?? 0
@@ -1522,7 +1668,8 @@ class _ClockInPageState extends State<ClockInPage>
       final totalDays = regularDays + manualDays + sickDays;
 
       debugPrint(
-          '[ATTENDANCE_BREAKDOWN] From Local DB - Regular: $regularDays, Manual: $manualDays, Sick: $sickDays, Total: $totalDays');
+        '[ATTENDANCE_BREAKDOWN] From Local DB - Regular: $regularDays, Manual: $manualDays, Sick: $sickDays, Total: $totalDays',
+      );
 
       return {
         'regular': regularDays,
@@ -1532,20 +1679,19 @@ class _ClockInPageState extends State<ClockInPage>
       };
     } catch (e) {
       debugPrint('[ATTENDANCE_BREAKDOWN] Fallback error: $e');
-      return {
-        'regular': 0,
-        'manual': 0,
-        'sick': 0,
-        'total': 0,
-      };
+      return {'regular': 0, 'manual': 0, 'sick': 0, 'total': 0};
     }
   }
 
   // Get clocking days count for a learner in the current month (backward compatibility)
-  Future<int> _getClockingDaysCount(String learnerId,
-      {bool includeToday = false}) async {
-    final result = await _getEnhancedClockingDaysCount(learnerId,
-        includeToday: includeToday);
+  Future<int> _getClockingDaysCount(
+    String learnerId, {
+    bool includeToday = false,
+  }) async {
+    final result = await _getEnhancedClockingDaysCount(
+      learnerId,
+      includeToday: includeToday,
+    );
     return result['count'] as int;
   }
 
@@ -1591,8 +1737,10 @@ class _ClockInPageState extends State<ClockInPage>
     }
 
     // Get enhanced clocking data
-    final clockingData = await _getEnhancedClockingDaysCount(learnerId,
-        includeToday: action == 'out');
+    final clockingData = await _getEnhancedClockingDaysCount(
+      learnerId,
+      includeToday: action == 'out',
+    );
     final clockingDays = clockingData['count'] as int;
     // final localCount = clockingData['local_count'] as int;
     // final serverCount = clockingData['server_count'] as int;
@@ -1667,10 +1815,7 @@ class _ClockInPageState extends State<ClockInPage>
                 children: [
                   const Text(
                     'Attendance:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   Text(
                     '$totalAttendedDays/$workingDays',
@@ -1726,7 +1871,8 @@ class _ClockInPageState extends State<ClockInPage>
   Future<bool> _checkLocationAndRadius() async {
     try {
       debugPrint(
-          '[GEOFENCE] Acquiring secure GPS position (foreground stream)...');
+        '[GEOFENCE] Acquiring secure GPS position (foreground stream)...',
+      );
       final secure = await SecureLocationService.getSecurePosition();
       final position = secure.position;
 
@@ -1735,7 +1881,8 @@ class _ClockInPageState extends State<ClockInPage>
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                  'Mock or emulator location detected. Use a real device with GPS.'),
+                'Mock or emulator location detected. Use a real device with GPS.',
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -1744,7 +1891,8 @@ class _ClockInPageState extends State<ClockInPage>
       }
 
       debugPrint(
-          '[GEOFENCE] Current position: ${position.latitude}, ${position.longitude}');
+        '[GEOFENCE] Current position: ${position.latitude}, ${position.longitude}',
+      );
       debugPrint('[GEOFENCE] Accuracy: ${position.accuracy} meters');
 
       return await _isWithinSiteRadius(
@@ -1767,17 +1915,23 @@ class _ClockInPageState extends State<ClockInPage>
     }
   }
 
-  Future<bool> _isWithinSiteRadius(String classID, double userLat,
-      double userLon, double userAccuracy) async {
+  Future<bool> _isWithinSiteRadius(
+    String classID,
+    double userLat,
+    double userLon,
+    double userAccuracy,
+  ) async {
     // Relaxed accuracy threshold - allow up to 60m like server
     if (userAccuracy > 60) {
       debugPrint(
-          '[GEOFENCE] Geolocation accuracy too low: $userAccuracy meters (max 60m)');
+        '[GEOFENCE] Geolocation accuracy too low: $userAccuracy meters (max 60m)',
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                'GPS accuracy too low (${userAccuracy.toStringAsFixed(0)}m). Please wait for better signal.'),
+              'GPS accuracy too low (${userAccuracy.toStringAsFixed(0)}m). Please wait for better signal.',
+            ),
             backgroundColor: Colors.orange,
           ),
         );
@@ -1794,7 +1948,8 @@ class _ClockInPageState extends State<ClockInPage>
       debugPrint('[GEOFENCE] Class table contents: $classes');
       debugPrint('[GEOFENCE] Sites table contents: $sites');
       debugPrint(
-          '[GEOFENCE] Querying coordinates for classID: $classID (type: ${classID.runtimeType})');
+        '[GEOFENCE] Querying coordinates for classID: $classID (type: ${classID.runtimeType})',
+      );
 
       final result = await db.rawQuery(
         'SELECT s.latitude, s.longitude FROM class c JOIN sites s ON c.siteID = s.siteID WHERE c.classID = ?',
@@ -1807,7 +1962,8 @@ class _ClockInPageState extends State<ClockInPage>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                  content: Text('No class data available in local database.')),
+                content: Text('No class data available in local database.'),
+              ),
             );
           }
         } else if (sites.isEmpty) {
@@ -1815,17 +1971,19 @@ class _ClockInPageState extends State<ClockInPage>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                  content: Text('No site data available in local database.')),
+                content: Text('No site data available in local database.'),
+              ),
             );
           }
         } else {
           debugPrint(
-              '[GEOFENCE] No matching class or site found for classID: $classID');
+            '[GEOFENCE] No matching class or site found for classID: $classID',
+          );
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content:
-                      Text('No site coordinates found for class $classID.')),
+                content: Text('No site coordinates found for class $classID.'),
+              ),
             );
           }
         }
@@ -1837,11 +1995,13 @@ class _ClockInPageState extends State<ClockInPage>
 
       if (siteLat == null || siteLon == null) {
         debugPrint(
-            '[GEOFENCE] Invalid site coordinates for classID: $classID, lat: ${result.first['latitude']}, lon: ${result.first['longitude']}');
+          '[GEOFENCE] Invalid site coordinates for classID: $classID, lat: ${result.first['latitude']}, lon: ${result.first['longitude']}',
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Invalid site coordinates in database.')),
+              content: Text('Invalid site coordinates in database.'),
+            ),
           );
         }
         return false;
@@ -1850,11 +2010,13 @@ class _ClockInPageState extends State<ClockInPage>
       final distance = _calculateDistance(userLat, userLon, siteLat, siteLon);
 
       debugPrint(
-          '[GEOFENCE] Distance to site for classID $classID: ${distance.toStringAsFixed(2)} meters');
+        '[GEOFENCE] Distance to site for classID $classID: ${distance.toStringAsFixed(2)} meters',
+      );
       debugPrint('[GEOFENCE] Site coordinates: $siteLat, $siteLon');
       debugPrint('[GEOFENCE] User coordinates: $userLat, $userLon');
       debugPrint(
-          '[GEOFENCE] User accuracy: ${userAccuracy.toStringAsFixed(1)}m');
+        '[GEOFENCE] User accuracy: ${userAccuracy.toStringAsFixed(1)}m',
+      );
 
       // Dynamic geofence radius with 60m cap: min(50m + accuracy, 60m)
       final baseRadius = 50.0;
@@ -1866,18 +2028,22 @@ class _ClockInPageState extends State<ClockInPage>
 
       debugPrint('[GEOFENCE] Base radius: ${baseRadius}m');
       debugPrint(
-          '[GEOFENCE] GPS accuracy: ${userAccuracy.toStringAsFixed(1)}m');
+        '[GEOFENCE] GPS accuracy: ${userAccuracy.toStringAsFixed(1)}m',
+      );
       debugPrint(
-          '[GEOFENCE] Calculated radius: ${calculatedRadius.toStringAsFixed(1)}m (${baseRadius}m + ${userAccuracy.toStringAsFixed(1)}m)');
+        '[GEOFENCE] Calculated radius: ${calculatedRadius.toStringAsFixed(1)}m (${baseRadius}m + ${userAccuracy.toStringAsFixed(1)}m)',
+      );
       debugPrint(
-          '[GEOFENCE] Effective radius: ${effectiveRadius.toStringAsFixed(1)}m (capped at ${maxAllowedRadius}m)');
+        '[GEOFENCE] Effective radius: ${effectiveRadius.toStringAsFixed(1)}m (capped at ${maxAllowedRadius}m)',
+      );
 
       if (distance > effectiveRadius) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  'You are ${distance.toStringAsFixed(0)}m away. Must be within ${effectiveRadius.toStringAsFixed(0)}m to clock in/out.'),
+                'You are ${distance.toStringAsFixed(0)}m away. Must be within ${effectiveRadius.toStringAsFixed(0)}m to clock in/out.',
+              ),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 4),
             ),
@@ -1887,15 +2053,17 @@ class _ClockInPageState extends State<ClockInPage>
       }
 
       debugPrint(
-          '[GEOFENCE] ✅ Within ${effectiveRadius.toStringAsFixed(1)}m radius - clocking allowed');
+        '[GEOFENCE] ✅ Within ${effectiveRadius.toStringAsFixed(1)}m radius - clocking allowed',
+      );
       return true;
     } catch (e, stackTrace) {
       debugPrint(
-          '[GEOFENCE] Error checking site radius for classID $classID: $e\nStack trace: $stackTrace');
+        '[GEOFENCE] Error checking site radius for classID $classID: $e\nStack trace: $stackTrace',
+      );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error checking location: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error checking location: $e')));
       }
       return false;
     }
@@ -1932,8 +2100,10 @@ class _ClockInPageState extends State<ClockInPage>
   }
 
   /// Backup clock-in flow: ID check → signature → geofence → GPS → clock-in
-  Future<void> _backupClockInFlow(String learnerId,
-      {bool skipMandatoryChecks = false}) async {
+  Future<void> _backupClockInFlow(
+    String learnerId, {
+    bool skipMandatoryChecks = false,
+  }) async {
     // Only run mandatory checks if NOT already done
     if (!skipMandatoryChecks) {
       debugPrint('[BACKUP_CLOCK_IN] Running mandatory checks...');
@@ -1951,8 +2121,9 @@ class _ClockInPageState extends State<ClockInPage>
         debugPrint('[BACKUP_CLOCK_IN] Bank check error (ignored): $e');
       }
 
-      final documentsComplete =
-          await _ensureLearnerDocumentsComplete(learnerId);
+      final documentsComplete = await _ensureLearnerDocumentsComplete(
+        learnerId,
+      );
       if (!documentsComplete) {
         return;
       }
@@ -1960,7 +2131,8 @@ class _ClockInPageState extends State<ClockInPage>
       await _showClockingDaysPopup(learnerId, 'in');
     } else {
       debugPrint(
-          '[BACKUP_CLOCK_IN] Skipping mandatory checks (already done in main flow)');
+        '[BACKUP_CLOCK_IN] Skipping mandatory checks (already done in main flow)',
+      );
     }
 
     setState(() {
@@ -1979,10 +2151,7 @@ class _ClockInPageState extends State<ClockInPage>
       if (!context.mounted) return;
 
       if (learner == null) {
-        FingerprintErrorHandler.showError(
-          context,
-          'Learner not found',
-        );
+        FingerprintErrorHandler.showError(context, 'Learner not found');
         setState(() {
           _isClockingIn[learnerId] = false;
           _currentLearnerIdForClocking = null;
@@ -2049,7 +2218,8 @@ class _ClockInPageState extends State<ClockInPage>
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                            'ID number does not match. Cannot proceed with clock-in.'),
+                          'ID number does not match. Cannot proceed with clock-in.',
+                        ),
                         backgroundColor: Colors.red,
                         duration: Duration(seconds: 3),
                       ),
@@ -2204,15 +2374,19 @@ class _ClockInPageState extends State<ClockInPage>
       final date = _getCurrentDateString();
 
       // Check if already clocked in today
-      final existingAttendance =
-          await DatabaseHelper().getAttendanceForDay(learnerId, date);
+      final existingAttendance = await DatabaseHelper().getAttendanceForDay(
+        learnerId,
+        date,
+      );
       if (!mounted) return;
       if (!context.mounted) return;
       if (existingAttendance != null &&
           existingAttendance['clock_in_time'] != null &&
           existingAttendance['clock_in_time'].toString().isNotEmpty) {
-        FingerprintErrorHandler.showInfo(context,
-            'Already clocked in today at ${existingAttendance['clock_in_time']}');
+        FingerprintErrorHandler.showInfo(
+          context,
+          'Already clocked in today at ${existingAttendance['clock_in_time']}',
+        );
         setState(() {
           _isClockingIn[learnerId] = false;
           _currentLearnerIdForClocking = null;
@@ -2264,7 +2438,8 @@ class _ClockInPageState extends State<ClockInPage>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                '✓ Backup clock-in successful at $now${synced ? '' : ' (will sync later)'}'),
+              '✓ Backup clock-in successful at $now${synced ? '' : ' (will sync later)'}',
+            ),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 3),
           ),
@@ -2274,10 +2449,7 @@ class _ClockInPageState extends State<ClockInPage>
       debugPrint('[BACKUP_CLOCK_IN] Error: $e');
       if (!mounted) return;
       if (!context.mounted) return;
-      FingerprintErrorHandler.showError(
-        context,
-        'Backup clock-in failed: $e',
-      );
+      FingerprintErrorHandler.showError(context, 'Backup clock-in failed: $e');
     } finally {
       setState(() {
         _isClockingIn[learnerId] = false;
@@ -2333,8 +2505,10 @@ class _ClockInPageState extends State<ClockInPage>
   }
 
   /// Perform the actual clock-in operation
-  Future<void> _performClockIn(String learnerId,
-      {bool isBackup = false}) async {
+  Future<void> _performClockIn(
+    String learnerId, {
+    bool isBackup = false,
+  }) async {
     // TODO: Implement actual clock-in database operation
     // This should include:
     // - Saving to local database
@@ -2366,10 +2540,7 @@ class _ClockInPageState extends State<ClockInPage>
       );
 
       if (learner == null) {
-        FingerprintErrorHandler.showError(
-          context,
-          'Learner not found',
-        );
+        FingerprintErrorHandler.showError(context, 'Learner not found');
         setState(() {
           _isClockingIn[learnerId] = false;
           _currentLearnerIdForClocking = null;
@@ -2473,10 +2644,7 @@ class _ClockInPageState extends State<ClockInPage>
       debugPrint('[BACKUP_CLOCK_OUT] Error: $e');
       if (!mounted) return;
       if (!context.mounted) return;
-      FingerprintErrorHandler.showError(
-        context,
-        'Backup clock-out failed: $e',
-      );
+      FingerprintErrorHandler.showError(context, 'Backup clock-out failed: $e');
     } finally {
       setState(() {
         _isClockingIn[learnerId] = false;
@@ -2486,8 +2654,10 @@ class _ClockInPageState extends State<ClockInPage>
   }
 
   /// Perform the actual clock-out operation
-  Future<void> _performClockOut(String learnerId,
-      {bool isBackup = false}) async {
+  Future<void> _performClockOut(
+    String learnerId, {
+    bool isBackup = false,
+  }) async {
     // TODO: Implement actual clock-out database operation
     // This should include:
     // - Saving to local database
@@ -2536,8 +2706,8 @@ class _ClockInPageState extends State<ClockInPage>
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         debugPrint('[DETECT] Futronic attempt $attempt/$maxAttempts...');
-        final isFutronicConnected =
-            await _futronicService.isFutronicConnected();
+        final isFutronicConnected = await _futronicService
+            .isFutronicConnected();
 
         if (isFutronicConnected) {
           debugPrint('[DETECT] ✅ Futronic detected on attempt $attempt!');
@@ -2570,9 +2740,10 @@ class _ClockInPageState extends State<ClockInPage>
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(_isInitializing
-                ? 'Sensor is initializing...'
-                : 'Sensor not ready.')),
+          content: Text(
+            _isInitializing ? 'Sensor is initializing...' : 'Sensor not ready.',
+          ),
+        ),
       );
       return;
     }
@@ -2585,8 +2756,9 @@ class _ClockInPageState extends State<ClockInPage>
       // User cancelled or time is wrong - block clock-in
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content:
-              Text('Clock-in cancelled: Device time must be corrected first'),
+          content: Text(
+            'Clock-in cancelled: Device time must be corrected first',
+          ),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
         ),
@@ -2627,7 +2799,8 @@ class _ClockInPageState extends State<ClockInPage>
       // Check mounted state before proceeding
       if (!mounted) {
         debugPrint(
-            '[CLOCK_IN] SIMPLIFIED: Widget not mounted - skipping bank check');
+          '[CLOCK_IN] SIMPLIFIED: Widget not mounted - skipping bank check',
+        );
         return;
       }
 
@@ -2636,22 +2809,26 @@ class _ClockInPageState extends State<ClockInPage>
         await _getLearnerForValidation(learnerId),
       );
       debugPrint(
-          '[CLOCK_IN] SIMPLIFIED: Bank details check result: $strictBankOk');
+        '[CLOCK_IN] SIMPLIFIED: Bank details check result: $strictBankOk',
+      );
 
       // CRASH FIX: Don't block flow based on bank check result
       // The bank details dialog will handle missing data if needed
       debugPrint(
-          '[CLOCK_IN] SIMPLIFIED: Bank details check completed - continuing flow');
+        '[CLOCK_IN] SIMPLIFIED: Bank details check completed - continuing flow',
+      );
     } catch (e) {
       debugPrint(
-          '[CLOCK_IN] SIMPLIFIED: ERROR in bank details check (ignored): $e');
+        '[CLOCK_IN] SIMPLIFIED: ERROR in bank details check (ignored): $e',
+      );
       // Continue with flow - don't let bank details check block clock-in
     }
 
     debugPrint('[CLOCK_IN] Checking document completeness...');
     try {
-      final documentsComplete =
-          await _ensureLearnerDocumentsComplete(learnerId);
+      final documentsComplete = await _ensureLearnerDocumentsComplete(
+        learnerId,
+      );
       debugPrint('[CLOCK_IN] Documents check result: $documentsComplete');
 
       if (!documentsComplete) {
@@ -2677,7 +2854,8 @@ class _ClockInPageState extends State<ClockInPage>
 
     // ===== NOW CHECK SCANNER (AFTER ALL MANDATORY CHECKS) =====
     debugPrint(
-        '[CLOCK_IN] All mandatory checks complete. Now detecting scanner...');
+      '[CLOCK_IN] All mandatory checks complete. Now detecting scanner...',
+    );
     final scanner = await _detectScanner();
 
     if (!mounted) return;
@@ -2685,7 +2863,8 @@ class _ClockInPageState extends State<ClockInPage>
 
     if (scanner == 'none') {
       debugPrint(
-          '[CLOCK_IN] No scanner detected - showing backup method dialog');
+        '[CLOCK_IN] No scanner detected - showing backup method dialog',
+      );
       final useBackup = await _showBackupMethodDialog();
       if (!mounted) return;
       if (!context.mounted) return;
@@ -2703,13 +2882,16 @@ class _ClockInPageState extends State<ClockInPage>
 
     // Scanner present - continue with normal fingerprint flow
     debugPrint(
-        '[CLOCK_IN] Scanner detected: $scanner - continuing with fingerprint verification');
+      '[CLOCK_IN] Scanner detected: $scanner - continuing with fingerprint verification',
+    );
 
     final learnerIdInt = int.tryParse(learnerId);
     if (learnerIdInt == null) {
       if (!context.mounted) return;
       FingerprintErrorHandler.showError(
-          context, 'Invalid learner ID. Cannot proceed with clock-in.');
+        context,
+        'Invalid learner ID. Cannot proceed with clock-in.',
+      );
       return;
     }
     final templates = await DatabaseHelper().getAllTemplates(learnerIdInt);
@@ -2734,7 +2916,8 @@ class _ClockInPageState extends State<ClockInPage>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              'This learner\'s fingerprint is enrolled on ZKTeco. Please use the ZKTeco scanner or re-enroll on Futronic for this learner.'),
+            'This learner\'s fingerprint is enrolled on ZKTeco. Please use the ZKTeco scanner or re-enroll on Futronic for this learner.',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
@@ -2747,7 +2930,8 @@ class _ClockInPageState extends State<ClockInPage>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              'This learner\'s fingerprint is enrolled on Futronic. Please use the Futronic scanner or re-enroll on ZKTeco for this learner.'),
+            'This learner\'s fingerprint is enrolled on Futronic. Please use the Futronic scanner or re-enroll on ZKTeco for this learner.',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
@@ -2756,10 +2940,12 @@ class _ClockInPageState extends State<ClockInPage>
 
     String? template;
     if (scanner == 'zkteco') {
-      template = templates['zkteco_left_template'] ??
+      template =
+          templates['zkteco_left_template'] ??
           templates['zkteco_right_template'];
     } else if (scanner == 'futronic') {
-      template = templates['futronic_left_template'] ??
+      template =
+          templates['futronic_left_template'] ??
           templates['futronic_right_template'];
     }
     if (template == null || template.isEmpty) {
@@ -2796,9 +2982,9 @@ class _ClockInPageState extends State<ClockInPage>
         if (!mounted) return;
         final hasNew =
             (refreshed['zkteco_left_template']?.isNotEmpty ?? false) ||
-                (refreshed['zkteco_right_template']?.isNotEmpty ?? false) ||
-                (refreshed['futronic_left_template']?.isNotEmpty ?? false) ||
-                (refreshed['futronic_right_template']?.isNotEmpty ?? false);
+            (refreshed['zkteco_right_template']?.isNotEmpty ?? false) ||
+            (refreshed['futronic_left_template']?.isNotEmpty ?? false) ||
+            (refreshed['futronic_right_template']?.isNotEmpty ?? false);
         if (hasNew) {
           // Re-run verification flow
           await _verifyAndClockIn(learnerId);
@@ -2849,12 +3035,14 @@ class _ClockInPageState extends State<ClockInPage>
     try {
       bool match = false;
       if (scanner == 'zkteco') {
-        match = await _fingerprintService.verify('left', template) ||
+        match =
+            await _fingerprintService.verify('left', template) ||
             await _fingerprintService.verify('right', template);
       } else if (scanner == 'futronic') {
         try {
           debugPrint(
-              '[CLOCK_IN] Attempting Futronic verification for learner $learnerId');
+            '[CLOCK_IN] Attempting Futronic verification for learner $learnerId',
+          );
           final leftTemplate = templates['futronic_left_template'];
           final rightTemplate = templates['futronic_right_template'];
           final hint = (leftTemplate != null && leftTemplate.isNotEmpty)
@@ -2911,7 +3099,8 @@ class _ClockInPageState extends State<ClockInPage>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                'No fingerprint scanner detected. Please connect a scanner.'),
+              'No fingerprint scanner detected. Please connect a scanner.',
+            ),
             backgroundColor: Colors.orange,
           ),
         );
@@ -2931,7 +3120,8 @@ class _ClockInPageState extends State<ClockInPage>
 
         if (!withinRadius) {
           debugPrint(
-              '[CLOCK_IN] ❌ Geofence check failed - user not within 50 meters');
+            '[CLOCK_IN] ❌ Geofence check failed - user not within 50 meters',
+          );
           setState(() {
             _isClockingIn[learnerId] = false;
             _currentLearnerIdForClocking = null;
@@ -2941,7 +3131,8 @@ class _ClockInPageState extends State<ClockInPage>
         }
 
         debugPrint(
-            '[CLOCK_IN] ✅ Geofence check passed - proceeding with clock-in');
+          '[CLOCK_IN] ✅ Geofence check passed - proceeding with clock-in',
+        );
 
         final now = _getCurrentTimeString();
         final date = _getCurrentDateString();
@@ -2990,7 +3181,8 @@ class _ClockInPageState extends State<ClockInPage>
 
         debugPrint('[CLOCK_IN] Starting sync for clock-in...');
         debugPrint(
-            '[CLOCK_IN] Location: ${position.latitude}, ${position.longitude} (accuracy: ${position.accuracy}m)');
+          '[CLOCK_IN] Location: ${position.latitude}, ${position.longitude} (accuracy: ${position.accuracy}m)',
+        );
 
         bool synced = false;
 
@@ -3025,7 +3217,8 @@ class _ClockInPageState extends State<ClockInPage>
 
         if (synced) {
           debugPrint(
-              '[CLOCK_IN] Sync SUCCESS - saving to local DB with synced=1');
+            '[CLOCK_IN] Sync SUCCESS - saving to local DB with synced=1',
+          );
           // Sync successful - save to local database with synced=1
           final dbData = {
             'LearnerID': learnerId,
@@ -3045,12 +3238,14 @@ class _ClockInPageState extends State<ClockInPage>
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Clock-in synced to server!'),
-                backgroundColor: Colors.blue),
+              content: Text('Clock-in synced to server!'),
+              backgroundColor: Colors.blue,
+            ),
           );
         } else {
           debugPrint(
-              '[CLOCK_IN] Sync FAILED - saving to local DB with synced=0');
+            '[CLOCK_IN] Sync FAILED - saving to local DB with synced=0',
+          );
           // Sync failed - save to local database with synced=0 for later sync
           final dbData = {
             'LearnerID': learnerId,
@@ -3070,8 +3265,9 @@ class _ClockInPageState extends State<ClockInPage>
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Clock-in saved locally (will sync when online)'),
-                backgroundColor: Colors.orange),
+              content: Text('Clock-in saved locally (will sync when online)'),
+              backgroundColor: Colors.orange,
+            ),
           );
         }
       } else {
@@ -3079,8 +3275,9 @@ class _ClockInPageState extends State<ClockInPage>
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Fingerprint does not match!'),
-              backgroundColor: Colors.red),
+            content: Text('Fingerprint does not match!'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
@@ -3089,8 +3286,9 @@ class _ClockInPageState extends State<ClockInPage>
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('Verification error: $e'),
-            backgroundColor: Colors.red),
+          content: Text('Verification error: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() {
@@ -3147,10 +3345,10 @@ class _ClockInPageState extends State<ClockInPage>
               const Text(
                 'This learner profile is incomplete. Please fill in missing fields and press Update Data before clock-in.',
               ),
-              if (missingFieldLabels.any((l) =>
-                  l == 'Province' ||
-                  l == 'District' ||
-                  l == 'Municipality')) ...[
+              if (missingFieldLabels.any(
+                (l) =>
+                    l == 'Province' || l == 'District' || l == 'Municipality',
+              )) ...[
                 const SizedBox(height: 8),
                 const Text(
                   'Province, District and Municipality must all be selected together.',
@@ -3205,8 +3403,9 @@ class _ClockInPageState extends State<ClockInPage>
     final refreshedLearner = await _getLearnerForValidation(learnerId);
     if (!mounted) return false;
     if (!context.mounted) return false;
-    final refreshedMissing =
-        learnerProfileMissingFieldLabels(refreshedLearner ?? {});
+    final refreshedMissing = learnerProfileMissingFieldLabels(
+      refreshedLearner ?? {},
+    );
 
     if (refreshedMissing.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -3222,27 +3421,34 @@ class _ClockInPageState extends State<ClockInPage>
     }
 
     debugPrint(
-        '[PROFILE_CHECK] SIMPLIFIED: Checking bank details completeness...');
+      '[PROFILE_CHECK] SIMPLIFIED: Checking bank details completeness...',
+    );
     try {
       // CRASH FIX: Check mounted state before bank details check
       if (!mounted) {
         debugPrint(
-            '[PROFILE_CHECK] SIMPLIFIED: Widget not mounted - skipping bank check');
+          '[PROFILE_CHECK] SIMPLIFIED: Widget not mounted - skipping bank check',
+        );
         return true; // Return true to prevent blocking
       }
 
-      final bankComplete =
-          await _ensureLearnerBankDetailsComplete(learnerId, learner);
+      final bankComplete = await _ensureLearnerBankDetailsComplete(
+        learnerId,
+        learner,
+      );
       debugPrint(
-          '[PROFILE_CHECK] SIMPLIFIED: Bank details check result: $bankComplete');
+        '[PROFILE_CHECK] SIMPLIFIED: Bank details check result: $bankComplete',
+      );
 
       // CRASH FIX: Always return true from bank check to prevent blocking
       // The bank details save operation already worked, so don't block the flow
       debugPrint(
-          '[PROFILE_CHECK] SIMPLIFIED: Bank details check completed - continuing flow');
+        '[PROFILE_CHECK] SIMPLIFIED: Bank details check completed - continuing flow',
+      );
     } catch (e) {
       debugPrint(
-          '[PROFILE_CHECK] SIMPLIFIED: ERROR in bank details check (ignored): $e');
+        '[PROFILE_CHECK] SIMPLIFIED: ERROR in bank details check (ignored): $e',
+      );
       // Ignore errors and continue - bank details already saved successfully
     }
 
@@ -3251,29 +3457,35 @@ class _ClockInPageState extends State<ClockInPage>
   }
 
   Future<Map<String, dynamic>?> _getLearnerForValidation(
-      String learnerId) async {
+    String learnerId,
+  ) async {
     return fetchLearnerForClockInValidation(learnerId);
   }
 
   List<String> _getMissingRequiredProfileFieldLabels(
-      Map<String, dynamic> learner) {
+    Map<String, dynamic> learner,
+  ) {
     debugPrint(
-        '[DEBUG clock_in_page] _getMissingRequiredProfileFieldLabels called with learner: $learner');
+      '[DEBUG clock_in_page] _getMissingRequiredProfileFieldLabels called with learner: $learner',
+    );
     final missing = <String>[];
     for (final rule in _requiredProfileRules) {
       if (_isRuleMissing(learner, rule.keys)) {
         debugPrint(
-            '[DEBUG clock_in_page] _getMissingRequiredProfileFieldLabels found missing rule: ${rule.label}');
+          '[DEBUG clock_in_page] _getMissingRequiredProfileFieldLabels found missing rule: ${rule.label}',
+        );
         missing.add(rule.label);
       }
     }
     debugPrint(
-        '[DEBUG clock_in_page] _getMissingRequiredProfileFieldLabels returning: $missing');
+      '[DEBUG clock_in_page] _getMissingRequiredProfileFieldLabels returning: $missing',
+    );
     return missing;
   }
 
   List<String> _getMissingRequiredProfileFieldKeys(
-      Map<String, dynamic> learner) {
+    Map<String, dynamic> learner,
+  ) {
     final missingKeys = <String>[];
     for (final rule in _requiredProfileRules) {
       if (!_isRuleMissing(learner, rule.keys)) continue;
@@ -3285,11 +3497,13 @@ class _ClockInPageState extends State<ClockInPage>
 
   bool _isRuleMissing(Map<String, dynamic> learner, List<String> keys) {
     debugPrint(
-        '[DEBUG clock_in_page] _isRuleMissing checking keys: $keys against learner keys: ${learner.keys}');
+      '[DEBUG clock_in_page] _isRuleMissing checking keys: $keys against learner keys: ${learner.keys}',
+    );
     for (final key in keys) {
       final value = learner[key];
       debugPrint(
-          '[DEBUG clock_in_page] _isRuleMissing - checking key $key, value: $value, isMissingValue: ${isMissingValue(value)}');
+        '[DEBUG clock_in_page] _isRuleMissing - checking key $key, value: $value, isMissingValue: ${isMissingValue(value)}',
+      );
       if (!isMissingValue(value)) {
         return false;
       }
@@ -3319,48 +3533,60 @@ class _ClockInPageState extends State<ClockInPage>
   }
 
   Future<bool> _ensureLearnerBankDetailsComplete(
-      String learnerId, Map<String, dynamic>? learnerProfile) async {
+    String learnerId,
+    Map<String, dynamic>? learnerProfile,
+  ) async {
     try {
       debugPrint(
-          '[BANK_CAPTURE] SIMPLIFIED: Checking bank details for learner: $learnerId');
+        '[BANK_CAPTURE] SIMPLIFIED: Checking bank details for learner: $learnerId',
+      );
       debugPrint('[BANK_CAPTURE] SIMPLIFIED: Widget mounted: $mounted');
 
       // CRASH FIX: Immediate return if widget not mounted
       if (!mounted) {
         debugPrint(
-            '[BANK_CAPTURE] SIMPLIFIED: Widget not mounted - returning true to prevent blocking');
+          '[BANK_CAPTURE] SIMPLIFIED: Widget not mounted - returning true to prevent blocking',
+        );
         return true;
       }
 
-      final bankData =
-          await _getLearnerBankDetailsForValidation(learnerId, learnerProfile);
+      final bankData = await _getLearnerBankDetailsForValidation(
+        learnerId,
+        learnerProfile,
+      );
       debugPrint(
-          '[BANK_CAPTURE] SIMPLIFIED: Retrieved bank data: ${bankData.keys.length} fields');
+        '[BANK_CAPTURE] SIMPLIFIED: Retrieved bank data: ${bankData.keys.length} fields',
+      );
 
       final missingBankLabels = _getMissingRequiredBankFieldLabels(bankData);
       debugPrint(
-          '[BANK_CAPTURE] SIMPLIFIED: Missing bank labels: $missingBankLabels');
+        '[BANK_CAPTURE] SIMPLIFIED: Missing bank labels: $missingBankLabels',
+      );
 
       if (missingBankLabels.isEmpty) {
         debugPrint(
-            '[BANK_CAPTURE] SIMPLIFIED: All bank details complete - returning true');
+          '[BANK_CAPTURE] SIMPLIFIED: All bank details complete - returning true',
+        );
         return true;
       }
 
       // CRASH FIX: Check mounted state again before any UI operations
       if (!mounted) {
         debugPrint(
-            '[BANK_CAPTURE] SIMPLIFIED: Widget unmounted during check - returning true');
+          '[BANK_CAPTURE] SIMPLIFIED: Widget unmounted during check - returning true',
+        );
         return true;
       }
 
       debugPrint(
-          '[BANK_CAPTURE] SIMPLIFIED: Showing missing bank details snackbar');
+        '[BANK_CAPTURE] SIMPLIFIED: Showing missing bank details snackbar',
+      );
       try {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text('Missing bank details: ${missingBankLabels.join(', ')}'),
+            content: Text(
+              'Missing bank details: ${missingBankLabels.join(', ')}',
+            ),
             backgroundColor: Colors.orange,
             duration: const Duration(seconds: 2), // Shorter duration
           ),
@@ -3373,14 +3599,16 @@ class _ClockInPageState extends State<ClockInPage>
       await Future.delayed(const Duration(milliseconds: 100));
       if (!mounted) {
         debugPrint(
-            '[BANK_CAPTURE] SIMPLIFIED: Widget unmounted after delay - returning true');
+          '[BANK_CAPTURE] SIMPLIFIED: Widget unmounted after delay - returning true',
+        );
         return true;
       }
 
       // CRASH FIX: Wrap dialog call in try-catch
       try {
         debugPrint(
-            '[BANK_CAPTURE] SIMPLIFIED: Calling bank details dialog for learner: $learnerId');
+          '[BANK_CAPTURE] SIMPLIFIED: Calling bank details dialog for learner: $learnerId',
+        );
         final saved = await _showBankDetailsCaptureDialog(learnerId, bankData);
         debugPrint('[BANK_CAPTURE] SIMPLIFIED: Dialog returned: $saved');
       } catch (e) {
@@ -3389,11 +3617,13 @@ class _ClockInPageState extends State<ClockInPage>
 
       // CRASH FIX: Always return true to prevent any blocking or crashes
       debugPrint(
-          '[BANK_CAPTURE] SIMPLIFIED: Bank details flow completed - returning true');
+        '[BANK_CAPTURE] SIMPLIFIED: Bank details flow completed - returning true',
+      );
       return true;
     } catch (e) {
       debugPrint(
-          '[BANK_CAPTURE] SIMPLIFIED: ERROR in bank details function: $e');
+        '[BANK_CAPTURE] SIMPLIFIED: ERROR in bank details function: $e',
+      );
       // Always return true to prevent blocking the flow
       return true;
     }
@@ -3405,7 +3635,8 @@ class _ClockInPageState extends State<ClockInPage>
   ) async {
     try {
       debugPrint(
-          '[BANK_VALIDATION] SIMPLIFIED: Starting bank validation for learner: $learnerId');
+        '[BANK_VALIDATION] SIMPLIFIED: Starting bank validation for learner: $learnerId',
+      );
 
       // CRASH FIX: Simplified approach - only use local data to prevent widget lifecycle conflicts
       final merged = <String, dynamic>{};
@@ -3416,27 +3647,31 @@ class _ClockInPageState extends State<ClockInPage>
       // NEW: First check online database for bank details
       try {
         debugPrint(
-            '[BANK_VALIDATION] ONLINE: Checking online database for bank details...');
+          '[BANK_VALIDATION] ONLINE: Checking online database for bank details...',
+        );
         final onlineBankData = await _checkOnlineBankDetails(learnerId);
         if (onlineBankData != null && onlineBankData.isNotEmpty) {
           merged.addAll(onlineBankData);
           debugPrint(
-              '[BANK_VALIDATION] ONLINE: Found online bank details - using server data');
+            '[BANK_VALIDATION] ONLINE: Found online bank details - using server data',
+          );
           return merged; // Return immediately if online data exists
         } else {
           debugPrint('[BANK_VALIDATION] ONLINE: No online bank details found');
         }
       } catch (e) {
         debugPrint(
-            '[BANK_VALIDATION] ONLINE: Online check failed: $e - falling back to local');
+          '[BANK_VALIDATION] ONLINE: Online check failed: $e - falling back to local',
+        );
       }
 
       // Fallback: Check local database if online check fails
       try {
         final learnerIdInt = int.tryParse(learnerId);
         if (learnerIdInt != null) {
-          final localBank =
-              await DatabaseHelper().fetchLearnerBankDetails(learnerIdInt);
+          final localBank = await DatabaseHelper().fetchLearnerBankDetails(
+            learnerIdInt,
+          );
           if (localBank != null) {
             merged.addAll(localBank);
             debugPrint('[BANK_VALIDATION] LOCAL: Found local bank details');
@@ -3449,7 +3684,8 @@ class _ClockInPageState extends State<ClockInPage>
       }
 
       debugPrint(
-          '[BANK_VALIDATION] SIMPLIFIED: Returning merged data (${merged.keys.length} fields)');
+        '[BANK_VALIDATION] SIMPLIFIED: Returning merged data (${merged.keys.length} fields)',
+      );
       return merged;
     } catch (e) {
       debugPrint('[BANK_VALIDATION] SIMPLIFIED: ERROR in bank validation: $e');
@@ -3459,7 +3695,8 @@ class _ClockInPageState extends State<ClockInPage>
   }
 
   List<String> _getMissingRequiredBankFieldLabels(
-      Map<String, dynamic> bankData) {
+    Map<String, dynamic> bankData,
+  ) {
     final missing = <String>[];
     for (final rule in _requiredBankRules) {
       if (_isRuleMissing(bankData, rule.keys)) {
@@ -3471,10 +3708,12 @@ class _ClockInPageState extends State<ClockInPage>
 
   // NEW: Check online database for bank details using the new endpoint
   Future<Map<String, dynamic>?> _checkOnlineBankDetails(
-      String learnerId) async {
+    String learnerId,
+  ) async {
     try {
       debugPrint(
-          '[ONLINE_BANK] Checking online database for learner: $learnerId');
+        '[ONLINE_BANK] Checking online database for learner: $learnerId',
+      );
 
       final url = Uri.parse(AppConfig.checkBankDetailsUrl);
       final response = await http.post(
@@ -3490,7 +3729,8 @@ class _ClockInPageState extends State<ClockInPage>
         if (data['success'] == true && data['has_bank_details'] == true) {
           final bankDetails = data['bank_details'];
           debugPrint(
-              '[ONLINE_BANK] Found online bank details: ${bankDetails['bank_name']}');
+            '[ONLINE_BANK] Found online bank details: ${bankDetails['bank_name']}',
+          );
 
           // Convert server response to format expected by the app
           final localBankData = {
@@ -3521,10 +3761,13 @@ class _ClockInPageState extends State<ClockInPage>
   }
 
   Future<bool> _showBankDetailsCaptureDialog(
-      String learnerId, Map<String, dynamic> existingBank) async {
+    String learnerId,
+    Map<String, dynamic> existingBank,
+  ) async {
     debugPrint('[BANK_DIALOG] ========== STARTING BANK DIALOG ==========');
     debugPrint(
-        '[BANK_DIALOG] Starting bank details dialog for learner: $learnerId');
+      '[BANK_DIALOG] Starting bank details dialog for learner: $learnerId',
+    );
     debugPrint('[BANK_DIALOG] Existing bank data: $existingBank');
     debugPrint('[BANK_DIALOG] Widget mounted status: $mounted');
     debugPrint('[BANK_DIALOG] Context hashCode: ${context.hashCode}');
@@ -3543,11 +3786,13 @@ class _ClockInPageState extends State<ClockInPage>
       branchCodeController.text =
           _bankCodes[initialSelectedBank] ?? branchCodeController.text;
       debugPrint(
-          '[BANK_DIALOG] Updated branch code from bank selection: "${branchCodeController.text}"');
+        '[BANK_DIALOG] Updated branch code from bank selection: "${branchCodeController.text}"',
+      );
     }
 
     debugPrint(
-        '[BANK_DIALOG] About to call showDialog - context mounted: $mounted');
+      '[BANK_DIALOG] About to call showDialog - context mounted: $mounted',
+    );
     debugPrint('[BANK_DIALOG] Context widget: ${context.widget.runtimeType}');
 
     Map<String, String>? submittedBankData;
@@ -3566,9 +3811,11 @@ class _ClockInPageState extends State<ClockInPage>
         barrierDismissible: false,
         builder: (dialogContext) {
           debugPrint(
-              '[BANK_DIALOG] Dialog builder called - dialogContext: ${dialogContext.hashCode}');
+            '[BANK_DIALOG] Dialog builder called - dialogContext: ${dialogContext.hashCode}',
+          );
           debugPrint(
-              '[BANK_DIALOG] Dialog context widget: ${dialogContext.widget.runtimeType}');
+            '[BANK_DIALOG] Dialog context widget: ${dialogContext.widget.runtimeType}',
+          );
 
           // Declare state variables INSIDE the StatefulBuilder's scope
           String? selectedBank = initialSelectedBank;
@@ -3578,9 +3825,11 @@ class _ClockInPageState extends State<ClockInPage>
           return StatefulBuilder(
             builder: (builderContext, setDialogState) {
               debugPrint(
-                  '[BANK_DIALOG] StatefulBuilder called - builderContext: ${builderContext.hashCode}');
+                '[BANK_DIALOG] StatefulBuilder called - builderContext: ${builderContext.hashCode}',
+              );
               debugPrint(
-                  '[BANK_DIALOG] StatefulBuilder setDialogState: ${setDialogState.runtimeType}');
+                '[BANK_DIALOG] StatefulBuilder setDialogState: ${setDialogState.runtimeType}',
+              );
 
               // Create a safe setState wrapper
               void safeSetDialogState(VoidCallback fn) {
@@ -3589,7 +3838,8 @@ class _ClockInPageState extends State<ClockInPage>
                     setDialogState(fn);
                   } else {
                     debugPrint(
-                        '[BANK_DIALOG] Context not mounted, skipping setState');
+                      '[BANK_DIALOG] Context not mounted, skipping setState',
+                    );
                   }
                 } catch (e) {
                   debugPrint('[BANK_DIALOG] Error in safeSetDialogState: $e');
@@ -3605,19 +3855,24 @@ class _ClockInPageState extends State<ClockInPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       DropdownButtonFormField<String>(
-                        value:
-                            _banks.contains(selectedBank) ? selectedBank : null,
-                        decoration:
-                            const InputDecoration(labelText: 'Bank Name'),
+                        value: _banks.contains(selectedBank)
+                            ? selectedBank
+                            : null,
+                        decoration: const InputDecoration(
+                          labelText: 'Bank Name',
+                        ),
                         items: _banks
-                            .map((bank) => DropdownMenuItem(
-                                  value: bank,
-                                  child: Text(bank),
-                                ))
+                            .map(
+                              (bank) => DropdownMenuItem(
+                                value: bank,
+                                child: Text(bank),
+                              ),
+                            )
                             .toList(),
                         onChanged: (value) {
                           debugPrint(
-                              '[BANK_DIALOG] Bank dropdown changed to: $value');
+                            '[BANK_DIALOG] Bank dropdown changed to: $value',
+                          );
                           try {
                             // Check if the dialog is still mounted before calling setState
                             if (builderContext.mounted) {
@@ -3629,16 +3884,20 @@ class _ClockInPageState extends State<ClockInPage>
                                 }
                               });
                               debugPrint(
-                                  '[BANK_DIALOG] Bank dropdown state updated successfully');
+                                '[BANK_DIALOG] Bank dropdown state updated successfully',
+                              );
                             } else {
                               debugPrint(
-                                  '[BANK_DIALOG] Dialog context not mounted, skipping setState');
+                                '[BANK_DIALOG] Dialog context not mounted, skipping setState',
+                              );
                             }
                           } catch (e) {
                             debugPrint(
-                                '[BANK_DIALOG] ERROR in bank dropdown setState: $e');
+                              '[BANK_DIALOG] ERROR in bank dropdown setState: $e',
+                            );
                             debugPrint(
-                                '[BANK_DIALOG] Stack trace: ${StackTrace.current}');
+                              '[BANK_DIALOG] Stack trace: ${StackTrace.current}',
+                            );
                           }
                         },
                       ),
@@ -3647,17 +3906,21 @@ class _ClockInPageState extends State<ClockInPage>
                         value: _accountTypes.contains(selectedAccountType)
                             ? selectedAccountType
                             : null,
-                        decoration:
-                            const InputDecoration(labelText: 'Account Type'),
+                        decoration: const InputDecoration(
+                          labelText: 'Account Type',
+                        ),
                         items: _accountTypes
-                            .map((type) => DropdownMenuItem(
-                                  value: type,
-                                  child: Text(type),
-                                ))
+                            .map(
+                              (type) => DropdownMenuItem(
+                                value: type,
+                                child: Text(type),
+                              ),
+                            )
                             .toList(),
                         onChanged: (value) {
                           debugPrint(
-                              '[BANK_DIALOG] Account type dropdown changed to: $value');
+                            '[BANK_DIALOG] Account type dropdown changed to: $value',
+                          );
                           try {
                             // Check if the dialog is still mounted before calling setState
                             if (builderContext.mounted) {
@@ -3665,16 +3928,20 @@ class _ClockInPageState extends State<ClockInPage>
                                 selectedAccountType = value;
                               });
                               debugPrint(
-                                  '[BANK_DIALOG] Account type dropdown state updated successfully');
+                                '[BANK_DIALOG] Account type dropdown state updated successfully',
+                              );
                             } else {
                               debugPrint(
-                                  '[BANK_DIALOG] Dialog context not mounted, skipping setState');
+                                '[BANK_DIALOG] Dialog context not mounted, skipping setState',
+                              );
                             }
                           } catch (e) {
                             debugPrint(
-                                '[BANK_DIALOG] ERROR in account type dropdown setState: $e');
+                              '[BANK_DIALOG] ERROR in account type dropdown setState: $e',
+                            );
                             debugPrint(
-                                '[BANK_DIALOG] Stack trace: ${StackTrace.current}');
+                              '[BANK_DIALOG] Stack trace: ${StackTrace.current}',
+                            );
                           }
                         },
                       ),
@@ -3690,15 +3957,18 @@ class _ClockInPageState extends State<ClockInPage>
                       TextField(
                         controller: branchCodeController,
                         keyboardType: TextInputType.number,
-                        decoration:
-                            const InputDecoration(labelText: 'Branch Code'),
+                        decoration: const InputDecoration(
+                          labelText: 'Branch Code',
+                        ),
                       ),
                       if (errorMessage != null) ...[
                         const SizedBox(height: 10),
                         Text(
                           errorMessage!,
-                          style:
-                              const TextStyle(color: Colors.red, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ],
@@ -3715,11 +3985,14 @@ class _ClockInPageState extends State<ClockInPage>
                   ElevatedButton(
                     onPressed: () {
                       debugPrint(
-                          '[BANK_DIALOG] ========== SAVE BUTTON PRESSED ==========');
+                        '[BANK_DIALOG] ========== SAVE BUTTON PRESSED ==========',
+                      );
                       debugPrint(
-                          '[BANK_DIALOG] Save button pressed - context mounted: ${builderContext.mounted}');
+                        '[BANK_DIALOG] Save button pressed - context mounted: ${builderContext.mounted}',
+                      );
                       debugPrint(
-                          '[BANK_DIALOG] Dialog context mounted: ${dialogContext.mounted}');
+                        '[BANK_DIALOG] Dialog context mounted: ${dialogContext.mounted}',
+                      );
 
                       final bankName = selectedBank?.trim() ?? '';
                       final bankType = selectedAccountType?.trim() ?? '';
@@ -3727,14 +4000,16 @@ class _ClockInPageState extends State<ClockInPage>
                       final bankCode = branchCodeController.text.trim();
 
                       debugPrint(
-                          '[BANK_DIALOG] Validating fields: bankName=$bankName, bankType=$bankType, accountNumber=$accountNumber, bankCode=$bankCode');
+                        '[BANK_DIALOG] Validating fields: bankName=$bankName, bankType=$bankType, accountNumber=$accountNumber, bankCode=$bankCode',
+                      );
 
                       if (bankName.isEmpty ||
                           bankType.isEmpty ||
                           accountNumber.isEmpty ||
                           bankCode.isEmpty) {
                         debugPrint(
-                            '[BANK_DIALOG] Validation failed - missing fields');
+                          '[BANK_DIALOG] Validation failed - missing fields',
+                        );
                         try {
                           // Check if the dialog is still mounted before calling setState
                           if (builderContext.mounted) {
@@ -3742,24 +4017,30 @@ class _ClockInPageState extends State<ClockInPage>
                               errorMessage = 'Please complete all bank fields.';
                             });
                             debugPrint(
-                                '[BANK_DIALOG] Error message set successfully');
+                              '[BANK_DIALOG] Error message set successfully',
+                            );
                           } else {
                             debugPrint(
-                                '[BANK_DIALOG] Dialog context not mounted, skipping error setState');
+                              '[BANK_DIALOG] Dialog context not mounted, skipping error setState',
+                            );
                           }
                         } catch (e) {
                           debugPrint(
-                              '[BANK_DIALOG] ERROR setting error message: $e');
+                            '[BANK_DIALOG] ERROR setting error message: $e',
+                          );
                           debugPrint(
-                              '[BANK_DIALOG] Stack trace: ${StackTrace.current}');
+                            '[BANK_DIALOG] Stack trace: ${StackTrace.current}',
+                          );
                         }
                         return;
                       }
 
                       debugPrint(
-                          '[BANK_DIALOG] Validation passed, attempting to close dialog');
+                        '[BANK_DIALOG] Validation passed, attempting to close dialog',
+                      );
                       debugPrint(
-                          '[BANK_DIALOG] About to call Navigator.pop with data');
+                        '[BANK_DIALOG] About to call Navigator.pop with data',
+                      );
 
                       try {
                         final resultData = {
@@ -3769,23 +4050,29 @@ class _ClockInPageState extends State<ClockInPage>
                           'BankCode': bankCode,
                         };
                         debugPrint(
-                            '[BANK_DIALOG] Result data prepared: $resultData');
+                          '[BANK_DIALOG] Result data prepared: $resultData',
+                        );
 
                         Navigator.of(dialogContext).pop(resultData);
                         debugPrint(
-                            '[BANK_DIALOG] Navigator.pop called successfully');
+                          '[BANK_DIALOG] Navigator.pop called successfully',
+                        );
                       } catch (e) {
                         debugPrint(
-                            '[BANK_DIALOG] CRITICAL ERROR closing dialog: $e');
+                          '[BANK_DIALOG] CRITICAL ERROR closing dialog: $e',
+                        );
                         debugPrint(
-                            '[BANK_DIALOG] Error type: ${e.runtimeType}');
+                          '[BANK_DIALOG] Error type: ${e.runtimeType}',
+                        );
                         debugPrint(
-                            '[BANK_DIALOG] Stack trace: ${StackTrace.current}');
+                          '[BANK_DIALOG] Stack trace: ${StackTrace.current}',
+                        );
 
                         // Try alternative approach
                         try {
                           debugPrint(
-                              '[BANK_DIALOG] Attempting alternative Navigator.pop');
+                            '[BANK_DIALOG] Attempting alternative Navigator.pop',
+                          );
                           Navigator.pop(dialogContext, {
                             'BankName': bankName,
                             'bankType': bankType,
@@ -3793,10 +4080,12 @@ class _ClockInPageState extends State<ClockInPage>
                             'BankCode': bankCode,
                           });
                           debugPrint(
-                              '[BANK_DIALOG] Alternative Navigator.pop succeeded');
+                            '[BANK_DIALOG] Alternative Navigator.pop succeeded',
+                          );
                         } catch (e2) {
                           debugPrint(
-                              '[BANK_DIALOG] Alternative Navigator.pop also failed: $e2');
+                            '[BANK_DIALOG] Alternative Navigator.pop also failed: $e2',
+                          );
                         }
                       }
                     },
@@ -3856,7 +4145,8 @@ class _ClockInPageState extends State<ClockInPage>
         debugPrint('[BANK_DIALOG] accountNumberController disposed safely');
       } else {
         debugPrint(
-            '[BANK_DIALOG] accountNumberController still has listeners, forcing disposal...');
+          '[BANK_DIALOG] accountNumberController still has listeners, forcing disposal...',
+        );
         // Force clear listeners before disposal
         accountNumberController.removeListener(() {});
         accountNumberController.dispose();
@@ -3869,7 +4159,8 @@ class _ClockInPageState extends State<ClockInPage>
         debugPrint('[BANK_DIALOG] branchCodeController disposed safely');
       } else {
         debugPrint(
-            '[BANK_DIALOG] branchCodeController still has listeners, forcing disposal...');
+          '[BANK_DIALOG] branchCodeController still has listeners, forcing disposal...',
+        );
         // Force clear listeners before disposal
         branchCodeController.removeListener(() {});
         branchCodeController.dispose();
@@ -3880,9 +4171,11 @@ class _ClockInPageState extends State<ClockInPage>
     } catch (e) {
       debugPrint('[BANK_DIALOG] ERROR disposing controllers: $e');
       debugPrint(
-          '[BANK_DIALOG] Controller disposal error type: ${e.runtimeType}');
+        '[BANK_DIALOG] Controller disposal error type: ${e.runtimeType}',
+      );
       debugPrint(
-          '[BANK_DIALOG] Controller disposal stack trace: ${StackTrace.current}');
+        '[BANK_DIALOG] Controller disposal stack trace: ${StackTrace.current}',
+      );
     }
 
     debugPrint('[BANK_DIALOG] Submitted data: $submittedBankData');
@@ -3896,8 +4189,10 @@ class _ClockInPageState extends State<ClockInPage>
     debugPrint('[BANK_DIALOG] Widget mounted before save: $mounted');
 
     try {
-      final ok =
-          await _upsertLearnerBankDetailsLocal(learnerId, submittedBankData);
+      final ok = await _upsertLearnerBankDetailsLocal(
+        learnerId,
+        submittedBankData,
+      );
       debugPrint('[BANK_DIALOG] Save operation completed with result: $ok');
       debugPrint('[BANK_DIALOG] Widget mounted after save: $mounted');
 
@@ -3923,9 +4218,12 @@ class _ClockInPageState extends State<ClockInPage>
   }
 
   Future<bool> _upsertLearnerBankDetailsLocal(
-      String learnerId, Map<String, dynamic> bankData) async {
+    String learnerId,
+    Map<String, dynamic> bankData,
+  ) async {
     debugPrint(
-        '[BANK_SAVE] ========== STARTING BANK SAVE OPERATION ==========');
+      '[BANK_SAVE] ========== STARTING BANK SAVE OPERATION ==========',
+    );
     debugPrint('[BANK_SAVE] Starting save for learner: $learnerId');
     debugPrint('[BANK_SAVE] Bank data: $bankData');
     debugPrint('[BANK_SAVE] Widget mounted: $mounted');
@@ -3992,7 +4290,7 @@ class _ClockInPageState extends State<ClockInPage>
               'bankType': bankData['bankType']?.toString().trim() ?? '',
               'BankAccount': bankData['BankAccount']?.toString().trim() ?? '',
               'BankCode': bankData['BankCode']?.toString().trim() ?? '',
-            }
+            },
           };
           debugPrint('[BANK_SAVE] Online payload: $onlinePayload');
 
@@ -4005,7 +4303,8 @@ class _ClockInPageState extends State<ClockInPage>
               .timeout(const Duration(seconds: 10));
 
           debugPrint(
-              '[BANK_SAVE] Online response status: ${response.statusCode}');
+            '[BANK_SAVE] Online response status: ${response.statusCode}',
+          );
           debugPrint('[BANK_SAVE] Online response body: ${response.body}');
 
           if (response.statusCode == 200) {
@@ -4014,7 +4313,8 @@ class _ClockInPageState extends State<ClockInPage>
 
             if (responseData['success'] == true) {
               debugPrint(
-                  '[BANK_SAVE] Online save successful, marking as synced...');
+                '[BANK_SAVE] Online save successful, marking as synced...',
+              );
               // Mark as synced if online save was successful
               await db.update(
                 'bankdetails',
@@ -4025,23 +4325,27 @@ class _ClockInPageState extends State<ClockInPage>
               debugPrint('[BANK_SAVE] Record marked as synced');
             } else {
               debugPrint(
-                  '[BANK_SAVE] Online save failed: ${responseData['message'] ?? 'Unknown error'}');
+                '[BANK_SAVE] Online save failed: ${responseData['message'] ?? 'Unknown error'}',
+              );
             }
           } else {
             debugPrint(
-                '[BANK_SAVE] Online save failed with status: ${response.statusCode}');
+              '[BANK_SAVE] Online save failed with status: ${response.statusCode}',
+            );
           }
         } catch (e) {
           debugPrint('[BANK_SAVE] Online save exception: $e');
           debugPrint(
-              '[BANK_SAVE] Online save failed, but local save succeeded - will sync later');
+            '[BANK_SAVE] Online save failed, but local save succeeded - will sync later',
+          );
         }
       } else {
         debugPrint('[BANK_SAVE] Offline mode - local save only');
       }
 
       debugPrint(
-          '[BANK_SAVE] ========== BANK SAVE OPERATION COMPLETED SUCCESSFULLY ==========');
+        '[BANK_SAVE] ========== BANK SAVE OPERATION COMPLETED SUCCESSFULLY ==========',
+      );
       return true;
     } catch (e) {
       debugPrint('[BANK_SAVE] CRITICAL ERROR in save operation: $e');
@@ -4060,7 +4364,9 @@ class _ClockInPageState extends State<ClockInPage>
     _RequiredProfileRule(label: 'Language', keys: ['Language']),
     _RequiredProfileRule(label: 'Disability', keys: ['Disability']),
     _RequiredProfileRule(
-        label: 'Cellphone Number', keys: ['CellphoneNumber', 'PhoneNumber']),
+      label: 'Cellphone Number',
+      keys: ['CellphoneNumber', 'PhoneNumber'],
+    ),
     _RequiredProfileRule(label: 'Email', keys: ['Email']),
     _RequiredProfileRule(label: 'Address Line 1', keys: ['AddressLine1']),
     _RequiredProfileRule(label: 'Address Line 2', keys: ['AddressLine2']),
@@ -4074,7 +4380,9 @@ class _ClockInPageState extends State<ClockInPage>
     _RequiredProfileRule(label: 'Next of Kin Contact', keys: ['KinContact']),
     _RequiredProfileRule(label: 'School Name', keys: ['SchoolName']),
     _RequiredProfileRule(
-        label: 'School Completion', keys: ['SchoolCompletion']),
+      label: 'School Completion',
+      keys: ['SchoolCompletion'],
+    ),
     _RequiredProfileRule(label: 'School Location', keys: ['SchoolLocation']),
     _RequiredProfileRule(label: 'School Grade', keys: ['SchoolGrade']),
     _RequiredProfileRule(label: 'Profile Image', keys: ['profile_image']),
@@ -4127,25 +4435,26 @@ class _ClockInPageState extends State<ClockInPage>
   }
 
   Future<void> _handleDocumentReupload(String learnerId, String docName) async {
-    await LearnerDocumentClockInService(context).scanAndSaveDocument(
-      learnerId,
-      docName,
-      replaceExisting: true,
-    );
+    await LearnerDocumentClockInService(
+      context,
+    ).scanAndSaveDocument(learnerId, docName, replaceExisting: true);
   }
 
   Future<Map<String, dynamic>> _getDetailedDocumentStatuses(
-      String learnerId) async {
+    String learnerId,
+  ) async {
     try {
       if (!await _checkConnectivity()) {
         // Offline: assume local docs are approved
         return {'allApproved': true, 'documents': []};
       }
 
-      final response = await http.post(
-        Uri.parse(AppConfig.buildUrl('get_document_statuses.php')),
-        body: {'learner_id': learnerId},
-      ).timeout(const Duration(seconds: 6));
+      final response = await http
+          .post(
+            Uri.parse(AppConfig.buildUrl('get_document_statuses.php')),
+            body: {'learner_id': learnerId},
+          )
+          .timeout(const Duration(seconds: 6));
 
       if (response.statusCode != 200) {
         return {'allApproved': false, 'documents': []};
@@ -4196,10 +4505,7 @@ class _ClockInPageState extends State<ClockInPage>
         }
       }
 
-      return {
-        'allApproved': problemDocs.isEmpty,
-        'documents': problemDocs,
-      };
+      return {'allApproved': problemDocs.isEmpty, 'documents': problemDocs};
     } catch (e) {
       debugPrint('[DOCUMENTS] Error fetching detailed statuses: $e');
       return {'allApproved': false, 'documents': []};
@@ -4244,8 +4550,9 @@ class _ClockInPageState extends State<ClockInPage>
         );
         if (existsOnServer) {
           final dynamic docId = doc['document_id'];
-          final int? parsedDocId =
-              docId is int ? docId : int.tryParse('$docId');
+          final int? parsedDocId = docId is int
+              ? docId
+              : int.tryParse('$docId');
           if (parsedDocId != null) {
             await dbHelper.updateLearnerDocumentSynced(parsedDocId, 1);
           }
@@ -4253,10 +4560,7 @@ class _ClockInPageState extends State<ClockInPage>
           continue;
         }
 
-        final request = http.MultipartRequest(
-          'POST',
-          Uri.parse(_uploadUrl),
-        )
+        final request = http.MultipartRequest('POST', Uri.parse(_uploadUrl))
           ..fields['learner_id'] = learnerId
           ..fields['documentName'] = documentName
           ..fields['status'] = doc['status']?.toString() ?? 'Pending'
@@ -4265,11 +4569,13 @@ class _ClockInPageState extends State<ClockInPage>
           ..fields['synced'] = '1'
           ..fields['rejection_reason'] =
               doc['rejection_reason']?.toString() ?? ''
-          ..files.add(await http.MultipartFile.fromPath(
-            'learner_document',
-            filePath,
-            filename: filePath.split('/').last,
-          ));
+          ..files.add(
+            await http.MultipartFile.fromPath(
+              'learner_document',
+              filePath,
+              filename: filePath.split('/').last,
+            ),
+          );
 
         final response = await request.send();
         final body = await response.stream.bytesToString();
@@ -4282,8 +4588,9 @@ class _ClockInPageState extends State<ClockInPage>
           final decoded = jsonDecode(body);
           if (decoded is Map && decoded['success'] == true) {
             final dynamic docId = doc['document_id'];
-            final int? parsedDocId =
-                docId is int ? docId : int.tryParse('$docId');
+            final int? parsedDocId = docId is int
+                ? docId
+                : int.tryParse('$docId');
             if (parsedDocId != null) {
               await dbHelper.updateLearnerDocumentSynced(parsedDocId, 1);
             }
@@ -4301,7 +4608,8 @@ class _ClockInPageState extends State<ClockInPage>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                'Synced $successCount document(s) successfully${failCount > 0 ? ', $failCount failed' : ''}.'),
+              'Synced $successCount document(s) successfully${failCount > 0 ? ', $failCount failed' : ''}.',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -4367,8 +4675,9 @@ class _ClockInPageState extends State<ClockInPage>
         );
         if (existsOnServer) {
           final dynamic docId = doc['document_id'];
-          final int? parsedDocId =
-              docId is int ? docId : int.tryParse('$docId');
+          final int? parsedDocId = docId is int
+              ? docId
+              : int.tryParse('$docId');
           if (parsedDocId != null) {
             await dbHelper.updateLearnerDocumentSynced(parsedDocId, 1);
           }
@@ -4377,23 +4686,23 @@ class _ClockInPageState extends State<ClockInPage>
         }
 
         try {
-          final request = http.MultipartRequest(
-            'POST',
-            Uri.parse(_uploadUrl),
-          )
+          final request = http.MultipartRequest('POST', Uri.parse(_uploadUrl))
             ..fields['learner_id'] = learnerId
             ..fields['documentName'] = documentName
             ..fields['status'] = doc['status']?.toString() ?? 'Pending'
-            ..fields['upload_date'] = doc['upload_date']?.toString() ??
+            ..fields['upload_date'] =
+                doc['upload_date']?.toString() ??
                 DateTime.now().toIso8601String()
             ..fields['synced'] = '1'
             ..fields['rejection_reason'] =
                 doc['rejection_reason']?.toString() ?? ''
-            ..files.add(await http.MultipartFile.fromPath(
-              'learner_document',
-              filePath,
-              filename: filePath.split('/').last,
-            ));
+            ..files.add(
+              await http.MultipartFile.fromPath(
+                'learner_document',
+                filePath,
+                filename: filePath.split('/').last,
+              ),
+            );
 
           final response = await request.send();
           final body = await response.stream.bytesToString();
@@ -4405,8 +4714,9 @@ class _ClockInPageState extends State<ClockInPage>
           final decoded = jsonDecode(body);
           if (decoded is Map && decoded['success'] == true) {
             final dynamic docId = doc['document_id'];
-            final int? parsedDocId =
-                docId is int ? docId : int.tryParse('$docId');
+            final int? parsedDocId = docId is int
+                ? docId
+                : int.tryParse('$docId');
             if (parsedDocId != null) {
               await dbHelper.updateLearnerDocumentSynced(parsedDocId, 1);
             }
@@ -4447,8 +4757,9 @@ class _ClockInPageState extends State<ClockInPage>
     final dbHelper = DatabaseHelper();
     final localDocs = await dbHelper.fetchLearnerDocuments(learnerId);
     final localExistingDocs = localDocs
-        .map((doc) =>
-            normalizeRequiredDoc(doc['documentName']?.toString() ?? ''))
+        .map(
+          (doc) => normalizeRequiredDoc(doc['documentName']?.toString() ?? ''),
+        )
         .toSet();
 
     // CRITICAL FIX FOR OFFLINE CLOCKING:
@@ -4470,17 +4781,21 @@ class _ClockInPageState extends State<ClockInPage>
         }
       } catch (e) {
         debugPrint(
-            '[DOCUMENTS] ONLINE: Server check failed: $e - falling back to local');
+          '[DOCUMENTS] ONLINE: Server check failed: $e - falling back to local',
+        );
       }
     }
 
     // When offline OR server check failed: trust local database
     final missingDocs = _requiredDocuments
-        .where((requiredDoc) =>
-            !localExistingDocs.contains(normalizeRequiredDoc(requiredDoc)))
+        .where(
+          (requiredDoc) =>
+              !localExistingDocs.contains(normalizeRequiredDoc(requiredDoc)),
+        )
         .toList();
     debugPrint(
-        '[DOCUMENTS] OFFLINE: Missing docs: $missingDocs (based on local database only)');
+      '[DOCUMENTS] OFFLINE: Missing docs: $missingDocs (based on local database only)',
+    );
     return missingDocs;
   }
 
@@ -4538,7 +4853,8 @@ class _ClockInPageState extends State<ClockInPage>
           status = item['status']?.toString() ?? 'Pending';
 
           // Handle learner_document table row shapes (real schema first).
-          value = item['documentName']?.toString() ??
+          value =
+              item['documentName']?.toString() ??
               item['DocumentName']?.toString() ??
               item['document_name']?.toString() ??
               item['document_type']?.toString() ??
@@ -4626,7 +4942,9 @@ class _ClockInPageState extends State<ClockInPage>
   }
 
   Future<bool> _scanAndSaveDocument(
-      String learnerId, String documentName) async {
+    String learnerId,
+    String documentName,
+  ) async {
     // Aggressively request garbage collection before scanning to reduce chance of process death
     await Future.delayed(const Duration(milliseconds: 100));
 
@@ -4639,7 +4957,8 @@ class _ClockInPageState extends State<ClockInPage>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              '$documentName already exists for this learner. Keeping existing document.'),
+            '$documentName already exists for this learner. Keeping existing document.',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
@@ -4689,14 +5008,17 @@ class _ClockInPageState extends State<ClockInPage>
       // Check if scanner is already busy
       if (scannerManager.isScanning) {
         throw Exception(
-            'Scanner is already in use. Please wait and try again.');
+          'Scanner is already in use. Please wait and try again.',
+        );
       }
 
       // Use the scanner manager with built-in retry logic
       final scanResult = await Future.any([
         scannerManager.scanDocuments(page: 80, maxRetries: 3),
         Future.delayed(
-            const Duration(minutes: 5), () => null), // 5 minute timeout
+          const Duration(minutes: 5),
+          () => null,
+        ), // 5 minute timeout
       ]);
 
       // Close loading dialog
@@ -4728,7 +5050,8 @@ class _ClockInPageState extends State<ClockInPage>
 
       debugPrint('[DOC_SCAN] PDF URI: ${scanResult['pdfUri']}');
       final file = await resolveFlutterDocScannerPdfFile(
-          scanResult['pdfUri'] as String?);
+        scanResult['pdfUri'] as String?,
+      );
       debugPrint('[DOC_SCAN] Resolved file: ${file?.path}');
 
       if (file == null || !await isReadablePdfFile(file)) {
@@ -4829,7 +5152,8 @@ class _ClockInPageState extends State<ClockInPage>
           content: Text(errorMessage),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 4),
-          action: errorMessage.contains('plugin error') ||
+          action:
+              errorMessage.contains('plugin error') ||
                   errorMessage.contains('Scanner session timed out') ||
                   errorMessage.contains('Scanner timeout')
               ? SnackBarAction(
@@ -4879,10 +5203,7 @@ class _ClockInPageState extends State<ClockInPage>
                 ),
                 child: Text(
                   technicalError,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontFamily: 'monospace',
-                  ),
+                  style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
                 ),
               ),
             ],
@@ -4951,9 +5272,10 @@ class _ClockInPageState extends State<ClockInPage>
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(_isInitializing
-                ? 'Sensor is initializing...'
-                : 'Sensor not ready.')),
+          content: Text(
+            _isInitializing ? 'Sensor is initializing...' : 'Sensor not ready.',
+          ),
+        ),
       );
       return;
     }
@@ -4971,16 +5293,19 @@ class _ClockInPageState extends State<ClockInPage>
       return;
     }
 
-    final existingAttendance = await DatabaseHelper()
-        .getAttendanceForDay(learnerId, _getCurrentDateString());
+    final existingAttendance = await DatabaseHelper().getAttendanceForDay(
+      learnerId,
+      _getCurrentDateString(),
+    );
     if (!mounted) return;
     if (!context.mounted) return;
     if (existingAttendance == null ||
         existingAttendance['clock_in_time'] == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Please clock in first'),
-            backgroundColor: Colors.orange),
+          content: Text('Please clock in first'),
+          backgroundColor: Colors.orange,
+        ),
       );
       return;
     }
@@ -4988,8 +5313,9 @@ class _ClockInPageState extends State<ClockInPage>
     // Show clocking days popup before proceeding
     await _showClockingDaysPopup(learnerId, 'out');
 
-    final templates =
-        await DatabaseHelper().getAllTemplates(int.parse(learnerId));
+    final templates = await DatabaseHelper().getAllTemplates(
+      int.parse(learnerId),
+    );
     final scanner = await _detectScanner();
 
     if (!mounted) return;
@@ -5031,7 +5357,8 @@ class _ClockInPageState extends State<ClockInPage>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              'This learner\'s fingerprint is enrolled on ZKTeco. Please use the ZKTeco scanner or re-enroll on Futronic for this learner.'),
+            'This learner\'s fingerprint is enrolled on ZKTeco. Please use the ZKTeco scanner or re-enroll on Futronic for this learner.',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
@@ -5044,7 +5371,8 @@ class _ClockInPageState extends State<ClockInPage>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              'This learner\'s fingerprint is enrolled on Futronic. Please use the Futronic scanner or re-enroll on ZKTeco for this learner.'),
+            'This learner\'s fingerprint is enrolled on Futronic. Please use the Futronic scanner or re-enroll on ZKTeco for this learner.',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
@@ -5053,10 +5381,12 @@ class _ClockInPageState extends State<ClockInPage>
 
     String? template;
     if (scanner == 'zkteco') {
-      template = templates['zkteco_left_template'] ??
+      template =
+          templates['zkteco_left_template'] ??
           templates['zkteco_right_template'];
     } else if (scanner == 'futronic') {
-      template = templates['futronic_left_template'] ??
+      template =
+          templates['futronic_left_template'] ??
           templates['futronic_right_template'];
     }
     if (template == null || template.isEmpty) {
@@ -5083,13 +5413,14 @@ class _ClockInPageState extends State<ClockInPage>
       }
 
       if (enrolled == true) {
-        final refreshed =
-            await DatabaseHelper().getAllTemplates(int.parse(learnerId));
+        final refreshed = await DatabaseHelper().getAllTemplates(
+          int.parse(learnerId),
+        );
         final hasNew =
             (refreshed['zkteco_left_template']?.isNotEmpty ?? false) ||
-                (refreshed['zkteco_right_template']?.isNotEmpty ?? false) ||
-                (refreshed['futronic_left_template']?.isNotEmpty ?? false) ||
-                (refreshed['futronic_right_template']?.isNotEmpty ?? false);
+            (refreshed['zkteco_right_template']?.isNotEmpty ?? false) ||
+            (refreshed['futronic_left_template']?.isNotEmpty ?? false) ||
+            (refreshed['futronic_right_template']?.isNotEmpty ?? false);
         if (hasNew) {
           // Re-run clock-out attempt
           await _verifyAndClockOut(learnerId);
@@ -5139,12 +5470,14 @@ class _ClockInPageState extends State<ClockInPage>
     try {
       bool match = false;
       if (scanner == 'zkteco') {
-        match = await _fingerprintService.verify('left', template) ||
+        match =
+            await _fingerprintService.verify('left', template) ||
             await _fingerprintService.verify('right', template);
       } else if (scanner == 'futronic') {
         try {
           debugPrint(
-              '[CLOCK_OUT] Attempting Futronic verification for learner $learnerId');
+            '[CLOCK_OUT] Attempting Futronic verification for learner $learnerId',
+          );
           // Capture once, compare both left/right templates if available
           final leftTemplate = templates['futronic_left_template'];
           final rightTemplate = templates['futronic_right_template'];
@@ -5200,7 +5533,8 @@ class _ClockInPageState extends State<ClockInPage>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                'No fingerprint scanner detected. Please connect a scanner.'),
+              'No fingerprint scanner detected. Please connect a scanner.',
+            ),
             backgroundColor: Colors.orange,
           ),
         );
@@ -5218,7 +5552,8 @@ class _ClockInPageState extends State<ClockInPage>
 
         if (!withinRadius) {
           debugPrint(
-              '[CLOCK_OUT] ❌ Geofence check failed - user not within 50 meters');
+            '[CLOCK_OUT] ❌ Geofence check failed - user not within 50 meters',
+          );
           setState(() {
             _isClockingIn[learnerId] = false;
             _currentLearnerIdForClocking = null;
@@ -5228,7 +5563,8 @@ class _ClockInPageState extends State<ClockInPage>
         }
 
         debugPrint(
-            '[CLOCK_OUT] ✅ Geofence check passed - proceeding with clock-out');
+          '[CLOCK_OUT] ✅ Geofence check passed - proceeding with clock-out',
+        );
 
         final now = _getCurrentTimeString();
         final clockInTime = existingAttendance['clock_in_time'].toString();
@@ -5280,14 +5616,16 @@ class _ClockInPageState extends State<ClockInPage>
         // Try to sync to server first
         debugPrint('[CLOCK_OUT] Starting sync for clock-out...');
         debugPrint(
-            '[CLOCK_OUT] Location: ${position.latitude}, ${position.longitude} (accuracy: ${position.accuracy}m)');
+          '[CLOCK_OUT] Location: ${position.latitude}, ${position.longitude} (accuracy: ${position.accuracy}m)',
+        );
 
         bool synced = false;
 
         // Check if online - if so, try immediate sync first
         if (_isConnected) {
           debugPrint(
-              '[CLOCK_OUT] Online - attempting immediate server sync...');
+            '[CLOCK_OUT] Online - attempting immediate server sync...',
+          );
           try {
             synced = await syncSingleClockOut(attendance);
             debugPrint('[CLOCK_OUT] Immediate sync result: $synced');
@@ -5316,7 +5654,8 @@ class _ClockInPageState extends State<ClockInPage>
 
         if (synced) {
           debugPrint(
-              '[CLOCK_OUT] Sync SUCCESS - updating local DB with synced=1');
+            '[CLOCK_OUT] Sync SUCCESS - updating local DB with synced=1',
+          );
           // Sync successful - update local database with synced=1
           final updatedAttendance = {
             'clock_out_time': now,
@@ -5324,18 +5663,22 @@ class _ClockInPageState extends State<ClockInPage>
             'synced': 1, // Mark as synced
           };
           await DatabaseHelper().updateClocking(
-              existingAttendance['clocking_id'], updatedAttendance);
+            existingAttendance['clocking_id'],
+            updatedAttendance,
+          );
           // UI already updated above, just show sync success message
           if (!mounted) return;
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Clock-out synced to server!'),
-                backgroundColor: Colors.blue),
+              content: Text('Clock-out synced to server!'),
+              backgroundColor: Colors.blue,
+            ),
           );
         } else {
           debugPrint(
-              '[CLOCK_OUT] Sync FAILED - updating local DB with synced=0');
+            '[CLOCK_OUT] Sync FAILED - updating local DB with synced=0',
+          );
           // Sync failed - update local database with synced=0 for later sync
           final updatedAttendance = {
             'clock_out_time': now,
@@ -5343,15 +5686,17 @@ class _ClockInPageState extends State<ClockInPage>
             'synced': 0, // Mark as not synced
           };
           await DatabaseHelper().updateClocking(
-              existingAttendance['clocking_id'], updatedAttendance);
+            existingAttendance['clocking_id'],
+            updatedAttendance,
+          );
           // UI already updated above, just show offline message
           if (!mounted) return;
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content:
-                    Text('Clock-out saved locally (will sync when online)'),
-                backgroundColor: Colors.orange),
+              content: Text('Clock-out saved locally (will sync when online)'),
+              backgroundColor: Colors.orange,
+            ),
           );
         }
       } else {
@@ -5359,8 +5704,9 @@ class _ClockInPageState extends State<ClockInPage>
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Fingerprint does not match!'),
-              backgroundColor: Colors.red),
+            content: Text('Fingerprint does not match!'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
@@ -5369,8 +5715,9 @@ class _ClockInPageState extends State<ClockInPage>
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('Verification error: $e'),
-            backgroundColor: Colors.red),
+          content: Text('Verification error: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() {
@@ -5396,10 +5743,12 @@ class _ClockInPageState extends State<ClockInPage>
       // Online mode: Try to sync from server first, fallback to local
       try {
         debugPrint(
-            '[INIT] Online mode - syncing learners from server for classID: ${widget.classID}');
+          '[INIT] Online mode - syncing learners from server for classID: ${widget.classID}',
+        );
         await dbHelper.syncLearnersFromServer(widget.classID);
         debugPrint(
-            '[INIT] Successfully synced learners from server for classID: ${widget.classID}');
+          '[INIT] Successfully synced learners from server for classID: ${widget.classID}',
+        );
       } catch (e) {
         debugPrint('[INIT] Failed to sync learners from server: $e');
         debugPrint('[INIT] Falling back to local database');
@@ -5419,7 +5768,8 @@ class _ClockInPageState extends State<ClockInPage>
     } else {
       // Offline mode: Load only from local database
       debugPrint(
-          '[INIT] Offline mode - loading learners from local database only');
+        '[INIT] Offline mode - loading learners from local database only',
+      );
     }
 
     await _loadLearnersFromLocalDatabase();
@@ -5458,7 +5808,8 @@ class _ClockInPageState extends State<ClockInPage>
         debugPrint('[INIT] Fetched site coordinates: $_siteLat, $_siteLon');
       } else {
         debugPrint(
-            '[INIT] No site coordinates found for classID: ${widget.classID}');
+          '[INIT] No site coordinates found for classID: ${widget.classID}',
+        );
       }
     } catch (e) {
       debugPrint('[INIT] Error fetching site coordinates: $e');
@@ -5471,7 +5822,8 @@ class _ClockInPageState extends State<ClockInPage>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              'You have $unsyncedCount offline record(s) that need to be synced. Tap the sync button to upload them.'),
+            'You have $unsyncedCount offline record(s) that need to be synced. Tap the sync button to upload them.',
+          ),
           backgroundColor: Colors.orange,
           duration: const Duration(seconds: 5),
           action: SnackBarAction(
@@ -5504,18 +5856,21 @@ class _ClockInPageState extends State<ClockInPage>
     // await _syncOfflineClockIns();
 
     debugPrint(
-        '[FETCH] ========== FETCHING CLOCKING DATA FROM SERVER ==========');
+      '[FETCH] ========== FETCHING CLOCKING DATA FROM SERVER ==========',
+    );
     debugPrint('[FETCH] ClassID: ${widget.classID}');
     debugPrint('[FETCH] This will ONLY sync existing server records for TODAY');
     debugPrint(
-        '[FETCH] NO new clock-ins will be created - only displaying synced data');
+      '[FETCH] NO new clock-ins will be created - only displaying synced data',
+    );
 
     // Sync clocking data from server for this class only (current day)
     try {
       final syncService = SyncService();
       await syncService.syncClassClockingFromServer(widget.classID);
       debugPrint(
-          '[FETCH] ✅ Synced CURRENT DAY clocking data from server for classID: ${widget.classID}');
+        '[FETCH] ✅ Synced CURRENT DAY clocking data from server for classID: ${widget.classID}',
+      );
     } catch (e) {
       debugPrint('[FETCH] ❌ Error syncing class clocking from server: $e');
     }
@@ -5571,13 +5926,15 @@ class _ClockInPageState extends State<ClockInPage>
         return;
       } catch (e) {
         debugPrint(
-            '[SYNC] Bulk sync failed: $e, falling back to individual sync');
+          '[SYNC] Bulk sync failed: $e, falling back to individual sync',
+        );
         // Fall through to individual sync if bulk fails
       }
     }
 
     debugPrint(
-        '[SYNC] Using INDIVIDUAL sync for ${offlineRecords.length} records');
+      '[SYNC] Using INDIVIDUAL sync for ${offlineRecords.length} records',
+    );
 
     int successCount = 0;
     int failureCount = 0;
@@ -5641,7 +5998,8 @@ class _ClockInPageState extends State<ClockInPage>
             whereArgs: [clockingId],
           );
           debugPrint(
-              'Successfully synced offline record for $learnerId (ID: $clockingId)');
+            'Successfully synced offline record for $learnerId (ID: $clockingId)',
+          );
           successCount++;
         } else {
           debugPrint('Failed to sync offline record for $learnerId');
@@ -5667,28 +6025,35 @@ class _ClockInPageState extends State<ClockInPage>
     if (mounted && showMessages) {
       if (successCount > 0 && failureCount == 0) {
         FingerprintErrorHandler.showSuccess(
-            context, 'Synced $successCount offline record(s)',
-            duration: const Duration(seconds: 2));
+          context,
+          'Synced $successCount offline record(s)',
+          duration: const Duration(seconds: 2),
+        );
       } else if (successCount > 0 && failureCount > 0) {
         FingerprintErrorHandler.showInfo(
-            context, 'Synced $successCount, $failureCount failed',
-            duration: const Duration(seconds: 3));
+          context,
+          'Synced $successCount, $failureCount failed',
+          duration: const Duration(seconds: 3),
+        );
       } else if (successCount == 0 && failureCount > 0) {
         FingerprintErrorHandler.showError(
-            context, 'Failed to sync $failureCount offline record(s)');
+          context,
+          'Failed to sync $failureCount offline record(s)',
+        );
       }
     } else if (successCount > 0) {
       // Silent background sync - just log
       debugPrint(
-          '[SYNC] ✅ Background sync completed: $successCount synced, $failureCount failed');
+        '[SYNC] ✅ Background sync completed: $successCount synced, $failureCount failed',
+      );
     }
   }
 
   Future<void> _refreshDataWithoutClearingState() async {
     try {
       final dbHelper = DatabaseHelper();
-      final learnersWithClockingData =
-          await dbHelper.getLearnersWithClockingData(widget.classID);
+      final learnersWithClockingData = await dbHelper
+          .getLearnersWithClockingData(widget.classID);
 
       setState(() {
         for (var learner in learnersWithClockingData) {
@@ -5743,38 +6108,49 @@ class _ClockInPageState extends State<ClockInPage>
       final db = await dbHelper.database;
 
       // Check if any learners exist in this class at all
-      final classCheck = await db.query('learnerdetails',
-          where: 'CAST(classID AS TEXT) = ?',
-          whereArgs: [normalizeClassId(widget.classID)]);
+      final classCheck = await db.query(
+        'learnerdetails',
+        where: 'CAST(classID AS TEXT) = ?',
+        whereArgs: [normalizeClassId(widget.classID)],
+      );
       debugPrint(
-          '[LOAD] Total learners in class ${widget.classID}: ${classCheck.length}');
+        '[LOAD] Total learners in class ${widget.classID}: ${classCheck.length}',
+      );
 
       if (classCheck.isEmpty) {
         debugPrint('[LOAD] ❌ No learners found in class ${widget.classID}');
         debugPrint('[LOAD] Available classes in database:');
         final allClasses = await db.rawQuery(
-            'SELECT DISTINCT classID FROM learnerdetails ORDER BY classID');
+          'SELECT DISTINCT classID FROM learnerdetails ORDER BY classID',
+        );
         for (var classData in allClasses.take(10)) {
           debugPrint(
-              '[LOAD]   - Class: ${classData['classID']} (type: ${classData['classID'].runtimeType})');
+            '[LOAD]   - Class: ${classData['classID']} (type: ${classData['classID'].runtimeType})',
+          );
         }
 
         // Try to create test learners for offline functionality
         debugPrint(
-            '[LOAD] 🔄 Attempting to create test learners for offline functionality...');
+          '[LOAD] 🔄 Attempting to create test learners for offline functionality...',
+        );
         try {
           await dbHelper.ensureClassDataExists(widget.classID);
-          await dbHelper.ensureTestLearnersExist(widget.classID,
-              learnerCount: 5);
+          await dbHelper.ensureTestLearnersExist(
+            widget.classID,
+            learnerCount: 5,
+          );
 
           // Retry loading after creating test data
-          final retryCheck = await db.query('learnerdetails',
-              where: 'CAST(classID AS TEXT) = ?',
-              whereArgs: [normalizeClassId(widget.classID)]);
+          final retryCheck = await db.query(
+            'learnerdetails',
+            where: 'CAST(classID AS TEXT) = ?',
+            whereArgs: [normalizeClassId(widget.classID)],
+          );
 
           if (retryCheck.isNotEmpty) {
             debugPrint(
-                '[LOAD] ✅ Successfully created ${retryCheck.length} test learners, retrying load...');
+              '[LOAD] ✅ Successfully created ${retryCheck.length} test learners, retrying load...',
+            );
             // Recursively call this method to load the new test data
             await _loadLearnersFromLocalDatabase();
             return;
@@ -5787,7 +6163,8 @@ class _ClockInPageState extends State<ClockInPage>
 
         if (widget.learners.isNotEmpty) {
           debugPrint(
-              '[LOAD] Using ${widget.learners.length} learners passed from dashboard (offline cache)');
+            '[LOAD] Using ${widget.learners.length} learners passed from dashboard (offline cache)',
+          );
           setState(() {
             _filterLearners();
           });
@@ -5801,11 +6178,12 @@ class _ClockInPageState extends State<ClockInPage>
         return;
       }
 
-      final learnersWithClockingData =
-          await dbHelper.getLearnersWithClockingData(widget.classID);
+      final learnersWithClockingData = await dbHelper
+          .getLearnersWithClockingData(widget.classID);
 
       debugPrint(
-          '[LOAD] Found ${learnersWithClockingData.length} learners for classID: ${widget.classID}');
+        '[LOAD] Found ${learnersWithClockingData.length} learners for classID: ${widget.classID}',
+      );
 
       setState(() {
         widget.learners.clear();
@@ -5825,7 +6203,8 @@ class _ClockInPageState extends State<ClockInPage>
             clockInTimes[learnerId] = clockInTime;
             clockedInCount++;
             debugPrint(
-                '[LOAD] Learner $learnerId ($learnerName) - Clocked IN at $clockInTime');
+              '[LOAD] Learner $learnerId ($learnerName) - Clocked IN at $clockInTime',
+            );
           }
           if (clockOutTime.isNotEmpty &&
               clockOutTime != 'N/A' &&
@@ -5833,7 +6212,8 @@ class _ClockInPageState extends State<ClockInPage>
             clockOutTimes[learnerId] = clockOutTime;
             clockedOutCount++;
             debugPrint(
-                '[LOAD] Learner $learnerId ($learnerName) - Clocked OUT at $clockOutTime');
+              '[LOAD] Learner $learnerId ($learnerName) - Clocked OUT at $clockOutTime',
+            );
           }
           if (contactTime.isNotEmpty &&
               contactTime != 'N/A' &&
@@ -5887,8 +6267,9 @@ class _ClockInPageState extends State<ClockInPage>
   Future<void> _loadAllLearnersFromLocalDatabase() async {
     try {
       final dbHelper = DatabaseHelper();
-      final allLearnersData =
-          await dbHelper.getLearnersWithAllClockingData(widget.classID);
+      final allLearnersData = await dbHelper.getLearnersWithAllClockingData(
+        widget.classID,
+      );
 
       setState(() {
         widget.learners.clear();
@@ -5932,12 +6313,15 @@ class _ClockInPageState extends State<ClockInPage>
             'Name': learner['Name']?.toString() ?? 'N/A',
             'Surname': learner['Surname']?.toString() ?? 'N/A',
             'IDNumber': learner['IDNumber']?.toString() ?? 'N/A',
-            'clock_in_time':
-                hasClocking ? clockInTime : '', // Empty if no clocking
-            'clock_out_time':
-                hasClocking ? clockOutTime : '', // Empty if no clocking
-            'contact_time':
-                hasClocking ? contactTime : '', // Empty if no clocking
+            'clock_in_time': hasClocking
+                ? clockInTime
+                : '', // Empty if no clocking
+            'clock_out_time': hasClocking
+                ? clockOutTime
+                : '', // Empty if no clocking
+            'contact_time': hasClocking
+                ? contactTime
+                : '', // Empty if no clocking
             'clock_date': hasClocking ? clockDate : '', // Empty if no clocking
             'has_clocking': hasClocking.toString(), // Convert boolean to string
             // Add signature page expected fields for compatibility
@@ -5952,21 +6336,26 @@ class _ClockInPageState extends State<ClockInPage>
     } catch (e) {
       if (!mounted) return;
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading all learners: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading all learners: $e')));
     }
   }
 
   double _calculateDistance(
-      double lat1, double lon1, double lat2, double lon2) {
+    double lat1,
+    double lon1,
+    double lat2,
+    double lon2,
+  ) {
     const double R = 6371e3; // Earth radius in meters
     final double phi1 = lat1 * math.pi / 180;
     final double phi2 = lat2 * math.pi / 180;
     final double deltaPhi = (lat2 - lat1) * math.pi / 180;
     final double deltaLambda = (lon2 - lon1) * math.pi / 180;
 
-    final double a = math.sin(deltaPhi / 2) * math.sin(deltaPhi / 2) +
+    final double a =
+        math.sin(deltaPhi / 2) * math.sin(deltaPhi / 2) +
         math.cos(phi1) *
             math.cos(phi2) *
             math.sin(deltaLambda / 2) *
@@ -5985,7 +6374,8 @@ class _ClockInPageState extends State<ClockInPage>
       // Update the state if it's different
       if (mounted && _isConnected != isConnected) {
         debugPrint(
-            '[CONNECTIVITY] Updating _isConnected state to: $isConnected');
+          '[CONNECTIVITY] Updating _isConnected state to: $isConnected',
+        );
         setState(() {
           _isConnected = isConnected;
         });
@@ -6206,26 +6596,32 @@ class _ClockInPageState extends State<ClockInPage>
                 ? () async {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content:
-                            Text('Syncing current day records from server...'),
+                        content: Text(
+                          'Syncing current day records from server...',
+                        ),
                         backgroundColor: Colors.blue,
                       ),
                     );
                     try {
                       final syncService = SyncService();
-                      await syncService
-                          .syncClassClockingFromServer(widget.classID);
+                      await syncService.syncClassClockingFromServer(
+                        widget.classID,
+                      );
                       await _loadAllLearnersFromLocalDatabase();
                       if (mounted) {
                         if (!context.mounted) return;
                         FingerprintErrorHandler.showSuccess(
-                            context, 'Current day records synced from server!');
+                          context,
+                          'Current day records synced from server!',
+                        );
                       }
                     } catch (e) {
                       if (mounted) {
                         if (!context.mounted) return;
-                        FingerprintErrorHandler.showError(context,
-                            'Failed to sync current day records from server');
+                        FingerprintErrorHandler.showError(
+                          context,
+                          'Failed to sync current day records from server',
+                        );
                       }
                     }
                   }
@@ -6240,12 +6636,15 @@ class _ClockInPageState extends State<ClockInPage>
                 onPressed: _isConnected
                     ? () async {
                         debugPrint(
-                            '[BUTTON] ========================================');
+                          '[BUTTON] ========================================',
+                        );
                         debugPrint(
-                            '[BUTTON] REFRESH BUTTON PRESSED - Starting sync');
+                          '[BUTTON] REFRESH BUTTON PRESSED - Starting sync',
+                        );
                         debugPrint('[BUTTON] classID: ${widget.classID}');
                         debugPrint(
-                            '[BUTTON] ========================================');
+                          '[BUTTON] ========================================',
+                        );
 
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -6256,18 +6655,22 @@ class _ClockInPageState extends State<ClockInPage>
                         );
                         try {
                           debugPrint(
-                              '[BUTTON] Creating DatabaseHelper instance...');
+                            '[BUTTON] Creating DatabaseHelper instance...',
+                          );
                           final dbHelper = DatabaseHelper();
                           debugPrint(
-                              '[BUTTON] DatabaseHelper created, calling syncLearnersFromServer...');
+                            '[BUTTON] DatabaseHelper created, calling syncLearnersFromServer...',
+                          );
 
                           await dbHelper.syncLearnersFromServer(widget.classID);
 
                           debugPrint(
-                              '[BUTTON] syncLearnersFromServer completed, loading from local DB...');
+                            '[BUTTON] syncLearnersFromServer completed, loading from local DB...',
+                          );
                           await _loadLearnersFromLocalDatabase();
                           debugPrint(
-                              '[BUTTON] _loadLearnersFromLocalDatabase completed');
+                            '[BUTTON] _loadLearnersFromLocalDatabase completed',
+                          );
 
                           if (mounted) {
                             if (!context.mounted) return;
@@ -6286,7 +6689,9 @@ class _ClockInPageState extends State<ClockInPage>
                           if (mounted) {
                             if (!context.mounted) return;
                             FingerprintErrorHandler.showError(
-                                context, 'Sync failed: $e');
+                              context,
+                              'Sync failed: $e',
+                            );
                           }
                         }
                       }
@@ -6308,7 +6713,8 @@ class _ClockInPageState extends State<ClockInPage>
               // Temporarily disabled - BackupClockInPage import issue
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                    content: Text('Backup clock-in temporarily disabled')),
+                  content: Text('Backup clock-in temporarily disabled'),
+                ),
               );
               // Navigator.push(
               //   context,
@@ -6350,7 +6756,9 @@ class _ClockInPageState extends State<ClockInPage>
                 Text(
                   'Class Information for ${widget.classID}',
                   style: const TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.bold),
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 const Text(
@@ -6366,28 +6774,30 @@ class _ClockInPageState extends State<ClockInPage>
                     // GPS Status Chip
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: _currentGpsAccuracy == null
                             ? Colors.grey.withOpacity(0.1)
                             : (!_isWithinRange && _siteLat != null
-                                ? Colors.red.withOpacity(0.1)
-                                : (_currentGpsAccuracy! <= 25
-                                    ? Colors.green.withOpacity(0.1)
-                                    : (_currentGpsAccuracy! <= 60
-                                        ? Colors.orange.withOpacity(0.1)
-                                        : Colors.red.withOpacity(0.1)))),
+                                  ? Colors.red.withOpacity(0.1)
+                                  : (_currentGpsAccuracy! <= 25
+                                        ? Colors.green.withOpacity(0.1)
+                                        : (_currentGpsAccuracy! <= 60
+                                              ? Colors.orange.withOpacity(0.1)
+                                              : Colors.red.withOpacity(0.1)))),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: _currentGpsAccuracy == null
                               ? Colors.grey
                               : (!_isWithinRange && _siteLat != null
-                                  ? Colors.red
-                                  : (_currentGpsAccuracy! <= 25
-                                      ? Colors.green
-                                      : (_currentGpsAccuracy! <= 60
-                                          ? Colors.orange
-                                          : Colors.red))),
+                                    ? Colors.red
+                                    : (_currentGpsAccuracy! <= 25
+                                          ? Colors.green
+                                          : (_currentGpsAccuracy! <= 60
+                                                ? Colors.orange
+                                                : Colors.red))),
                           width: 1,
                         ),
                       ),
@@ -6402,37 +6812,40 @@ class _ClockInPageState extends State<ClockInPage>
                             color: _currentGpsAccuracy == null
                                 ? Colors.grey
                                 : (!_isWithinRange && _siteLat != null
-                                    ? Colors.red
-                                    : (_currentGpsAccuracy! <= 25
-                                        ? Colors.green
-                                        : (_currentGpsAccuracy! <= 60
-                                            ? Colors.orange
-                                            : Colors.red))),
+                                      ? Colors.red
+                                      : (_currentGpsAccuracy! <= 25
+                                            ? Colors.green
+                                            : (_currentGpsAccuracy! <= 60
+                                                  ? Colors.orange
+                                                  : Colors.red))),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             _currentGpsAccuracy == null
                                 ? 'GPS: --'
                                 : (!_isWithinRange && _siteLat != null
-                                    ? 'OUT OF RANGE'
-                                    : 'GPS Accuracy: ${_currentGpsAccuracy!.toStringAsFixed(0)}m'),
+                                      ? 'OUT OF RANGE'
+                                      : 'GPS Accuracy: ${_currentGpsAccuracy!.toStringAsFixed(0)}m'),
                             style: TextStyle(
                               fontSize: 14,
                               color: _currentGpsAccuracy == null
                                   ? Colors.grey
                                   : (!_isWithinRange && _siteLat != null
-                                      ? Colors.red
-                                      : (_currentGpsAccuracy! <= 25
-                                          ? Colors.green
-                                          : (_currentGpsAccuracy! <= 60
-                                              ? Colors.orange
-                                              : Colors.red))),
+                                        ? Colors.red
+                                        : (_currentGpsAccuracy! <= 25
+                                              ? Colors.green
+                                              : (_currentGpsAccuracy! <= 60
+                                                    ? Colors.orange
+                                                    : Colors.red))),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const Icon(Icons.refresh,
-                              size: 16, color: Colors.grey),
+                          const Icon(
+                            Icons.refresh,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
                         ],
                       ),
                     ),
@@ -6442,15 +6855,18 @@ class _ClockInPageState extends State<ClockInPage>
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: _isSensorConnected
                               ? Colors.green.withOpacity(0.1)
                               : Colors.red.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color:
-                                _isSensorConnected ? Colors.green : Colors.red,
+                            color: _isSensorConnected
+                                ? Colors.green
+                                : Colors.red,
                             width: 1,
                           ),
                         ),
@@ -6492,7 +6908,8 @@ class _ClockInPageState extends State<ClockInPage>
                     _statusMessage,
                     style: TextStyle(
                       fontSize: 14,
-                      color: _statusMessage.toLowerCase().contains('error') ||
+                      color:
+                          _statusMessage.toLowerCase().contains('error') ||
                               _statusMessage.toLowerCase().contains('failed')
                           ? Colors.red
                           : Colors.black,
@@ -6526,13 +6943,18 @@ class _ClockInPageState extends State<ClockInPage>
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.warning,
-                                  color: Colors.orange, size: 16),
+                              const Icon(
+                                Icons.warning,
+                                color: Colors.orange,
+                                size: 16,
+                              ),
                               const SizedBox(width: 8),
                               Text(
                                 '${snapshot.data} offline record(s) waiting to sync',
                                 style: const TextStyle(
-                                    color: Colors.orange, fontSize: 14),
+                                  color: Colors.orange,
+                                  fontSize: 14,
+                                ),
                               ),
                             ],
                           ),
@@ -6588,16 +7010,20 @@ class _ClockInPageState extends State<ClockInPage>
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.person_off,
-                                    size: 64, color: Colors.grey.shade300),
+                                Icon(
+                                  Icons.person_off,
+                                  size: 64,
+                                  color: Colors.grey.shade300,
+                                ),
                                 const SizedBox(height: 16),
                                 Text(
                                   _searchQuery.isEmpty
                                       ? 'No learners found for this class'
                                       : 'No learners match your search',
                                   style: TextStyle(
-                                      color: Colors.grey.shade500,
-                                      fontSize: 16),
+                                    color: Colors.grey.shade500,
+                                    fontSize: 16,
+                                  ),
                                 ),
                               ],
                             ),
@@ -6635,23 +7061,29 @@ class _ClockInPageState extends State<ClockInPage>
                                     cells: [
                                       DataCell(Text(name)),
                                       DataCell(Text(surname)),
-                                      DataCell(Text(
+                                      DataCell(
+                                        Text(
                                           learner['IDNumber']?.toString() ??
-                                              'N/A')),
+                                              'N/A',
+                                        ),
+                                      ),
                                       // Fingerprint status column
-                                      DataCell(_buildFingerprintStatusIndicator(
-                                          learnerId)),
+                                      DataCell(
+                                        _buildFingerprintStatusIndicator(
+                                          learnerId,
+                                        ),
+                                      ),
                                       // Clock In column
                                       DataCell(
                                         clockInTime.isEmpty
                                             ? ElevatedButton(
                                                 onPressed:
                                                     _isClockingIn[learnerId] ==
-                                                            true
-                                                        ? null
-                                                        : () =>
-                                                            _verifyAndClockIn(
-                                                                learnerId),
+                                                        true
+                                                    ? null
+                                                    : () => _verifyAndClockIn(
+                                                        learnerId,
+                                                      ),
                                                 style: ElevatedButton.styleFrom(
                                                   backgroundColor: Colors.green,
                                                   foregroundColor: Colors.white,
@@ -6661,9 +7093,9 @@ class _ClockInPageState extends State<ClockInPage>
                                             : Text(
                                                 clockInTime,
                                                 style: const TextStyle(
-                                                    color: Colors.green,
-                                                    fontWeight:
-                                                        FontWeight.bold),
+                                                  color: Colors.green,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                               ),
                                       ),
                                       // Clock Out column
@@ -6671,36 +7103,43 @@ class _ClockInPageState extends State<ClockInPage>
                                         clockInTime.isEmpty
                                             ? const Text('-')
                                             : (clockOutTime.isEmpty
-                                                ? ElevatedButton(
-                                                    onPressed: _isClockingIn[
-                                                                learnerId] ==
-                                                            true
-                                                        ? null
-                                                        : () =>
-                                                            _verifyAndClockOut(
-                                                                learnerId),
-                                                    style: ElevatedButton
-                                                        .styleFrom(
-                                                      backgroundColor:
-                                                          Colors.red,
-                                                      foregroundColor:
-                                                          Colors.white,
-                                                    ),
-                                                    child:
-                                                        const Text('Clock Out'),
-                                                  )
-                                                : Text(
-                                                    clockOutTime,
-                                                    style: const TextStyle(
+                                                  ? ElevatedButton(
+                                                      onPressed:
+                                                          _isClockingIn[learnerId] ==
+                                                              true
+                                                          ? null
+                                                          : () =>
+                                                                _verifyAndClockOut(
+                                                                  learnerId,
+                                                                ),
+                                                      style:
+                                                          ElevatedButton.styleFrom(
+                                                            backgroundColor:
+                                                                Colors.red,
+                                                            foregroundColor:
+                                                                Colors.white,
+                                                          ),
+                                                      child: const Text(
+                                                        'Clock Out',
+                                                      ),
+                                                    )
+                                                  : Text(
+                                                      clockOutTime,
+                                                      style: const TextStyle(
                                                         color: Colors.red,
                                                         fontWeight:
-                                                            FontWeight.bold),
-                                                  )),
+                                                            FontWeight.bold,
+                                                      ),
+                                                    )),
                                       ),
                                       // Contact Time column
-                                      DataCell(Text(contactTime.isEmpty
-                                          ? '-'
-                                          : contactTime)),
+                                      DataCell(
+                                        Text(
+                                          contactTime.isEmpty
+                                              ? '-'
+                                              : contactTime,
+                                        ),
+                                      ),
                                       // Sick Note column
                                       DataCell(
                                         ElevatedButton.icon(
@@ -6710,10 +7149,12 @@ class _ClockInPageState extends State<ClockInPage>
                                               MaterialPageRoute(
                                                 builder: (context) =>
                                                     SickNotePage(
-                                                  learnerID:
-                                                      int.parse(learnerId),
-                                                  learnerName: '$name $surname',
-                                                ),
+                                                      learnerID: int.parse(
+                                                        learnerId,
+                                                      ),
+                                                      learnerName:
+                                                          '$name $surname',
+                                                    ),
                                               ),
                                             );
                                           },
@@ -6721,8 +7162,9 @@ class _ClockInPageState extends State<ClockInPage>
                                             backgroundColor: Colors.blue[100],
                                           ),
                                           icon: const Icon(
-                                              Icons.medical_services,
-                                              size: 18),
+                                            Icons.medical_services,
+                                            size: 18,
+                                          ),
                                           label: const Text('Sick'),
                                         ),
                                       ),
@@ -6751,9 +7193,10 @@ class _ClockInPageState extends State<ClockInPage>
           Text(
             time.isNotEmpty ? time : '--:--',
             style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: time.isNotEmpty ? color : Colors.grey.shade400),
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: time.isNotEmpty ? color : Colors.grey.shade400,
+            ),
           ),
         ],
       ),
@@ -6766,9 +7209,10 @@ class _ClockInPageState extends State<ClockInPage>
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2));
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          );
         }
         final templates = snapshot.data ?? {'left': null, 'right': null};
         final hasLeft =
@@ -6798,8 +7242,5 @@ class _RequiredProfileRule {
   final String label;
   final List<String> keys;
 
-  const _RequiredProfileRule({
-    required this.label,
-    required this.keys,
-  });
+  const _RequiredProfileRule({required this.label, required this.keys});
 }

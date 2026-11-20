@@ -52,7 +52,8 @@ class DatabaseHelper {
 
       if (unsyncedRecords.isNotEmpty) {
         debugPrint(
-            '[CLEANUP] Found ${unsyncedRecords.length} unsynced records - attempting to sync before cleanup');
+          '[CLEANUP] Found ${unsyncedRecords.length} unsynced records - attempting to sync before cleanup',
+        );
 
         // Check if we have internet connectivity
         bool hasInternet = false;
@@ -64,7 +65,8 @@ class DatabaseHelper {
 
         if (hasInternet) {
           debugPrint(
-              '[CLEANUP] Internet available - syncing ${unsyncedRecords.length} unsynced records');
+            '[CLEANUP] Internet available - syncing ${unsyncedRecords.length} unsynced records',
+          );
 
           // Attempt to sync each unsynced record
           int syncedCount = 0;
@@ -83,15 +85,18 @@ class DatabaseHelper {
               }
             } catch (e) {
               debugPrint(
-                  '[CLEANUP] Failed to sync record ${record['clocking_id']}: $e');
+                '[CLEANUP] Failed to sync record ${record['clocking_id']}: $e',
+              );
             }
           }
 
           debugPrint(
-              '[CLEANUP] Successfully synced $syncedCount/${unsyncedRecords.length} records');
+            '[CLEANUP] Successfully synced $syncedCount/${unsyncedRecords.length} records',
+          );
         } else {
           debugPrint(
-              '[CLEANUP] No internet - preserving ${unsyncedRecords.length} unsynced records');
+            '[CLEANUP] No internet - preserving ${unsyncedRecords.length} unsynced records',
+          );
           // Don't delete unsynced records when offline
         }
       }
@@ -126,25 +131,31 @@ class DatabaseHelper {
 
       if (totalDeleted > 0) {
         debugPrint(
-            '[CLEANUP] Deleted $totalDeleted learner_clocking records: synced=$deletedSyncedLearner, old=$deletedOld');
+          '[CLEANUP] Deleted $totalDeleted learner_clocking records: synced=$deletedSyncedLearner, old=$deletedOld',
+        );
       } else {
         debugPrint(
-            '[CLEANUP] No old learner_clocking records to delete - database clean');
+          '[CLEANUP] No old learner_clocking records to delete - database clean',
+        );
       }
 
       // Log what's remaining
-      final remainingCount =
-          await db.rawQuery('SELECT COUNT(*) as count FROM learner_clocking');
+      final remainingCount = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM learner_clocking',
+      );
       final remaining = remainingCount.first['count'];
       debugPrint(
-          '[CLEANUP] Remaining learner_clocking records: $remaining (current day only)');
+        '[CLEANUP] Remaining learner_clocking records: $remaining (current day only)',
+      );
 
       // Log induction_clocking count (not cleaned up)
-      final inductionCount =
-          await db.rawQuery('SELECT COUNT(*) as count FROM induction_clocking');
+      final inductionCount = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM induction_clocking',
+      );
       final inductionRemaining = inductionCount.first['count'];
       debugPrint(
-          '[CLEANUP] induction_clocking records: $inductionRemaining (kept permanently, NOT deleted)');
+        '[CLEANUP] induction_clocking records: $inductionRemaining (kept permanently, NOT deleted)',
+      );
     } catch (e) {
       debugPrint('[CLEANUP] Error cleaning up old records: $e');
     }
@@ -207,8 +218,8 @@ class DatabaseHelper {
             'user_latitude': attendance['user_latitude'].toString(),
             'user_longitude': attendance['user_longitude'].toString(),
             'user_accuracy': attendance['user_accuracy'].toString(),
-            'device_epoch':
-                (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString(),
+            'device_epoch': (DateTime.now().millisecondsSinceEpoch ~/ 1000)
+                .toString(),
             'is_offline_sync': 'true', // Syncing offline record to server
           },
         ),
@@ -246,8 +257,8 @@ class DatabaseHelper {
             'user_latitude': attendance['user_latitude'].toString(),
             'user_longitude': attendance['user_longitude'].toString(),
             'user_accuracy': attendance['user_accuracy'].toString(),
-            'device_epoch':
-                (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString(),
+            'device_epoch': (DateTime.now().millisecondsSinceEpoch ~/ 1000)
+                .toString(),
             'is_offline_sync': 'true', // Syncing offline record to server
           },
         ),
@@ -271,8 +282,11 @@ class DatabaseHelper {
   Future<void> clearLearners(String classID) async {
     try {
       final db = await database;
-      await db
-          .delete('learnerdetails', where: 'classID = ?', whereArgs: [classID]);
+      await db.delete(
+        'learnerdetails',
+        where: 'classID = ?',
+        whereArgs: [classID],
+      );
       debugPrint('Cleared all learners for class ID: $classID');
     } catch (e) {
       debugPrint('Error clearing learners for class $classID: $e');
@@ -287,16 +301,20 @@ class DatabaseHelper {
       final today = DateTime.now().toIso8601String().split('T')[0];
 
       debugPrint(
-          '[CLEANUP_DUPLICATES] Starting duplicate cleanup for date: $today');
+        '[CLEANUP_DUPLICATES] Starting duplicate cleanup for date: $today',
+      );
 
       // Find all duplicate records (same learner, same date)
-      final duplicates = await db.rawQuery('''
+      final duplicates = await db.rawQuery(
+        '''
         SELECT LearnerID, clock_date, COUNT(*) as count
         FROM learner_clocking 
         WHERE clock_date = ?
         GROUP BY LearnerID, clock_date
         HAVING COUNT(*) > 1
-      ''', [today]);
+      ''',
+        [today],
+      );
 
       if (duplicates.isEmpty) {
         debugPrint('[CLEANUP_DUPLICATES] No duplicate records found');
@@ -304,14 +322,16 @@ class DatabaseHelper {
       }
 
       debugPrint(
-          '[CLEANUP_DUPLICATES] Found ${duplicates.length} learners with duplicates');
+        '[CLEANUP_DUPLICATES] Found ${duplicates.length} learners with duplicates',
+      );
 
       for (var duplicate in duplicates) {
         final learnerId = duplicate['LearnerID'];
         final date = duplicate['clock_date'];
 
         debugPrint(
-            '[CLEANUP_DUPLICATES] Cleaning up duplicates for LearnerID: $learnerId, date: $date');
+          '[CLEANUP_DUPLICATES] Cleaning up duplicates for LearnerID: $learnerId, date: $date',
+        );
 
         // Get all records for this learner on this date, ordered by clocking_id (newest first)
         final records = await db.query(
@@ -327,7 +347,8 @@ class DatabaseHelper {
           final recordsToDelete = records.skip(1);
 
           debugPrint(
-              '[CLEANUP_DUPLICATES] Keeping record ID: ${recordToKeep['clocking_id']}, deleting ${recordsToDelete.length} duplicates');
+            '[CLEANUP_DUPLICATES] Keeping record ID: ${recordToKeep['clocking_id']}, deleting ${recordsToDelete.length} duplicates',
+          );
 
           for (var recordToDelete in recordsToDelete) {
             await db.delete(
@@ -336,7 +357,8 @@ class DatabaseHelper {
               whereArgs: [recordToDelete['clocking_id']],
             );
             debugPrint(
-                '[CLEANUP_DUPLICATES] Deleted duplicate record ID: ${recordToDelete['clocking_id']}');
+              '[CLEANUP_DUPLICATES] Deleted duplicate record ID: ${recordToDelete['clocking_id']}',
+            );
           }
         }
       }
@@ -349,9 +371,12 @@ class DatabaseHelper {
 
   // DEPRECATED: Use getAllTemplates instead
   Future<void> updateFingerprintTemplates(
-      String learnerID, String templatesJson) async {
+    String learnerID,
+    String templatesJson,
+  ) async {
     debugPrint(
-        '[DEPRECATED] updateFingerprintTemplates called - use saveZkTecoTemplate or saveFutronicTemplate instead');
+      '[DEPRECATED] updateFingerprintTemplates called - use saveZkTecoTemplate or saveFutronicTemplate instead',
+    );
     // This method is kept for backward compatibility but should not be used
   }
 
@@ -372,7 +397,8 @@ class DatabaseHelper {
       );
 
       debugPrint(
-          '[DB_HELPER] Upserted learner: ${sanitizedData['Name']} ${sanitizedData['Surname']} (ID: ${sanitizedData['LearnerID']})');
+        '[DB_HELPER] Upserted learner: ${sanitizedData['Name']} ${sanitizedData['Surname']} (ID: ${sanitizedData['LearnerID']})',
+      );
     } catch (e) {
       debugPrint('[DB_HELPER] Error upserting learner: $e');
       rethrow;
@@ -414,12 +440,15 @@ class DatabaseHelper {
       'signature': _sanitizeString(rawData['signature']),
       'synced': rawData['synced'] ?? 0,
       'zkteco_left_template': _sanitizeString(rawData['zkteco_left_template']),
-      'zkteco_right_template':
-          _sanitizeString(rawData['zkteco_right_template']),
-      'futronic_left_template':
-          _sanitizeString(rawData['futronic_left_template']),
-      'futronic_right_template':
-          _sanitizeString(rawData['futronic_right_template']),
+      'zkteco_right_template': _sanitizeString(
+        rawData['zkteco_right_template'],
+      ),
+      'futronic_left_template': _sanitizeString(
+        rawData['futronic_left_template'],
+      ),
+      'futronic_right_template': _sanitizeString(
+        rawData['futronic_right_template'],
+      ),
       'imagePath': _sanitizeString(rawData['imagePath']),
       'activity_statu': _sanitizeString(rawData['activity_statu']),
       'witness_initials': _sanitizeString(rawData['witness_initials']),
@@ -468,7 +497,8 @@ class DatabaseHelper {
       if (existing.isNotEmpty) {
         final id = existing.first['id'] as int;
         debugPrint(
-            '[DB_HELPER] Updating existing monitoring record for learner ${record['learner_id']} on ${record['monitoring_date']}');
+          '[DB_HELPER] Updating existing monitoring record for learner ${record['learner_id']} on ${record['monitoring_date']}',
+        );
         await db.update(
           'monitoring_records',
           record,
@@ -564,7 +594,8 @@ class DatabaseHelper {
   // DEPRECATED: Use getAllTemplates instead
   Future<Map<String, String?>> getFingerprintTemplates(String learnerID) async {
     debugPrint(
-        '[DEPRECATED] getFingerprintTemplates called - use getAllTemplates instead');
+      '[DEPRECATED] getFingerprintTemplates called - use getAllTemplates instead',
+    );
     // Return empty templates for backward compatibility
     return {'left': null, 'right': null};
   }
@@ -625,7 +656,9 @@ class DatabaseHelper {
   }
 
   Future<Map<String, dynamic>?> getAttendanceForDay(
-      String learnerID, String date) async {
+    String learnerID,
+    String date,
+  ) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'learner_clocking',
@@ -641,7 +674,8 @@ class DatabaseHelper {
     // Server fetch disabled - data is already synced via main sync endpoint
     // This prevents FormatException errors from broken get_clocking_data.php endpoint
     debugPrint(
-        '[DB_HELPER] No local record found for LearnerID: $learnerID, date: $date');
+      '[DB_HELPER] No local record found for LearnerID: $learnerID, date: $date',
+    );
 
     return null;
   }
@@ -683,7 +717,8 @@ class DatabaseHelper {
           if (record['attempt_3_time'] != null ||
               record['attempt_2_time'] != null) {
             debugPrint(
-                '[DB_HELPER] Learner $learnerId MISSED monitoring for today. Blocking clock-out.');
+              '[DB_HELPER] Learner $learnerId MISSED monitoring for today. Blocking clock-out.',
+            );
             return true;
           }
         }
@@ -697,23 +732,26 @@ class DatabaseHelper {
 
   Future<Database> _initDatabase() async {
     final path = await getDatabasesPath();
-    return openDatabase(join(path, _dbName),
-        version: 20, // ⬆️ BUMP for manual_clocking_evidence table migration
-        onUpgrade: (db, oldVersion, newVersion) async {
-      debugPrint(
-          '[DB] Upgrading database from version $oldVersion to $newVersion');
-      if (oldVersion < 2) {
-        // Update BankCode column type from INTEGER to VARCHAR
-        try {
-          await db.execute(
-              'ALTER TABLE bankdetails MODIFY COLUMN BankCode VARCHAR(50)');
-          debugPrint('[DB] Updated BankCode column type to VARCHAR(50)');
-        } catch (e) {
-          debugPrint('[DB] Error updating BankCode column: $e');
-          // If the column doesn't exist or can't be modified, recreate the table
+    return openDatabase(
+      join(path, _dbName),
+      version: 20, // ⬆️ BUMP for manual_clocking_evidence table migration
+      onUpgrade: (db, oldVersion, newVersion) async {
+        debugPrint(
+          '[DB] Upgrading database from version $oldVersion to $newVersion',
+        );
+        if (oldVersion < 2) {
+          // Update BankCode column type from INTEGER to VARCHAR
           try {
-            await db.execute('DROP TABLE IF EXISTS bankdetails');
-            await db.execute('''
+            await db.execute(
+              'ALTER TABLE bankdetails MODIFY COLUMN BankCode VARCHAR(50)',
+            );
+            debugPrint('[DB] Updated BankCode column type to VARCHAR(50)');
+          } catch (e) {
+            debugPrint('[DB] Error updating BankCode column: $e');
+            // If the column doesn't exist or can't be modified, recreate the table
+            try {
+              await db.execute('DROP TABLE IF EXISTS bankdetails');
+              await db.execute('''
                 CREATE TABLE bankdetails (
                   BankID INTEGER PRIMARY KEY AUTOINCREMENT,
                   LearnerID INTEGER,
@@ -725,32 +763,39 @@ class DatabaseHelper {
                   FOREIGN KEY (LearnerID) REFERENCES learnerdetails(LearnerID)
                 )
               ''');
-            debugPrint('[DB] Recreated bankdetails table with correct schema');
-          } catch (e2) {
-            debugPrint('[DB] Error recreating bankdetails table: $e2');
+              debugPrint(
+                '[DB] Recreated bankdetails table with correct schema',
+              );
+            } catch (e2) {
+              debugPrint('[DB] Error recreating bankdetails table: $e2');
+            }
           }
         }
-      }
-      if (oldVersion < 3) {
-        // Add fingerprint columns to facilitator table
-        try {
-          await db.execute(
-              'ALTER TABLE facilitator ADD COLUMN zkteco_left_template longtext');
-          await db.execute(
-              'ALTER TABLE facilitator ADD COLUMN zkteco_right_template longtext');
-          await db.execute(
-              'ALTER TABLE facilitator ADD COLUMN futronic_left_template longtext');
-          await db.execute(
-              'ALTER TABLE facilitator ADD COLUMN futronic_right_template longtext');
-          debugPrint('[DB] Added fingerprint columns to facilitator table');
-        } catch (e) {
-          debugPrint(
-              '[DB] Error adding fingerprint columns to facilitator: $e');
-        }
+        if (oldVersion < 3) {
+          // Add fingerprint columns to facilitator table
+          try {
+            await db.execute(
+              'ALTER TABLE facilitator ADD COLUMN zkteco_left_template longtext',
+            );
+            await db.execute(
+              'ALTER TABLE facilitator ADD COLUMN zkteco_right_template longtext',
+            );
+            await db.execute(
+              'ALTER TABLE facilitator ADD COLUMN futronic_left_template longtext',
+            );
+            await db.execute(
+              'ALTER TABLE facilitator ADD COLUMN futronic_right_template longtext',
+            );
+            debugPrint('[DB] Added fingerprint columns to facilitator table');
+          } catch (e) {
+            debugPrint(
+              '[DB] Error adding fingerprint columns to facilitator: $e',
+            );
+          }
 
-        // Create facilitator_clocking table
-        try {
-          await db.execute('''
+          // Create facilitator_clocking table
+          try {
+            await db.execute('''
               CREATE TABLE IF NOT EXISTS facilitator_clocking (
                 clocking_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 facilitator_id INTEGER NOT NULL,
@@ -764,16 +809,16 @@ class DatabaseHelper {
                 user_accuracy DECIMAL(10,6)
               )
             ''');
-          debugPrint('[DB] Created facilitator_clocking table');
-        } catch (e) {
-          debugPrint('[DB] Error creating facilitator_clocking table: $e');
+            debugPrint('[DB] Created facilitator_clocking table');
+          } catch (e) {
+            debugPrint('[DB] Error creating facilitator_clocking table: $e');
+          }
         }
-      }
 
-      if (oldVersion < 4) {
-        // Create learner pathways cache table for offline POE access
-        try {
-          await db.execute('''
+        if (oldVersion < 4) {
+          // Create learner pathways cache table for offline POE access
+          try {
+            await db.execute('''
               CREATE TABLE IF NOT EXISTS learner_pathways_cache (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 learnerID INTEGER UNIQUE NOT NULL,
@@ -782,17 +827,18 @@ class DatabaseHelper {
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
               )
             ''');
-          debugPrint(
-              '[DB] Created learner_pathways_cache table for offline POE support');
-        } catch (e) {
-          debugPrint('[DB] Error creating learner_pathways_cache table: $e');
+            debugPrint(
+              '[DB] Created learner_pathways_cache table for offline POE support',
+            );
+          } catch (e) {
+            debugPrint('[DB] Error creating learner_pathways_cache table: $e');
+          }
         }
-      }
 
-      if (oldVersion < 5) {
-        // Create pothole_checklist_scanned_documents table
-        try {
-          await db.execute('''
+        if (oldVersion < 5) {
+          // Create pothole_checklist_scanned_documents table
+          try {
+            await db.execute('''
               CREATE TABLE IF NOT EXISTS pothole_checklist_scanned_documents (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 learner_id TEXT NOT NULL,
@@ -803,30 +849,36 @@ class DatabaseHelper {
                 synced INTEGER DEFAULT 0
               )
             ''');
-          debugPrint('[DB] Created pothole_checklist_scanned_documents table');
-        } catch (e) {
-          debugPrint(
-              '[DB] Error creating pothole_checklist_scanned_documents table: $e');
+            debugPrint(
+              '[DB] Created pothole_checklist_scanned_documents table',
+            );
+          } catch (e) {
+            debugPrint(
+              '[DB] Error creating pothole_checklist_scanned_documents table: $e',
+            );
+          }
         }
-      }
 
-      if (oldVersion < 6) {
-        // Add assessorExpiryDate column to facilitator table
-        try {
-          await db.execute(
-              'ALTER TABLE facilitator ADD COLUMN assessorExpiryDate TEXT');
-          debugPrint(
-              '[DB] Added assessorExpiryDate column to facilitator table');
-        } catch (e) {
-          debugPrint(
-              '[DB] Error adding assessorExpiryDate column to facilitator: $e');
+        if (oldVersion < 6) {
+          // Add assessorExpiryDate column to facilitator table
+          try {
+            await db.execute(
+              'ALTER TABLE facilitator ADD COLUMN assessorExpiryDate TEXT',
+            );
+            debugPrint(
+              '[DB] Added assessorExpiryDate column to facilitator table',
+            );
+          } catch (e) {
+            debugPrint(
+              '[DB] Error adding assessorExpiryDate column to facilitator: $e',
+            );
+          }
         }
-      }
 
-      if (oldVersion < 7) {
-        // Create work_experience table
-        try {
-          await db.execute('''
+        if (oldVersion < 7) {
+          // Create work_experience table
+          try {
+            await db.execute('''
               CREATE TABLE IF NOT EXISTS work_experience (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 learner_id TEXT NOT NULL,
@@ -840,30 +892,31 @@ class DatabaseHelper {
                 synced INTEGER DEFAULT 0
               )
             ''');
-          debugPrint('[DB] Created work_experience table');
-        } catch (e) {
-          debugPrint('[DB] Error creating work_experience table: $e');
-        }
-      }
-
-      if (oldVersion < 8) {
-        // Add unitStandard column to poe table (prevents exercise key collisions
-        // across unit standards, which can cause "wrong tick" behaviour).
-        try {
-          final columns = await db.rawQuery("PRAGMA table_info('poe')");
-          final hasUnitStandard = columns.any(
-              (c) => (c['name']?.toString().toLowerCase() == 'unitstandard'));
-          if (!hasUnitStandard) {
-            await db.execute('ALTER TABLE poe ADD COLUMN unitStandard TEXT');
-            debugPrint('[DB] Added unitStandard column to poe table');
+            debugPrint('[DB] Created work_experience table');
+          } catch (e) {
+            debugPrint('[DB] Error creating work_experience table: $e');
           }
-        } catch (e) {
-          debugPrint('[DB] Error adding unitStandard column to poe: $e');
         }
 
-        // Create facilitator_material_issues table
-        try {
-          await db.execute('''
+        if (oldVersion < 8) {
+          // Add unitStandard column to poe table (prevents exercise key collisions
+          // across unit standards, which can cause "wrong tick" behaviour).
+          try {
+            final columns = await db.rawQuery("PRAGMA table_info('poe')");
+            final hasUnitStandard = columns.any(
+              (c) => (c['name']?.toString().toLowerCase() == 'unitstandard'),
+            );
+            if (!hasUnitStandard) {
+              await db.execute('ALTER TABLE poe ADD COLUMN unitStandard TEXT');
+              debugPrint('[DB] Added unitStandard column to poe table');
+            }
+          } catch (e) {
+            debugPrint('[DB] Error adding unitStandard column to poe: $e');
+          }
+
+          // Create facilitator_material_issues table
+          try {
+            await db.execute('''
               CREATE TABLE IF NOT EXISTS facilitator_material_issues (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 logistics_id TEXT NOT NULL,
@@ -885,17 +938,18 @@ class DatabaseHelper {
                 synced INTEGER DEFAULT 0
               )
             ''');
-          debugPrint('[DB] Created facilitator_material_issues table');
-        } catch (e) {
-          debugPrint(
-              '[DB] Error creating facilitator_material_issues table: $e');
+            debugPrint('[DB] Created facilitator_material_issues table');
+          } catch (e) {
+            debugPrint(
+              '[DB] Error creating facilitator_material_issues table: $e',
+            );
+          }
         }
-      }
 
-      if (oldVersion < 9) {
-        // Create monitoring_records table for offline monitoring support
-        try {
-          await db.execute('''
+        if (oldVersion < 9) {
+          // Create monitoring_records table for offline monitoring support
+          try {
+            await db.execute('''
             CREATE TABLE IF NOT EXISTS monitoring_records (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               learner_id TEXT NOT NULL,
@@ -920,91 +974,110 @@ class DatabaseHelper {
               UNIQUE(learner_id, monitoring_date)
             )
           ''');
-          debugPrint('[DB] Created monitoring_records table for version 9');
-        } catch (e) {
-          debugPrint('[DB] Error creating monitoring_records table: $e');
+            debugPrint('[DB] Created monitoring_records table for version 9');
+          } catch (e) {
+            debugPrint('[DB] Error creating monitoring_records table: $e');
+          }
         }
-      }
 
-      if (oldVersion < 10) {
-        // Add missing columns to material_receipt_form table
-        try {
-          // Check if each column exists before adding
-          final columns =
-              await db.rawQuery("PRAGMA table_info('material_receipt_form')");
-          final existingColumns =
-              columns.map((c) => c['name']?.toString().toLowerCase()).toSet();
+        if (oldVersion < 10) {
+          // Add missing columns to material_receipt_form table
+          try {
+            // Check if each column exists before adding
+            final columns = await db.rawQuery(
+              "PRAGMA table_info('material_receipt_form')",
+            );
+            final existingColumns = columns
+                .map((c) => c['name']?.toString().toLowerCase())
+                .toSet();
 
-          if (!existingColumns.contains('sub_description')) {
-            await db.execute(
-                'ALTER TABLE material_receipt_form ADD COLUMN sub_description TEXT');
+            if (!existingColumns.contains('sub_description')) {
+              await db.execute(
+                'ALTER TABLE material_receipt_form ADD COLUMN sub_description TEXT',
+              );
+              debugPrint(
+                '[DB] Added sub_description column to material_receipt_form',
+              );
+            }
+
+            if (!existingColumns.contains('date_aor_created')) {
+              await db.execute(
+                'ALTER TABLE material_receipt_form ADD COLUMN date_aor_created TEXT',
+              );
+              debugPrint(
+                '[DB] Added date_aor_created column to material_receipt_form',
+              );
+            }
+
+            if (!existingColumns.contains('facilitator_signature')) {
+              await db.execute(
+                'ALTER TABLE material_receipt_form ADD COLUMN facilitator_signature TEXT',
+              );
+              debugPrint(
+                '[DB] Added facilitator_signature column to material_receipt_form',
+              );
+            }
+
+            if (!existingColumns.contains('learnerid')) {
+              await db.execute(
+                'ALTER TABLE material_receipt_form ADD COLUMN learnerID TEXT',
+              );
+              debugPrint(
+                '[DB] Added learnerID column to material_receipt_form',
+              );
+            }
+          } catch (e) {
             debugPrint(
-                '[DB] Added sub_description column to material_receipt_form');
+              '[DB] Error adding columns to material_receipt_form: $e',
+            );
           }
-
-          if (!existingColumns.contains('date_aor_created')) {
-            await db.execute(
-                'ALTER TABLE material_receipt_form ADD COLUMN date_aor_created TEXT');
-            debugPrint(
-                '[DB] Added date_aor_created column to material_receipt_form');
-          }
-
-          if (!existingColumns.contains('facilitator_signature')) {
-            await db.execute(
-                'ALTER TABLE material_receipt_form ADD COLUMN facilitator_signature TEXT');
-            debugPrint(
-                '[DB] Added facilitator_signature column to material_receipt_form');
-          }
-
-          if (!existingColumns.contains('learnerid')) {
-            await db.execute(
-                'ALTER TABLE material_receipt_form ADD COLUMN learnerID TEXT');
-            debugPrint('[DB] Added learnerID column to material_receipt_form');
-          }
-        } catch (e) {
-          debugPrint('[DB] Error adding columns to material_receipt_form: $e');
         }
-      }
 
-      if (oldVersion < 11) {
-        // Add location columns to learnerdetails table
-        try {
-          // Check if columns exist before adding
-          final columns =
-              await db.rawQuery("PRAGMA table_info('learnerdetails')");
-          final existingColumns =
-              columns.map((c) => c['name']?.toString().toLowerCase()).toSet();
+        if (oldVersion < 11) {
+          // Add location columns to learnerdetails table
+          try {
+            // Check if columns exist before adding
+            final columns = await db.rawQuery(
+              "PRAGMA table_info('learnerdetails')",
+            );
+            final existingColumns = columns
+                .map((c) => c['name']?.toString().toLowerCase())
+                .toSet();
 
-          if (!existingColumns.contains('province')) {
-            await db.execute(
-                'ALTER TABLE learnerdetails ADD COLUMN Province VARCHAR(50)');
-            debugPrint('[DB] Added Province column to learnerdetails');
+            if (!existingColumns.contains('province')) {
+              await db.execute(
+                'ALTER TABLE learnerdetails ADD COLUMN Province VARCHAR(50)',
+              );
+              debugPrint('[DB] Added Province column to learnerdetails');
+            }
+
+            if (!existingColumns.contains('district')) {
+              await db.execute(
+                'ALTER TABLE learnerdetails ADD COLUMN District VARCHAR(50)',
+              );
+              debugPrint('[DB] Added District column to learnerdetails');
+            }
+
+            if (!existingColumns.contains('municipality')) {
+              await db.execute(
+                'ALTER TABLE learnerdetails ADD COLUMN Municipality VARCHAR(50)',
+              );
+              debugPrint('[DB] Added Municipality column to learnerdetails');
+            }
+          } catch (e) {
+            debugPrint(
+              '[DB] Error adding location columns to learnerdetails: $e',
+            );
           }
-
-          if (!existingColumns.contains('district')) {
-            await db.execute(
-                'ALTER TABLE learnerdetails ADD COLUMN District VARCHAR(50)');
-            debugPrint('[DB] Added District column to learnerdetails');
-          }
-
-          if (!existingColumns.contains('municipality')) {
-            await db.execute(
-                'ALTER TABLE learnerdetails ADD COLUMN Municipality VARCHAR(50)');
-            debugPrint('[DB] Added Municipality column to learnerdetails');
-          }
-        } catch (e) {
-          debugPrint(
-              '[DB] Error adding location columns to learnerdetails: $e');
         }
-      }
 
-      if (oldVersion < 12) {
-        // Create learner_clocking_evidence table for face recognition evidence
-        try {
-          // Drop and recreate to ensure correct schema
-          await db.execute('DROP TABLE IF EXISTS learner_clocking_evidence');
+        if (oldVersion < 12) {
+          // Create learner_clocking_evidence table for face recognition evidence
+          try {
+            // Drop and recreate to ensure correct schema
+            await db.execute('DROP TABLE IF EXISTS learner_clocking_evidence');
 
-          await db.execute('''
+            await db.execute('''
             CREATE TABLE IF NOT EXISTS learner_clocking_evidence (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               LearnerID INTEGER NOT NULL,
@@ -1036,32 +1109,35 @@ class DatabaseHelper {
             )
           ''');
 
-          await db.execute('''
+            await db.execute('''
             CREATE INDEX IF NOT EXISTS idx_evidence_learner 
             ON learner_clocking_evidence(LearnerID)
           ''');
 
-          await db.execute('''
+            await db.execute('''
             CREATE INDEX IF NOT EXISTS idx_evidence_date 
             ON learner_clocking_evidence(clock_date)
           ''');
 
-          await db.execute('''
+            await db.execute('''
             CREATE INDEX IF NOT EXISTS idx_evidence_synced 
             ON learner_clocking_evidence(synced)
           ''');
 
-          debugPrint(
-              '[DB] Created learner_clocking_evidence table with indices');
-        } catch (e) {
-          debugPrint('[DB] Error creating learner_clocking_evidence table: $e');
+            debugPrint(
+              '[DB] Created learner_clocking_evidence table with indices',
+            );
+          } catch (e) {
+            debugPrint(
+              '[DB] Error creating learner_clocking_evidence table: $e',
+            );
+          }
         }
-      }
 
-      if (oldVersion < 13) {
-        // Create learner_face_cache table for offline face verification
-        try {
-          await db.execute('''
+        if (oldVersion < 13) {
+          // Create learner_face_cache table for offline face verification
+          try {
+            await db.execute('''
             CREATE TABLE IF NOT EXISTS learner_face_cache (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               learner_id INTEGER UNIQUE NOT NULL,
@@ -1073,20 +1149,21 @@ class DatabaseHelper {
             )
           ''');
 
-          await db.execute('''
+            await db.execute('''
             CREATE INDEX IF NOT EXISTS idx_face_cache_learner 
             ON learner_face_cache(learner_id)
           ''');
 
-          debugPrint(
-              '[DB] Created learner_face_cache table for offline verification');
-        } catch (e) {
-          debugPrint('[DB] Error creating learner_face_cache table: $e');
-        }
+            debugPrint(
+              '[DB] Created learner_face_cache table for offline verification',
+            );
+          } catch (e) {
+            debugPrint('[DB] Error creating learner_face_cache table: $e');
+          }
 
-        // Create learner_face_verification_queue table for offline sync
-        try {
-          await db.execute('''
+          // Create learner_face_verification_queue table for offline sync
+          try {
+            await db.execute('''
             CREATE TABLE IF NOT EXISTS learner_face_verification_queue (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               learner_id INTEGER NOT NULL,
@@ -1104,48 +1181,52 @@ class DatabaseHelper {
             )
           ''');
 
-          await db.execute('''
+            await db.execute('''
             CREATE INDEX IF NOT EXISTS idx_verification_queue_learner 
             ON learner_face_verification_queue(learner_id)
           ''');
 
-          await db.execute('''
+            await db.execute('''
             CREATE INDEX IF NOT EXISTS idx_verification_queue_synced 
             ON learner_face_verification_queue(synced)
           ''');
 
-          debugPrint(
-              '[DB] Created learner_face_verification_queue table for offline sync');
-        } catch (e) {
-          debugPrint(
-              '[DB] Error creating learner_face_verification_queue table: $e');
+            debugPrint(
+              '[DB] Created learner_face_verification_queue table for offline sync',
+            );
+          } catch (e) {
+            debugPrint(
+              '[DB] Error creating learner_face_verification_queue table: $e',
+            );
+          }
         }
-      }
 
-      if (oldVersion < 14) {
-        // v14: Province/District/Municipality sync fix
-        // The columns already exist (added in v11), but insertLearnerDetails()
-        // was missing these fields. Clear learner data to force fresh sync.
-        debugPrint(
-            '[DB] ✅ v14 migration: Clearing learner data for fresh sync');
-
-        try {
-          await db.delete('learnerdetails');
+        if (oldVersion < 14) {
+          // v14: Province/District/Municipality sync fix
+          // The columns already exist (added in v11), but insertLearnerDetails()
+          // was missing these fields. Clear learner data to force fresh sync.
           debugPrint(
-              '[DB] Cleared learnerdetails - will re-sync with location fields');
-        } catch (e) {
-          debugPrint('[DB] Error clearing learnerdetails: $e');
+            '[DB] ✅ v14 migration: Clearing learner data for fresh sync',
+          );
+
+          try {
+            await db.delete('learnerdetails');
+            debugPrint(
+              '[DB] Cleared learnerdetails - will re-sync with location fields',
+            );
+          } catch (e) {
+            debugPrint('[DB] Error clearing learnerdetails: $e');
+          }
         }
-      }
 
-      if (oldVersion < 15) {
-        // v15: Multi-camera face verification support
-        // Add camera_facing column to support both front and back camera embeddings
-        debugPrint('[DB] ✅ v15 migration: Adding multi-camera support');
+        if (oldVersion < 15) {
+          // v15: Multi-camera face verification support
+          // Add camera_facing column to support both front and back camera embeddings
+          debugPrint('[DB] ✅ v15 migration: Adding multi-camera support');
 
-        try {
-          // Recreate learner_face_cache with composite primary key
-          await db.execute('''
+          try {
+            // Recreate learner_face_cache with composite primary key
+            await db.execute('''
             CREATE TABLE IF NOT EXISTS learner_face_cache_new (
               learner_id INTEGER NOT NULL,
               camera_facing TEXT NOT NULL CHECK(camera_facing IN ('front', 'back')),
@@ -1158,60 +1239,65 @@ class DatabaseHelper {
             )
           ''');
 
-          // Copy existing data (mark as 'back' camera)
-          await db.execute('''
+            // Copy existing data (mark as 'back' camera)
+            await db.execute('''
             INSERT INTO learner_face_cache_new 
             (learner_id, camera_facing, embedding, quality_score, enrolled_at, updated_at, synced)
             SELECT learner_id, 'back', embedding, quality_score, enrolled_at, updated_at, synced
             FROM learner_face_cache
           ''');
 
-          // Drop old table
-          await db.execute('DROP TABLE learner_face_cache');
+            // Drop old table
+            await db.execute('DROP TABLE learner_face_cache');
 
-          // Rename new table
-          await db.execute(
-              'ALTER TABLE learner_face_cache_new RENAME TO learner_face_cache');
+            // Rename new table
+            await db.execute(
+              'ALTER TABLE learner_face_cache_new RENAME TO learner_face_cache',
+            );
 
-          // Create indexes
-          await db.execute('''
+            // Create indexes
+            await db.execute('''
             CREATE INDEX IF NOT EXISTS idx_learner_face_cache_learner 
             ON learner_face_cache(learner_id)
           ''');
 
-          await db.execute('''
+            await db.execute('''
             CREATE INDEX IF NOT EXISTS idx_learner_face_cache_synced 
             ON learner_face_cache(synced)
           ''');
 
-          debugPrint(
-              '[DB] ✅ Recreated learner_face_cache with camera_facing column');
-        } catch (e) {
-          debugPrint('[DB] ❌ Error migrating learner_face_cache: $e');
-        }
+            debugPrint(
+              '[DB] ✅ Recreated learner_face_cache with camera_facing column',
+            );
+          } catch (e) {
+            debugPrint('[DB] ❌ Error migrating learner_face_cache: $e');
+          }
 
-        try {
-          // Add camera_facing to verification queue
-          await db.execute('''
+          try {
+            // Add camera_facing to verification queue
+            await db.execute('''
             ALTER TABLE learner_face_verification_queue 
             ADD COLUMN camera_facing TEXT DEFAULT 'back'
           ''');
 
-          debugPrint(
-              '[DB] ✅ Added camera_facing to learner_face_verification_queue');
-        } catch (e) {
-          debugPrint(
-              '[DB] ❌ Error adding camera_facing to verification queue: $e');
+            debugPrint(
+              '[DB] ✅ Added camera_facing to learner_face_verification_queue',
+            );
+          } catch (e) {
+            debugPrint(
+              '[DB] ❌ Error adding camera_facing to verification queue: $e',
+            );
+          }
         }
-      }
 
-      if (oldVersion < 16) {
-        // v16: Facilitator clocking evidence table
-        debugPrint(
-            '[DB] ✅ v16 migration: Adding facilitator_clocking_evidence table');
+        if (oldVersion < 16) {
+          // v16: Facilitator clocking evidence table
+          debugPrint(
+            '[DB] ✅ v16 migration: Adding facilitator_clocking_evidence table',
+          );
 
-        try {
-          await db.execute('''
+          try {
+            await db.execute('''
             CREATE TABLE IF NOT EXISTS facilitator_clocking_evidence (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               facilitator_id INTEGER NOT NULL,
@@ -1243,53 +1329,59 @@ class DatabaseHelper {
             )
           ''');
 
-          await db.execute('''
+            await db.execute('''
             CREATE INDEX IF NOT EXISTS idx_fac_evidence_facilitator 
             ON facilitator_clocking_evidence(facilitator_id)
           ''');
 
-          await db.execute('''
+            await db.execute('''
             CREATE INDEX IF NOT EXISTS idx_fac_evidence_date 
             ON facilitator_clocking_evidence(clock_date)
           ''');
 
-          await db.execute('''
+            await db.execute('''
             CREATE INDEX IF NOT EXISTS idx_fac_evidence_synced 
             ON facilitator_clocking_evidence(synced)
           ''');
 
-          debugPrint(
-              '[DB] ✅ Created facilitator_clocking_evidence table with indexes');
-        } catch (e) {
-          debugPrint('[DB] ❌ Error creating facilitator_clocking_evidence: $e');
+            debugPrint(
+              '[DB] ✅ Created facilitator_clocking_evidence table with indexes',
+            );
+          } catch (e) {
+            debugPrint(
+              '[DB] ❌ Error creating facilitator_clocking_evidence: $e',
+            );
+          }
         }
-      }
 
-      if (oldVersion < 17) {
-        // v17: Add clock_in_method column to facilitator_clocking table
-        debugPrint(
-            '[DB] ✅ v17 migration: Adding clock_in_method column to facilitator_clocking');
+        if (oldVersion < 17) {
+          // v17: Add clock_in_method column to facilitator_clocking table
+          debugPrint(
+            '[DB] ✅ v17 migration: Adding clock_in_method column to facilitator_clocking',
+          );
 
-        try {
-          await db.execute('''
+          try {
+            await db.execute('''
             ALTER TABLE facilitator_clocking 
             ADD COLUMN clock_in_method TEXT DEFAULT 'signature'
           ''');
 
-          debugPrint(
-              '[DB] ✅ Added clock_in_method column to facilitator_clocking table');
-        } catch (e) {
-          debugPrint('[DB] ❌ Error adding clock_in_method column: $e');
+            debugPrint(
+              '[DB] ✅ Added clock_in_method column to facilitator_clocking table',
+            );
+          } catch (e) {
+            debugPrint('[DB] ❌ Error adding clock_in_method column: $e');
+          }
         }
-      }
 
-      if (oldVersion < 18) {
-        // v18: Create offline_sessions table for persistent offline authentication
-        debugPrint(
-            '[DB] ✅ v18 migration: Creating offline_sessions table for offline token storage');
+        if (oldVersion < 18) {
+          // v18: Create offline_sessions table for persistent offline authentication
+          debugPrint(
+            '[DB] ✅ v18 migration: Creating offline_sessions table for offline token storage',
+          );
 
-        try {
-          await db.execute('''
+          try {
+            await db.execute('''
             CREATE TABLE IF NOT EXISTS offline_sessions (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               user_email TEXT NOT NULL UNIQUE,
@@ -1301,70 +1393,78 @@ class DatabaseHelper {
             )
           ''');
 
-          await db.execute('''
+            await db.execute('''
             CREATE INDEX IF NOT EXISTS idx_offline_sessions_email 
             ON offline_sessions(user_email)
           ''');
 
-          await db.execute('''
+            await db.execute('''
             CREATE INDEX IF NOT EXISTS idx_offline_sessions_expires 
             ON offline_sessions(expires_at)
           ''');
 
-          debugPrint('[DB] ✅ Created offline_sessions table with indexes');
-        } catch (e) {
-          debugPrint('[DB] ❌ Error creating offline_sessions table: $e');
+            debugPrint('[DB] ✅ Created offline_sessions table with indexes');
+          } catch (e) {
+            debugPrint('[DB] ❌ Error creating offline_sessions table: $e');
+          }
         }
-      }
 
-      if (oldVersion < 19) {
-        // v19: Ensure location columns exist in learnerdetails table
-        debugPrint(
-            '[DB] ✅ v19 migration: Ensuring Province, District, Municipality columns exist');
+        if (oldVersion < 19) {
+          // v19: Ensure location columns exist in learnerdetails table
+          debugPrint(
+            '[DB] ✅ v19 migration: Ensuring Province, District, Municipality columns exist',
+          );
 
-        try {
-          // Check if columns exist
-          final columns =
-              await db.rawQuery("PRAGMA table_info('learnerdetails')");
-          final existingColumns =
-              columns.map((c) => c['name']?.toString().toLowerCase()).toSet();
+          try {
+            // Check if columns exist
+            final columns = await db.rawQuery(
+              "PRAGMA table_info('learnerdetails')",
+            );
+            final existingColumns = columns
+                .map((c) => c['name']?.toString().toLowerCase())
+                .toSet();
 
-          if (!existingColumns.contains('province')) {
-            await db.execute(
-                'ALTER TABLE learnerdetails ADD COLUMN Province VARCHAR(100) NULL');
-            debugPrint('[DB] ✅ Added Province column to learnerdetails');
+            if (!existingColumns.contains('province')) {
+              await db.execute(
+                'ALTER TABLE learnerdetails ADD COLUMN Province VARCHAR(100) NULL',
+              );
+              debugPrint('[DB] ✅ Added Province column to learnerdetails');
+            }
+
+            if (!existingColumns.contains('district')) {
+              await db.execute(
+                'ALTER TABLE learnerdetails ADD COLUMN District VARCHAR(100) NULL',
+              );
+              debugPrint('[DB] ✅ Added District column to learnerdetails');
+            }
+
+            if (!existingColumns.contains('municipality')) {
+              await db.execute(
+                'ALTER TABLE learnerdetails ADD COLUMN Municipality VARCHAR(100) NULL',
+              );
+              debugPrint('[DB] ✅ Added Municipality column to learnerdetails');
+            }
+
+            debugPrint('[DB] ✅ Location columns migration complete');
+          } catch (e) {
+            debugPrint('[DB] ❌ Error adding location columns: $e');
           }
-
-          if (!existingColumns.contains('district')) {
-            await db.execute(
-                'ALTER TABLE learnerdetails ADD COLUMN District VARCHAR(100) NULL');
-            debugPrint('[DB] ✅ Added District column to learnerdetails');
-          }
-
-          if (!existingColumns.contains('municipality')) {
-            await db.execute(
-                'ALTER TABLE learnerdetails ADD COLUMN Municipality VARCHAR(100) NULL');
-            debugPrint('[DB] ✅ Added Municipality column to learnerdetails');
-          }
-
-          debugPrint('[DB] ✅ Location columns migration complete');
-        } catch (e) {
-          debugPrint('[DB] ❌ Error adding location columns: $e');
         }
-      }
 
-      if (oldVersion < 20) {
-        // v20: Create manual_clocking_evidence table for signature + face photo evidence
-        debugPrint(
-            '[DB] ✅ v20 migration: Creating manual_clocking_evidence table');
+        if (oldVersion < 20) {
+          // v20: Create manual_clocking_evidence table for signature + face photo evidence
+          debugPrint(
+            '[DB] ✅ v20 migration: Creating manual_clocking_evidence table',
+          );
 
-        try {
-          // Check if table already exists
-          final tables = await db.rawQuery(
-              "SELECT name FROM sqlite_master WHERE type='table' AND name='manual_clocking_evidence'");
+          try {
+            // Check if table already exists
+            final tables = await db.rawQuery(
+              "SELECT name FROM sqlite_master WHERE type='table' AND name='manual_clocking_evidence'",
+            );
 
-          if (tables.isEmpty) {
-            await db.execute('''
+            if (tables.isEmpty) {
+              await db.execute('''
               CREATE TABLE manual_clocking_evidence (
                 evidence_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 LearnerID INTEGER NOT NULL,
@@ -1380,19 +1480,22 @@ class DatabaseHelper {
                 FOREIGN KEY (LearnerID) REFERENCES learnerdetails(LearnerID)
               )
             ''');
-            debugPrint('[DB] ✅ Created manual_clocking_evidence table');
-          } else {
-            debugPrint('[DB] ℹ️ manual_clocking_evidence table already exists');
+              debugPrint('[DB] ✅ Created manual_clocking_evidence table');
+            } else {
+              debugPrint(
+                '[DB] ℹ️ manual_clocking_evidence table already exists',
+              );
+            }
+          } catch (e) {
+            debugPrint(
+              '[DB] ❌ Error creating manual_clocking_evidence table: $e',
+            );
           }
-        } catch (e) {
-          debugPrint(
-              '[DB] ❌ Error creating manual_clocking_evidence table: $e');
         }
-      }
-    }, onCreate: (db, dbVersion) async {
-      // Create example tables
-      await db.execute(
-        '''
+      },
+      onCreate: (db, dbVersion) async {
+        // Create example tables
+        await db.execute('''
           CREATE TABLE users (
             userID INTEGER PRIMARY KEY AUTOINCREMENT,
             email VARCHAR(255),
@@ -1400,10 +1503,9 @@ class DatabaseHelper {
             role VARCHAR(50),
             classID INTEGER
           )
-          ''',
-      );
+          ''');
 
-      await db.execute('''
+        await db.execute('''
   CREATE TABLE facilitator (
     facilitator_id INTEGER PRIMARY KEY,
     firstName TEXT,
@@ -1427,8 +1529,7 @@ class DatabaseHelper {
   )
 ''');
 
-      await db.execute(
-        '''
+        await db.execute('''
           CREATE TABLE learnerdetails (
               LearnerID INTEGER PRIMARY KEY,
               Title VARCHAR(50) NOT NULL,
@@ -1472,43 +1573,35 @@ class DatabaseHelper {
               futronic_left_template longtext,
               futronic_right_template longtext
           )
-          ''',
-      );
+          ''');
 
-      // Create location lookup tables for offline functionality
-      await db.execute(
-        '''
+        // Create location lookup tables for offline functionality
+        await db.execute('''
           CREATE TABLE IF NOT EXISTS province (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name VARCHAR(100) NOT NULL UNIQUE
           )
-          ''',
-      );
+          ''');
 
-      await db.execute(
-        '''
+        await db.execute('''
           CREATE TABLE IF NOT EXISTS district (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name VARCHAR(100) NOT NULL,
             province VARCHAR(100) NOT NULL,
             UNIQUE(name, province)
           )
-          ''',
-      );
+          ''');
 
-      await db.execute(
-        '''
+        await db.execute('''
           CREATE TABLE IF NOT EXISTS local_municipality (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name VARCHAR(100) NOT NULL,
             district VARCHAR(100) NOT NULL,
             UNIQUE(name, district)
           )
-          ''',
-      );
+          ''');
 
-      await db.execute(
-        '''
+        await db.execute('''
          CREATE TABLE learner_clocking (
     clocking_id INTEGER PRIMARY KEY AUTOINCREMENT,
     LearnerID INTEGER NOT NULL,
@@ -1522,12 +1615,10 @@ class DatabaseHelper {
     user_longitude DECIMAL(10,6),
     user_accuracy DECIMAL(10,6)
  ); 
-          ''',
-      );
+          ''');
 
-      //Clocking log
-      await db.execute(
-        '''
+        //Clocking log
+        await db.execute('''
           CREATE TABLE clocking_log (
            log_id INTEGER PRIMARY KEY AUTOINCREMENT,
             learnerID INTEGER,
@@ -1540,12 +1631,10 @@ class DatabaseHelper {
              user_longitude DECIMAL,
              reason VARCHAR
           )
-          ''',
-      );
+          ''');
 
-      // Facilitator clocking table
-      await db.execute(
-        '''
+        // Facilitator clocking table
+        await db.execute('''
           CREATE TABLE facilitator_clocking (
             clocking_id INTEGER PRIMARY KEY AUTOINCREMENT,
             facilitator_id INTEGER NOT NULL,
@@ -1559,22 +1648,18 @@ class DatabaseHelper {
             user_longitude DECIMAL(10,6),
             user_accuracy DECIMAL(10,6)
           )
-          ''',
-      );
+          ''');
 
-      // Create unsynced data table
-      await db.execute(
-        '''
+        // Create unsynced data table
+        await db.execute('''
           CREATE TABLE $_unsyncedTable (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             table_name TEXT,
             data TEXT,
             synced INTEGER DEFAULT 0
           )
-          ''',
-      );
-      await db.execute(
-        '''
+          ''');
+        await db.execute('''
           CREATE TABLE sdp (
            sdp_id INTEGER PRIMARY KEY AUTOINCREMENT,
             sdp_name TEXT,
@@ -1592,10 +1677,8 @@ class DatabaseHelper {
             client_name TEXT,
             signature_image TEXT
           )
-          ''',
-      );
-      await db.execute(
-        '''
+          ''');
+        await db.execute('''
           CREATE TABLE sites (
             siteID INTEGER PRIMARY KEY AUTOINCREMENT,
             siteName VARCHAR(255),
@@ -1615,10 +1698,8 @@ class DatabaseHelper {
             email VARCHAR(255),
             qualification_id VARCHAR(100)
           )
-          ''',
-      );
-      await db.execute(
-        '''
+          ''');
+        await db.execute('''
     CREATE TABLE bankdetails (
     BankID INTEGER PRIMARY KEY AUTOINCREMENT,
     LearnerID INTEGER,
@@ -1630,10 +1711,8 @@ class DatabaseHelper {
     FOREIGN KEY (LearnerID) REFERENCES learnerdetails(LearnerID)
 )
 
-          ''',
-      );
-      await db.execute(
-        '''
+          ''');
+        await db.execute('''
          CREATE TABLE class (
     classID INTEGER PRIMARY KEY AUTOINCREMENT,
     className TEXT,
@@ -1645,21 +1724,17 @@ class DatabaseHelper {
     qualification_id VARCHAR(50)
 )
 
-          ''',
-      );
-      await db.execute(
-        '''
+          ''');
+        await db.execute('''
          CREATE TABLE learningpathway (
     pathway_id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT,
     synced INTEGER DEFAULT 0  
 )
 
-          ''',
-      );
+          ''');
 
-      await db.execute(
-        '''
+        await db.execute('''
          CREATE TABLE qualification (
          id INTEGER,
          qualification_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1672,18 +1747,14 @@ class DatabaseHelper {
          synced INTEGER DEFAULT 0  
 )
 
-          ''',
-      );
-      await db.execute(
-        '''
+          ''');
+        await db.execute('''
          CREATE TABLE qualifications (
          id INTEGER PRIMARY KEY AUTOINCREMENT,
          name TEXT
 )
-          ''',
-      );
-      await db.execute(
-        '''
+          ''');
+        await db.execute('''
          CREATE TABLE unitstandard (
          id INTEGER PRIMARY KEY AUTOINCREMENT,
          unitstandard_id INTEGER,
@@ -1694,10 +1765,8 @@ class DatabaseHelper {
          synced INTEGER DEFAULT 0  
 )
 
-          ''',
-      );
-      await db.execute(
-        '''
+          ''');
+        await db.execute('''
          CREATE TABLE assessments (
          assessment_id INTEGER PRIMARY KEY AUTOINCREMENT,
          project_id VARCHAR(50),
@@ -1716,10 +1785,8 @@ class DatabaseHelper {
          question_type TEXT
 )
 
-          ''',
-      );
-      await db.execute(
-        '''
+          ''');
+        await db.execute('''
          CREATE TABLE poe (
          poe_id  INTEGER PRIMARY KEY AUTOINCREMENT,
          learnerID INTEGER,
@@ -1730,12 +1797,10 @@ class DatabaseHelper {
          synced INTEGER DEFAULT 0,
          logbook_text TEXT 
 )
-          ''',
-      );
+          ''');
 
-      // Create learner pathways cache table for offline POE access
-      await db.execute(
-        '''
+        // Create learner pathways cache table for offline POE access
+        await db.execute('''
          CREATE TABLE learner_pathways_cache (
          id INTEGER PRIMARY KEY AUTOINCREMENT,
          learnerID INTEGER UNIQUE NOT NULL,
@@ -1743,11 +1808,9 @@ class DatabaseHelper {
          cached_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )
-          ''',
-      );
+          ''');
 
-      await db.execute(
-        '''
+        await db.execute('''
 CREATE TABLE material_forms(
 id INTEGER PRIMARY KEY AUTOINCREMENT, 
 classID INTEGER,
@@ -1763,9 +1826,8 @@ created_at TIMESTAMP,
 updated_at TIMESTAMP
 )
 
-          ''',
-      );
-      await db.execute('''
+          ''');
+        await db.execute('''
    CREATE TABLE IF NOT EXISTS material_receipt_form (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       student_id_number TEXT NOT NULL,
@@ -1786,8 +1848,8 @@ updated_at TIMESTAMP
     )
 ''');
 
-      // Create monitoring_records table for offline monitoring support
-      await db.execute('''
+        // Create monitoring_records table for offline monitoring support
+        await db.execute('''
         CREATE TABLE IF NOT EXISTS monitoring_records (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           learner_id TEXT NOT NULL,
@@ -1813,8 +1875,8 @@ updated_at TIMESTAMP
         )
       ''');
 
-      // Create the project table
-      await db.execute('''
+        // Create the project table
+        await db.execute('''
       CREATE TABLE project (
         project_id INTEGER PRIMARY KEY AUTOINCREMENT,
         sdp_name TEXT NOT NULL,
@@ -1842,7 +1904,7 @@ updated_at TIMESTAMP
         pathway_uif_status TEXT
       )
     ''');
-      await db.execute('''
+        await db.execute('''
          CREATE TABLE learner_document (
     document_id INTEGER PRIMARY KEY AUTOINCREMENT,
     documentName TEXT,
@@ -1853,7 +1915,7 @@ updated_at TIMESTAMP
     synced INTEGER DEFAULT 0,
     rejection_reason TEXT
 )''');
-      await db.execute('''
+        await db.execute('''
   CREATE TABLE sick_note (
     note_id INTEGER PRIMARY KEY AUTOINCREMENT,
     learner_id INTEGER,
@@ -1870,7 +1932,7 @@ updated_at TIMESTAMP
   )
 ''');
 
-      await db.execute('''
+        await db.execute('''
   CREATE TABLE manual_clocking (
     manual_id INTEGER PRIMARY KEY AUTOINCREMENT,
     clocking_id INTEGER,
@@ -1890,8 +1952,8 @@ updated_at TIMESTAMP
   )
 ''');
 
-      // Manual clocking evidence table (signature + face photos)
-      await db.execute('''
+        // Manual clocking evidence table (signature + face photos)
+        await db.execute('''
   CREATE TABLE manual_clocking_evidence (
     evidence_id INTEGER PRIMARY KEY AUTOINCREMENT,
     LearnerID INTEGER NOT NULL,
@@ -1908,8 +1970,7 @@ updated_at TIMESTAMP
   )
 ''');
 
-      await db.execute(
-        '''
+        await db.execute('''
          CREATE TABLE induction_clocking (
     clocking_id INTEGER PRIMARY KEY AUTOINCREMENT,
     LearnerID INTEGER NOT NULL,
@@ -1923,12 +1984,10 @@ updated_at TIMESTAMP
     user_longitude DECIMAL(10,6),
     user_accuracy DECIMAL(10,6)
  );
-          ''',
-      );
+          ''');
 
-      // Create pothole_checklist_scanned_documents table
-      await db.execute(
-        '''
+        // Create pothole_checklist_scanned_documents table
+        await db.execute('''
          CREATE TABLE pothole_checklist_scanned_documents (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     learner_id TEXT NOT NULL,
@@ -1938,9 +1997,8 @@ updated_at TIMESTAMP
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     synced INTEGER DEFAULT 0
  );
-          ''',
-      );
-      await db.execute('''
+          ''');
+        await db.execute('''
               CREATE TABLE IF NOT EXISTS guardian_details (
                 guardian_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 learner_id INTEGER NOT NULL,
@@ -1959,8 +2017,8 @@ updated_at TIMESTAMP
               )
             ''');
 
-      // Create work_experience table
-      await db.execute('''
+        // Create work_experience table
+        await db.execute('''
               CREATE TABLE IF NOT EXISTS work_experience (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 learner_id TEXT NOT NULL,
@@ -1975,8 +2033,8 @@ updated_at TIMESTAMP
               )
             ''');
 
-      // Create facilitator_material_issues table
-      await db.execute('''
+        // Create facilitator_material_issues table
+        await db.execute('''
               CREATE TABLE IF NOT EXISTS facilitator_material_issues (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 logistics_id TEXT NOT NULL,
@@ -1999,8 +2057,8 @@ updated_at TIMESTAMP
               )
             ''');
 
-      // Create offline_sessions table for persistent offline authentication
-      await db.execute('''
+        // Create offline_sessions table for persistent offline authentication
+        await db.execute('''
         CREATE TABLE IF NOT EXISTS offline_sessions (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_email TEXT NOT NULL UNIQUE,
@@ -2012,19 +2070,20 @@ updated_at TIMESTAMP
         )
       ''');
 
-      await db.execute('''
+        await db.execute('''
         CREATE INDEX IF NOT EXISTS idx_offline_sessions_email 
         ON offline_sessions(user_email)
       ''');
 
-      await db.execute('''
+        await db.execute('''
         CREATE INDEX IF NOT EXISTS idx_offline_sessions_expires 
         ON offline_sessions(expires_at)
       ''');
 
-      // Seed essential data to ensure offline functionality
-      await _seedEssentialData(db);
-    });
+        // Seed essential data to ensure offline functionality
+        await _seedEssentialData(db);
+      },
+    );
   }
 
   /// Seeds essential data to ensure the database always has critical records for offline functionality
@@ -2066,24 +2125,21 @@ updated_at TIMESTAMP
       }
 
       // Create default offline facilitator
-      await db.insert(
-          'facilitator',
-          {
-            'facilitator_id': 999999,
-            'firstName': 'Offline',
-            'lastName': 'Facilitator',
-            'role': 'facilitator',
-            'email': 'offline@rlmss.local',
-            'classID': 999,
-            'password': '\$2y\$10\$dummyhashforofflineaccess', // Dummy hash
-            'assessorNo': 'OFFLINE001',
-            'assessorExpiryDate': '2030-12-31',
-            'phoneNumber': '000-000-0000',
-            'workNumber': '000-000-0000',
-            'f_IDNumber': '0000000000000',
-            'serial_number': 'OFFLINE_DEVICE_001',
-          },
-          conflictAlgorithm: ConflictAlgorithm.ignore);
+      await db.insert('facilitator', {
+        'facilitator_id': 999999,
+        'firstName': 'Offline',
+        'lastName': 'Facilitator',
+        'role': 'facilitator',
+        'email': 'offline@rlmss.local',
+        'classID': 999,
+        'password': '\$2y\$10\$dummyhashforofflineaccess', // Dummy hash
+        'assessorNo': 'OFFLINE001',
+        'assessorExpiryDate': '2030-12-31',
+        'phoneNumber': '000-000-0000',
+        'workNumber': '000-000-0000',
+        'f_IDNumber': '0000000000000',
+        'serial_number': 'OFFLINE_DEVICE_001',
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
 
       debugPrint('[DB_SEED] ✅ Default facilitator seeded');
     } catch (e) {
@@ -2101,14 +2157,11 @@ updated_at TIMESTAMP
       }
 
       // Create default offline class
-      await db.insert(
-          'class',
-          {
-            'classID': 999,
-            'className': 'Offline Training Class',
-            'siteID': 999,
-          },
-          conflictAlgorithm: ConflictAlgorithm.ignore);
+      await db.insert('class', {
+        'classID': 999,
+        'className': 'Offline Training Class',
+        'siteID': 999,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
 
       debugPrint('[DB_SEED] ✅ Default class seeded');
     } catch (e) {
@@ -2126,23 +2179,20 @@ updated_at TIMESTAMP
       }
 
       // Create default offline site
-      await db.insert(
-          'sites',
-          {
-            'siteID': 999,
-            'siteName': 'Offline Training Site',
-            'siteAddress': 'Offline Location',
-            'latitude': -26.2041, // Default to Johannesburg
-            'longitude': 28.0473,
-            'radius': 100.0,
-            'province': 'Offline',
-            'district': 'Offline',
-            'municipality': 'Offline',
-            'contact_person': 'System Administrator',
-            'cell_phone': '000-000-0000',
-            'email': 'offline@rlmss.local',
-          },
-          conflictAlgorithm: ConflictAlgorithm.ignore);
+      await db.insert('sites', {
+        'siteID': 999,
+        'siteName': 'Offline Training Site',
+        'siteAddress': 'Offline Location',
+        'latitude': -26.2041, // Default to Johannesburg
+        'longitude': 28.0473,
+        'radius': 100.0,
+        'province': 'Offline',
+        'district': 'Offline',
+        'municipality': 'Offline',
+        'contact_person': 'System Administrator',
+        'cell_phone': '000-000-0000',
+        'email': 'offline@rlmss.local',
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
 
       debugPrint('[DB_SEED] ✅ Default site seeded');
     } catch (e) {
@@ -2160,21 +2210,18 @@ updated_at TIMESTAMP
       }
 
       // Create default offline SDP
-      await db.insert(
-          'sdp',
-          {
-            'sdp_id': 999,
-            'sdp_name': 'Offline Skills Development Provider',
-            'accreditation_status': 'Accredited',
-            'contact_person': 'System Administrator',
-            'contact_email': 'offline@rlmss.local',
-            'contact_phone': '000-000-0000',
-            'address': 'Offline Location',
-            'province': 'Gauteng',
-            'district': 'Johannesburg',
-            'municipality': 'Johannesburg Metro',
-          },
-          conflictAlgorithm: ConflictAlgorithm.ignore);
+      await db.insert('sdp', {
+        'sdp_id': 999,
+        'sdp_name': 'Offline Skills Development Provider',
+        'accreditation_status': 'Accredited',
+        'contact_person': 'System Administrator',
+        'contact_email': 'offline@rlmss.local',
+        'contact_phone': '000-000-0000',
+        'address': 'Offline Location',
+        'province': 'Gauteng',
+        'district': 'Johannesburg',
+        'municipality': 'Johannesburg Metro',
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
 
       debugPrint('[DB_SEED] ✅ Default SDP seeded');
     } catch (e) {
@@ -2192,30 +2239,27 @@ updated_at TIMESTAMP
       }
 
       // Create default offline project
-      await db.insert(
-          'project',
-          {
-            'project_id': 999,
-            'sdp_name': 'Offline Skills Development Provider',
-            'project_pathway': 'General Skills Development',
-            'qualification': 'Multi-Trade Skills Programme',
-            'qualification_id': 999,
-            'project_startdate': '2024-01-01',
-            'project_enddate': '2030-12-31',
-            'project_duration': '365',
-            'project_learners': '50',
-            'accreditation_status': 'Accredited',
-            'seta': 'CETA',
-            'contact_person': 'System Administrator',
-            'contact_email': 'offline@rlmss.local',
-            'contact_phone': '000-000-0000',
-            'address': 'Offline Location',
-            'province': 'Gauteng',
-            'district': 'Johannesburg',
-            'municipality': 'Johannesburg Metro',
-            'synced': 1,
-          },
-          conflictAlgorithm: ConflictAlgorithm.ignore);
+      await db.insert('project', {
+        'project_id': 999,
+        'sdp_name': 'Offline Skills Development Provider',
+        'project_pathway': 'General Skills Development',
+        'qualification': 'Multi-Trade Skills Programme',
+        'qualification_id': 999,
+        'project_startdate': '2024-01-01',
+        'project_enddate': '2030-12-31',
+        'project_duration': '365',
+        'project_learners': '50',
+        'accreditation_status': 'Accredited',
+        'seta': 'CETA',
+        'contact_person': 'System Administrator',
+        'contact_email': 'offline@rlmss.local',
+        'contact_phone': '000-000-0000',
+        'address': 'Offline Location',
+        'province': 'Gauteng',
+        'district': 'Johannesburg',
+        'municipality': 'Johannesburg Metro',
+        'synced': 1,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
 
       debugPrint('[DB_SEED] ✅ Default project seeded');
     } catch (e) {
@@ -2227,11 +2271,13 @@ updated_at TIMESTAMP
     try {
       // Check if province table exists first
       final tableExists = await db.rawQuery(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name='province'");
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='province'",
+      );
 
       if (tableExists.isEmpty) {
         debugPrint(
-            '[DB_SEED] ⚠ Province table does not exist yet, skipping location seed');
+          '[DB_SEED] ⚠ Province table does not exist yet, skipping location seed',
+        );
         return;
       }
 
@@ -2258,8 +2304,9 @@ updated_at TIMESTAMP
       ];
 
       for (String province in provinces) {
-        await db.insert('province', {'name': province},
-            conflictAlgorithm: ConflictAlgorithm.ignore);
+        await db.insert('province', {
+          'name': province,
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
       }
 
       // Seed major districts for key provinces (limited set for offline functionality)
@@ -2269,7 +2316,7 @@ updated_at TIMESTAMP
           'City of Tshwane',
           'Ekurhuleni',
           'Sedibeng',
-          'West Rand'
+          'West Rand',
         ],
         'Western Cape': [
           'City of Cape Town',
@@ -2277,7 +2324,7 @@ updated_at TIMESTAMP
           'Overberg',
           'Eden',
           'Central Karoo',
-          'West Coast'
+          'West Coast',
         ],
         'KwaZulu-Natal': [
           'eThekwini',
@@ -2285,14 +2332,16 @@ updated_at TIMESTAMP
           'uThukela',
           'Amajuba',
           'Zululand',
-          'Umkhanyakude'
+          'Umkhanyakude',
         ],
       };
 
       for (String province in districts.keys) {
         for (String district in districts[province]!) {
-          await db.insert('district', {'name': district, 'province': province},
-              conflictAlgorithm: ConflictAlgorithm.ignore);
+          await db.insert('district', {
+            'name': district,
+            'province': province,
+          }, conflictAlgorithm: ConflictAlgorithm.ignore);
         }
       }
 
@@ -2303,29 +2352,30 @@ updated_at TIMESTAMP
           'Alexandra',
           'Randburg',
           'Roodepoort',
-          'Sandton'
+          'Sandton',
         ],
         'City of Tshwane': [
           'Tshwane Metro',
           'Centurion',
           'Pretoria',
           'Wonderboom',
-          'Akasia'
+          'Akasia',
         ],
         'Ekurhuleni': [
           'Ekurhuleni Metro',
           'Kempton Park',
           'Germiston',
           'Boksburg',
-          'Benoni'
+          'Benoni',
         ],
       };
 
       for (String district in municipalities.keys) {
         for (String municipality in municipalities[district]!) {
-          await db.insert('local_municipality',
-              {'name': municipality, 'district': district},
-              conflictAlgorithm: ConflictAlgorithm.ignore);
+          await db.insert('local_municipality', {
+            'name': municipality,
+            'district': district,
+          }, conflictAlgorithm: ConflictAlgorithm.ignore);
         }
       }
 
@@ -2349,13 +2399,19 @@ updated_at TIMESTAMP
   }
 
   Future<List<Map<String, dynamic>>> getDistrictsFromLocal(
-      String province) async {
+    String province,
+  ) async {
     try {
       final db = await database;
-      final result = await db.query('district',
-          where: 'province = ?', whereArgs: [province], orderBy: 'name');
+      final result = await db.query(
+        'district',
+        where: 'province = ?',
+        whereArgs: [province],
+        orderBy: 'name',
+      );
       debugPrint(
-          '[DB] Found ${result.length} districts for province "$province" in local database');
+        '[DB] Found ${result.length} districts for province "$province" in local database',
+      );
       return result;
     } catch (e) {
       debugPrint('[DB] Error fetching districts from local: $e');
@@ -2364,13 +2420,19 @@ updated_at TIMESTAMP
   }
 
   Future<List<Map<String, dynamic>>> getMunicipalitiesFromLocal(
-      String district) async {
+    String district,
+  ) async {
     try {
       final db = await database;
-      final result = await db.query('local_municipality',
-          where: 'district = ?', whereArgs: [district], orderBy: 'name');
+      final result = await db.query(
+        'local_municipality',
+        where: 'district = ?',
+        whereArgs: [district],
+        orderBy: 'name',
+      );
       debugPrint(
-          '[DB] Found ${result.length} municipalities for district "$district" in local database');
+        '[DB] Found ${result.length} municipalities for district "$district" in local database',
+      );
       return result;
     } catch (e) {
       debugPrint('[DB] Error fetching municipalities from local: $e');
@@ -2389,10 +2451,12 @@ updated_at TIMESTAMP
     try {
       debugPrint('[LOCATION_SYNC] Syncing provinces from server...');
 
-      final response = await http.get(
-        Uri.parse(AppConfig.buildUrl('sync_provinces.php')),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .get(
+            Uri.parse(AppConfig.buildUrl('sync_provinces.php')),
+            headers: {'Content-Type': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -2405,23 +2469,22 @@ updated_at TIMESTAMP
           // Insert new provinces
           int insertedCount = 0;
           for (var province in data['provinces']) {
-            await db.insert(
-                'province',
-                {
-                  'name': province['name']?.toString() ?? '',
-                },
-                conflictAlgorithm: ConflictAlgorithm.replace);
+            await db.insert('province', {
+              'name': province['name']?.toString() ?? '',
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
             insertedCount++;
           }
 
           debugPrint('[LOCATION_SYNC] ✅ Synced $insertedCount provinces');
         } else {
           debugPrint(
-              '[LOCATION_SYNC] ❌ Server returned invalid provinces data');
+            '[LOCATION_SYNC] ❌ Server returned invalid provinces data',
+          );
         }
       } else {
         debugPrint(
-            '[LOCATION_SYNC] ❌ Failed to fetch provinces: ${response.statusCode}');
+          '[LOCATION_SYNC] ❌ Failed to fetch provinces: ${response.statusCode}',
+        );
       }
     } catch (e) {
       debugPrint('[LOCATION_SYNC] ❌ Error syncing provinces: $e');
@@ -2432,10 +2495,12 @@ updated_at TIMESTAMP
     try {
       debugPrint('[LOCATION_SYNC] Syncing districts from server...');
 
-      final response = await http.get(
-        Uri.parse(AppConfig.buildUrl('sync_districts.php')),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .get(
+            Uri.parse(AppConfig.buildUrl('sync_districts.php')),
+            headers: {'Content-Type': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -2448,24 +2513,23 @@ updated_at TIMESTAMP
           // Insert new districts
           int insertedCount = 0;
           for (var district in data['districts']) {
-            await db.insert(
-                'district',
-                {
-                  'name': district['name']?.toString() ?? '',
-                  'province': district['province']?.toString() ?? '',
-                },
-                conflictAlgorithm: ConflictAlgorithm.replace);
+            await db.insert('district', {
+              'name': district['name']?.toString() ?? '',
+              'province': district['province']?.toString() ?? '',
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
             insertedCount++;
           }
 
           debugPrint('[LOCATION_SYNC] ✅ Synced $insertedCount districts');
         } else {
           debugPrint(
-              '[LOCATION_SYNC] ❌ Server returned invalid districts data');
+            '[LOCATION_SYNC] ❌ Server returned invalid districts data',
+          );
         }
       } else {
         debugPrint(
-            '[LOCATION_SYNC] ❌ Failed to fetch districts: ${response.statusCode}');
+          '[LOCATION_SYNC] ❌ Failed to fetch districts: ${response.statusCode}',
+        );
       }
     } catch (e) {
       debugPrint('[LOCATION_SYNC] ❌ Error syncing districts: $e');
@@ -2476,10 +2540,12 @@ updated_at TIMESTAMP
     try {
       debugPrint('[LOCATION_SYNC] Syncing municipalities from server...');
 
-      final response = await http.get(
-        Uri.parse(AppConfig.buildUrl('sync_municipalities.php')),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .get(
+            Uri.parse(AppConfig.buildUrl('sync_municipalities.php')),
+            headers: {'Content-Type': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -2492,24 +2558,23 @@ updated_at TIMESTAMP
           // Insert new municipalities
           int insertedCount = 0;
           for (var municipality in data['municipalities']) {
-            await db.insert(
-                'local_municipality',
-                {
-                  'name': municipality['name']?.toString() ?? '',
-                  'district': municipality['district']?.toString() ?? '',
-                },
-                conflictAlgorithm: ConflictAlgorithm.replace);
+            await db.insert('local_municipality', {
+              'name': municipality['name']?.toString() ?? '',
+              'district': municipality['district']?.toString() ?? '',
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
             insertedCount++;
           }
 
           debugPrint('[LOCATION_SYNC] ✅ Synced $insertedCount municipalities');
         } else {
           debugPrint(
-              '[LOCATION_SYNC] ❌ Server returned invalid municipalities data');
+            '[LOCATION_SYNC] ❌ Server returned invalid municipalities data',
+          );
         }
       } else {
         debugPrint(
-            '[LOCATION_SYNC] ❌ Failed to fetch municipalities: ${response.statusCode}');
+          '[LOCATION_SYNC] ❌ Failed to fetch municipalities: ${response.statusCode}',
+        );
       }
     } catch (e) {
       debugPrint('[LOCATION_SYNC] ❌ Error syncing municipalities: $e');
@@ -2537,75 +2602,76 @@ updated_at TIMESTAMP
       final db = await database;
 
       // Check if class exists
-      final classExists = await db.query('class',
-          where: _classIdMatchSql, whereArgs: [normalizeClassId(classID)]);
+      final classExists = await db.query(
+        'class',
+        where: _classIdMatchSql,
+        whereArgs: [normalizeClassId(classID)],
+      );
 
       if (classExists.isEmpty) {
         debugPrint(
-            '[DB_ENSURE] Class $classID does not exist, creating placeholder...');
+          '[DB_ENSURE] Class $classID does not exist, creating placeholder...',
+        );
 
         // Create placeholder class
-        await db.insert(
-            'class',
-            {
-              'classID': int.tryParse(classID) ?? classID,
-              'className': className ?? 'Class $classID',
-              'siteID': 999, // Link to default site
-              'project_id': 999, // Link to default project
-            },
-            conflictAlgorithm: ConflictAlgorithm.ignore);
+        await db.insert('class', {
+          'classID': int.tryParse(classID) ?? classID,
+          'className': className ?? 'Class $classID',
+          'siteID': 999, // Link to default site
+          'project_id': 999, // Link to default project
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
 
         debugPrint('[DB_ENSURE] ✅ Created placeholder class $classID');
       }
 
       // Ensure there's at least one learner for this class (for testing)
-      final learnersExist = await db.query('learnerdetails',
-          where: _classIdMatchSql,
-          whereArgs: [normalizeClassId(classID)],
-          limit: 1);
+      final learnersExist = await db.query(
+        'learnerdetails',
+        where: _classIdMatchSql,
+        whereArgs: [normalizeClassId(classID)],
+        limit: 1,
+      );
 
       if (learnersExist.isEmpty) {
         debugPrint(
-            '[DB_ENSURE] No learners found for class $classID, creating test learner...');
+          '[DB_ENSURE] No learners found for class $classID, creating test learner...',
+        );
 
         // Create test learner for offline functionality
-        await db.insert(
-            'learnerdetails',
-            {
-              'LearnerID': 999999,
-              'Title': 'Mr',
-              'Name': 'Test',
-              'Surname': 'Learner',
-              'idNumber': '0000000000000',
-              'DateOfBirth': '1990-01-01',
-              'PhoneNumber': '000-000-0000',
-              'Email': 'test.learner@offline.local',
-              'Age': 34,
-              'Gender': 'Male',
-              'classID': int.tryParse(classID) ?? classID,
-              'Race': 'African',
-              'Language': 'English',
-              'Disability': 'None',
-              'CellphoneNumber': '000-000-0000',
-              'AddressLine1': 'Offline Address',
-              'AddressLine2': '',
-              'AddressLine3': '',
-              'PostalCode': '0000',
-              'KinName': 'Test Guardian',
-              'KinRelation': 'Parent',
-              'KinContact': '000-000-0000',
-              'SchoolName': 'Offline School',
-              'SchoolCompletion': 'Grade 12',
-              'SchoolLocation': 'Offline',
-              'SchoolGrade': '12',
-              'profile_image': '',
-              'signature': '',
-              'synced': 0,
-              'Province': 'Gauteng',
-              'District': 'Johannesburg',
-              'Municipality': 'Johannesburg Metro',
-            },
-            conflictAlgorithm: ConflictAlgorithm.ignore);
+        await db.insert('learnerdetails', {
+          'LearnerID': 999999,
+          'Title': 'Mr',
+          'Name': 'Test',
+          'Surname': 'Learner',
+          'idNumber': '0000000000000',
+          'DateOfBirth': '1990-01-01',
+          'PhoneNumber': '000-000-0000',
+          'Email': 'test.learner@offline.local',
+          'Age': 34,
+          'Gender': 'Male',
+          'classID': int.tryParse(classID) ?? classID,
+          'Race': 'African',
+          'Language': 'English',
+          'Disability': 'None',
+          'CellphoneNumber': '000-000-0000',
+          'AddressLine1': 'Offline Address',
+          'AddressLine2': '',
+          'AddressLine3': '',
+          'PostalCode': '0000',
+          'KinName': 'Test Guardian',
+          'KinRelation': 'Parent',
+          'KinContact': '000-000-0000',
+          'SchoolName': 'Offline School',
+          'SchoolCompletion': 'Grade 12',
+          'SchoolLocation': 'Offline',
+          'SchoolGrade': '12',
+          'profile_image': '',
+          'signature': '',
+          'synced': 0,
+          'Province': 'Gauteng',
+          'District': 'Johannesburg',
+          'Municipality': 'Johannesburg Metro',
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
 
         debugPrint('[DB_ENSURE] ✅ Created test learner for class $classID');
       }
@@ -2616,21 +2682,28 @@ updated_at TIMESTAMP
 
   /// Specifically ensure learner data exists for class ID 134 (or any specific class)
   /// This is useful for testing and ensuring offline functionality
-  Future<void> ensureTestLearnersExist(String classID,
-      {int learnerCount = 5}) async {
+  Future<void> ensureTestLearnersExist(
+    String classID, {
+    int learnerCount = 5,
+  }) async {
     debugPrint(
-        '[DB_ENSURE_LEARNERS] Ensuring $learnerCount test learners exist for classID: $classID');
+      '[DB_ENSURE_LEARNERS] Ensuring $learnerCount test learners exist for classID: $classID',
+    );
 
     try {
       final db = await database;
 
       // Check existing learners
-      final existingLearners = await db
-          .query('learnerdetails', where: 'classID = ?', whereArgs: [classID]);
+      final existingLearners = await db.query(
+        'learnerdetails',
+        where: 'classID = ?',
+        whereArgs: [classID],
+      );
 
       if (existingLearners.length >= learnerCount) {
         debugPrint(
-            '[DB_ENSURE_LEARNERS] Already have ${existingLearners.length} learners for class $classID');
+          '[DB_ENSURE_LEARNERS] Already have ${existingLearners.length} learners for class $classID',
+        );
         return;
       }
 
@@ -2642,65 +2715,66 @@ updated_at TIMESTAMP
         final learnerId = startingId + i;
         final learnerNum = i + 1;
 
-        await db.insert(
-            'learnerdetails',
-            {
-              'LearnerID': learnerId,
-              'Title': i % 2 == 0 ? 'Mr' : 'Ms',
-              'Name': 'TestLearner$learnerNum',
-              'Surname': 'Class$classID',
-              'idNumber':
-                  (1990000000000 + learnerId).toString().padLeft(13, '0'),
-              'DateOfBirth':
-                  '199${(i % 10).toString()}-${((i % 12) + 1).toString().padLeft(2, '0')}-15',
-              'PhoneNumber':
-                  '011-${(2000000 + learnerId).toString().substring(0, 7)}',
-              'Email': 'testlearner$learnerNum.class$classID@offline.local',
-              'Age': 25 + (i % 15),
-              'Gender': i % 2 == 0 ? 'Male' : 'Female',
-              'classID': int.tryParse(classID) ?? classID,
-              'Race': ['African', 'Coloured', 'Indian', 'White'][i % 4],
-              'Language': ['English', 'Afrikaans', 'Zulu', 'Xhosa'][i % 4],
-              'Disability': 'None',
-              'CellphoneNumber':
-                  '072-${(1000000 + learnerId).toString().substring(0, 7)}',
-              'AddressLine1': '$learnerNum Test Street',
-              'AddressLine2': 'Test Suburb',
-              'AddressLine3': 'Test City',
-              'PostalCode': (1000 + (i * 10)).toString(),
-              'KinName': 'Guardian$learnerNum LastName',
-              'KinRelation': ['Parent', 'Guardian', 'Sibling', 'Spouse'][i % 4],
-              'KinContact':
-                  '011-${(3000000 + learnerId).toString().substring(0, 7)}',
-              'SchoolName': 'Test High School $learnerNum',
-              'SchoolCompletion': [
-                'Grade 10',
-                'Grade 11',
-                'Grade 12',
-                'Matric'
-              ][i % 4],
-              'SchoolLocation': 'Test Town',
-              'SchoolGrade': ['10', '11', '12', '12'][i % 4],
-              'profile_image': '',
-              'signature': '',
-              'synced': 0,
-              'Province': 'Gauteng',
-              'District': 'Johannesburg',
-              'Municipality': 'Johannesburg Metro',
-              'created_at': DateTime.now().toIso8601String(),
-              'updated_at': DateTime.now().toIso8601String(),
-            },
-            conflictAlgorithm: ConflictAlgorithm.ignore);
+        await db.insert('learnerdetails', {
+          'LearnerID': learnerId,
+          'Title': i % 2 == 0 ? 'Mr' : 'Ms',
+          'Name': 'TestLearner$learnerNum',
+          'Surname': 'Class$classID',
+          'idNumber': (1990000000000 + learnerId).toString().padLeft(13, '0'),
+          'DateOfBirth':
+              '199${(i % 10).toString()}-${((i % 12) + 1).toString().padLeft(2, '0')}-15',
+          'PhoneNumber':
+              '011-${(2000000 + learnerId).toString().substring(0, 7)}',
+          'Email': 'testlearner$learnerNum.class$classID@offline.local',
+          'Age': 25 + (i % 15),
+          'Gender': i % 2 == 0 ? 'Male' : 'Female',
+          'classID': int.tryParse(classID) ?? classID,
+          'Race': ['African', 'Coloured', 'Indian', 'White'][i % 4],
+          'Language': ['English', 'Afrikaans', 'Zulu', 'Xhosa'][i % 4],
+          'Disability': 'None',
+          'CellphoneNumber':
+              '072-${(1000000 + learnerId).toString().substring(0, 7)}',
+          'AddressLine1': '$learnerNum Test Street',
+          'AddressLine2': 'Test Suburb',
+          'AddressLine3': 'Test City',
+          'PostalCode': (1000 + (i * 10)).toString(),
+          'KinName': 'Guardian$learnerNum LastName',
+          'KinRelation': ['Parent', 'Guardian', 'Sibling', 'Spouse'][i % 4],
+          'KinContact':
+              '011-${(3000000 + learnerId).toString().substring(0, 7)}',
+          'SchoolName': 'Test High School $learnerNum',
+          'SchoolCompletion': [
+            'Grade 10',
+            'Grade 11',
+            'Grade 12',
+            'Matric',
+          ][i % 4],
+          'SchoolLocation': 'Test Town',
+          'SchoolGrade': ['10', '11', '12', '12'][i % 4],
+          'profile_image': '',
+          'signature': '',
+          'synced': 0,
+          'Province': 'Gauteng',
+          'District': 'Johannesburg',
+          'Municipality': 'Johannesburg Metro',
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
       }
 
       debugPrint(
-          '[DB_ENSURE_LEARNERS] ✅ Created $learnersToCreate test learners for class $classID');
+        '[DB_ENSURE_LEARNERS] ✅ Created $learnersToCreate test learners for class $classID',
+      );
 
       // Verify total count
-      final totalLearners = await db
-          .query('learnerdetails', where: 'classID = ?', whereArgs: [classID]);
+      final totalLearners = await db.query(
+        'learnerdetails',
+        where: 'classID = ?',
+        whereArgs: [classID],
+      );
       debugPrint(
-          '[DB_ENSURE_LEARNERS] Total learners now in class $classID: ${totalLearners.length}');
+        '[DB_ENSURE_LEARNERS] Total learners now in class $classID: ${totalLearners.length}',
+      );
     } catch (e) {
       debugPrint('[DB_ENSURE_LEARNERS] ❌ Error creating test learners: $e');
     }
@@ -2766,7 +2840,11 @@ updated_at TIMESTAMP
 
   // Store user credentials for offline use (storing hashed password)
   Future<void> storeUserCredentials(
-      String email, String password, String role, String classID) async {
+    String email,
+    String password,
+    String role,
+    String classID,
+  ) async {
     final db = await database;
     String hashedPassword = hashPassword(password);
 
@@ -2815,43 +2893,45 @@ updated_at TIMESTAMP
 
   // Insert unsynced data into the tracking table
   Future<void> insertUnsyncedData(
-      String tableName, Map<String, dynamic> data) async {
+    String tableName,
+    Map<String, dynamic> data,
+  ) async {
     final db = await database;
-    await db.insert(
-      _unsyncedTable,
-      {
-        'table_name': tableName,
-        'data': json.encode(data),
-        'synced': 0,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert(_unsyncedTable, {
+      'table_name': tableName,
+      'data': json.encode(data),
+      'synced': 0,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   // Connectivity Listener
   void initConnectivityListener() {
     try {
-      Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
-        try {
-          _updateConnectionStatus(
-              result); // Pass the result to the update method
-        } catch (e) {
-          debugPrint('Error in connectivity listener: $e');
+      Connectivity().onConnectivityChanged.listen(
+        (List<ConnectivityResult> result) {
+          try {
+            _updateConnectionStatus(
+              result,
+            ); // Pass the result to the update method
+          } catch (e) {
+            debugPrint('Error in connectivity listener: $e');
+            // Don't let connectivity errors crash the app
+          }
+        },
+        onError: (error) {
+          debugPrint('Connectivity listener error: $error');
           // Don't let connectivity errors crash the app
-        }
-      }, onError: (error) {
-        debugPrint('Connectivity listener error: $error');
-        // Don't let connectivity errors crash the app
-      });
+        },
+      );
     } catch (e) {
       debugPrint('Error initializing connectivity listener: $e');
       // Don't let connectivity errors crash the app
     }
   }
 
-  void _updateConnectionStatus(ConnectivityResult result) {
+  void _updateConnectionStatus(List<ConnectivityResult> result) {
     try {
-      if (result != ConnectivityResult.none) {
+      if (!result.contains(ConnectivityResult.none)) {
         debugPrint('Internet available - syncing offline data...');
         // Sync unsynced learners (profile, images, etc.) when back online
         syncUnsyncedLearnersWhenOnline().catchError((error) {
@@ -2884,7 +2964,8 @@ updated_at TIMESTAMP
     if (unsyncedLearners.isEmpty) return;
 
     debugPrint(
-        '[SYNC] Found ${unsyncedLearners.length} unsynced learners - syncing to server');
+      '[SYNC] Found ${unsyncedLearners.length} unsynced learners - syncing to server',
+    );
     List<Map<String, dynamic>> allDataToSync = [];
     for (var learner in unsyncedLearners) {
       try {
@@ -2910,13 +2991,16 @@ updated_at TIMESTAMP
       for (var syncedLearner in syncedLearners) {
         try {
           await updateSyncedStatus(
-              syncedLearner['idNumber'], syncedLearner['LearnerID']);
+            syncedLearner['idNumber'],
+            syncedLearner['LearnerID'],
+          );
         } catch (e) {
           debugPrint('Error updating sync status: $e');
         }
       }
       debugPrint(
-          '[SYNC] Successfully synced ${syncedLearners.length} learners');
+        '[SYNC] Successfully synced ${syncedLearners.length} learners',
+      );
     }
   }
 
@@ -2971,18 +3055,21 @@ updated_at TIMESTAMP
           // Map fingerprint template based on scanner type and hand
           if (fingerprintTemplate.isNotEmpty) {
             debugPrint(
-                '[MAPPING] Processing fingerprint_template: ${fingerprintTemplate.length} chars, isLeftHand: $isLeftHand');
+              '[MAPPING] Processing fingerprint_template: ${fingerprintTemplate.length} chars, isLeftHand: $isLeftHand',
+            );
 
             if (isLeftHand == '1' || isLeftHand.toLowerCase() == 'true') {
               // isLeftHand=true means LEFT hand template
               mappedData['futronic_left_template'] = fingerprintTemplate;
               debugPrint(
-                  '[MAPPING] ✅ Mapped fingerprint_template to futronic_left_template (isLeftHand=true)');
+                '[MAPPING] ✅ Mapped fingerprint_template to futronic_left_template (isLeftHand=true)',
+              );
             } else {
               // isLeftHand=false/0 means RIGHT hand template
               mappedData['futronic_right_template'] = fingerprintTemplate;
               debugPrint(
-                  '[MAPPING] ✅ Mapped fingerprint_template to futronic_right_template (isLeftHand=false)');
+                '[MAPPING] ✅ Mapped fingerprint_template to futronic_right_template (isLeftHand=false)',
+              );
             }
           }
           mappedData.remove('fingerprint_template');
@@ -2999,7 +3086,8 @@ updated_at TIMESTAMP
         debugPrint('[DB_INSERT] Facilitator data being inserted:');
         debugPrint('[DB_INSERT]   ID: ${mappedData['facilitator_id']}');
         debugPrint(
-            '[DB_INSERT]   Name: ${mappedData['firstName']} ${mappedData['lastName']}');
+          '[DB_INSERT]   Name: ${mappedData['firstName']} ${mappedData['lastName']}',
+        );
         debugPrint('[DB_INSERT]   Email: ${mappedData['email']}');
         debugPrint('[DB_INSERT]   Role: ${mappedData['role']}');
         debugPrint('[DB_INSERT]   ClassID: ${mappedData['classID']}');
@@ -3013,29 +3101,32 @@ updated_at TIMESTAMP
         mappedData['LearnerID'] = mappedData['LearnerID'] ?? 0;
         mappedData['Title'] =
             (mappedData['Title']?.toString().trim().isNotEmpty ?? false)
-                ? mappedData['Title']
-                : 'N/A';
+            ? mappedData['Title']
+            : 'N/A';
         mappedData['Name'] =
             (mappedData['Name']?.toString().trim().isNotEmpty ?? false)
-                ? mappedData['Name']
-                : 'N/A';
+            ? mappedData['Name']
+            : 'N/A';
         mappedData['Surname'] =
             (mappedData['Surname']?.toString().trim().isNotEmpty ?? false)
-                ? mappedData['Surname']
-                : 'N/A';
+            ? mappedData['Surname']
+            : 'N/A';
         mappedData['idNumber'] =
             (mappedData['idNumber']?.toString().trim().isNotEmpty ?? false)
-                ? mappedData['idNumber']
-                : 'UNKNOWN';
+            ? mappedData['idNumber']
+            : 'UNKNOWN';
         mappedData['DateOfBirth'] =
             (mappedData['DateOfBirth']?.toString().trim().isNotEmpty ?? false)
-                ? mappedData['DateOfBirth']
-                : '1900-01-01';
+            ? mappedData['DateOfBirth']
+            : '1900-01-01';
       }
 
       // Insert data as-is (with mappings only for learnerdetails)
-      await db.insert(tableName, mappedData,
-          conflictAlgorithm: ConflictAlgorithm.replace);
+      await db.insert(
+        tableName,
+        mappedData,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
       debugPrint('Successfully inserted data into $tableName');
     } catch (e) {
       debugPrint('Error inserting data into $tableName: $e');
@@ -3094,10 +3185,14 @@ updated_at TIMESTAMP
         'sourceafis_template': learnerData['sourceafis_template'] ?? '',
       };
 
-      await db.insert('learnerdetails', completeLearnerData,
-          conflictAlgorithm: ConflictAlgorithm.replace);
+      await db.insert(
+        'learnerdetails',
+        completeLearnerData,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
       debugPrint(
-          'Successfully inserted learner details with all fields: ${completeLearnerData.keys.toList()}');
+        'Successfully inserted learner details with all fields: ${completeLearnerData.keys.toList()}',
+      );
     } catch (e) {
       debugPrint('Error inserting learner details: $e');
       debugPrint('Learner data keys: ${learnerData.keys.toList()}');
@@ -3169,13 +3264,16 @@ updated_at TIMESTAMP
   Future<Map<String, String?>> getLearnerTraceability(String learnerId) async {
     final db = await database;
 
-    final results = await db.rawQuery('''
+    final results = await db.rawQuery(
+      '''
       SELECT ld.classID, c.siteID, s.project_id
       FROM learnerdetails ld
       LEFT JOIN class c ON ld.classID = c.classID
       LEFT JOIN sites s ON c.siteID = s.siteID
       WHERE ld.LearnerID = ?
-    ''', [learnerId]);
+    ''',
+      [learnerId],
+    );
 
     String? classId;
     String? siteId;
@@ -3193,28 +3291,28 @@ updated_at TIMESTAMP
             siteId.isEmpty ||
             projectId == null ||
             projectId.isEmpty)) {
-      final classResults = await db.rawQuery('''
+      final classResults = await db.rawQuery(
+        '''
         SELECT c.siteID, s.project_id
         FROM class c
         LEFT JOIN sites s ON c.siteID = s.siteID
         WHERE c.classID = ?
-      ''', [classId]);
+      ''',
+        [classId],
+      );
       if (classResults.isNotEmpty) {
         siteId ??= classResults.first['siteID']?.toString();
         projectId ??= classResults.first['project_id']?.toString();
       }
     }
 
-    return {
-      'classID': classId,
-      'siteID': siteId,
-      'project_id': projectId,
-    };
+    return {'classID': classId, 'siteID': siteId, 'project_id': projectId};
   }
 
   //get data with clockindata
   Future<List<Map<String, dynamic>>> getLearnersWithClockingData(
-      String classID) async {
+    String classID,
+  ) async {
     final db = await database;
 
     // Use South African time (SAST - UTC+2)
@@ -3222,9 +3320,11 @@ updated_at TIMESTAMP
     final currentDate = DateFormat('yyyy-MM-dd').format(saTime);
 
     debugPrint(
-        '[LOAD_LEARNERS] Getting learners for classID: $classID, date: $currentDate (SAST)');
+      '[LOAD_LEARNERS] Getting learners for classID: $classID, date: $currentDate (SAST)',
+    );
 
-    final result = await db.rawQuery('''
+    final result = await db.rawQuery(
+      '''
     SELECT 
       l.LearnerID, 
       l.Name, 
@@ -3249,19 +3349,23 @@ updated_at TIMESTAMP
       GROUP BY LearnerID
     ) lc ON l.LearnerID = lc.LearnerID 
     WHERE CAST(l.classID AS TEXT) = ?
-  ''', [
-      currentDate, // Current date in SAST
-      normalizeClassId(classID),
-    ]);
+  ''',
+      [
+        currentDate, // Current date in SAST
+        normalizeClassId(classID),
+      ],
+    );
 
     debugPrint(
-        '[LOAD_LEARNERS] Found ${result.length} learners with clocking data for today');
+      '[LOAD_LEARNERS] Found ${result.length} learners with clocking data for today',
+    );
     return result;
   }
 
   // Get ONLY learners who have clocked in today
   Future<List<Map<String, dynamic>>> getClockedInLearnersOnly(
-      String classID) async {
+    String classID,
+  ) async {
     final db = await database;
 
     // Use South African time (SAST - UTC+2)
@@ -3269,9 +3373,11 @@ updated_at TIMESTAMP
     final currentDate = DateFormat('yyyy-MM-dd').format(saTime);
 
     debugPrint(
-        '[CLOCKED_IN_ONLY] Getting clocked-in learners for classID: $classID, date: $currentDate (SAST)');
+      '[CLOCKED_IN_ONLY] Getting clocked-in learners for classID: $classID, date: $currentDate (SAST)',
+    );
 
-    final result = await db.rawQuery('''
+    final result = await db.rawQuery(
+      '''
     SELECT 
       l.LearnerID, 
       l.Name, 
@@ -3299,19 +3405,23 @@ updated_at TIMESTAMP
     AND lc.clock_in_time IS NOT NULL
     AND lc.clock_in_time != ''
     ORDER BY lc.clock_in_time DESC
-  ''', [
-      currentDate, // Current date in SAST
-      normalizeClassId(classID),
-    ]);
+  ''',
+      [
+        currentDate, // Current date in SAST
+        normalizeClassId(classID),
+      ],
+    );
 
     debugPrint(
-        '[CLOCKED_IN_ONLY] Found ${result.length} learners who clocked in today');
+      '[CLOCKED_IN_ONLY] Found ${result.length} learners who clocked in today',
+    );
     return result;
   }
 
   // Get ONLY learners who have NOT clocked in today (for signature geofence page)
   Future<List<Map<String, dynamic>>> getLearnersNotClockedInToday(
-      String classID) async {
+    String classID,
+  ) async {
     final db = await database;
 
     // Use South African time (SAST - UTC+2)
@@ -3319,9 +3429,11 @@ updated_at TIMESTAMP
     final currentDate = DateFormat('yyyy-MM-dd').format(saTime);
 
     debugPrint(
-        '[NOT_CLOCKED_IN] Getting learners who have NOT clocked in for classID: $classID, date: $currentDate (SAST)');
+      '[NOT_CLOCKED_IN] Getting learners who have NOT clocked in for classID: $classID, date: $currentDate (SAST)',
+    );
 
-    final result = await db.rawQuery('''
+    final result = await db.rawQuery(
+      '''
     SELECT 
       l.LearnerID, 
       l.Name, 
@@ -3337,19 +3449,20 @@ updated_at TIMESTAMP
       AND clock_in_time != ''
     )
     ORDER BY l.Name ASC
-  ''', [
-      normalizeClassId(classID),
-      currentDate,
-    ]);
+  ''',
+      [normalizeClassId(classID), currentDate],
+    );
 
     debugPrint(
-        '[NOT_CLOCKED_IN] Found ${result.length} learners who have NOT clocked in today');
+      '[NOT_CLOCKED_IN] Found ${result.length} learners who have NOT clocked in today',
+    );
     return result;
   }
 
   // Get ALL learners from class with their earliest clocking data (if any)
   Future<List<Map<String, dynamic>>> getLearnersWithAllClockingData(
-      String classID) async {
+    String classID,
+  ) async {
     final db = await database;
 
     // First get all learners from the class
@@ -3402,18 +3515,23 @@ updated_at TIMESTAMP
 
   // Get approved manual attendance days for a learner in a specific month
   Future<int> getApprovedManualAttendanceDays(
-      int learnerId, String monthStr) async {
+    int learnerId,
+    String monthStr,
+  ) async {
     final db = await database;
 
     try {
       // Query approved manual clocking records for the month
-      final result = await db.rawQuery('''
+      final result = await db.rawQuery(
+        '''
         SELECT COUNT(DISTINCT DATE(clock_date)) as count
         FROM manual_clocking
         WHERE LearnerID = ?
         AND clock_date LIKE ?
         AND (status = 'Approved' OR status = 'approved' OR status = 'APPROVED')
-      ''', [learnerId, '$monthStr%']);
+      ''',
+        [learnerId, '$monthStr%'],
+      );
 
       if (result.isNotEmpty && result.first['count'] != null) {
         return result.first['count'] as int;
@@ -3421,14 +3539,17 @@ updated_at TIMESTAMP
       return 0;
     } catch (e) {
       debugPrint(
-          '[DATABASE] Error getting approved manual attendance for learner $learnerId: $e');
+        '[DATABASE] Error getting approved manual attendance for learner $learnerId: $e',
+      );
       return 0;
     }
   }
 
   // Method to check if clock-in exists for a specific learner and date
   Future<Map<String, dynamic>?> getClockInForDate(
-      String learnerID, String clockDate) async {
+    String learnerID,
+    String clockDate,
+  ) async {
     final db = await database;
     final result = await db.query(
       'learner_clocking',
@@ -3453,18 +3574,20 @@ updated_at TIMESTAMP
         whereArgs: [learnerID, clockDate, keepId],
       );
       debugPrint(
-          '[CLOCKING_CLEANUP] Removed $deleted duplicate open learner_clocking rows for learner=$learnerID, date=$clockDate, kept clocking_id=$keepId');
+        '[CLOCKING_CLEANUP] Removed $deleted duplicate open learner_clocking rows for learner=$learnerID, date=$clockDate, kept clocking_id=$keepId',
+      );
     }
 
     return result.first;
   }
 
-//find all data for clockins
+  //find all data for clockins
   // Method to get all clocking data for today
   Future<List<Map<String, dynamic>>> getClockingDataForToday() async {
     final db = await database;
-    final today =
-        DateFormat('yyyy-MM-dd').format(DateTime.now()); // Format today's date
+    final today = DateFormat(
+      'yyyy-MM-dd',
+    ).format(DateTime.now()); // Format today's date
 
     // Query to fetch data where the clock_date matches today's date
     return await db.query(
@@ -3509,7 +3632,8 @@ updated_at TIMESTAMP
         whereArgs: [learnerID, clockDate, keepId],
       );
       debugPrint(
-          '[CLOCKING_CLEANUP] Removed $deleted duplicate learner_clocking rows for learner=$learnerID, date=$clockDate, kept clocking_id=$keepId');
+        '[CLOCKING_CLEANUP] Removed $deleted duplicate learner_clocking rows for learner=$learnerID, date=$clockDate, kept clocking_id=$keepId',
+      );
     }
 
     // Update the single remaining record
@@ -3528,14 +3652,16 @@ updated_at TIMESTAMP
   /// IMPORTANT: signature_in and face_in should be BASE64 strings for offline storage
   /// These will be uploaded to server during sync and converted to filenames
   Future<void> insertManualClockInOffline(
-      Map<String, dynamic> clockInData) async {
+    Map<String, dynamic> clockInData,
+  ) async {
     final db = await database;
 
     final clockDate = clockInData['clock_date'];
     final learnerID = clockInData['LearnerID'];
 
     debugPrint(
-        '[MANUAL_CLOCKING] Saving offline clock-in for learner $learnerID on $clockDate');
+      '[MANUAL_CLOCKING] Saving offline clock-in for learner $learnerID on $clockDate',
+    );
 
     // Check if record already exists
     final existing = await db.query(
@@ -3555,7 +3681,8 @@ updated_at TIMESTAMP
         'synced': 0,
       });
       debugPrint(
-          '[MANUAL_CLOCKING] ✅ Inserted offline clock-in for learner $learnerID');
+        '[MANUAL_CLOCKING] ✅ Inserted offline clock-in for learner $learnerID',
+      );
     } else {
       await db.update(
         'manual_clocking',
@@ -3568,7 +3695,8 @@ updated_at TIMESTAMP
         whereArgs: [learnerID, clockDate],
       );
       debugPrint(
-          '[MANUAL_CLOCKING] ✅ Updated offline clock-in for learner $learnerID');
+        '[MANUAL_CLOCKING] ✅ Updated offline clock-in for learner $learnerID',
+      );
     }
 
     // 2. Insert/Update manual_clocking_evidence table (STORE BASE64 IMAGES)
@@ -3597,7 +3725,8 @@ updated_at TIMESTAMP
       if (evidenceExists.isEmpty) {
         await db.insert('manual_clocking_evidence', evidenceData);
         debugPrint(
-            '[MANUAL_CLOCKING] ✅ Inserted evidence (base64 images) for learner $learnerID');
+          '[MANUAL_CLOCKING] ✅ Inserted evidence (base64 images) for learner $learnerID',
+        );
       } else {
         await db.update(
           'manual_clocking_evidence',
@@ -3606,19 +3735,22 @@ updated_at TIMESTAMP
           whereArgs: [learnerID, clockDate],
         );
         debugPrint(
-            '[MANUAL_CLOCKING] ✅ Updated evidence (base64 images) for learner $learnerID');
+          '[MANUAL_CLOCKING] ✅ Updated evidence (base64 images) for learner $learnerID',
+        );
       }
 
       // DEBUG: Log image sizes
       if (clockInData.containsKey('signature_in')) {
         final sigSize = (clockInData['signature_in'] as String).length;
         debugPrint(
-            '[MANUAL_CLOCKING] Signature image size: ${(sigSize / 1024).toStringAsFixed(1)} KB');
+          '[MANUAL_CLOCKING] Signature image size: ${(sigSize / 1024).toStringAsFixed(1)} KB',
+        );
       }
       if (clockInData.containsKey('face_in')) {
         final faceSize = (clockInData['face_in'] as String).length;
         debugPrint(
-            '[MANUAL_CLOCKING] Face image size: ${(faceSize / 1024).toStringAsFixed(1)} KB');
+          '[MANUAL_CLOCKING] Face image size: ${(faceSize / 1024).toStringAsFixed(1)} KB',
+        );
       }
     }
   }
@@ -3628,14 +3760,16 @@ updated_at TIMESTAMP
   ///
   /// IMPORTANT: signature_out and face_out should be BASE64 strings for offline storage
   Future<void> updateManualClockOutOffline(
-      Map<String, dynamic> clockOutData) async {
+    Map<String, dynamic> clockOutData,
+  ) async {
     final db = await database;
 
     final clockDate = clockOutData['clock_date'];
     final learnerID = clockOutData['LearnerID'];
 
     debugPrint(
-        '[MANUAL_CLOCKING] Saving offline clock-out for learner $learnerID on $clockDate');
+      '[MANUAL_CLOCKING] Saving offline clock-out for learner $learnerID on $clockDate',
+    );
 
     // 1. Update manual_clocking table
     await db.update(
@@ -3649,7 +3783,8 @@ updated_at TIMESTAMP
       whereArgs: [learnerID, clockDate],
     );
     debugPrint(
-        '[MANUAL_CLOCKING] ✅ Updated offline clock-out for learner $learnerID');
+      '[MANUAL_CLOCKING] ✅ Updated offline clock-out for learner $learnerID',
+    );
 
     // 2. Update manual_clocking_evidence table (STORE BASE64 IMAGES)
     if (clockOutData.containsKey('signature_out') ||
@@ -3670,23 +3805,26 @@ updated_at TIMESTAMP
         whereArgs: [learnerID, clockDate],
       );
       debugPrint(
-          '[MANUAL_CLOCKING] ✅ Updated offline clock-out evidence (base64 images) for learner $learnerID');
+        '[MANUAL_CLOCKING] ✅ Updated offline clock-out evidence (base64 images) for learner $learnerID',
+      );
 
       // DEBUG: Log image sizes
       if (clockOutData.containsKey('signature_out')) {
         final sigSize = (clockOutData['signature_out'] as String).length;
         debugPrint(
-            '[MANUAL_CLOCKING] Signature image size: ${(sigSize / 1024).toStringAsFixed(1)} KB');
+          '[MANUAL_CLOCKING] Signature image size: ${(sigSize / 1024).toStringAsFixed(1)} KB',
+        );
       }
       if (clockOutData.containsKey('face_out')) {
         final faceSize = (clockOutData['face_out'] as String).length;
         debugPrint(
-            '[MANUAL_CLOCKING] Face image size: ${(faceSize / 1024).toStringAsFixed(1)} KB');
+          '[MANUAL_CLOCKING] Face image size: ${(faceSize / 1024).toStringAsFixed(1)} KB',
+        );
       }
     }
   }
 
-//update clock out
+  //update clock out
   Future<void> updateClockOutOffline(Map<String, dynamic> clockOutData) async {
     final db = await database;
 
@@ -3695,8 +3833,10 @@ updated_at TIMESTAMP
     String clockDate = clockOutData['clock_date'];
 
     // Retrieve the clock-in data for the learner on the current date
-    Map<String, dynamic>? clockInData =
-        await getClockInForDate(learnerID, clockDate);
+    Map<String, dynamic>? clockInData = await getClockInForDate(
+      learnerID,
+      clockDate,
+    );
 
     if (clockInData != null) {
       // If clock-in exists, calculate the contact time (time difference between clock-in and clock-out)
@@ -3727,13 +3867,16 @@ updated_at TIMESTAMP
     } else {
       // If no clock-in data exists, log and handle this scenario
       debugPrint(
-          'No matching clock-in data found for this learner on this date.');
+        'No matching clock-in data found for this learner on this date.',
+      );
     }
   }
 
-//getClockOutForDate
+  //getClockOutForDate
   Future<Map<String, dynamic>?> getClockOutForDate(
-      String learnerID, String date) async {
+    String learnerID,
+    String date,
+  ) async {
     final db = await database;
     final result = await db.query(
       'learner_clocking',
@@ -3755,31 +3898,18 @@ updated_at TIMESTAMP
 
   Future<Map<String, dynamic>?> getSdpById(int id) async {
     final db = await database;
-    final result = await db.query(
-      'sdp',
-      where: 'sdp_id = ?',
-      whereArgs: [id],
-    );
+    final result = await db.query('sdp', where: 'sdp_id = ?', whereArgs: [id]);
     return result.isNotEmpty ? result.first : null;
   }
 
   Future<int> updateSdp(int id, Map<String, dynamic> sdp) async {
     final db = await database;
-    return await db.update(
-      'sdp',
-      sdp,
-      where: 'sdp_id = ?',
-      whereArgs: [id],
-    );
+    return await db.update('sdp', sdp, where: 'sdp_id = ?', whereArgs: [id]);
   }
 
   Future<int> deleteSdp(int id) async {
     final db = await database;
-    return await db.delete(
-      'sdp',
-      where: 'sdp_id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('sdp', where: 'sdp_id = ?', whereArgs: [id]);
   }
 
   // start password
@@ -3820,7 +3950,8 @@ updated_at TIMESTAMP
         // Direct comparison for plain text passwords (not recommended, but handle it)
         passwordMatches = password == storedPassword;
         debugPrint(
-            "⚠️ WARNING: Password is stored in plain text for SDP user $trimmedEmail");
+          "⚠️ WARNING: Password is stored in plain text for SDP user $trimmedEmail",
+        );
       }
 
       if (passwordMatches) {
@@ -3836,7 +3967,9 @@ updated_at TIMESTAMP
   }
 
   Future<Map<String, dynamic>?> getFacilitator(
-      String email, String password) async {
+    String email,
+    String password,
+  ) async {
     final db = await database;
 
     // Trim email to remove whitespace
@@ -3872,7 +4005,8 @@ updated_at TIMESTAMP
         // Direct comparison for plain text passwords (not recommended, but handle it)
         passwordMatches = password == storedPassword;
         debugPrint(
-            "⚠ WARNING: Password is stored in plain text for facilitator $trimmedEmail");
+          "⚠ WARNING: Password is stored in plain text for facilitator $trimmedEmail",
+        );
       }
 
       if (passwordMatches) {
@@ -3887,9 +4021,12 @@ updated_at TIMESTAMP
     }
   }
 
-// Alternative method if you want to handle both user types in one function
+  // Alternative method if you want to handle both user types in one function
   Future<Map<String, dynamic>?> authenticateUser(
-      String email, String password, String userType) async {
+    String email,
+    String password,
+    String userType,
+  ) async {
     final db = await database;
 
     final tableName = userType == 'facilitator' ? 'facilitator' : 'sdp';
@@ -3966,27 +4103,26 @@ updated_at TIMESTAMP
 
       // Calculate expiry (7 days from now)
       final now = DateTime.now();
-      final expiresAt =
-          now.add(const Duration(days: AppConfig.offlineSessionExpiryDays));
-
-      // Insert or replace the session
-      await db.insert(
-        'offline_sessions',
-        {
-          'user_email': email,
-          'token_hash': tokenHash,
-          'device_id': deviceId,
-          'created_at': now.toIso8601String(),
-          'expires_at': expiresAt.toIso8601String(),
-          'last_activity_at': now.toIso8601String(),
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
+      final expiresAt = now.add(
+        const Duration(days: AppConfig.offlineSessionExpiryDays),
       );
 
+      // Insert or replace the session
+      await db.insert('offline_sessions', {
+        'user_email': email,
+        'token_hash': tokenHash,
+        'device_id': deviceId,
+        'created_at': now.toIso8601String(),
+        'expires_at': expiresAt.toIso8601String(),
+        'last_activity_at': now.toIso8601String(),
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+
       debugPrint(
-          '[OFFLINE_TOKEN_SECURITY] Token created for $email on device $deviceId, expires ${expiresAt.toIso8601String()}');
+        '[OFFLINE_TOKEN_SECURITY] Token created for $email on device $deviceId, expires ${expiresAt.toIso8601String()}',
+      );
       debugPrint(
-          '[OFFLINE_TOKEN] ✅ Created offline session for $email (expires: ${expiresAt.toIso8601String()})');
+        '[OFFLINE_TOKEN] ✅ Created offline session for $email (expires: ${expiresAt.toIso8601String()})',
+      );
       return token;
     } catch (e) {
       debugPrint('[OFFLINE_TOKEN_SECURITY] Token creation FAILED: $e');
@@ -4011,7 +4147,8 @@ updated_at TIMESTAMP
 
       if (result.isEmpty) {
         debugPrint(
-            '[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token not found for $email');
+          '[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token not found for $email',
+        );
         debugPrint('[OFFLINE_TOKEN] ❌ No session found for $email');
         return false;
       }
@@ -4029,9 +4166,13 @@ updated_at TIMESTAMP
           storedDeviceId != currentDeviceId &&
           storedDeviceId != 'unknown_device') {
         debugPrint(
-            '[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: device_id mismatch for $email (stored: $storedDeviceId, current: $currentDeviceId)');
-        await db.delete('offline_sessions',
-            where: 'user_email = ?', whereArgs: [email]);
+          '[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: device_id mismatch for $email (stored: $storedDeviceId, current: $currentDeviceId)',
+        );
+        await db.delete(
+          'offline_sessions',
+          where: 'user_email = ?',
+          whereArgs: [email],
+        );
         return false;
       }
 
@@ -4039,18 +4180,26 @@ updated_at TIMESTAMP
       final providedHash = _hashToken(token);
       if (providedHash != storedHash) {
         debugPrint(
-            '[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token hash mismatch for $email');
-        await db.delete('offline_sessions',
-            where: 'user_email = ?', whereArgs: [email]);
+          '[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token hash mismatch for $email',
+        );
+        await db.delete(
+          'offline_sessions',
+          where: 'user_email = ?',
+          whereArgs: [email],
+        );
         return false;
       }
 
       // Check if expired
       if (now.isAfter(expiresAt)) {
         debugPrint(
-            '[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token expired for $email at $expiresAtStr');
-        await db.delete('offline_sessions',
-            where: 'user_email = ?', whereArgs: [email]);
+          '[OFFLINE_TOKEN_SECURITY] VALIDATION FAILED: token expired for $email at $expiresAtStr',
+        );
+        await db.delete(
+          'offline_sessions',
+          where: 'user_email = ?',
+          whereArgs: [email],
+        );
         return false;
       }
 
@@ -4061,11 +4210,13 @@ updated_at TIMESTAMP
       };
 
       if (AppConfig.offlineTokenRefreshEnabled && hoursUntilExpiry < 24) {
-        final newExpiresAt =
-            now.add(const Duration(days: AppConfig.offlineSessionExpiryDays));
+        final newExpiresAt = now.add(
+          const Duration(days: AppConfig.offlineSessionExpiryDays),
+        );
         updateData['expires_at'] = newExpiresAt.toIso8601String();
         debugPrint(
-            '[OFFLINE_TOKEN] 🔄 Token refreshed for $email (new expiry: ${newExpiresAt.toIso8601String()})');
+          '[OFFLINE_TOKEN] 🔄 Token refreshed for $email (new expiry: ${newExpiresAt.toIso8601String()})',
+        );
       }
 
       // Update last activity and possibly expiry
@@ -4110,8 +4261,11 @@ updated_at TIMESTAMP
       // Check if expired
       if (now.isAfter(expiresAt)) {
         debugPrint('[OFFLINE_TOKEN] Session expired for $email');
-        await db.delete('offline_sessions',
-            where: 'user_email = ?', whereArgs: [email]);
+        await db.delete(
+          'offline_sessions',
+          where: 'user_email = ?',
+          whereArgs: [email],
+        );
         return null;
       }
 
@@ -4214,7 +4368,8 @@ updated_at TIMESTAMP
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
     debugPrint(
-        '[DB_HELPER] Upserted bank details for learner: ${bankData['LearnerID']}');
+      '[DB_HELPER] Upserted bank details for learner: ${bankData['LearnerID']}',
+    );
   }
 
   // Get all sites from the database
@@ -4248,11 +4403,7 @@ updated_at TIMESTAMP
   // Delete a site by its ID
   Future<void> deleteSite(int siteID) async {
     final db = await database;
-    await db.delete(
-      'sites',
-      where: 'siteID = ?',
-      whereArgs: [siteID],
-    );
+    await db.delete('sites', where: 'siteID = ?', whereArgs: [siteID]);
   }
 
   // Get sites by a specific field, for example, `sdp_id`
@@ -4271,7 +4422,9 @@ updated_at TIMESTAMP
 
   // Save SDP sites for offline use
   Future<void> saveSdpSitesForOffline(
-      String sdpId, List<Map<String, dynamic>> sites) async {
+    String sdpId,
+    List<Map<String, dynamic>> sites,
+  ) async {
     final db = await database;
 
     // Parse sdpId to int if needed
@@ -4335,7 +4488,8 @@ updated_at TIMESTAMP
 
   // Fetch class data by siteID from SQLite
   Future<List<Map<String, dynamic>>> fetchClassDataBySiteID(
-      String siteID) async {
+    String siteID,
+  ) async {
     final db = await database;
     return await db.query(
       'classData',
@@ -4349,19 +4503,15 @@ updated_at TIMESTAMP
     final db = await database;
 
     for (var item in classData) {
-      await db.insert(
-        'classData',
-        {
-          'siteID': item['siteID'], // Insert siteID
-          'classID': item['classID'],
-          'className': item['className'],
-          'learnerCount': item['learnerCount'],
-          'learnersClockedIn': item['learnersClockedIn'],
-          'learnersClockedOut': item['learnersClockedOut'],
-          'learnersAbsent': item['learnersAbsent'],
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await db.insert('classData', {
+        'siteID': item['siteID'], // Insert siteID
+        'classID': item['classID'],
+        'className': item['className'],
+        'learnerCount': item['learnerCount'],
+        'learnersClockedIn': item['learnersClockedIn'],
+        'learnersClockedOut': item['learnersClockedOut'],
+        'learnersAbsent': item['learnersAbsent'],
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
   }
 
@@ -4407,7 +4557,7 @@ updated_at TIMESTAMP
   // var result = await db.query('class', where: 'siteID = ?', whereArgs: [classID]);
   // return result.isNotEmpty ? result : [];
   // }
-// 1. Insert a new class
+  // 1. Insert a new class
   Future<int> insertClass(Map<String, dynamic> classData) async {
     final db = await database;
     return await db.insert(_unsyncedTable, classData);
@@ -4471,7 +4621,10 @@ updated_at TIMESTAMP
   /// Save the signature locally in the `learnerdetails` table
 
   Future<void> saveSignatureLocally(
-      String learnerID, String signaturePath, String fieldName) async {
+    String learnerID,
+    String signaturePath,
+    String fieldName,
+  ) async {
     try {
       final db = await database;
       await db.update(
@@ -4488,7 +4641,10 @@ updated_at TIMESTAMP
   }
 
   Future<void> saveInitialsLocally(
-      String learnerID, String initials, String fieldName) async {
+    String learnerID,
+    String initials,
+    String fieldName,
+  ) async {
     try {
       final db = await database;
       await db.update(
@@ -4521,25 +4677,22 @@ updated_at TIMESTAMP
   }
 
   Future<void> saveLearnerDocumentToDatabase(
-      String learnerID,
-      String documentName,
-      String documentPath,
-      String status,
-      String uploadDate) async {
+    String learnerID,
+    String documentName,
+    String documentPath,
+    String status,
+    String uploadDate,
+  ) async {
     try {
       final db = await database;
-      await db.insert(
-        'learner_document',
-        {
-          'learner_id': learnerID,
-          'documentName': documentName,
-          'learner_document': documentPath,
-          'status': status,
-          'upload_date': uploadDate,
-          'synced': 0,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await db.insert('learner_document', {
+        'learner_id': learnerID,
+        'documentName': documentName,
+        'learner_document': documentPath,
+        'status': status,
+        'upload_date': uploadDate,
+        'synced': 0,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
       debugPrint('Document saved to database: $documentName');
     } catch (e) {
       debugPrint('Error saving document to database: $e');
@@ -4549,7 +4702,9 @@ updated_at TIMESTAMP
   /// end of signature and initials
   /// Update the learner's profile image in the `learnerdetails` table
   Future<void> updateLearnerProfileImage(
-      int learnerID, String imagePath) async {
+    int learnerID,
+    String imagePath,
+  ) async {
     final db = await database;
 
     await db.update(
@@ -4560,12 +4715,15 @@ updated_at TIMESTAMP
     );
 
     debugPrint(
-        'Updated learner $learnerID profile_image with path: $imagePath');
+      'Updated learner $learnerID profile_image with path: $imagePath',
+    );
   }
 
   /// Function to update the image path in the database
   Future<void> updateImagePathInDatabase(
-      int learnerID, String imagePath) async {
+    int learnerID,
+    String imagePath,
+  ) async {
     final db = await database;
 
     await db.update(
@@ -4581,7 +4739,8 @@ updated_at TIMESTAMP
   //get data for class
 
   Future<Map<String, dynamic>> fetchClassDetailsAndAttendance(
-      String classID) async {
+    String classID,
+  ) async {
     try {
       final db = await database;
 
@@ -4602,8 +4761,8 @@ updated_at TIMESTAMP
       final classInfo = classData.first;
       final className =
           classInfo['className']; // Assuming the column is named 'className'
-      final classMax = classInfo[
-          'numberOfLearners']; // Assuming the column is named 'numberOfLearners'
+      final classMax =
+          classInfo['numberOfLearners']; // Assuming the column is named 'numberOfLearners'
       final siteID =
           classInfo['siteID']; // Assuming the column is named 'siteID'
 
@@ -4647,7 +4806,9 @@ updated_at TIMESTAMP
 
       // 5. Get total attendance for the class
       final int attendanceData = await _getAttendance(
-          classID, DateFormat('yyyy-MM-dd').format(DateTime.now()));
+        classID,
+        DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      );
       debugPrint('total atendance to day is : $attendanceData');
 
       // 6. Return the combined data in a Map
@@ -4668,12 +4829,15 @@ updated_at TIMESTAMP
     }
   }
 
-// Helper methods to get total learners and attendance count
+  // Helper methods to get total learners and attendance count
 
   Future<int> _getTotalLearners(String classID) async {
     final db = await database;
-    final learnerData = await db
-        .query('learnerdetails', where: 'classID = ?', whereArgs: [classID]);
+    final learnerData = await db.query(
+      'learnerdetails',
+      where: 'classID = ?',
+      whereArgs: [classID],
+    );
     return learnerData.length;
   }
 
@@ -4697,8 +4861,9 @@ updated_at TIMESTAMP
 
       // Extract learner IDs into a list, ensuring correct type
       final learnerIDs = learnerIDsData
-          .map((row) =>
-              row['LearnerID'].toString()) // Convert to String explicitly
+          .map(
+            (row) => row['LearnerID'].toString(),
+          ) // Convert to String explicitly
           .toList();
 
       if (learnerIDs.isEmpty) {
@@ -4722,11 +4887,13 @@ updated_at TIMESTAMP
       );
 
       debugPrint(
-          '[ATTENDANCE] Counting attendance for classID $classID on date $clockDate: ${attendanceData.first['count']} learners');
+        '[ATTENDANCE] Counting attendance for classID $classID on date $clockDate: ${attendanceData.first['count']} learners',
+      );
 
       if (attendanceData.isEmpty || attendanceData.first['count'] == null) {
         debugPrint(
-            'No attendance records found for classID: $classID on date: $clockDate');
+          'No attendance records found for classID: $classID on date: $clockDate',
+        );
         return 0;
       }
 
@@ -4735,7 +4902,8 @@ updated_at TIMESTAMP
           int.tryParse(attendanceData.first['count'].toString()) ?? 0;
 
       debugPrint(
-          'Total attendance for classID $classID on date $clockDate: $attendanceCount');
+        'Total attendance for classID $classID on date $clockDate: $attendanceCount',
+      );
       return attendanceCount;
     } catch (e) {
       debugPrint('Error fetching attendance data: $e');
@@ -4744,7 +4912,8 @@ updated_at TIMESTAMP
   }
 
   Future<void> insertLearningpathway(
-      Map<String, dynamic> learningpathwayData) async {
+    Map<String, dynamic> learningpathwayData,
+  ) async {
     final db = await database;
     await db.insert(
       'learningpathway',
@@ -4763,7 +4932,8 @@ updated_at TIMESTAMP
   }
 
   Future<void> insertPathwaySelection(
-      Map<String, dynamic> pathwaySelectiondata) async {
+    Map<String, dynamic> pathwaySelectiondata,
+  ) async {
     final db = await database;
     await db.insert(
       'pathway_selection',
@@ -4773,7 +4943,8 @@ updated_at TIMESTAMP
   }
 
   Future<void> insertQualification(
-      Map<String, dynamic> qualificationData) async {
+    Map<String, dynamic> qualificationData,
+  ) async {
     final db = await database;
     await db.insert(
       'qualification',
@@ -4783,7 +4954,8 @@ updated_at TIMESTAMP
   }
 
   Future<void> insertQualificationSelection(
-      Map<String, dynamic> qualificationSelectiondata) async {
+    Map<String, dynamic> qualificationSelectiondata,
+  ) async {
     final db = await database;
     await db.insert(
       'qualification_selection',
@@ -4793,7 +4965,8 @@ updated_at TIMESTAMP
   }
 
   Future<void> insertQualificationPathway(
-      Map<String, dynamic> qualificationPathwaydata) async {
+    Map<String, dynamic> qualificationPathwaydata,
+  ) async {
     final db = await database;
     await db.insert(
       'qualification_pathway',
@@ -4803,7 +4976,8 @@ updated_at TIMESTAMP
   }
 
   Future<void> insertQualificationunitstandard(
-      Map<String, dynamic> qualificationunitstandardData) async {
+    Map<String, dynamic> qualificationunitstandardData,
+  ) async {
     final db = await database;
     await db.insert(
       'qualificationunitstandard',
@@ -4822,7 +4996,8 @@ updated_at TIMESTAMP
   }
 
   Future<void> insertUnitStandardSelection(
-      Map<String, dynamic> unitStandardSelectiondata) async {
+    Map<String, dynamic> unitStandardSelectiondata,
+  ) async {
     final db = await database;
     await db.insert(
       'unit_standard_selection',
@@ -4858,7 +5033,8 @@ updated_at TIMESTAMP
     final db = await database;
 
     // Fetch raw data including the raw Project_pathway JSON string
-    var result = await db.rawQuery('''
+    var result = await db.rawQuery(
+      '''
     SELECT 
       ld.classID, 
       s.project_id,
@@ -4879,7 +5055,9 @@ updated_at TIMESTAMP
       AND a.unit_standard_id IS NOT NULL 
       AND a.unit_standard_id != ''
     WHERE ld.learnerID  = ?;
-  ''', [learnerID]);
+  ''',
+      [learnerID],
+    );
 
     if (result.isEmpty) {
       debugPrint('No data found for learnerID: $learnerID');
@@ -4924,8 +5102,9 @@ updated_at TIMESTAMP
                               us['name']?.toString() ?? 'Unknown Unit Standard';
 
                           bool alreadyExists = unitStandardsList.any(
-                              (existing) =>
-                                  existing['id']?.toString().trim() == id);
+                            (existing) =>
+                                existing['id']?.toString().trim() == id,
+                          );
 
                           if (!alreadyExists) {
                             unitStandardsList.add({
@@ -4947,7 +5126,8 @@ updated_at TIMESTAMP
           }
         } catch (e) {
           debugPrint(
-              'Error parsing Project_pathway JSON for project $projectId: $e');
+            'Error parsing Project_pathway JSON for project $projectId: $e',
+          );
         }
       }
 
@@ -4966,10 +5146,12 @@ updated_at TIMESTAMP
         }
 
         // Deduplicate assessments
-        bool isDuplicate = unitStandardAssessments[usId]!.any((a) =>
-            a['question_number'] == row['question_number'] &&
-            a['exercise'] == row['exercise'] &&
-            a['assessment_type'] == bucket);
+        bool isDuplicate = unitStandardAssessments[usId]!.any(
+          (a) =>
+              a['question_number'] == row['question_number'] &&
+              a['exercise'] == row['exercise'] &&
+              a['assessment_type'] == bucket,
+        );
 
         if (!isDuplicate) {
           unitStandardAssessments[usId]!.add({
@@ -4992,8 +5174,10 @@ updated_at TIMESTAMP
           us['name']?.toString().trim() ?? 'Unknown Unit Standard';
 
       // Aggressively remove ID from the start if it exists (e.g., "259604 - ...")
-      final idPattern =
-          RegExp('^${RegExp.escape(usId)}[\\s:\\-–—]*', caseSensitive: false);
+      final idPattern = RegExp(
+        '^${RegExp.escape(usId)}[\\s:\\-–—]*',
+        caseSensitive: false,
+      );
       final usCleanName = usRawName.replaceFirst(idPattern, '');
       final fullUsName = "$usId - $usCleanName";
 
@@ -5031,8 +5215,13 @@ updated_at TIMESTAMP
   }
 
   Future<void> saveUploadToLocalPoe(
-      int learnerID, String type, String exercise, String filePath,
-      {String? unitStandard, int synced = 0}) async {
+    int learnerID,
+    String type,
+    String exercise,
+    String filePath, {
+    String? unitStandard,
+    int synced = 0,
+  }) async {
     try {
       final db = await database;
 
@@ -5043,11 +5232,7 @@ updated_at TIMESTAMP
       final existing = await db.query(
         'poe',
         where: 'learnerID = ? AND type = ? AND exercise = ?',
-        whereArgs: [
-          learnerID.toString(),
-          type,
-          uniqueExercise,
-        ],
+        whereArgs: [learnerID.toString(), type, uniqueExercise],
       );
 
       if (existing.isNotEmpty) {
@@ -5060,29 +5245,24 @@ updated_at TIMESTAMP
             'synced': synced,
           },
           where: 'learnerID = ? AND type = ? AND exercise = ?',
-          whereArgs: [
-            learnerID.toString(),
-            type,
-            uniqueExercise,
-          ],
+          whereArgs: [learnerID.toString(), type, uniqueExercise],
         );
         debugPrint(
-            "POE upload updated (synced=$synced): learnerID=$learnerID, type=$type, exercise=$uniqueExercise, filePath=$filePath");
+          "POE upload updated (synced=$synced): learnerID=$learnerID, type=$type, exercise=$uniqueExercise, filePath=$filePath",
+        );
       } else {
         // Insert new record
-        await db.insert(
-          'poe',
-          {
-            'learnerID': learnerID.toString(),
-            'type': type,
-            'exercise': uniqueExercise,
-            'filePath': filePath,
-            'submitted_at': DateTime.now().toIso8601String(),
-            'synced': synced,
-          },
-        );
+        await db.insert('poe', {
+          'learnerID': learnerID.toString(),
+          'type': type,
+          'exercise': uniqueExercise,
+          'filePath': filePath,
+          'submitted_at': DateTime.now().toIso8601String(),
+          'synced': synced,
+        });
         debugPrint(
-            "POE upload inserted (synced=$synced): learnerID=$learnerID, type=$type, exercise=$uniqueExercise, filePath=$filePath");
+          "POE upload inserted (synced=$synced): learnerID=$learnerID, type=$type, exercise=$uniqueExercise, filePath=$filePath",
+        );
       }
     } catch (e, stackTrace) {
       debugPrint("Error saving POE upload: $e\nStackTrace: $stackTrace");
@@ -5091,8 +5271,12 @@ updated_at TIMESTAMP
   }
 
   Future<void> saveManualMarkToLocalPoe(
-      int learnerID, String type, String exercise, String filePath,
-      {String? unitStandard}) async {
+    int learnerID,
+    String type,
+    String exercise,
+    String filePath, {
+    String? unitStandard,
+  }) async {
     try {
       final db = await database;
 
@@ -5102,11 +5286,7 @@ updated_at TIMESTAMP
       final existing = await db.query(
         'poe',
         where: 'learnerID = ? AND type = ? AND exercise = ?',
-        whereArgs: [
-          learnerID.toString(),
-          type,
-          uniqueExercise,
-        ],
+        whereArgs: [learnerID.toString(), type, uniqueExercise],
       );
 
       if (existing.isNotEmpty) {
@@ -5120,30 +5300,25 @@ updated_at TIMESTAMP
                 0, // Set to 0 for manual entries so they can be updated later by a scan
           },
           where: 'learnerID = ? AND type = ? AND exercise = ?',
-          whereArgs: [
-            learnerID.toString(),
-            type,
-            uniqueExercise,
-          ],
+          whereArgs: [learnerID.toString(), type, uniqueExercise],
         );
         debugPrint(
-            "Manual POE entry updated: learnerID=$learnerID, type=$type, exercise=$uniqueExercise, filePath=$filePath");
+          "Manual POE entry updated: learnerID=$learnerID, type=$type, exercise=$uniqueExercise, filePath=$filePath",
+        );
       } else {
         // Insert new record
-        await db.insert(
-          'poe',
-          {
-            'learnerID': learnerID.toString(),
-            'type': type,
-            'exercise': uniqueExercise,
-            'filePath': filePath,
-            'submitted_at': DateTime.now().toIso8601String(),
-            'synced':
-                0, // Set to 0 for manual entries so they can be updated later by a scan
-          },
-        );
+        await db.insert('poe', {
+          'learnerID': learnerID.toString(),
+          'type': type,
+          'exercise': uniqueExercise,
+          'filePath': filePath,
+          'submitted_at': DateTime.now().toIso8601String(),
+          'synced':
+              0, // Set to 0 for manual entries so they can be updated later by a scan
+        });
         debugPrint(
-            "Manual POE entry inserted: learnerID=$learnerID, type=$type, exercise=$uniqueExercise, filePath=$filePath");
+          "Manual POE entry inserted: learnerID=$learnerID, type=$type, exercise=$uniqueExercise, filePath=$filePath",
+        );
       }
     } catch (e, stackTrace) {
       debugPrint("Error saving manual POE entry: $e\nStackTrace: $stackTrace");
@@ -5193,7 +5368,8 @@ updated_at TIMESTAMP
 
   // Helper function to get all questions from API
   Future<List<Map<String, dynamic>>> _getAllQuestionsFromAPI(
-      String learnerID) async {
+    String learnerID,
+  ) async {
     try {
       final questions = <Map<String, dynamic>>[];
 
@@ -5224,8 +5400,9 @@ updated_at TIMESTAMP
                         qualification['unitstandards'][unitStandardName];
 
                     // Extract unit standard ID from name
-                    final unitIdMatch =
-                        RegExp(r'^(\d{4,10})').firstMatch(unitStandardName);
+                    final unitIdMatch = RegExp(
+                      r'^(\d{4,10})',
+                    ).firstMatch(unitStandardName);
                     final unitId = unitIdMatch?.group(1) ?? '';
 
                     // Add formative questions
@@ -5272,7 +5449,8 @@ updated_at TIMESTAMP
       }
 
       debugPrint(
-          'Retrieved ${questions.length} questions from API for learner $learnerID');
+        'Retrieved ${questions.length} questions from API for learner $learnerID',
+      );
       return questions;
     } catch (e) {
       debugPrint('Error getting questions from API: $e');
@@ -5321,14 +5499,21 @@ updated_at TIMESTAMP
   }
 
   Future<String?> getExistingDocumentPath(
-      int learnerID, String type, String unitStandard) async {
+    int learnerID,
+    String type,
+    String unitStandard,
+  ) async {
     try {
       // First, try to get document path from server if connected (specific to unit standard)
-      String? serverDocumentPath =
-          await _getServerDocumentPath(learnerID, type, unitStandard);
+      String? serverDocumentPath = await _getServerDocumentPath(
+        learnerID,
+        type,
+        unitStandard,
+      );
       if (serverDocumentPath != null) {
         debugPrint(
-            "Found existing document from server for $type in unit $unitStandard: $serverDocumentPath");
+          "Found existing document from server for $type in unit $unitStandard: $serverDocumentPath",
+        );
         return serverDocumentPath;
       }
 
@@ -5337,16 +5522,20 @@ updated_at TIMESTAMP
 
       // Try to find the most recent document for this learner and type
       // Note: POE table might not have unit standard field, so we search by type and time
-      final uploads = await db.rawQuery('''
+      final uploads = await db.rawQuery(
+        '''
         SELECT filePath, exercise, submitted_at FROM poe 
         WHERE learnerID = ? AND type = ? AND synced = 1
         AND filePath NOT LIKE 'MANUALLY_MARKED%'
         ORDER BY submitted_at DESC 
         LIMIT 5
-      ''', [learnerID.toString(), type]);
+      ''',
+        [learnerID.toString(), type],
+      );
 
       debugPrint(
-          "Found ${uploads.length} potential documents in local DB for $type");
+        "Found ${uploads.length} potential documents in local DB for $type",
+      );
 
       for (var upload in uploads) {
         final filePath = upload['filePath']?.toString();
@@ -5359,43 +5548,55 @@ updated_at TIMESTAMP
             !filePath.startsWith('MANUALLY_MARKED') &&
             File(filePath).existsSync()) {
           debugPrint(
-              "Found existing document from local DB for $type (exercise: $exercise, submitted: $submittedAt): $filePath");
+            "Found existing document from local DB for $type (exercise: $exercise, submitted: $submittedAt): $filePath",
+          );
           return filePath;
         }
       }
 
       debugPrint(
-          "No existing document found for learnerID=$learnerID, type=$type, unitStandard=$unitStandard");
+        "No existing document found for learnerID=$learnerID, type=$type, unitStandard=$unitStandard",
+      );
       return null;
     } catch (e, stackTrace) {
       debugPrint(
-          "Error finding existing document: $e\nStackTrace: $stackTrace");
+        "Error finding existing document: $e\nStackTrace: $stackTrace",
+      );
       return null;
     }
   }
 
   Future<String?> _getServerDocumentPath(
-      int learnerID, String type, String unitStandard) async {
+    int learnerID,
+    String type,
+    String unitStandard,
+  ) async {
     try {
       // Check connectivity first
       var connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      if (connectivityResult.contains(ConnectivityResult.none)) {
         debugPrint("No internet connection, skipping server check");
         return null;
       }
 
       // Use existing poe.php endpoint to get POE data with document paths
       final url = Uri.parse(AppConfig.poeUrl);
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {'learnerID': learnerID.toString()},
-      ).timeout(const Duration(seconds: 10), onTimeout: () {
-        throw Exception('Server request timed out');
-      });
+      final response = await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: {'learnerID': learnerID.toString()},
+          )
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Server request timed out');
+            },
+          );
 
       debugPrint(
-          'Server POE request for document path: learnerID=$learnerID, type=$type, unitStandard=$unitStandard, statusCode=${response.statusCode}');
+        'Server POE request for document path: learnerID=$learnerID, type=$type, unitStandard=$unitStandard, statusCode=${response.statusCode}',
+      );
 
       if (response.statusCode == 200) {
         final decodedResponse = json.decode(response.body);
@@ -5417,7 +5618,8 @@ updated_at TIMESTAMP
                     // Only check the specific unit standard we're working with
                     if (unitStandardName == unitStandard) {
                       debugPrint(
-                          'Found matching unit standard on server: $unitStandardName');
+                        'Found matching unit standard on server: $unitStandardName',
+                      );
 
                       // Check the specific type (formative/summative) for uploaded documents
                       List<dynamic>? exercises;
@@ -5441,7 +5643,8 @@ updated_at TIMESTAMP
                                   filePath.isNotEmpty &&
                                   !filePath.startsWith('MANUALLY_MARKED')) {
                                 debugPrint(
-                                    'Server returned document path from POE data for unit $unitStandard: $filePath');
+                                  'Server returned document path from POE data for unit $unitStandard: $filePath',
+                                );
                                 return filePath;
                               }
                             }
@@ -5460,17 +5663,23 @@ updated_at TIMESTAMP
       }
 
       debugPrint(
-          'No document path found on server for learnerID=$learnerID, type=$type, unitStandard=$unitStandard');
+        'No document path found on server for learnerID=$learnerID, type=$type, unitStandard=$unitStandard',
+      );
       return null;
     } catch (e, stackTrace) {
       debugPrint(
-          "Error getting document path from server: $e\nStackTrace: $stackTrace");
+        "Error getting document path from server: $e\nStackTrace: $stackTrace",
+      );
       return null;
     }
   }
 
-  Future<void> saveLogBookText(String learnerID, String type, String exercise,
-      String logbookText) async {
+  Future<void> saveLogBookText(
+    String learnerID,
+    String type,
+    String exercise,
+    String logbookText,
+  ) async {
     try {
       final db = await database;
       final count = await db.query(
@@ -5490,21 +5699,18 @@ updated_at TIMESTAMP
           whereArgs: [learnerID, type, exercise],
         );
       } else {
-        await db.insert(
-          'poe',
-          {
-            'learnerID': learnerID,
-            'type': type,
-            'exercise': exercise,
-            'logbook_text': logbookText,
-            'submitted_at': DateTime.now().toIso8601String(),
-            'synced': 0,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+        await db.insert('poe', {
+          'learnerID': learnerID,
+          'type': type,
+          'exercise': exercise,
+          'logbook_text': logbookText,
+          'submitted_at': DateTime.now().toIso8601String(),
+          'synced': 0,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
       }
       debugPrint(
-          "LogBook text saved: learnerID=$learnerID, type=$type, exercise=$exercise, logbook_text=$logbookText");
+        "LogBook text saved: learnerID=$learnerID, type=$type, exercise=$exercise, logbook_text=$logbookText",
+      );
     } catch (e, stackTrace) {
       debugPrint("Error saving LogBook text: $e\nStackTrace: $stackTrace");
       rethrow;
@@ -5521,7 +5727,8 @@ updated_at TIMESTAMP
         orderBy: 'submitted_at ASC',
       );
       debugPrint(
-          "[POE_SYNC] Found ${unsyncedRecords.length} unsynced POE records for learnerID=$learnerID");
+        "[POE_SYNC] Found ${unsyncedRecords.length} unsynced POE records for learnerID=$learnerID",
+      );
       return unsyncedRecords;
     } catch (e, stackTrace) {
       debugPrint("Error fetching unsynced POE: $e\nStackTrace: $stackTrace");
@@ -5532,12 +5739,7 @@ updated_at TIMESTAMP
   Future<void> markPOEAsSynced(int id) async {
     try {
       final db = await database;
-      await db.update(
-        'poe',
-        {'synced': 1},
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+      await db.update('poe', {'synced': 1}, where: 'id = ?', whereArgs: [id]);
       debugPrint("[POE_SYNC] Marked POE record as synced: id=$id");
     } catch (e, stackTrace) {
       debugPrint("Error marking POE as synced: $e\nStackTrace: $stackTrace");
@@ -5566,27 +5768,27 @@ updated_at TIMESTAMP
 
   // Save learner pathways data to cache for offline access
   Future<void> saveLearnerPathwaysCache(
-      int learnerID, Map<String, dynamic> pathways) async {
+    int learnerID,
+    Map<String, dynamic> pathways,
+  ) async {
     try {
       await _ensureCacheTableExists();
       final db = await database;
       final pathwaysJson = jsonEncode(pathways);
 
-      await db.insert(
-        'learner_pathways_cache',
-        {
-          'learnerID': learnerID,
-          'pathways_json': pathwaysJson,
-          'updated_at': DateTime.now().toIso8601String(),
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await db.insert('learner_pathways_cache', {
+        'learnerID': learnerID,
+        'pathways_json': pathwaysJson,
+        'updated_at': DateTime.now().toIso8601String(),
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       debugPrint(
-          "[OFFLINE_CACHE] Saved pathways cache for learnerID=$learnerID");
+        "[OFFLINE_CACHE] Saved pathways cache for learnerID=$learnerID",
+      );
     } catch (e, stackTrace) {
       debugPrint(
-          "Error saving learner pathways cache: $e\nStackTrace: $stackTrace");
+        "Error saving learner pathways cache: $e\nStackTrace: $stackTrace",
+      );
       rethrow;
     }
   }
@@ -5604,7 +5806,8 @@ updated_at TIMESTAMP
 
       if (results.isEmpty) {
         debugPrint(
-            "[OFFLINE_CACHE] No cached pathways found for learnerID=$learnerID");
+          "[OFFLINE_CACHE] No cached pathways found for learnerID=$learnerID",
+        );
         return null;
       }
 
@@ -5612,17 +5815,21 @@ updated_at TIMESTAMP
       final pathways = jsonDecode(pathwaysJson) as Map<String, dynamic>;
 
       debugPrint(
-          "[OFFLINE_CACHE] Retrieved cached pathways for learnerID=$learnerID");
+        "[OFFLINE_CACHE] Retrieved cached pathways for learnerID=$learnerID",
+      );
       return pathways;
     } catch (e, stackTrace) {
       debugPrint(
-          "Error getting learner pathways cache: $e\nStackTrace: $stackTrace");
+        "Error getting learner pathways cache: $e\nStackTrace: $stackTrace",
+      );
       return null;
     }
   }
 
   Future<List<Map<String, dynamic>>> getLearnerss(
-      String classID, String selectedItem) async {
+    String classID,
+    String selectedItem,
+  ) async {
     final db = await database;
 
     // Start building the query
@@ -5673,8 +5880,10 @@ WHERE ld.classID = ?
       if (selectedItem == 'Select') {
         result = await db.rawQuery(query, [classID]); // Only bind classID
       } else {
-        result = await db.rawQuery(query,
-            [classID, selectedItem]); // Bind both classID and selectedItem
+        result = await db.rawQuery(query, [
+          classID,
+          selectedItem,
+        ]); // Bind both classID and selectedItem
       }
       return result;
     } catch (e) {
@@ -5685,11 +5894,13 @@ WHERE ld.classID = ?
 
   //get profile for facilitator
   Future<List<Map<String, dynamic>>> getLearnerDetailsByClassID(
-      String classID) async {
+    String classID,
+  ) async {
     final db = await database;
 
     try {
-      final result = await db.rawQuery('''
+      final result = await db.rawQuery(
+        '''
     SELECT 
     p.Project_name,
     JSON_UNQUOTE(JSON_EXTRACT(p.project_pathway, '\$[0].name')) AS pathway_name,
@@ -5708,7 +5919,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
          JSON_EXTRACT(p.project_pathway, '\$[0].qual_types[0].qualification.name'), 
          JSON_EXTRACT(p.project_pathway, '\$[0].qual_types[0].qualification.id'), 
          f.firstName, f.lastName, c.className;
-    ''', [classID]);
+    ''',
+        [classID],
+      );
 
       debugPrint('Query Result: $result'); // Print the result to see the data
 
@@ -5770,13 +5983,15 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     return await db.insert('material_receipt_form', data);
   }
 
-  Future<List<Map<String, dynamic>>> query(String sql,
-      [List<dynamic>? arguments]) async {
+  Future<List<Map<String, dynamic>>> query(
+    String sql, [
+    List<dynamic>? arguments,
+  ]) async {
     final db = await database;
     return await db.rawQuery(sql, arguments ?? []);
   }
 
-// Insert a record into the database
+  // Insert a record into the database
   Future<void> insertReceiptForm(Map<String, dynamic> record) async {
     final db = await database;
     await db.insert(
@@ -5799,9 +6014,11 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     }
   }
 
-//save
+  //save
   Future<void> saveLearnerDetailsOffline(
-      String classID, Map<String, dynamic> data) async {
+    String classID,
+    Map<String, dynamic> data,
+  ) async {
     final db = await database;
     await db.insert(
       'facilitator',
@@ -5827,7 +6044,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   }
 
   Future<List<Map<String, dynamic>>> getDocumentsByLearnerId(
-      String learnerId) async {
+    String learnerId,
+  ) async {
     final db = await database;
     return await db.query(
       'learner_document',
@@ -5840,12 +6058,17 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   Future<int> markAsSynced(String idNumber) async {
     final db = await database;
-    return await db.update(tableLearnerDetails, {'synced': 1},
-        where: 'idNumber = ?', whereArgs: [idNumber]);
+    return await db.update(
+      tableLearnerDetails,
+      {'synced': 1},
+      where: 'idNumber = ?',
+      whereArgs: [idNumber],
+    );
   }
 
   Future<List<Map<String, dynamic>>> fetchLearnerDocuments(
-      String learnerId) async {
+    String learnerId,
+  ) async {
     final db = await database;
     return await db.query(
       'learner_document',
@@ -5885,17 +6108,21 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   }
 
   Future<Map<String, dynamic>> getFacilitatorDetailsByClassID(
-      String classID) async {
+    String classID,
+  ) async {
     final db = await database;
     try {
-      List<Map<String, dynamic>> result = await db.rawQuery('''
+      List<Map<String, dynamic>> result = await db.rawQuery(
+        '''
       SELECT f.facilitator_id, f.firstName, f.lastName, f.role, f.email, f.classID,
              f.phoneNumber, f.f_IDNumber, f.assessorNo, f.assessorExpiryDate, f.f_signature, f.f_profile, 
              c.className
       FROM facilitator f
       LEFT JOIN class c ON f.classID = c.classID
       WHERE f.classID = ?
-    ''', [classID]);
+    ''',
+        [classID],
+      );
 
       if (result.isNotEmpty) {
         Map<String, dynamic> facilitator = result.first;
@@ -5946,7 +6173,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   }
 
   Future<void> saveFacilitatorDetailsOffline(
-      String classID, Map<String, dynamic> data) async {
+    String classID,
+    Map<String, dynamic> data,
+  ) async {
     final db = await database;
     try {
       // First, check if facilitator already exists and get existing templates
@@ -5973,7 +6202,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
                 existing.first['futronic_right_template'] as String?,
           };
           debugPrint(
-              '[DB] Preserving existing fingerprint templates for facilitator $facilitatorId');
+            '[DB] Preserving existing fingerprint templates for facilitator $facilitatorId',
+          );
         }
       }
 
@@ -6019,7 +6249,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
               existingTemplates['futronic_right_template'];
         }
         debugPrint(
-            '[DB] ✅ Preserved fingerprint templates during facilitator update');
+          '[DB] ✅ Preserved fingerprint templates during facilitator update',
+        );
       }
 
       await db.insert(
@@ -6029,7 +6260,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       );
 
       debugPrint(
-          '[DB] Saved facilitator to local database: ${data['firstName']} ${data['lastName']}, classID: $classID');
+        '[DB] Saved facilitator to local database: ${data['firstName']} ${data['lastName']}, classID: $classID',
+      );
     } catch (e) {
       debugPrint('[DB] Failed to save facilitator details: $e');
       throw Exception('Failed to save facilitator details: $e');
@@ -6067,7 +6299,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   }
 
   Future<void> updateFacilitatorSignature(
-      String classID, String base64Signature) async {
+    String classID,
+    String base64Signature,
+  ) async {
     final db = await database;
     try {
       await db.update(
@@ -6082,7 +6316,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   }
 
   Future<void> updateFacilitatorProfileImage(
-      String classID, String base64Image) async {
+    String classID,
+    String base64Image,
+  ) async {
     final db = await database;
     try {
       await db.update(
@@ -6097,7 +6333,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   }
 
   Future<void> updateFacilitatorDetails(
-      String classID, Map<String, dynamic> updatedData) async {
+    String classID,
+    Map<String, dynamic> updatedData,
+  ) async {
     debugPrint('[DB] updateFacilitatorDetails called with classID: $classID');
     debugPrint('[DB] updatedData: $updatedData');
 
@@ -6122,7 +6360,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   }
 
   Future<String?> convertBase64ToFile(
-      String base64Data, String fileName) async {
+    String base64Data,
+    String fileName,
+  ) async {
     try {
       final bytes = base64Decode(base64Data);
       final directory = await getApplicationDocumentsDirectory();
@@ -6167,7 +6407,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       );
 
       debugPrint(
-          'Synced status updated for learner ID: $serverLearnerId (idNumber: $idNumber)');
+        'Synced status updated for learner ID: $serverLearnerId (idNumber: $idNumber)',
+      );
     } catch (e) {
       debugPrint('Error updating synced status: $e');
       rethrow;
@@ -6175,7 +6416,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   }
 
   Future<void> updateBankDetailsSyncedStatus(
-      int bankId, int syncedStatus) async {
+    int bankId,
+    int syncedStatus,
+  ) async {
     final db = await database;
     try {
       await db.update(
@@ -6193,7 +6436,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   // Fetch unsynced learners for a specific class with bank details
   Future<List<Map<String, dynamic>>> fetchUnsyncedLearners(
-      String classID) async {
+    String classID,
+  ) async {
     final db = await database;
     try {
       // First, get all unsynced learners
@@ -6204,7 +6448,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       );
 
       debugPrint(
-          'Found ${learners.length} unsynced learners for class $classID');
+        'Found ${learners.length} unsynced learners for class $classID',
+      );
 
       // For each learner, fetch their bank details
       List<Map<String, dynamic>> learnersWithBankDetails = [];
@@ -6275,7 +6520,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   // Update local LearnerID with server LearnerID
   Future<void> updateLearnerID(
-      dynamic oldLearnerID, dynamic newLearnerID) async {
+    dynamic oldLearnerID,
+    dynamic newLearnerID,
+  ) async {
     final db = await database;
     try {
       // Update learnerdetails table
@@ -6336,13 +6583,16 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   /// When profile_image, signature, or witness_signature contain device paths
   /// to existing files, reads and encodes them for server upload.
   Future<Map<String, dynamic>> _prepareLearnerDataWithBase64Images(
-      Map<String, dynamic> learnerData) async {
+    Map<String, dynamic> learnerData,
+  ) async {
     final result = Map<String, dynamic>.from(learnerData);
     final learnerId = learnerData['LearnerID']?.toString() ?? '';
 
     // Helper to encode local file as base64 if it exists
     Future<void> encodeIfLocalFile(
-        String fieldName, String base64FieldName) async {
+      String fieldName,
+      String base64FieldName,
+    ) async {
       final path = learnerData[fieldName]?.toString();
       if (path == null || path.isEmpty) return;
       try {
@@ -6373,7 +6623,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   }
 
   Future<Map<String, dynamic>?> _sendAllDataToBackend(
-      List<Map<String, dynamic>> allData) async {
+    List<Map<String, dynamic>> allData,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse(AppConfig.syncLearnerUrl),
@@ -6408,7 +6659,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('No internet connection, cannot sync data')),
+          content: Text('No internet connection, cannot sync data'),
+        ),
       );
       return;
     }
@@ -6424,9 +6676,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
     if (unsyncedLearners.isEmpty) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No data to sync')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No data to sync')));
       return;
     }
 
@@ -6447,17 +6699,16 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         Map<String, dynamic> learnerData = Map.from(learner);
         learnerData = await _prepareLearnerDataWithBase64Images(learnerData);
 
-        Map<String, dynamic>? bankData =
-            bankDetails.isNotEmpty ? Map.from(bankDetails.first) : null;
+        Map<String, dynamic>? bankData = bankDetails.isNotEmpty
+            ? Map.from(bankDetails.first)
+            : null;
 
         // Add to batch data
-        allDataToSync.add({
-          'learner': learnerData,
-          'bank': bankData,
-        });
+        allDataToSync.add({'learner': learnerData, 'bank': bankData});
       } catch (e) {
         debugPrint(
-            'Error preparing learner data for idNumber ${learner['idNumber']}: $e');
+          'Error preparing learner data for idNumber ${learner['idNumber']}: $e',
+        );
       }
     }
 
@@ -6500,7 +6751,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           debugPrint('Successfully processed sync for learner: $idNumber');
         } catch (e) {
           debugPrint(
-              'Error processing synced learner ${syncedLearner['idNumber']}: $e');
+            'Error processing synced learner ${syncedLearner['idNumber']}: $e',
+          );
         }
       }
 
@@ -6510,9 +6762,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       }
 
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     } else {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -6521,8 +6773,11 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     }
   }
 
-  Future<void> submitLearnerData(BuildContext context,
-      Map<String, dynamic> learnerData, Map<String, dynamic>? bankData) async {
+  Future<void> submitLearnerData(
+    BuildContext context,
+    Map<String, dynamic> learnerData,
+    Map<String, dynamic>? bankData,
+  ) async {
     try {
       int learnerId = await insertOrUpdateLearner(learnerData, bankData);
       bool isConnected = await _checkConnectivity();
@@ -6534,17 +6789,17 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content:
-                  Text('No internet connection, learner data saved locally')),
+            content: Text('No internet connection, learner data saved locally'),
+          ),
         );
         await syncBankDetails(); // Verify and store bank details locally
       }
     } catch (e) {
       debugPrint('Error submitting learner data: $e');
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving data: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error saving data: $e')));
     }
   }
 
@@ -6560,7 +6815,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         'yyyy-MM-dd',
         'dd/MM/yyyy',
         'MM/dd/yyyy',
-        'yyyy/MM/dd'
+        'yyyy/MM/dd',
       ];
       DateTime? parsedDate;
 
@@ -6585,8 +6840,10 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     }
   }
 
-  Future<int> insertOrUpdateLearner(Map<String, dynamic> learnerData,
-      [Map<String, dynamic>? bankData]) async {
+  Future<int> insertOrUpdateLearner(
+    Map<String, dynamic> learnerData, [
+    Map<String, dynamic>? bankData,
+  ]) async {
     final db = await database;
     int learnerId = 0;
 
@@ -6598,19 +6855,24 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       // Get project_id from classID (via class -> sites join)
       int? projectId;
       if (learnerData['classID'] != null) {
-        final projectResult = await txn.rawQuery('''
+        final projectResult = await txn.rawQuery(
+          '''
           SELECT s.project_id 
           FROM class c 
           JOIN sites s ON c.siteID = s.siteID 
           WHERE c.classID = ?
-        ''', [learnerData['classID'].toString()]);
+        ''',
+          [learnerData['classID'].toString()],
+        );
 
         if (projectResult.isNotEmpty &&
             projectResult.first['project_id'] != null) {
-          projectId =
-              int.tryParse(projectResult.first['project_id'].toString());
+          projectId = int.tryParse(
+            projectResult.first['project_id'].toString(),
+          );
           debugPrint(
-              '[DB] Found project_id: $projectId for classID: ${learnerData['classID']}');
+            '[DB] Found project_id: $projectId for classID: ${learnerData['classID']}',
+          );
         }
       }
 
@@ -6618,18 +6880,23 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       List<Map<String, dynamic>> existingLearner = [];
       if (projectId != null) {
         // Check for duplicate in same project
-        existingLearner = await txn.rawQuery('''
+        existingLearner = await txn.rawQuery(
+          '''
           SELECT ld.* 
           FROM learnerdetails ld
           JOIN class c ON ld.classID = c.classID
           JOIN sites s ON c.siteID = s.siteID
           WHERE ld.idNumber = ? AND s.project_id = ?
-        ''', [learnerData['idNumber'], projectId]);
+        ''',
+          [learnerData['idNumber'], projectId],
+        );
 
         debugPrint(
-            '[DB] Checking for duplicate: idNumber=${learnerData['idNumber']}, project_id=$projectId');
+          '[DB] Checking for duplicate: idNumber=${learnerData['idNumber']}, project_id=$projectId',
+        );
         debugPrint(
-            '[DB] Found ${existingLearner.length} existing learner(s) in same project');
+          '[DB] Found ${existingLearner.length} existing learner(s) in same project',
+        );
       } else {
         // Fallback to old behavior if project_id not found
         existingLearner = await txn.query(
@@ -6651,7 +6918,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         final originalDate = learnerOnlyData['DateOfBirth']?.toString();
         learnerOnlyData['DateOfBirth'] = _validateAndFormatDate(originalDate);
         debugPrint(
-            '[DB] DateOfBirth: $originalDate -> ${learnerOnlyData['DateOfBirth']}');
+          '[DB] DateOfBirth: $originalDate -> ${learnerOnlyData['DateOfBirth']}',
+        );
       }
 
       if (existingLearner.isNotEmpty) {
@@ -6664,9 +6932,11 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           whereArgs: [learnerId],
         );
         debugPrint(
-            '[DB] Updated existing learner with ID: $learnerId (same project)');
+          '[DB] Updated existing learner with ID: $learnerId (same project)',
+        );
         debugPrint(
-            'Updated existing learner with ID: $learnerId (same project)');
+          'Updated existing learner with ID: $learnerId (same project)',
+        );
       } else {
         // Insert new learner (either new or duplicate in different project)
         learnerOnlyData['synced'] = 0; // Ensure synced is 0 for new entries
@@ -6704,7 +6974,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
             whereArgs: [learnerId],
           );
           debugPrint(
-              '[DB] Updated existing bank details for learner: $learnerId');
+            '[DB] Updated existing bank details for learner: $learnerId',
+          );
           debugPrint('Updated existing bank details for learner: $learnerId');
         } else {
           // Insert new bank details
@@ -6714,7 +6985,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         }
       } else {
         debugPrint(
-            '[DB] No bank data to insert/update - bankData is null or empty');
+          '[DB] No bank data to insert/update - bankData is null or empty',
+        );
         debugPrint('No bank data to insert/update - bankData is null or empty');
       }
     });
@@ -6727,7 +6999,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         whereArgs: [learnerId],
       );
       debugPrint(
-          '[DB] Verification - inserted/updated learner data: ${insertedLearner.first}');
+        '[DB] Verification - inserted/updated learner data: ${insertedLearner.first}',
+      );
 
       if (bankData != null && bankData.isNotEmpty) {
         final insertedBank = await db.query(
@@ -6736,7 +7009,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           whereArgs: [learnerId],
         );
         debugPrint(
-            '[DB] Verification - inserted/updated bank data: ${insertedBank.isNotEmpty ? insertedBank.first : 'NONE'}');
+          '[DB] Verification - inserted/updated bank data: ${insertedBank.isNotEmpty ? insertedBank.first : 'NONE'}',
+        );
       }
     } catch (e) {
       debugPrint('[DB] Error during verification: $e');
@@ -6747,43 +7021,54 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   // Check if learner exists in the same project
   Future<Map<String, dynamic>?> checkLearnerExistsInProject(
-      String idNumber, String classID) async {
+    String idNumber,
+    String classID,
+  ) async {
     final db = await database;
 
     try {
       // Get project_id from classID
-      final projectResult = await db.rawQuery('''
+      final projectResult = await db.rawQuery(
+        '''
         SELECT s.project_id 
         FROM class c 
         JOIN sites s ON c.siteID = s.siteID 
         WHERE c.classID = ?
-      ''', [classID]);
+      ''',
+        [classID],
+      );
 
       if (projectResult.isEmpty || projectResult.first['project_id'] == null) {
         debugPrint(
-            '[DB] No project_id found for classID: $classID, cannot check duplicate');
+          '[DB] No project_id found for classID: $classID, cannot check duplicate',
+        );
         return null;
       }
 
       final projectId = projectResult.first['project_id'];
 
       // Check if learner exists in same project
-      final existingLearner = await db.rawQuery('''
+      final existingLearner = await db.rawQuery(
+        '''
         SELECT ld.*, c.className, s.siteName, s.project_id
         FROM learnerdetails ld
         JOIN class c ON ld.classID = c.classID
         JOIN sites s ON c.siteID = s.siteID
         WHERE ld.idNumber = ? AND s.project_id = ?
-      ''', [idNumber, projectId]);
+      ''',
+        [idNumber, projectId],
+      );
 
       if (existingLearner.isNotEmpty) {
         debugPrint(
-            '[DB] Learner with idNumber $idNumber exists in project $projectId');
+          '[DB] Learner with idNumber $idNumber exists in project $projectId',
+        );
         return existingLearner.first;
       }
 
       debugPrint(
-          '[DB] Learner with idNumber $idNumber does NOT exist in project $projectId');
+        '[DB] Learner with idNumber $idNumber does NOT exist in project $projectId',
+      );
       return null;
     } catch (e) {
       debugPrint('[DB] Error checking learner duplicate: $e');
@@ -6800,20 +7085,24 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     );
 
     debugPrint(
-        'Found ${unsyncedBankDetails.length} unsynced bank details for offline storage');
+      'Found ${unsyncedBankDetails.length} unsynced bank details for offline storage',
+    );
 
     for (var bankDetail in unsyncedBankDetails) {
       try {
         if (bankDetail['LearnerID'] == null || bankDetail['BankName'] == null) {
           debugPrint(
-              'Invalid bank detail for BankID ${bankDetail['BankID']}: Missing required fields');
+            'Invalid bank detail for BankID ${bankDetail['BankID']}: Missing required fields',
+          );
           continue;
         }
         debugPrint(
-            'Bank details for LearnerID ${bankDetail['LearnerID']} verified and stored offline');
+          'Bank details for LearnerID ${bankDetail['LearnerID']} verified and stored offline',
+        );
       } catch (e) {
         debugPrint(
-            'Error processing bank details for BankID ${bankDetail['BankID']}: $e');
+          'Error processing bank details for BankID ${bankDetail['BankID']}: $e',
+        );
       }
     }
   }
@@ -6824,10 +7113,12 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       debugPrint('[SYNC] Starting learner documents sync...');
 
       // Make request to sync endpoint
-      final response = await http.get(
-        Uri.parse(AppConfig.syncLearnerDocumentsUrl),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .get(
+            Uri.parse(AppConfig.syncLearnerDocumentsUrl),
+            headers: {'Content-Type': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
@@ -6835,7 +7126,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         if (jsonData['success'] == true) {
           final documents = jsonData['documents'] as List;
           debugPrint(
-              '[SYNC] Retrieved ${documents.length} learner documents from server');
+            '[SYNC] Retrieved ${documents.length} learner documents from server',
+          );
 
           final db = await database;
           int syncedCount = 0;
@@ -6880,12 +7172,14 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
               }
             } catch (e) {
               debugPrint(
-                  '[SYNC] Error syncing document ${document['document_id']}: $e');
+                '[SYNC] Error syncing document ${document['document_id']}: $e',
+              );
             }
           }
 
           debugPrint(
-              '[SYNC] Successfully synced $syncedCount new learner documents');
+            '[SYNC] Successfully synced $syncedCount new learner documents',
+          );
         } else {
           debugPrint('[SYNC] Server returned error: ${jsonData['message']}');
         }
@@ -6935,8 +7229,11 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     final db = await database;
     try {
       // Check if bankdetails table exists
-      final tables = await db.query('sqlite_master',
-          where: 'type = ? AND name = ?', whereArgs: ['table', 'bankdetails']);
+      final tables = await db.query(
+        'sqlite_master',
+        where: 'type = ? AND name = ?',
+        whereArgs: ['table', 'bankdetails'],
+      );
       if (tables.isEmpty) {
         debugPrint('[DEBUG] bankdetails table does not exist!');
         return;
@@ -6949,12 +7246,14 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       debugPrint('[DEBUG] bankdetails table schema:');
       for (var column in schema) {
         debugPrint(
-            '[DEBUG] Column: ${column['name']} - Type: ${column['type']}');
+          '[DEBUG] Column: ${column['name']} - Type: ${column['type']}',
+        );
       }
 
       // Check if table has any data
-      final count =
-          await db.rawQuery('SELECT COUNT(*) as count FROM bankdetails');
+      final count = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM bankdetails',
+      );
       debugPrint('[DEBUG] bankdetails table has ${count.first['count']} rows');
 
       // Show sample data
@@ -6969,7 +7268,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     }
   }
 
-// Add this method to manually trigger sync
+  // Add this method to manually trigger sync
   Future<void> forceSyncAllData(BuildContext context) async {
     try {
       // Sync all unsynced data
@@ -7032,7 +7331,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
     try {
       debugPrint(
-          '[SYNC-CLASS] Inside try block - Starting learner sync for classID: $classID');
+        '[SYNC-CLASS] Inside try block - Starting learner sync for classID: $classID',
+      );
 
       // Get auth token for authenticated requests
       final token = await AppConfig.getAuthToken();
@@ -7045,36 +7345,43 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       http.Response? response;
       try {
         debugPrint(
-            '[SYNC-CLASS] Trying primary endpoint: syncLearnersByClassUrl');
-        response = await http.get(
-          Uri.parse('${AppConfig.syncLearnersByClassUrl}?classID=$classID'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-        ).timeout(const Duration(seconds: 15));
+          '[SYNC-CLASS] Trying primary endpoint: syncLearnersByClassUrl',
+        );
+        response = await http
+            .get(
+              Uri.parse('${AppConfig.syncLearnersByClassUrl}?classID=$classID'),
+              headers: {
+                'Authorization': 'Bearer $token',
+                'Content-Type': 'application/json',
+              },
+            )
+            .timeout(const Duration(seconds: 15));
 
         if (response.statusCode != 200) {
           debugPrint(
-              '[SYNC-CLASS] Primary endpoint returned ${response.statusCode}, trying fallback...');
+            '[SYNC-CLASS] Primary endpoint returned ${response.statusCode}, trying fallback...',
+          );
           response = null;
         }
       } catch (e) {
         debugPrint(
-            '[SYNC-CLASS] Primary endpoint failed: $e, trying fallback...');
+          '[SYNC-CLASS] Primary endpoint failed: $e, trying fallback...',
+        );
         response = null;
       }
 
       // Fallback to alternative endpoint if primary fails
       if (response == null) {
         debugPrint('[SYNC-CLASS] Trying fallback endpoint: getLearnersUrl');
-        response = await http.get(
-          Uri.parse('${AppConfig.getLearnersUrl}?classID=$classID'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-        ).timeout(const Duration(seconds: 10));
+        response = await http
+            .get(
+              Uri.parse('${AppConfig.getLearnersUrl}?classID=$classID'),
+              headers: {
+                'Authorization': 'Bearer $token',
+                'Content-Type': 'application/json',
+              },
+            )
+            .timeout(const Duration(seconds: 10));
       }
 
       if (response.statusCode == 200) {
@@ -7089,10 +7396,12 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           if (responseData['success'] == true) {
             learnersDataRaw = responseData['data'] as List<dynamic>;
             debugPrint(
-                '[SYNC-CLASS] Using new response format with ${learnersDataRaw.length} learners');
+              '[SYNC-CLASS] Using new response format with ${learnersDataRaw.length} learners',
+            );
           } else {
             debugPrint(
-                '[SYNC-CLASS] Server returned success=false: ${responseData['error'] ?? 'Unknown error'}');
+              '[SYNC-CLASS] Server returned success=false: ${responseData['error'] ?? 'Unknown error'}',
+            );
             throw Exception(responseData['error'] ?? 'Sync failed');
           }
         } else if (responseData is List) {
@@ -7101,7 +7410,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           debugPrint('[SYNC-CLASS] Using old response format (direct array)');
         } else {
           debugPrint(
-              '[SYNC-CLASS] Unexpected response format: ${responseData.runtimeType}');
+            '[SYNC-CLASS] Unexpected response format: ${responseData.runtimeType}',
+          );
           throw Exception('Unexpected response format from server');
         }
 
@@ -7117,26 +7427,34 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
         debugPrint('[SYNC-CLASS] ===== CLASS LEARNER SYNC DEBUG START =====');
         debugPrint(
-            '[SYNC-CLASS] Received ${learnersDataRaw.length} raw records, ${learnersData.length} unique learners from server for classID: $classID');
+          '[SYNC-CLASS] Received ${learnersDataRaw.length} raw records, ${learnersData.length} unique learners from server for classID: $classID',
+        );
         debugPrint(
-            '[SYNC-CLASS] First learner data sample: ${learnersData.isNotEmpty ? learnersData.first : 'No learners'}');
+          '[SYNC-CLASS] First learner data sample: ${learnersData.isNotEmpty ? learnersData.first : 'No learners'}',
+        );
 
         // Debug fingerprint data from server for multiple learners
         if (learnersData.isNotEmpty) {
           for (int i = 0; i < math.min(3, learnersData.length); i++) {
             final learner = learnersData[i];
             debugPrint(
-                '[SYNC-CLASS] Learner ${i + 1} (ID: ${learner['LearnerID']}) fingerprint fields:');
+              '[SYNC-CLASS] Learner ${i + 1} (ID: ${learner['LearnerID']}) fingerprint fields:',
+            );
             debugPrint(
-                '[SYNC-CLASS]   zkteco_left_template: ${learner['zkteco_left_template']?.toString().length ?? 'null'} chars');
+              '[SYNC-CLASS]   zkteco_left_template: ${learner['zkteco_left_template']?.toString().length ?? 'null'} chars',
+            );
             debugPrint(
-                '[SYNC-CLASS]   zkteco_right_template: ${learner['zkteco_right_template']?.toString().length ?? 'null'} chars');
+              '[SYNC-CLASS]   zkteco_right_template: ${learner['zkteco_right_template']?.toString().length ?? 'null'} chars',
+            );
             debugPrint(
-                '[SYNC-CLASS]   futronic_left_template: ${learner['futronic_left_template']?.toString().length ?? 'null'} chars');
+              '[SYNC-CLASS]   futronic_left_template: ${learner['futronic_left_template']?.toString().length ?? 'null'} chars',
+            );
             debugPrint(
-                '[SYNC-CLASS]   futronic_right_template: ${learner['futronic_right_template']?.toString().length ?? 'null'} chars');
+              '[SYNC-CLASS]   futronic_right_template: ${learner['futronic_right_template']?.toString().length ?? 'null'} chars',
+            );
             debugPrint(
-                '[SYNC-CLASS]   sourceafis_template: ${learner['sourceafis_template']?.toString().length ?? 'null'} chars');
+              '[SYNC-CLASS]   sourceafis_template: ${learner['sourceafis_template']?.toString().length ?? 'null'} chars',
+            );
           }
         }
         debugPrint('[SYNC-CLASS] ===== CLASS LEARNER SYNC DEBUG END =====');
@@ -7158,9 +7476,11 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         }
 
         debugPrint(
-            '[SYNC] Found ${existingLearners.length} existing learners in local database');
+          '[SYNC] Found ${existingLearners.length} existing learners in local database',
+        );
         debugPrint(
-            '[SYNC] Using UPSERT logic - preserving existing learners for offline operation');
+          '[SYNC] Using UPSERT logic - preserving existing learners for offline operation',
+        );
 
         // Insert new learners
         for (var learner in learnersData) {
@@ -7246,8 +7566,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
               }
               if (existingLearner['isLeftHand'] != null &&
                   existingLearner['isLeftHand'].toString().isNotEmpty) {
-                fingerprintData['isLeftHand'] =
-                    existingLearner['isLeftHand'].toString();
+                fingerprintData['isLeftHand'] = existingLearner['isLeftHand']
+                    .toString();
               }
               if (existingLearner['sourceafis_template'] != null &&
                   existingLearner['sourceafis_template']
@@ -7257,7 +7577,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
                     existingLearner['sourceafis_template'].toString();
               }
               debugPrint(
-                  '[SYNC] Starting with existing local templates for learner: $learnerId');
+                '[SYNC] Starting with existing local templates for learner: $learnerId',
+              );
             }
 
             // Override with server data if it exists (server takes priority)
@@ -7268,35 +7589,40 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
               fingerprintData['zkteco_left_template'] =
                   learner['zkteco_left_template'].toString();
               debugPrint(
-                  '[SYNC] Server provided zkteco_left_template for learner: $learnerId');
+                '[SYNC] Server provided zkteco_left_template for learner: $learnerId',
+              );
             }
             if (learner['zkteco_right_template'] != null &&
                 learner['zkteco_right_template'].toString().isNotEmpty) {
               fingerprintData['zkteco_right_template'] =
                   learner['zkteco_right_template'].toString();
               debugPrint(
-                  '[SYNC] Server provided zkteco_right_template for learner: $learnerId');
+                '[SYNC] Server provided zkteco_right_template for learner: $learnerId',
+              );
             }
             if (learner['futronic_left_template'] != null &&
                 learner['futronic_left_template'].toString().isNotEmpty) {
               fingerprintData['futronic_left_template'] =
                   learner['futronic_left_template'].toString();
               debugPrint(
-                  '[SYNC] Server provided futronic_left_template for learner: $learnerId');
+                '[SYNC] Server provided futronic_left_template for learner: $learnerId',
+              );
             }
             if (learner['futronic_right_template'] != null &&
                 learner['futronic_right_template'].toString().isNotEmpty) {
               fingerprintData['futronic_right_template'] =
                   learner['futronic_right_template'].toString();
               debugPrint(
-                  '[SYNC] Server provided futronic_right_template for learner: $learnerId');
+                '[SYNC] Server provided futronic_right_template for learner: $learnerId',
+              );
             }
             if (learner['sourceafis_template'] != null &&
                 learner['sourceafis_template'].toString().isNotEmpty) {
               fingerprintData['sourceafis_template'] =
                   learner['sourceafis_template'].toString();
               debugPrint(
-                  '[SYNC] Server provided sourceafis_template for learner: $learnerId');
+                '[SYNC] Server provided sourceafis_template for learner: $learnerId',
+              );
             }
 
             // Add old format fields for backwards compatibility mapping
@@ -7305,34 +7631,43 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
               fingerprintData['fingerprint_template'] =
                   learner['fingerprint_template'].toString();
               debugPrint(
-                  '[SYNC] Server provided fingerprint_template (old format) for learner: $learnerId');
+                '[SYNC] Server provided fingerprint_template (old format) for learner: $learnerId',
+              );
             }
             if (learner['isLeftHand'] != null &&
                 learner['isLeftHand'].toString().isNotEmpty) {
               fingerprintData['isLeftHand'] = learner['isLeftHand'].toString();
               debugPrint(
-                  '[SYNC] Server provided isLeftHand (old format) for learner: $learnerId');
+                '[SYNC] Server provided isLeftHand (old format) for learner: $learnerId',
+              );
             }
 
             learnerData.addAll(fingerprintData);
 
             // Debug what we're about to insert
             debugPrint(
-                '[SYNC] ===== INSERTING LEARNER ${learnerData['LearnerID']} =====');
+              '[SYNC] ===== INSERTING LEARNER ${learnerData['LearnerID']} =====',
+            );
             debugPrint(
-                '[SYNC] Pre-insert learnerData keys: ${learnerData.keys.toList()}');
+              '[SYNC] Pre-insert learnerData keys: ${learnerData.keys.toList()}',
+            );
             debugPrint('[SYNC] Fingerprint data before insert:');
             debugPrint(
-                '[SYNC]   fingerprint_template: ${learnerData['fingerprint_template']?.toString().length ?? 'null'} chars');
+              '[SYNC]   fingerprint_template: ${learnerData['fingerprint_template']?.toString().length ?? 'null'} chars',
+            );
             debugPrint('[SYNC]   isLeftHand: ${learnerData['isLeftHand']}');
             debugPrint(
-                '[SYNC]   zkteco_left_template: ${learnerData['zkteco_left_template']?.toString().length ?? 'null'} chars');
+              '[SYNC]   zkteco_left_template: ${learnerData['zkteco_left_template']?.toString().length ?? 'null'} chars',
+            );
             debugPrint(
-                '[SYNC]   zkteco_right_template: ${learnerData['zkteco_right_template']?.toString().length ?? 'null'} chars');
+              '[SYNC]   zkteco_right_template: ${learnerData['zkteco_right_template']?.toString().length ?? 'null'} chars',
+            );
             debugPrint(
-                '[SYNC]   futronic_left_template: ${learnerData['futronic_left_template']?.toString().length ?? 'null'} chars');
+              '[SYNC]   futronic_left_template: ${learnerData['futronic_left_template']?.toString().length ?? 'null'} chars',
+            );
             debugPrint(
-                '[SYNC]   futronic_right_template: ${learnerData['futronic_right_template']?.toString().length ?? 'null'} chars');
+              '[SYNC]   futronic_right_template: ${learnerData['futronic_right_template']?.toString().length ?? 'null'} chars',
+            );
 
             // Use insertData instead of direct db.insert to ensure proper column mapping
             // OFFLINE-FIRST: Use UPSERT logic (update if exists, insert if new)
@@ -7345,12 +7680,14 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
                 whereArgs: [learnerId],
               );
               debugPrint(
-                  '[SYNC] Updated existing learner: ${learnerData['Name']} ${learnerData['Surname']} (ID: $learnerId)');
+                '[SYNC] Updated existing learner: ${learnerData['Name']} ${learnerData['Surname']} (ID: $learnerId)',
+              );
             } else {
               // INSERT new learner
               await insertData('learnerdetails', learnerData);
               debugPrint(
-                  '[SYNC] Inserted new learner: ${learnerData['Name']} ${learnerData['Surname']} (ID: $learnerId)');
+                '[SYNC] Inserted new learner: ${learnerData['Name']} ${learnerData['Surname']} (ID: $learnerId)',
+              );
             }
 
             // Verify what was actually inserted
@@ -7363,7 +7700,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
                 'zkteco_left_template',
                 'zkteco_right_template',
                 'futronic_left_template',
-                'futronic_right_template'
+                'futronic_right_template',
               ],
               where: 'LearnerID = ?',
               whereArgs: [learnerData['LearnerID']],
@@ -7372,15 +7709,20 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
               final row = verifyResult.first;
               debugPrint('[SYNC] ===== VERIFICATION POST-INSERT =====');
               debugPrint(
-                  '[SYNC] Learner ${row['LearnerID']} (${row['Name']} ${row['Surname']}) fingerprint columns:');
+                '[SYNC] Learner ${row['LearnerID']} (${row['Name']} ${row['Surname']}) fingerprint columns:',
+              );
               debugPrint(
-                  '[SYNC]   zkteco_left_template: ${row['zkteco_left_template']?.toString().length ?? 'null'} chars');
+                '[SYNC]   zkteco_left_template: ${row['zkteco_left_template']?.toString().length ?? 'null'} chars',
+              );
               debugPrint(
-                  '[SYNC]   zkteco_right_template: ${row['zkteco_right_template']?.toString().length ?? 'null'} chars');
+                '[SYNC]   zkteco_right_template: ${row['zkteco_right_template']?.toString().length ?? 'null'} chars',
+              );
               debugPrint(
-                  '[SYNC]   futronic_left_template: ${row['futronic_left_template']?.toString().length ?? 'null'} chars');
+                '[SYNC]   futronic_left_template: ${row['futronic_left_template']?.toString().length ?? 'null'} chars',
+              );
               debugPrint(
-                  '[SYNC]   futronic_right_template: ${row['futronic_right_template']?.toString().length ?? 'null'} chars');
+                '[SYNC]   futronic_right_template: ${row['futronic_right_template']?.toString().length ?? 'null'} chars',
+              );
               debugPrint('[SYNC] ===== END VERIFICATION =====');
             }
           } catch (e) {
@@ -7389,10 +7731,12 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         }
 
         debugPrint(
-            '[SYNC] Successfully synced ${learnersData.length} learners for classID: $classID');
+          '[SYNC] Successfully synced ${learnersData.length} learners for classID: $classID',
+        );
       } else {
         debugPrint(
-            '[SYNC] Server returned status code: ${response.statusCode}');
+          '[SYNC] Server returned status code: ${response.statusCode}',
+        );
         throw Exception('Failed to fetch learners from server');
       }
     } catch (e) {
@@ -7401,11 +7745,14 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     }
   }
 
-  Future<void> syncUnsyncedLearnerProfiles(
-      {int batchSize = 5, int maxToSync = 20}) async {
+  Future<void> syncUnsyncedLearnerProfiles({
+    int batchSize = 5,
+    int maxToSync = 20,
+  }) async {
     try {
       debugPrint(
-          '[SYNC-LEARNER-PROFILE] Starting lazy sync of unsynced learner profiles (batch: $batchSize, max: $maxToSync)');
+        '[SYNC-LEARNER-PROFILE] Starting lazy sync of unsynced learner profiles (batch: $batchSize, max: $maxToSync)',
+      );
 
       final db = await database;
 
@@ -7424,7 +7771,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       }
 
       debugPrint(
-          '[SYNC-LEARNER-PROFILE] Found ${unsyncedLearners.length} unsynced learner profiles (limited to $maxToSync)');
+        '[SYNC-LEARNER-PROFILE] Found ${unsyncedLearners.length} unsynced learner profiles (limited to $maxToSync)',
+      );
 
       // Check internet connectivity
       bool hasInternet = false;
@@ -7437,7 +7785,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
       if (!hasInternet) {
         debugPrint(
-            '[SYNC-LEARNER-PROFILE] No internet - skipping sync of learner profiles');
+          '[SYNC-LEARNER-PROFILE] No internet - skipping sync of learner profiles',
+        );
         return;
       }
 
@@ -7504,7 +7853,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
           if (updateData.isEmpty) {
             debugPrint(
-                '[SYNC-LEARNER-PROFILE] No fields to sync for learner $learnerId - marking as synced');
+              '[SYNC-LEARNER-PROFILE] No fields to sync for learner $learnerId - marking as synced',
+            );
             await db.update(
               'learnerdetails',
               {'synced': 1},
@@ -7516,7 +7866,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           }
 
           debugPrint(
-              '[SYNC-LEARNER-PROFILE] Syncing learner profile for $learnerId with fields: ${updateData.keys}');
+            '[SYNC-LEARNER-PROFILE] Syncing learner profile for $learnerId with fields: ${updateData.keys}',
+          );
 
           // Get auth token
           final prefs = await SharedPreferences.getInstance();
@@ -7529,10 +7880,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
                 'Content-Type': 'application/json',
                 if (token != null) 'Authorization': 'Bearer $token',
               },
-              body: jsonEncode({
-                'LearnerID': learnerId,
-                'data': updateData,
-              }),
+              body: jsonEncode({'LearnerID': learnerId, 'data': updateData}),
             ),
             endpoint: 'learner_profile_sync',
             maxRetries: NetworkConfig.syncOperationsMaxRetries,
@@ -7543,7 +7891,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
             final jsonResponse = jsonDecode(response.body);
             if (jsonResponse['success'] == true) {
               debugPrint(
-                  '[SYNC-LEARNER-PROFILE] Successfully synced learner profile for $learnerId');
+                '[SYNC-LEARNER-PROFILE] Successfully synced learner profile for $learnerId',
+              );
               await db.update(
                 'learnerdetails',
                 {'synced': 1},
@@ -7553,22 +7902,26 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
               syncedCount++;
             } else {
               debugPrint(
-                  '[SYNC-LEARNER-PROFILE] Server rejected update for learner $learnerId: ${jsonResponse['message']}');
+                '[SYNC-LEARNER-PROFILE] Server rejected update for learner $learnerId: ${jsonResponse['message']}',
+              );
             }
           } else {
             debugPrint(
-                '[SYNC-LEARNER-PROFILE] Failed to sync learner $learnerId: HTTP ${response.statusCode}');
+              '[SYNC-LEARNER-PROFILE] Failed to sync learner $learnerId: HTTP ${response.statusCode}',
+            );
           }
         } catch (e) {
           debugPrint(
-              '[SYNC-LEARNER-PROFILE] Error syncing learner profile: $e');
+            '[SYNC-LEARNER-PROFILE] Error syncing learner profile: $e',
+          );
         }
 
         // BATCH QUEUING: Add delay after each batch
         batchCount++;
         if (batchCount >= batchSize && i < unsyncedLearners.length - 1) {
           debugPrint(
-              '[SYNC-LEARNER-PROFILE] Batch complete ($batchCount records), waiting 500ms before next batch...');
+            '[SYNC-LEARNER-PROFILE] Batch complete ($batchCount records), waiting 500ms before next batch...',
+          );
           await Future.delayed(const Duration(milliseconds: 500));
           batchCount = 0;
         } else if (i < unsyncedLearners.length - 1) {
@@ -7578,25 +7931,30 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       }
 
       debugPrint(
-          '[SYNC-LEARNER-PROFILE] Successfully synced $syncedCount/${unsyncedLearners.length} learner profiles');
+        '[SYNC-LEARNER-PROFILE] Successfully synced $syncedCount/${unsyncedLearners.length} learner profiles',
+      );
 
       // If we synced all records in this batch and reached the limit,
       // there might be more unsynced records
       if (unsyncedLearners.length == maxToSync && syncedCount > 0) {
         debugPrint(
-            '[SYNC-LEARNER-PROFILE] More unsynced records may exist. Run sync again to continue.');
+          '[SYNC-LEARNER-PROFILE] More unsynced records may exist. Run sync again to continue.',
+        );
       }
     } catch (e) {
       debugPrint(
-          '[SYNC-LEARNER-PROFILE] Error syncing unsynced learner profiles: $e');
+        '[SYNC-LEARNER-PROFILE] Error syncing unsynced learner profiles: $e',
+      );
     }
   }
 
   Future<List<Map<String, dynamic>>> getLearnersWithInductionClockingData(
-      String classID) async {
+    String classID,
+  ) async {
     final db = await database;
     try {
-      final result = await db.rawQuery('''
+      final result = await db.rawQuery(
+        '''
         SELECT l.LearnerID, l.Name, l.Surname, l.idNumber, ic.clock_in_time, ic.clock_out_time, ic.contact_time
         FROM learnerdetails l
         LEFT JOIN (
@@ -7609,7 +7967,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           GROUP BY LearnerID
         ) ic ON l.LearnerID = ic.LearnerID
         WHERE l.classID = ?
-      ''', [DateFormat('yyyy-MM-dd').format(DateTime.now()), classID]);
+      ''',
+        [DateFormat('yyyy-MM-dd').format(DateTime.now()), classID],
+      );
       debugPrint('Fetched learners with clocking data: $result');
       return result;
     } catch (e) {
@@ -7641,7 +8001,10 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   }
 
   Future<void> updateInductionClocking(
-      String learnerID, String clockDate, Map<String, dynamic> data) async {
+    String learnerID,
+    String clockDate,
+    Map<String, dynamic> data,
+  ) async {
     final db = await database;
     try {
       await db.update(
@@ -7651,7 +8014,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         whereArgs: [learnerID, clockDate],
       );
       debugPrint(
-          'Updated clocking data for LearnerID: $learnerID on $clockDate: $data');
+        'Updated clocking data for LearnerID: $learnerID on $clockDate: $data',
+      );
     } catch (e) {
       debugPrint('Error updating induction_clocking: $e');
       rethrow;
@@ -7662,8 +8026,11 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   /// Returns true if synced to server, false if saved locally
   /// scannerType: 'zkteco' or 'futronic' to determine which column to save to
   Future<bool> saveFingerprintSmart(
-      int learnerId, String finger, dynamic template,
-      {String scannerType = 'futronic'}) async {
+    int learnerId,
+    String finger,
+    dynamic template, {
+    String scannerType = 'futronic',
+  }) async {
     try {
       final db = await database;
       final templateStr = template.toString();
@@ -7671,21 +8038,30 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       // Skip if template is empty
       if (templateStr.isEmpty) {
         debugPrint(
-            '[SAVE] Skipping save for empty template: $scannerType $finger for learner $learnerId');
+          '[SAVE] Skipping save for empty template: $scannerType $finger for learner $learnerId',
+        );
         return false;
       }
 
       // Save to the appropriate column based on scanner type
       if (scannerType == 'zkteco') {
-        await saveZkTecoTemplate(learnerId, templateStr,
-            isLeft: finger == 'left');
+        await saveZkTecoTemplate(
+          learnerId,
+          templateStr,
+          isLeft: finger == 'left',
+        );
         debugPrint(
-            '[SAVE] Saved ZKTeco template to ${finger == 'left' ? 'zkteco_left_template' : 'zkteco_right_template'}');
+          '[SAVE] Saved ZKTeco template to ${finger == 'left' ? 'zkteco_left_template' : 'zkteco_right_template'}',
+        );
       } else if (scannerType == 'futronic') {
-        await saveFutronicTemplate(learnerId, templateStr,
-            isLeft: finger == 'left');
+        await saveFutronicTemplate(
+          learnerId,
+          templateStr,
+          isLeft: finger == 'left',
+        );
         debugPrint(
-            '[SAVE] Saved Futronic template to ${finger == 'left' ? 'futronic_left_template' : 'futronic_right_template'}');
+          '[SAVE] Saved Futronic template to ${finger == 'left' ? 'futronic_left_template' : 'futronic_right_template'}',
+        );
       } else {
         throw Exception('Unknown scanner type: $scannerType');
       }
@@ -7702,17 +8078,19 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       try {
         // Check connectivity first
         final connectivityResult = await Connectivity().checkConnectivity();
-        if (connectivityResult != ConnectivityResult.none) {
+        if (!connectivityResult.contains(ConnectivityResult.none)) {
           debugPrint(
-              '[SYNC] Internet available, attempting immediate sync for $scannerType template');
+            '[SYNC] Internet available, attempting immediate sync for $scannerType template',
+          );
 
           // Try to sync just this specific template first
           await _syncSingleTemplate(
-              learnerId,
-              scannerType == 'zkteco'
-                  ? (finger == 'left' ? 'zkteco_left' : 'zkteco_right')
-                  : (finger == 'left' ? 'futronic_left' : 'futronic_right'),
-              templateStr);
+            learnerId,
+            scannerType == 'zkteco'
+                ? (finger == 'left' ? 'zkteco_left' : 'zkteco_right')
+                : (finger == 'left' ? 'futronic_left' : 'futronic_right'),
+            templateStr,
+          );
 
           debugPrint('[SYNC] Individual template sync completed successfully');
 
@@ -7725,7 +8103,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           );
 
           debugPrint(
-              '[SYNC] Immediate sync completed successfully for $scannerType $finger template');
+            '[SYNC] Immediate sync completed successfully for $scannerType $finger template',
+          );
           return true; // Successfully synced
         } else {
           debugPrint('[SYNC] No internet connection, will sync later');
@@ -7744,19 +8123,25 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   // DEPRECATED: Use saveZkTecoTemplate or saveFutronicTemplate instead
   Future<void> saveFingerprint(
-      int learnerId, String finger, String wsqTemplate) async {
+    int learnerId,
+    String finger,
+    String wsqTemplate,
+  ) async {
     debugPrint(
-        '[DEPRECATED] saveFingerprint called - use saveZkTecoTemplate or saveFutronicTemplate instead');
+      '[DEPRECATED] saveFingerprint called - use saveZkTecoTemplate or saveFutronicTemplate instead',
+    );
     // This method is kept for backward compatibility but should not be used
   }
 
   // Comprehensive fingerprint detection method
   Future<Map<String, String?>> getFingerprintsComprehensive(
-      int learnerId) async {
+    int learnerId,
+  ) async {
     final db = await database;
 
     debugPrint(
-        '[DB_DEBUG] getFingerprintsComprehensive for learner $learnerId');
+      '[DB_DEBUG] getFingerprintsComprehensive for learner $learnerId',
+    );
 
     // Query ALL columns to see what data exists
     final result = await db.query(
@@ -7783,7 +8168,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
               valueStr.length > 50) {
             // Fingerprint templates are usually quite long
             debugPrint(
-                '[DB_DEBUG] Found potential fingerprint data in column "$key": ${valueStr.length} chars');
+              '[DB_DEBUG] Found potential fingerprint data in column "$key": ${valueStr.length} chars',
+            );
 
             // Try to determine if it's left or right hand
             if (keyLower.contains('left') ||
@@ -7805,11 +8191,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       });
 
       debugPrint(
-          '[DB_DEBUG] Comprehensive search result - Left: ${leftTemplate != null}, Right: ${rightTemplate != null}');
-      return {
-        'left': leftTemplate,
-        'right': rightTemplate,
-      };
+        '[DB_DEBUG] Comprehensive search result - Left: ${leftTemplate != null}, Right: ${rightTemplate != null}',
+      );
+      return {'left': leftTemplate, 'right': rightTemplate};
     }
 
     return {'left': null, 'right': null};
@@ -7841,7 +8225,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         'zkteco_right_template',
         'futronic_left_template',
         'futronic_right_template',
-        'sourceafis_template'
+        'sourceafis_template',
       ],
       where: 'LearnerID = ?',
       whereArgs: [learnerId],
@@ -7862,15 +8246,20 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       final sourceafis = row['sourceafis_template'] as String?;
 
       debugPrint(
-          '[DB_DEBUG] ZKTeco left template: ${zkLeft?.length ?? 0} chars, null: ${zkLeft == null}');
+        '[DB_DEBUG] ZKTeco left template: ${zkLeft?.length ?? 0} chars, null: ${zkLeft == null}',
+      );
       debugPrint(
-          '[DB_DEBUG] ZKTeco right template: ${zkRight?.length ?? 0} chars, null: ${zkRight == null}');
+        '[DB_DEBUG] ZKTeco right template: ${zkRight?.length ?? 0} chars, null: ${zkRight == null}',
+      );
       debugPrint(
-          '[DB_DEBUG] Futronic left template: ${futronicLeft?.length ?? 0} chars, null: ${futronicLeft == null}');
+        '[DB_DEBUG] Futronic left template: ${futronicLeft?.length ?? 0} chars, null: ${futronicLeft == null}',
+      );
       debugPrint(
-          '[DB_DEBUG] Futronic right template: ${futronicRight?.length ?? 0} chars, null: ${futronicRight == null}');
+        '[DB_DEBUG] Futronic right template: ${futronicRight?.length ?? 0} chars, null: ${futronicRight == null}',
+      );
       debugPrint(
-          '[DB_DEBUG] SourceAFIS template: ${sourceafis?.length ?? 0} chars, null: ${sourceafis == null}');
+        '[DB_DEBUG] SourceAFIS template: ${sourceafis?.length ?? 0} chars, null: ${sourceafis == null}',
+      );
 
       // If no templates found, check if data might be in a different format
       if ((zkLeft == null || zkLeft.isEmpty) &&
@@ -7879,7 +8268,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           (futronicRight == null || futronicRight.isEmpty) &&
           (sourceafis == null || sourceafis.isEmpty)) {
         debugPrint(
-            '[DB_DEBUG] No templates found in standard columns, checking for any non-null template data...');
+          '[DB_DEBUG] No templates found in standard columns, checking for any non-null template data...',
+        );
         // Let's see if there's ANY fingerprint data for this learner
         final allData = await db.query(
           'learnerdetails',
@@ -7890,12 +8280,14 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         if (allData.isNotEmpty) {
           final allRow = allData.first;
           debugPrint(
-              '[DB_DEBUG] All available columns for learner $learnerId:');
+            '[DB_DEBUG] All available columns for learner $learnerId:',
+          );
           allRow.forEach((key, value) {
             if (key.toLowerCase().contains('template') ||
                 key.toLowerCase().contains('finger')) {
               debugPrint(
-                  '[DB_DEBUG]   $key: ${value != null ? "${value.toString().length} chars" : "NULL"}');
+                '[DB_DEBUG]   $key: ${value != null ? "${value.toString().length} chars" : "NULL"}',
+              );
             }
           });
         }
@@ -7905,43 +8297,48 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       var leftTemplate = (zkLeft != null && zkLeft.isNotEmpty)
           ? zkLeft
           : (futronicLeft != null && futronicLeft.isNotEmpty)
-              ? futronicLeft
-              : null;
+          ? futronicLeft
+          : null;
       var rightTemplate = (zkRight != null && zkRight.isNotEmpty)
           ? zkRight
           : (futronicRight != null && futronicRight.isNotEmpty)
-              ? futronicRight
-              : null;
+          ? futronicRight
+          : null;
 
       // If no templates found in standard columns, try comprehensive search
       if ((leftTemplate == null || leftTemplate.isEmpty) &&
           (rightTemplate == null || rightTemplate.isEmpty)) {
         debugPrint(
-            '[DB_DEBUG] No templates found in standard columns, trying comprehensive search...');
-        final comprehensiveResult =
-            await getFingerprintsComprehensive(learnerId);
+          '[DB_DEBUG] No templates found in standard columns, trying comprehensive search...',
+        );
+        final comprehensiveResult = await getFingerprintsComprehensive(
+          learnerId,
+        );
         leftTemplate = comprehensiveResult['left'];
         rightTemplate = comprehensiveResult['right'];
       }
 
       // Debug logging
       debugPrint(
-          '[DB_DEBUG] ZKTeco left template exists: ${zkLeft != null && zkLeft.isNotEmpty}');
+        '[DB_DEBUG] ZKTeco left template exists: ${zkLeft != null && zkLeft.isNotEmpty}',
+      );
       debugPrint(
-          '[DB_DEBUG] ZKTeco right template exists: ${zkRight != null && zkRight.isNotEmpty}');
+        '[DB_DEBUG] ZKTeco right template exists: ${zkRight != null && zkRight.isNotEmpty}',
+      );
       debugPrint(
-          '[DB_DEBUG] Futronic left template exists: ${futronicLeft != null && futronicLeft.isNotEmpty}');
+        '[DB_DEBUG] Futronic left template exists: ${futronicLeft != null && futronicLeft.isNotEmpty}',
+      );
       debugPrint(
-          '[DB_DEBUG] Futronic right template exists: ${futronicRight != null && futronicRight.isNotEmpty}');
+        '[DB_DEBUG] Futronic right template exists: ${futronicRight != null && futronicRight.isNotEmpty}',
+      );
       debugPrint(
-          '[DB_DEBUG] Final left template exists: ${leftTemplate != null && leftTemplate.isNotEmpty}');
+        '[DB_DEBUG] Final left template exists: ${leftTemplate != null && leftTemplate.isNotEmpty}',
+      );
       debugPrint(
-          '[DB_DEBUG] Final right template exists: ${rightTemplate != null && rightTemplate.isNotEmpty}');
+        '[DB_DEBUG] Final right template exists: ${rightTemplate != null && rightTemplate.isNotEmpty}',
+      );
 
-      return {
-        'left': leftTemplate,
-        'right': rightTemplate,
-      };
+      return {'left': leftTemplate, 'right': rightTemplate};
     } else {
       debugPrint('[DB_DEBUG] No learner found with ID $learnerId');
     }
@@ -7949,7 +8346,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   }
 
   Future<Map<String, dynamic>?> getInductionAttendanceForDay(
-      String learnerId, String date) async {
+    String learnerId,
+    String date,
+  ) async {
     final db = await database;
     final result = await db.query(
       'induction_clocking',
@@ -7964,7 +8363,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     // Server fetch disabled - data is already synced via main sync endpoint
     // This prevents FormatException errors from broken get_indaction_data.php endpoint
     debugPrint(
-        '[DB_HELPER] No local induction record found for LearnerID: $learnerId, date: $date');
+      '[DB_HELPER] No local induction record found for LearnerID: $learnerId, date: $date',
+    );
 
     return null;
   }
@@ -7978,7 +8378,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         'zkteco_left_template',
         'zkteco_right_template',
         'futronic_left_template',
-        'futronic_right_template'
+        'futronic_right_template',
       ],
       where: 'LearnerID = ?',
       whereArgs: [learnerId],
@@ -7993,12 +8393,12 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       final template = (zkLeft != null && zkLeft.isNotEmpty)
           ? zkLeft
           : (zkRight != null && zkRight.isNotEmpty)
-              ? zkRight
-              : (futronicLeft != null && futronicLeft.isNotEmpty)
-                  ? futronicLeft
-                  : (futronicRight != null && futronicRight.isNotEmpty)
-                      ? futronicRight
-                      : null;
+          ? zkRight
+          : (futronicLeft != null && futronicLeft.isNotEmpty)
+          ? futronicLeft
+          : (futronicRight != null && futronicRight.isNotEmpty)
+          ? futronicRight
+          : null;
 
       if (template != null) {
         try {
@@ -8015,13 +8415,15 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   // Store fingerprint feature vector (as base64 string) for a learner
   Future<void> saveFingerprintFeatures(
-      int learnerId, Uint8List featureBytes) async {
+    int learnerId,
+    Uint8List featureBytes,
+  ) async {
     final db = await database;
     final base64Features = base64Encode(featureBytes);
     await db.update(
       'learnerdetails',
       {
-        'sourceafis_template': base64Features
+        'sourceafis_template': base64Features,
       }, // Reusing the same column for feature vectors
       where: 'LearnerID = ?',
       whereArgs: [learnerId],
@@ -8034,7 +8436,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     final result = await db.query(
       'learnerdetails',
       columns: [
-        'sourceafis_template'
+        'sourceafis_template',
       ], // Reusing the same column for feature vectors
       where: 'LearnerID = ?',
       whereArgs: [learnerId],
@@ -8054,7 +8456,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   // DEPRECATED: Use getAllTemplates instead
   Future<Uint8List?> getIsLefthand(int learnerId) async {
     debugPrint(
-        '[DEPRECATED] getIsLefthand called - use getAllTemplates instead');
+      '[DEPRECATED] getIsLefthand called - use getAllTemplates instead',
+    );
     // This method is kept for backward compatibility but should not be used
     return null;
   }
@@ -8091,7 +8494,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         'futronic_left_template': null,
         'futronic_right_template': null,
         'sourceafis_template': null,
-        'synced': 0
+        'synced': 0,
       },
       where: 'LearnerID = ?',
       whereArgs: [learnerId],
@@ -8123,19 +8526,23 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
     // Create indexes
     await db.execute(
-        'CREATE INDEX IF NOT EXISTS idx_monitoring_learner_status ON monitoring (learner_id, status)');
+      'CREATE INDEX IF NOT EXISTS idx_monitoring_learner_status ON monitoring (learner_id, status)',
+    );
     await db.execute(
-        'CREATE INDEX IF NOT EXISTS idx_monitoring_prompt_type ON monitoring (prompt_type, status)');
+      'CREATE INDEX IF NOT EXISTS idx_monitoring_prompt_type ON monitoring (prompt_type, status)',
+    );
   }
 
   // Get random learners who are currently clocked in
-  Future<List<Map<String, dynamic>>> getRandomClockedLearners(
-      {int count = 2}) async {
+  Future<List<Map<String, dynamic>>> getRandomClockedLearners({
+    int count = 2,
+  }) async {
     final db = await database;
     final now = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     // Get learners who are clocked in today
-    final result = await db.rawQuery('''
+    final result = await db.rawQuery(
+      '''
       SELECT DISTINCT l.LearnerID, l.firstName, l.lastName, l.classID,
              c.clock_in_time, c.clock_out_time
       FROM learnerdetails l
@@ -8150,15 +8557,19 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         )
       ORDER BY RANDOM()
       LIMIT ?
-    ''', [now, count]);
+    ''',
+      [now, count],
+    );
 
     debugPrint('[MONITORING] Found ${result.length} random clocked learners');
     return result;
   }
 
   // Create random biometric prompt
-  Future<int> createRandomPrompt(int learnerId,
-      {int countdownDuration = 180}) async {
+  Future<int> createRandomPrompt(
+    int learnerId, {
+    int countdownDuration = 180,
+  }) async {
     final db = await database;
     final now = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
 
@@ -8171,7 +8582,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     });
 
     debugPrint(
-        '[MONITORING] Created random prompt for learner $learnerId, monitoring_id: $monitoringId');
+      '[MONITORING] Created random prompt for learner $learnerId, monitoring_id: $monitoringId',
+    );
     return monitoringId;
   }
 
@@ -8201,7 +8613,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     );
 
     debugPrint(
-        '[MONITORING] Updated monitoring_id $monitoringId status to $status');
+      '[MONITORING] Updated monitoring_id $monitoringId status to $status',
+    );
   }
 
   // Get pending monitoring records
@@ -8255,16 +8668,21 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   // ==================== FACILITATOR FINGERPRINT METHODS ====================
 
   // Save facilitator fingerprint template (ZKTeco or Futronic) with server sync
-  Future<bool> saveFacilitatorTemplate(int facilitatorId, String scannerType,
-      String finger, String templateStr) async {
+  Future<bool> saveFacilitatorTemplate(
+    int facilitatorId,
+    String scannerType,
+    String finger,
+    String templateStr,
+  ) async {
     try {
       final db = await database;
 
       // Determine column name based on scanner and finger
       String columnName;
       if (scannerType == 'zkteco') {
-        columnName =
-            finger == 'left' ? 'zkteco_left_template' : 'zkteco_right_template';
+        columnName = finger == 'left'
+            ? 'zkteco_left_template'
+            : 'zkteco_right_template';
       } else if (scannerType == 'futronic') {
         columnName = finger == 'left'
             ? 'futronic_left_template'
@@ -8274,7 +8692,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       }
 
       debugPrint(
-          '[FAC_FP] Saving $scannerType $finger template for facilitator $facilitatorId (${templateStr.length} chars)');
+        '[FAC_FP] Saving $scannerType $finger template for facilitator $facilitatorId (${templateStr.length} chars)',
+      );
 
       // Save template to local database first
       final updateResult = await db.update(
@@ -8286,7 +8705,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
       debugPrint('[FAC_FP] Update result: $updateResult rows affected');
       debugPrint(
-          '[FAC_FP] Successfully saved $scannerType $finger template to local database');
+        '[FAC_FP] Successfully saved $scannerType $finger template to local database',
+      );
 
       // Verify the template was saved
       final verifyResult = await db.query(
@@ -8299,23 +8719,30 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       if (verifyResult.isNotEmpty) {
         final savedTemplate = verifyResult.first[columnName] as String?;
         debugPrint(
-            '[FAC_FP] Template verification: ${savedTemplate != null ? 'SAVED (${savedTemplate.length} chars)' : 'NOT SAVED'}');
+          '[FAC_FP] Template verification: ${savedTemplate != null ? 'SAVED (${savedTemplate.length} chars)' : 'NOT SAVED'}',
+        );
       } else {
         debugPrint(
-            '[FAC_FP] ERROR: Facilitator not found after template save!');
+          '[FAC_FP] ERROR: Facilitator not found after template save!',
+        );
       }
 
       // Try to sync to server
       bool synced = false;
       try {
         synced = await _syncFacilitatorTemplateToServer(
-            facilitatorId, columnName, templateStr);
+          facilitatorId,
+          columnName,
+          templateStr,
+        );
         if (synced) {
           debugPrint(
-              '[FAC_FP] Successfully synced $columnName to server for facilitator $facilitatorId');
+            '[FAC_FP] Successfully synced $columnName to server for facilitator $facilitatorId',
+          );
         } else {
           debugPrint(
-              '[FAC_FP] Template saved locally, will sync to server later');
+            '[FAC_FP] Template saved locally, will sync to server later',
+          );
         }
       } catch (e) {
         debugPrint('[FAC_FP] Error syncing to server (saved locally): $e');
@@ -8330,18 +8757,22 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   // Sync facilitator fingerprint template to server
   Future<bool> _syncFacilitatorTemplateToServer(
-      int facilitatorId, String templateType, String templateData) async {
+    int facilitatorId,
+    String templateType,
+    String templateData,
+  ) async {
     try {
       // Skip sync if template is empty
       if (templateData.isEmpty) {
         debugPrint(
-            '[FAC_FP_SYNC] Skipping sync for empty template: $templateType for facilitator $facilitatorId');
+          '[FAC_FP_SYNC] Skipping sync for empty template: $templateType for facilitator $facilitatorId',
+        );
         return false;
       }
 
       // Check connectivity
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      if (connectivityResult.contains(ConnectivityResult.none)) {
         debugPrint('[FAC_FP_SYNC] No internet connection');
         return false;
       }
@@ -8353,12 +8784,14 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         'template_data': templateData,
       };
 
-      final url =
-          Uri.parse('${AppConfig.baseUrl}/sync_facilitator_fingerprint.php');
+      final url = Uri.parse(
+        '${AppConfig.baseUrl}/sync_facilitator_fingerprint.php',
+      );
 
       debugPrint('[FAC_FP_SYNC] Syncing template to server: $url');
       debugPrint(
-          '[FAC_FP_SYNC] Template type: $templateType, length: ${templateData.length}');
+        '[FAC_FP_SYNC] Template type: $templateType, length: ${templateData.length}',
+      );
 
       final response = await http
           .post(
@@ -8372,16 +8805,19 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         final result = jsonDecode(response.body);
         if (result['success'] == true) {
           debugPrint(
-              '[FAC_FP_SYNC] Server sync successful: ${result['message']}');
+            '[FAC_FP_SYNC] Server sync successful: ${result['message']}',
+          );
           return true;
         } else {
           debugPrint(
-              '[FAC_FP_SYNC] Server returned error: ${result['message']}');
+            '[FAC_FP_SYNC] Server returned error: ${result['message']}',
+          );
           return false;
         }
       } else {
         debugPrint(
-            '[FAC_FP_SYNC] Server returned status ${response.statusCode}');
+          '[FAC_FP_SYNC] Server returned status ${response.statusCode}',
+        );
         return false;
       }
     } catch (e) {
@@ -8392,7 +8828,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   // Get all fingerprint templates for a facilitator
   Future<Map<String, String?>> getAllFacilitatorTemplates(
-      int facilitatorId) async {
+    int facilitatorId,
+  ) async {
     final db = await database;
 
     debugPrint('[DB] Getting templates for facilitator_id: $facilitatorId');
@@ -8404,7 +8841,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         'zkteco_left_template',
         'zkteco_right_template',
         'futronic_left_template',
-        'futronic_right_template'
+        'futronic_right_template',
       ],
       where: 'facilitator_id = ?',
       whereArgs: [facilitatorId],
@@ -8436,7 +8873,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   // Get facilitator fingerprints (best available templates)
   Future<Map<String, String?>> getFacilitatorFingerprints(
-      int facilitatorId) async {
+    int facilitatorId,
+  ) async {
     final db = await database;
 
     final result = await db.query(
@@ -8445,7 +8883,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         'zkteco_left_template',
         'zkteco_right_template',
         'futronic_left_template',
-        'futronic_right_template'
+        'futronic_right_template',
       ],
       where: 'facilitator_id = ?',
       whereArgs: [facilitatorId],
@@ -8463,18 +8901,15 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       var leftTemplate = (zkLeft != null && zkLeft.isNotEmpty)
           ? zkLeft
           : (futronicLeft != null && futronicLeft.isNotEmpty)
-              ? futronicLeft
-              : null;
+          ? futronicLeft
+          : null;
       var rightTemplate = (zkRight != null && zkRight.isNotEmpty)
           ? zkRight
           : (futronicRight != null && futronicRight.isNotEmpty)
-              ? futronicRight
-              : null;
+          ? futronicRight
+          : null;
 
-      return {
-        'left': leftTemplate,
-        'right': rightTemplate,
-      };
+      return {'left': leftTemplate, 'right': rightTemplate};
     }
 
     return {'left': null, 'right': null};
@@ -8508,7 +8943,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   // Get facilitator attendance for a specific day
   Future<Map<String, dynamic>?> getFacilitatorAttendanceForDay(
-      String facilitatorId, String date) async {
+    String facilitatorId,
+    String date,
+  ) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'facilitator_clocking',
@@ -8525,7 +8962,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   // Update facilitator clocking record
   Future<void> updateFacilitatorClocking(
-      int clockingId, Map<String, dynamic> row) async {
+    int clockingId,
+    Map<String, dynamic> row,
+  ) async {
     final db = await database;
     await db.update(
       'facilitator_clocking',
@@ -8562,7 +9001,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     );
 
     debugPrint(
-        '[DB_HELPER] Updated facilitator clock-out for facilitator $facilitatorId on $clockDate');
+      '[DB_HELPER] Updated facilitator clock-out for facilitator $facilitatorId on $clockDate',
+    );
   }
 
   // Check if facilitator has any fingerprints enrolled
@@ -8581,18 +9021,22 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       // Use South African time (SAST - UTC+2)
       final saTime = DateTime.now().toUtc().add(const Duration(hours: 2));
       final today = DateFormat('yyyy-MM-dd').format(saTime);
-      final attendance =
-          await getFacilitatorAttendanceForDay(facilitatorId.toString(), today);
+      final attendance = await getFacilitatorAttendanceForDay(
+        facilitatorId.toString(),
+        today,
+      );
 
       if (attendance != null && attendance['clock_in_time'] != null) {
         final clockInTime = attendance['clock_in_time'].toString();
         debugPrint(
-            '[FAC_CLOCK] Facilitator $facilitatorId clocked in today at $clockInTime');
+          '[FAC_CLOCK] Facilitator $facilitatorId clocked in today at $clockInTime',
+        );
         return clockInTime.isNotEmpty && clockInTime != 'null';
       }
 
       debugPrint(
-          '[FAC_CLOCK] Facilitator $facilitatorId has NOT clocked in today');
+        '[FAC_CLOCK] Facilitator $facilitatorId has NOT clocked in today',
+      );
       return false;
     } catch (e) {
       debugPrint('[FAC_CLOCK] Error checking clock-in status: $e');
@@ -8606,8 +9050,10 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       // Use South African time (SAST - UTC+2)
       final saTime = DateTime.now().toUtc().add(const Duration(hours: 2));
       final today = DateFormat('yyyy-MM-dd').format(saTime);
-      final attendance =
-          await getFacilitatorAttendanceForDay(facilitatorId.toString(), today);
+      final attendance = await getFacilitatorAttendanceForDay(
+        facilitatorId.toString(),
+        today,
+      );
 
       if (attendance != null && attendance['clock_in_time'] != null) {
         return attendance['clock_in_time'].toString();
@@ -8671,7 +9117,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       data['synced'] = 0;
       await db.insert('facilitator_clocking_evidence', data);
       debugPrint(
-          '[FAC_EVIDENCE] Inserted new evidence for facilitator $facilitatorId on $clockDate');
+        '[FAC_EVIDENCE] Inserted new evidence for facilitator $facilitatorId on $clockDate',
+      );
     } else {
       // Update existing record
       data['updated_at'] = DateTime.now().toIso8601String();
@@ -8682,7 +9129,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         whereArgs: [facilitatorId, clockDate],
       );
       debugPrint(
-          '[FAC_EVIDENCE] Updated evidence for facilitator $facilitatorId on $clockDate');
+        '[FAC_EVIDENCE] Updated evidence for facilitator $facilitatorId on $clockDate',
+      );
     }
   }
 
@@ -8703,7 +9151,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   /// Get all unsynced facilitator clocking evidence
   Future<List<Map<String, dynamic>>>
-      getUnsyncedFacilitatorClockingEvidence() async {
+  getUnsyncedFacilitatorClockingEvidence() async {
     final db = await database;
     return await db.query(
       'facilitator_clocking_evidence',
@@ -8726,7 +9174,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       whereArgs: [facilitatorId, clockDate],
     );
     debugPrint(
-        '[FAC_EVIDENCE] Marked evidence as synced for facilitator $facilitatorId on $clockDate');
+      '[FAC_EVIDENCE] Marked evidence as synced for facilitator $facilitatorId on $clockDate',
+    );
   }
 
   /// Generate neural network features from WSQ template for contactless verification
@@ -8736,7 +9185,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   //
   //     // Check connectivity first
   //     final connectivityResult = await Connectivity().checkConnectivity();
-  //     if (connectivityResult == ConnectivityResult.none) {
+  //     if (connectivityResult.contains(ConnectivityResult.none)) {
   //       debugPrint('[NEURAL_GEN] No internet connection - neural features will be generated during first contactless verification');
   //       return;
   //     }
@@ -8842,17 +9291,19 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           'zkteco_left_template',
           'zkteco_right_template',
           'futronic_left_template',
-          'futronic_right_template'
+          'futronic_right_template',
         ],
         where:
             'zkteco_left_template IS NOT NULL OR zkteco_right_template IS NOT NULL OR futronic_left_template IS NOT NULL OR futronic_right_template IS NOT NULL',
       );
 
       debugPrint(
-          '[SYNC] Total learners with fingerprint templates: ${allFingerprints.length}');
+        '[SYNC] Total learners with fingerprint templates: ${allFingerprints.length}',
+      );
       for (final fp in allFingerprints.take(5)) {
         debugPrint(
-            '[SYNC] Learner ${fp['LearnerID']}: synced=${fp['synced']}, zkteco_left=${fp['zkteco_left_template'] != null}, zkteco_right=${fp['zkteco_right_template'] != null}, futronic_left=${fp['futronic_left_template'] != null}, futronic_right=${fp['futronic_right_template'] != null}');
+          '[SYNC] Learner ${fp['LearnerID']}: synced=${fp['synced']}, zkteco_left=${fp['zkteco_left_template'] != null}, zkteco_right=${fp['zkteco_right_template'] != null}, futronic_left=${fp['futronic_left_template'] != null}, futronic_right=${fp['futronic_right_template'] != null}',
+        );
       }
 
       debugPrint('Found ${fingerprints.length} unsynced fingerprints');
@@ -8861,24 +9312,31 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         final learnerId = fingerprint['LearnerID'] as int;
         debugPrint('Syncing fingerprints for learner: $learnerId');
         debugPrint(
-            '  - ZKTeco left template exists: ${fingerprint['zkteco_left_template'] != null}');
+          '  - ZKTeco left template exists: ${fingerprint['zkteco_left_template'] != null}',
+        );
         debugPrint(
-            '  - ZKTeco right template exists: ${fingerprint['zkteco_right_template'] != null}');
+          '  - ZKTeco right template exists: ${fingerprint['zkteco_right_template'] != null}',
+        );
         debugPrint(
-            '  - Futronic left template exists: ${fingerprint['futronic_left_template'] != null}');
+          '  - Futronic left template exists: ${fingerprint['futronic_left_template'] != null}',
+        );
         debugPrint(
-            '  - Futronic right template exists: ${fingerprint['futronic_right_template'] != null}');
+          '  - Futronic right template exists: ${fingerprint['futronic_right_template'] != null}',
+        );
 
         // Check which templates exist and are not empty
-        bool hasZkTecoLeft = fingerprint['zkteco_left_template'] != null &&
+        bool hasZkTecoLeft =
+            fingerprint['zkteco_left_template'] != null &&
             (fingerprint['zkteco_left_template'] as String).isNotEmpty;
-        bool hasZkTecoRight = fingerprint['zkteco_right_template'] != null &&
+        bool hasZkTecoRight =
+            fingerprint['zkteco_right_template'] != null &&
             (fingerprint['zkteco_right_template'] as String).isNotEmpty;
-        bool hasFutronicLeft = fingerprint['futronic_left_template'] != null &&
+        bool hasFutronicLeft =
+            fingerprint['futronic_left_template'] != null &&
             (fingerprint['futronic_left_template'] as String).isNotEmpty;
         bool hasFutronicRight =
             fingerprint['futronic_right_template'] != null &&
-                (fingerprint['futronic_right_template'] as String).isNotEmpty;
+            (fingerprint['futronic_right_template'] as String).isNotEmpty;
 
         List<String> syncErrors = [];
         int successfulSyncs = 0;
@@ -8887,9 +9345,13 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         if (hasZkTecoLeft) {
           try {
             debugPrint(
-                '[SYNC] Syncing ZKTeco left template, length: ${(fingerprint['zkteco_left_template'] as String).length}');
-            await _syncSingleTemplate(learnerId, 'zkteco_left',
-                fingerprint['zkteco_left_template'] as String);
+              '[SYNC] Syncing ZKTeco left template, length: ${(fingerprint['zkteco_left_template'] as String).length}',
+            );
+            await _syncSingleTemplate(
+              learnerId,
+              'zkteco_left',
+              fingerprint['zkteco_left_template'] as String,
+            );
             successfulSyncs++;
             debugPrint('[SYNC] ZKTeco left template synced successfully');
           } catch (e) {
@@ -8901,9 +9363,13 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         if (hasZkTecoRight) {
           try {
             debugPrint(
-                '[SYNC] Syncing ZKTeco right template, length: ${(fingerprint['zkteco_right_template'] as String).length}');
-            await _syncSingleTemplate(learnerId, 'zkteco_right',
-                fingerprint['zkteco_right_template'] as String);
+              '[SYNC] Syncing ZKTeco right template, length: ${(fingerprint['zkteco_right_template'] as String).length}',
+            );
+            await _syncSingleTemplate(
+              learnerId,
+              'zkteco_right',
+              fingerprint['zkteco_right_template'] as String,
+            );
             successfulSyncs++;
             debugPrint('[SYNC] ZKTeco right template synced successfully');
           } catch (e) {
@@ -8915,9 +9381,13 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         if (hasFutronicLeft) {
           try {
             debugPrint(
-                '[SYNC] Syncing Futronic left template, length: ${(fingerprint['futronic_left_template'] as String).length}');
-            await _syncSingleTemplate(learnerId, 'futronic_left',
-                fingerprint['futronic_left_template'] as String);
+              '[SYNC] Syncing Futronic left template, length: ${(fingerprint['futronic_left_template'] as String).length}',
+            );
+            await _syncSingleTemplate(
+              learnerId,
+              'futronic_left',
+              fingerprint['futronic_left_template'] as String,
+            );
             successfulSyncs++;
             debugPrint('[SYNC] Futronic left template synced successfully');
           } catch (e) {
@@ -8929,9 +9399,13 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         if (hasFutronicRight) {
           try {
             debugPrint(
-                '[SYNC] Syncing Futronic right template, length: ${(fingerprint['futronic_right_template'] as String).length}');
-            await _syncSingleTemplate(learnerId, 'futronic_right',
-                fingerprint['futronic_right_template'] as String);
+              '[SYNC] Syncing Futronic right template, length: ${(fingerprint['futronic_right_template'] as String).length}',
+            );
+            await _syncSingleTemplate(
+              learnerId,
+              'futronic_right',
+              fingerprint['futronic_right_template'] as String,
+            );
             successfulSyncs++;
             debugPrint('[SYNC] Futronic right template synced successfully');
           } catch (e) {
@@ -8949,13 +9423,15 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
             whereArgs: [learnerId],
           );
           debugPrint(
-              'Marked learner $learnerId as synced ($successfulSyncs templates synced successfully)');
+            'Marked learner $learnerId as synced ($successfulSyncs templates synced successfully)',
+          );
         }
 
         // Log any errors but don't stop the overall sync
         if (syncErrors.isNotEmpty) {
           debugPrint(
-              'Sync errors for learner $learnerId: ${syncErrors.join(', ')}');
+            'Sync errors for learner $learnerId: ${syncErrors.join(', ')}',
+          );
         }
       }
 
@@ -8966,36 +9442,44 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   }
 
   Future<void> _syncSingleTemplate(
-      int learnerId, String templateType, String template) async {
+    int learnerId,
+    String templateType,
+    String template,
+  ) async {
     try {
       debugPrint(
-          '[SYNC] Starting sync for learner $learnerId, type: $templateType');
+        '[SYNC] Starting sync for learner $learnerId, type: $templateType',
+      );
       debugPrint('[SYNC] Template length: ${template.length}');
       debugPrint(
-          '[SYNC] Template preview: ${template.isNotEmpty ? template.substring(0, template.length > 50 ? 50 : template.length) : 'EMPTY'}...');
+        '[SYNC] Template preview: ${template.isNotEmpty ? template.substring(0, template.length > 50 ? 50 : template.length) : 'EMPTY'}...',
+      );
       debugPrint('[SYNC] Template is empty: ${template.isEmpty}');
 
       // Skip sync if template is empty
       if (template.isEmpty) {
         debugPrint(
-            '[SYNC] Skipping sync for empty template: $templateType for learner $learnerId');
+          '[SYNC] Skipping sync for empty template: $templateType for learner $learnerId',
+        );
         return;
       }
 
-      final response = await http.post(
-        Uri.parse(AppConfig.buildUrl('sync_fingerprint.php')),
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization':
-              'Bearer rlmss_2025_8e7d2f6e-3c4b-4c8f-b1e6-4a01a1b2e9f7',
-        },
-        body: {
-          'learner_id': learnerId.toString(),
-          'template_type':
-              templateType, // e.g., 'zkteco_left', 'futronic_right'
-          'template': template,
-        },
-      ).timeout(const Duration(seconds: 15)); // Add timeout
+      final response = await http
+          .post(
+            Uri.parse(AppConfig.buildUrl('sync_fingerprint.php')),
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Authorization':
+                  'Bearer rlmss_2025_8e7d2f6e-3c4b-4c8f-b1e6-4a01a1b2e9f7',
+            },
+            body: {
+              'learner_id': learnerId.toString(),
+              'template_type':
+                  templateType, // e.g., 'zkteco_left', 'futronic_right'
+              'template': template,
+            },
+          )
+          .timeout(const Duration(seconds: 15)); // Add timeout
 
       debugPrint('[SYNC] Response status: ${response.statusCode}');
       debugPrint('[SYNC] Response body: ${response.body}');
@@ -9005,14 +9489,18 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           final data = json.decode(response.body);
           if (data['success'] == true) {
             debugPrint(
-                '[SYNC] Successfully synced $templateType template for learner $learnerId');
+              '[SYNC] Successfully synced $templateType template for learner $learnerId',
+            );
             debugPrint(
-                'Successfully synced $templateType template for learner $learnerId');
+              'Successfully synced $templateType template for learner $learnerId',
+            );
           } else {
             debugPrint(
-                '[SYNC] Server error syncing $templateType for learner $learnerId: ${data['message']}');
+              '[SYNC] Server error syncing $templateType for learner $learnerId: ${data['message']}',
+            );
             debugPrint(
-                'Server error syncing $templateType for learner $learnerId: ${data['message']}');
+              'Server error syncing $templateType for learner $learnerId: ${data['message']}',
+            );
             throw Exception('Server error: ${data['message']}');
           }
         } catch (jsonError) {
@@ -9024,15 +9512,18 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         debugPrint('[SYNC] HTTP error: ${response.statusCode}');
         debugPrint('[SYNC] Response body: ${response.body}');
         throw Exception(
-            'HTTP error: ${response.statusCode} - ${response.body}');
+          'HTTP error: ${response.statusCode} - ${response.body}',
+        );
       }
     } on TimeoutException catch (e) {
       debugPrint(
-          '[SYNC] Timeout syncing $templateType for learner $learnerId: $e');
+        '[SYNC] Timeout syncing $templateType for learner $learnerId: $e',
+      );
       throw Exception('Sync timeout: $e');
     } catch (e) {
       debugPrint(
-          '[SYNC] Exception syncing $templateType for learner $learnerId: $e');
+        '[SYNC] Exception syncing $templateType for learner $learnerId: $e',
+      );
       debugPrint('Exception syncing $templateType for learner $learnerId: $e');
       rethrow;
     }
@@ -9044,7 +9535,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     Timer.periodic(const Duration(seconds: 30), (timer) async {
       try {
         final connectivityResult = await Connectivity().checkConnectivity();
-        if (connectivityResult != ConnectivityResult.none) {
+        if (!connectivityResult.contains(ConnectivityResult.none)) {
           await syncUnsyncedFingerprints();
         }
       } catch (e) {
@@ -9054,7 +9545,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   }
 
   Future<void> updateLearnerLocally(
-      String learnerID, Map<String, dynamic> updateData) async {
+    String learnerID,
+    Map<String, dynamic> updateData,
+  ) async {
     try {
       final db = await database;
 
@@ -9072,7 +9565,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       );
 
       debugPrint(
-          'Learner information updated locally for learner ID: $learnerID');
+        'Learner information updated locally for learner ID: $learnerID',
+      );
       debugPrint('Updated fields: ${updateData.keys.toList()}');
     } catch (e) {
       debugPrint('Error updating learner information locally: $e');
@@ -9082,13 +9576,18 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   // Alias for updateLearnerLocally for backward compatibility
   Future<void> updateLearnerDetails(
-      String learnerID, Map<String, dynamic> updateData) async {
+    String learnerID,
+    Map<String, dynamic> updateData,
+  ) async {
     return updateLearnerLocally(learnerID, updateData);
   }
 
   // Save ZKTeco template (left or right)
-  Future<void> saveZkTecoTemplate(int learnerId, String? template,
-      {required bool isLeft}) async {
+  Future<void> saveZkTecoTemplate(
+    int learnerId,
+    String? template, {
+    required bool isLeft,
+  }) async {
     final db = await database;
     await db.update(
       'learnerdetails',
@@ -9099,12 +9598,16 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       whereArgs: [learnerId],
     );
     debugPrint(
-        '[SAVE] Marked learner $learnerId as unsynced after saving ${isLeft ? 'left' : 'right'} ZKTeco template');
+      '[SAVE] Marked learner $learnerId as unsynced after saving ${isLeft ? 'left' : 'right'} ZKTeco template',
+    );
   }
 
   // Save Futronic template (left or right)
-  Future<void> saveFutronicTemplate(int learnerId, String? template,
-      {required bool isLeft}) async {
+  Future<void> saveFutronicTemplate(
+    int learnerId,
+    String? template, {
+    required bool isLeft,
+  }) async {
     final db = await database;
     await db.update(
       'learnerdetails',
@@ -9115,7 +9618,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       whereArgs: [learnerId],
     );
     debugPrint(
-        '[SAVE] Marked learner $learnerId as unsynced after saving ${isLeft ? 'left' : 'right'} Futronic template');
+      '[SAVE] Marked learner $learnerId as unsynced after saving ${isLeft ? 'left' : 'right'} Futronic template',
+    );
   }
 
   // Get all templates for a learner (both ZKTeco and Futronic)
@@ -9127,7 +9631,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         'zkteco_left_template',
         'zkteco_right_template',
         'futronic_left_template',
-        'futronic_right_template'
+        'futronic_right_template',
       ],
       where: 'LearnerID = ?',
       whereArgs: [learnerId],
@@ -9211,20 +9715,12 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     );
 
     if (scannedDoc != null) {
-      return {
-        'exists': true,
-        'type': 'scanned',
-        'data': scannedDoc,
-      };
+      return {'exists': true, 'type': 'scanned', 'data': scannedDoc};
     }
 
     // Check for system-generated checklist (from server)
     // This will be checked via API call in the UI
-    return {
-      'exists': false,
-      'type': 'none',
-      'data': null,
-    };
+    return {'exists': false, 'type': 'none', 'data': null};
   }
 
   /// Get all unsynced scanned documents
@@ -9283,20 +9779,19 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           whereArgs: [guardianData['learner_id']],
         );
         debugPrint(
-            'Guardian details updated for learner ${guardianData['learner_id']}');
+          'Guardian details updated for learner ${guardianData['learner_id']}',
+        );
       } else {
         // Insert new record
-        await db.insert(
-          'guardian_details',
-          {
-            ...guardianData,
-            'created_at': DateTime.now().toIso8601String(),
-            'updated_at': DateTime.now().toIso8601String(),
-            'synced': 0,
-          },
-        );
+        await db.insert('guardian_details', {
+          ...guardianData,
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+          'synced': 0,
+        });
         debugPrint(
-            'Guardian details inserted for learner ${guardianData['learner_id']}');
+          'Guardian details inserted for learner ${guardianData['learner_id']}',
+        );
       }
     } catch (e) {
       debugPrint('Error saving guardian details: $e');
@@ -9331,7 +9826,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   // ========================================
 
   Future<List<Map<String, dynamic>>> getWorkExperiences(
-      String learnerID) async {
+    String learnerID,
+  ) async {
     try {
       final db = await database;
       final result = await db.query(
@@ -9341,7 +9837,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         orderBy: 'period_from DESC',
       );
       debugPrint(
-          '[WORK_EXP] Found ${result.length} work experiences for learner $learnerID');
+        '[WORK_EXP] Found ${result.length} work experiences for learner $learnerID',
+      );
       return result;
     } catch (e) {
       debugPrint('[WORK_EXP] Error fetching work experiences: $e');
@@ -9384,11 +9881,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
   Future<void> deleteWorkExperience(int id) async {
     try {
       final db = await database;
-      await db.delete(
-        'work_experience',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
+      await db.delete('work_experience', where: 'id = ?', whereArgs: [id]);
       debugPrint('[WORK_EXP] Deleted work experience ID: $id');
     } catch (e) {
       debugPrint('[WORK_EXP] Error deleting work experience: $e');
@@ -9429,7 +9922,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   /// Fetch every learner linked to the supplied SDP (identifier can be id or name).
   Future<List<Map<String, dynamic>>> getLearnersBySdp(
-      String sdpIdentifier) async {
+    String sdpIdentifier,
+  ) async {
     final db = await database;
     final identifier = sdpIdentifier.trim();
 
@@ -9449,10 +9943,12 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     whereClauses.add('LOWER(COALESCE(s.sdp_name, "")) = LOWER(?)');
     whereArgs.add(identifier);
 
-    final whereStatement =
-        whereClauses.map((clause) => '($clause)').join(' OR ');
+    final whereStatement = whereClauses
+        .map((clause) => '($clause)')
+        .join(' OR ');
 
-    final query = '''
+    final query =
+        '''
       SELECT 
         l.LearnerID,
         l.Name,
@@ -9479,7 +9975,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
   // Get unit standards for a class using efficient SQLite JSON operators
   Future<List<Map<String, dynamic>>> getClassUnitStandards(
-      String classID) async {
+    String classID,
+  ) async {
     final db = await database;
 
     try {
@@ -9487,7 +9984,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       debugPrint('ClassID: $classID');
 
       // Use SQLite JSON operators to extract unit standards directly
-      var result = await db.rawQuery('''
+      var result = await db.rawQuery(
+        '''
         SELECT 
           c.classID,
           c.className,
@@ -9499,7 +9997,9 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         LEFT JOIN sites s ON c.siteID = s.siteID
         LEFT JOIN project pr ON s.project_id = pr.project_id
         WHERE c.classID = ?
-      ''', [classID]);
+      ''',
+        [classID],
+      );
 
       debugPrint('Raw query results (count: ${result.length}):');
       for (var row in result) {
@@ -9526,7 +10026,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
             enrichedRow['unit_standards_list'] = unitStandards;
 
             debugPrint(
-                '✅ Parsed ${unitStandards.length} unit standards from JSON');
+              '✅ Parsed ${unitStandards.length} unit standards from JSON',
+            );
 
             // Process each unit standard to ensure proper format
             List<Map<String, dynamic>> formattedUnitStandards = [];
@@ -9545,14 +10046,17 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
             enrichedRow['formatted_unit_standards'] = formattedUnitStandards;
 
             debugPrint(
-                'Formatted unit standards: ${formattedUnitStandards.length} items');
+              'Formatted unit standards: ${formattedUnitStandards.length} items',
+            );
             for (int i = 0; i < formattedUnitStandards.length && i < 3; i++) {
               debugPrint(
-                  '  - ${formattedUnitStandards[i]['unitstandard_id']}: ${formattedUnitStandards[i]['unit_standard_name']}');
+                '  - ${formattedUnitStandards[i]['unitstandard_id']}: ${formattedUnitStandards[i]['unit_standard_name']}',
+              );
             }
           } catch (e) {
             debugPrint(
-                '❌ JSON parsing error: $e, for unit_standards: $unitStandardsJson');
+              '❌ JSON parsing error: $e, for unit_standards: $unitStandardsJson',
+            );
             enrichedRow['unit_standards_list'] = [];
             enrichedRow['formatted_unit_standards'] = [];
           }
@@ -9599,7 +10103,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
       // Ensure required fields have default values
       final sanitizedData = Map<String, dynamic>.from(learnerData);
-      sanitizedData['synced'] = sanitizedData['synced'] ??
+      sanitizedData['synced'] =
+          sanitizedData['synced'] ??
           1; // Mark as synced since it came from server
       sanitizedData['created_at'] =
           sanitizedData['created_at'] ?? DateTime.now().toIso8601String();
@@ -9623,7 +10128,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
 
       // Ensure synced status is maintained
       final sanitizedData = Map<String, dynamic>.from(learnerData);
-      sanitizedData['synced'] = sanitizedData['synced'] ??
+      sanitizedData['synced'] =
+          sanitizedData['synced'] ??
           1; // Mark as synced since it came from server
       sanitizedData['updated_at'] = DateTime.now().toIso8601String();
 
@@ -9649,7 +10155,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       final db = await database;
 
       debugPrint(
-          '[DB_REPAIR] Dropping and recreating learner_clocking_evidence table...');
+        '[DB_REPAIR] Dropping and recreating learner_clocking_evidence table...',
+      );
 
       // Drop existing table
       await db.execute('DROP TABLE IF EXISTS learner_clocking_evidence');
@@ -9701,7 +10208,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       ''');
 
       debugPrint(
-          '[DB_REPAIR] ✅ learner_clocking_evidence table recreated successfully');
+        '[DB_REPAIR] ✅ learner_clocking_evidence table recreated successfully',
+      );
     } catch (e) {
       debugPrint('[DB_REPAIR] ❌ Error recreating table: $e');
       rethrow;
@@ -9718,7 +10226,7 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
     double? longitude,
     double? accuracy,
     String?
-        verificationMethod, // 'face', 'fingerprint', 'security_question', 'otp'
+    verificationMethod, // 'face', 'fingerprint', 'security_question', 'otp'
     int? faceLogId,
   }) async {
     try {
@@ -9753,7 +10261,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           whereArgs: [learnerId, clockDate],
         );
         debugPrint(
-            '[DB] Updated clock-in evidence for learner $learnerId on $clockDate');
+          '[DB] Updated clock-in evidence for learner $learnerId on $clockDate',
+        );
       } else {
         // Insert new row
         await db.insert('learner_clocking_evidence', {
@@ -9771,7 +10280,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           'synced': 0,
         });
         debugPrint(
-            '[DB] Inserted clock-in evidence for learner $learnerId on $clockDate');
+          '[DB] Inserted clock-in evidence for learner $learnerId on $clockDate',
+        );
       }
     } catch (e) {
       debugPrint('[DB] Error saving clock-in evidence: $e');
@@ -9823,7 +10333,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           whereArgs: [learnerId, clockDate],
         );
         debugPrint(
-            '[DB] Updated clock-out evidence for learner $learnerId on $clockDate');
+          '[DB] Updated clock-out evidence for learner $learnerId on $clockDate',
+        );
       } else {
         // Insert new row (clock-out without clock-in - shouldn't happen but handle it)
         await db.insert('learner_clocking_evidence', {
@@ -9841,7 +10352,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           'synced': 0,
         });
         debugPrint(
-            '[DB] Inserted clock-out evidence for learner $learnerId on $clockDate (no clock-in)');
+          '[DB] Inserted clock-out evidence for learner $learnerId on $clockDate (no clock-in)',
+        );
       }
     } catch (e) {
       debugPrint('[DB] Error saving clock-out evidence: $e');
@@ -9901,7 +10413,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
         whereArgs: [learnerId, clockDate],
       );
       debugPrint(
-          '[DB] Marked evidence as synced for learner $learnerId on $clockDate');
+        '[DB] Marked evidence as synced for learner $learnerId on $clockDate',
+      );
     } catch (e) {
       debugPrint('[DB] Error marking evidence as synced: $e');
     }
@@ -9917,7 +10430,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
       }
 
       debugPrint(
-          '[DB_SYNC] Syncing ${unsynced.length} evidence records to server...');
+        '[DB_SYNC] Syncing ${unsynced.length} evidence records to server...',
+      );
 
       final url = AppConfig.buildUrl('sync_clocking_evidence.php');
       final token = await AppConfig.getAuthToken();
@@ -9949,7 +10463,8 @@ GROUP BY p.project_id, p.Project_name, JSON_EXTRACT(p.project_pathway, '\$[0].na
           }
 
           debugPrint(
-              '[DB_SYNC] ✅ Successfully synced ${result['synced']} evidence records');
+            '[DB_SYNC] ✅ Successfully synced ${result['synced']} evidence records',
+          );
           return result as Map<String, dynamic>;
         } else {
           throw Exception(result['message'] ?? 'Sync failed');

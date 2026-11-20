@@ -175,7 +175,7 @@ class _FacilitatorFaceClockOutPageState
 
       // 2. Check server if online
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult != ConnectivityResult.none) {
+      if (!connectivityResult.contains(ConnectivityResult.none)) {
         debugPrint('[FAC_FACE_CLOCKOUT] Checking server for clocking status');
         final serverStatus = await _checkServerForClockingStatus(today);
 
@@ -410,7 +410,7 @@ class _FacilitatorFaceClockOutPageState
     try {
       // Check connectivity
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      if (connectivityResult.contains(ConnectivityResult.none)) {
         debugPrint('[FAC_FACE_CLOCKOUT] Offline - will sync later');
         return;
       }

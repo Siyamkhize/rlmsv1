@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -142,7 +142,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
 
   Future<bool> _checkConnectivity() async {
     final connectivityResult = await Connectivity().checkConnectivity();
-    return connectivityResult != ConnectivityResult.none;
+    return !connectivityResult.contains(ConnectivityResult.none);
   }
 
   /// Fetch paginated learners from server
@@ -835,7 +835,7 @@ class _UnallocatedLearnersPageState extends State<UnallocatedLearnersPage> {
       );
 
       debugPrint(
-          '[ASSIGN] Queued offline assignment: Learner $learnerId → Class $classId');
+          '[ASSIGN] Queued offline assignment: Learner $learnerId ? Class $classId');
     } catch (e) {
       debugPrint('[ASSIGN] Error queuing assignment: $e');
       rethrow;

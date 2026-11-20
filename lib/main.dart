@@ -71,9 +71,9 @@ void callbackDispatcher() {
           DarwinInitializationSettings();
       const InitializationSettings initializationSettings =
           InitializationSettings(
-        android: initializationSettingsAndroid,
-        iOS: initializationSettingsIOS,
-      );
+            android: initializationSettingsAndroid,
+            iOS: initializationSettingsIOS,
+          );
       await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
       if (task == syncTask) {
@@ -82,8 +82,9 @@ void callbackDispatcher() {
         final syncService = SyncService();
 
         final connectivityResult = await Connectivity().checkConnectivity();
-        final hasNetwork = connectivityResult == ConnectivityResult.wifi ||
-            connectivityResult == ConnectivityResult.mobile;
+        final hasNetwork =
+            connectivityResult.contains(ConnectivityResult.wifi) ||
+            connectivityResult.contains(ConnectivityResult.mobile);
 
         if (hasNetwork) {
           print("Background sync: Network available, starting sync...");
@@ -103,8 +104,9 @@ void callbackDispatcher() {
         print("Connectivity check task started at ${DateTime.now()}");
         final connectivityResult = await Connectivity().checkConnectivity();
         print("Connectivity result: $connectivityResult");
-        final hasNetwork = connectivityResult == ConnectivityResult.wifi ||
-            connectivityResult == ConnectivityResult.mobile;
+        final hasNetwork =
+            connectivityResult.contains(ConnectivityResult.wifi) ||
+            connectivityResult.contains(ConnectivityResult.mobile);
         print("Has network: $hasNetwork");
 
         if (!hasNetwork) {
@@ -112,21 +114,19 @@ void callbackDispatcher() {
           try {
             const AndroidNotificationDetails androidDetails =
                 AndroidNotificationDetails(
-              'connectivity_channel',
-              'Connectivity Alerts',
-              channelDescription:
-                  'Notifications for network connectivity issues',
-              importance: Importance.max,
-              priority: Priority.high,
-              ticker: 'ticker',
-              playSound: false, // Changed from true to false
-              enableVibration: true,
-              fullScreenIntent: true, // Show notification prominently
-            );
+                  'connectivity_channel',
+                  'Connectivity Alerts',
+                  channelDescription:
+                      'Notifications for network connectivity issues',
+                  importance: Importance.max,
+                  priority: Priority.high,
+                  ticker: 'ticker',
+                  playSound: false, // Changed from true to false
+                  enableVibration: true,
+                  fullScreenIntent: true, // Show notification prominently
+                );
             const DarwinNotificationDetails iosDetails =
-                DarwinNotificationDetails(
-              badgeNumber: 1,
-            );
+                DarwinNotificationDetails(badgeNumber: 1);
             const NotificationDetails platformDetails = NotificationDetails(
               android: androidDetails,
               iOS: iosDetails,
@@ -179,12 +179,14 @@ void main() async {
 
   // DEBUG-ONLY: Allow connecting to hosts with certificate hostname mismatch (development servers)
   if (kDebugMode) {
-    HttpOverrides.global = _DevHttpOverrides(allowedHosts: {
-      AppConfig.serverHost,
-      "192.168.0.65",
-      "192.168.68.105",
-      "192.168.68.112"
-    });
+    HttpOverrides.global = _DevHttpOverrides(
+      allowedHosts: {
+        AppConfig.serverHost,
+        "192.168.0.65",
+        "192.168.68.105",
+        "192.168.68.112",
+      },
+    );
   }
 
   // Request permissions
@@ -207,10 +209,10 @@ void main() async {
       DarwinInitializationSettings();
   const WindowsInitializationSettings initializationSettingsWindows =
       WindowsInitializationSettings(
-    appName: 'rlmss',
-    appUserModelId: 'com.example.rlmss',
-    guid: 'd49b0314-ee7c-4f34-95b1-3f01f9c4e9c3',
-  );
+        appName: 'rlmss',
+        appUserModelId: 'com.example.rlmss',
+        guid: 'd49b0314-ee7c-4f34-95b1-3f01f9c4e9c3',
+      );
   const InitializationSettings initializationSettings = InitializationSettings(
     android: initializationSettingsAndroid,
     iOS: initializationSettingsIOS,
@@ -268,8 +270,8 @@ class _DevHttpOverrides extends HttpOverrides {
     final client = super.createHttpClient(context);
     client.badCertificateCallback =
         (X509Certificate cert, String host, int port) {
-      return allowedHosts.contains(host);
-    };
+          return allowedHosts.contains(host);
+        };
     return client;
   }
 }
@@ -282,12 +284,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'rlmss',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      routes: {
-        '/login': (context) => const LoginPage(),
-      },
+      theme: ThemeData(primarySwatch: Colors.blue),
+      routes: {'/login': (context) => const LoginPage()},
       home: const LoginPage(),
     );
   }
@@ -335,12 +333,15 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _checkConnectivity() async {
     try {
-      final ConnectivityResult result =
-          await Connectivity().checkConnectivity();
+      final List<ConnectivityResult> result = await Connectivity()
+          .checkConnectivity();
       setState(() {
-        _isOffline = result != ConnectivityResult.wifi &&
-            result != ConnectivityResult.mobile;
-        _connectivityStatus = _getStatusMessage(result);
+        _isOffline =
+            !result.contains(ConnectivityResult.wifi) &&
+            !result.contains(ConnectivityResult.mobile);
+        _connectivityStatus = _getStatusMessage(
+          result.isNotEmpty ? result.first : ConnectivityResult.none,
+        );
       });
     } catch (e) {
       setState(() {
@@ -396,14 +397,16 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       debugPrint(
-          '[OFFLINE_TOKEN] Found offline session for $email, validating...');
+        '[OFFLINE_TOKEN] Found offline session for $email, validating...',
+      );
 
       // Load session from database to check expiry
       final session = await dbHelper.loadOfflineSession(email);
 
       if (session == null) {
         debugPrint(
-            '[OFFLINE_TOKEN] Session expired or not found, clearing SharedPreferences');
+          '[OFFLINE_TOKEN] Session expired or not found, clearing SharedPreferences',
+        );
         await prefs.remove('offline_token');
         await prefs.remove('offline_user_email');
         return;
@@ -420,7 +423,8 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       debugPrint(
-          '[OFFLINE_TOKEN] ✅ Valid session found, auto-logging in as $email');
+        '[OFFLINE_TOKEN] ✅ Valid session found, auto-logging in as $email',
+      );
 
       // Fetch user details and navigate based on role
       // First check SDP
@@ -429,7 +433,8 @@ class _LoginPageState extends State<LoginPage> {
         String role = 'sdp';
         String siteID = sdpEntry['siteID']?.toString() ?? '';
         String classID = sdpEntry['classID']?.toString() ?? '';
-        String sdp = sdpEntry['sdp_id']?.toString() ??
+        String sdp =
+            sdpEntry['sdp_id']?.toString() ??
             sdpEntry['sdp_name']?.toString() ??
             sdpEntry['Reg_number']?.toString() ??
             '';
@@ -440,14 +445,23 @@ class _LoginPageState extends State<LoginPage> {
         List learners = await dbHelper.getLearnersForClass(siteIDInt);
 
         Map<String, dynamic> offlineData = {
-          'sdp_name': sdpEntry['sdp_name']?.toString() ??
+          'sdp_name':
+              sdpEntry['sdp_name']?.toString() ??
               sdpEntry['client_name']?.toString() ??
               '',
           'sdp_id': sdp,
         };
 
-        _navigateBasedOnRole(role, classID, sdp, classData, learners,
-            facilitatorId, classes, offlineData);
+        _navigateBasedOnRole(
+          role,
+          classID,
+          sdp,
+          classData,
+          learners,
+          facilitatorId,
+          classes,
+          offlineData,
+        );
         return;
       }
 
@@ -469,12 +483,21 @@ class _LoginPageState extends State<LoginPage> {
         List classes = facilitator['classes'] ?? [];
 
         _navigateBasedOnRole(
-            role, classID, sdp, [], [], facilitatorId, classes, {});
+          role,
+          classID,
+          sdp,
+          [],
+          [],
+          facilitatorId,
+          classes,
+          {},
+        );
         return;
       }
 
       debugPrint(
-          '[OFFLINE_TOKEN] ⚠️ Session valid but user not found in database');
+        '[OFFLINE_TOKEN] ⚠️ Session valid but user not found in database',
+      );
       await prefs.remove('offline_token');
       await prefs.remove('offline_user_email');
     } catch (e) {
@@ -483,19 +506,24 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<Map<String, dynamic>?> _attemptLogin(
-      String username, String password) async {
+    String username,
+    String password,
+  ) async {
     try {
-      final response = await http.post(
-        Uri.parse(AppConfig.loginUrl),
-        body: {'email': username, 'password': password},
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .post(
+            Uri.parse(AppConfig.loginUrl),
+            body: {'email': username, 'password': password},
+          )
+          .timeout(const Duration(seconds: 15));
 
       print("Raw login response: ${response.body}"); // Log raw response
 
       if (response.statusCode == 200) {
         // Clean response by removing HTML tags and trimming extra characters
-        String cleaned =
-            response.body.replaceAll(RegExp(r'<[^>]+>'), '').trim();
+        String cleaned = response.body
+            .replaceAll(RegExp(r'<[^>]+>'), '')
+            .trim();
         // Try to extract JSON object if extra content exists
         final start = cleaned.indexOf('{');
         final end = cleaned.lastIndexOf('}');
@@ -535,7 +563,8 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Background sync completed successfully')),
+            content: Text('Background sync completed successfully'),
+          ),
         );
       }
     } catch (syncError) {
@@ -574,9 +603,11 @@ class _LoginPageState extends State<LoginPage> {
             debugPrint('[LOGIN] ✅ Auth token saved successfully');
             debugPrint('[LOGIN] Token length: ${token.length}');
             debugPrint(
-                '[LOGIN] Token first 16 chars: ${token.substring(0, token.length >= 16 ? 16 : token.length)}...');
+              '[LOGIN] Token first 16 chars: ${token.substring(0, token.length >= 16 ? 16 : token.length)}...',
+            );
             debugPrint(
-                '[LOGIN] Token last 16 chars: ...${token.substring(token.length >= 16 ? token.length - 16 : 0)}');
+              '[LOGIN] Token last 16 chars: ...${token.substring(token.length >= 16 ? token.length - 16 : 0)}',
+            );
           } else {
             debugPrint('[LOGIN] ❌ WARNING: No auth_token in login response!');
           }
@@ -585,7 +616,8 @@ class _LoginPageState extends State<LoginPage> {
           debugPrint('[LOGIN] Raw role from server: "$role"');
           final classID = data['classID']?.toString() ?? '';
           // Try multiple fields for SDP identifier
-          final sdp = data['sdp_id']?.toString() ??
+          final sdp =
+              data['sdp_id']?.toString() ??
               data['sdp_name']?.toString() ??
               data['sdpId']?.toString() ??
               '';
@@ -619,7 +651,8 @@ class _LoginPageState extends State<LoginPage> {
                     : null,
               });
               debugPrint(
-                  '[LOGIN] Saved facilitator data to local database for classID: $classID');
+                '[LOGIN] Saved facilitator data to local database for classID: $classID',
+              );
             } catch (e) {
               debugPrint('[LOGIN] Error saving facilitator data: $e');
             }
@@ -632,10 +665,12 @@ class _LoginPageState extends State<LoginPage> {
           if (classID.isNotEmpty) {
             try {
               // Ensure class data exists for offline functionality
-              await dbHelper.ensureClassDataExists(classID,
-                  className: null, // Will use default
-                  facilitatorEmail: username,
-                  facilitatorName: null);
+              await dbHelper.ensureClassDataExists(
+                classID,
+                className: null, // Will use default
+                facilitatorEmail: username,
+                facilitatorName: null,
+              );
 
               await dbHelper.syncLearnersFromServer(classID);
               print('Successfully synced learners for classID: $classID');
@@ -646,18 +681,27 @@ class _LoginPageState extends State<LoginPage> {
           }
 
           // Navigate immediately
-          _navigateBasedOnRole(role, classID, sdp, classData, learners,
-              facilitatorId, classes, data);
+          _navigateBasedOnRole(
+            role,
+            classID,
+            sdp,
+            classData,
+            learners,
+            facilitatorId,
+            classes,
+            data,
+          );
         } else {
           final message =
               (data['message']?.toString().trim().isNotEmpty == true)
-                  ? data['message'].toString()
-                  : 'Invalid email or password';
+              ? data['message'].toString()
+              : 'Invalid email or password';
           _showError(message);
         }
       } else {
         _showError(
-            'Unable to reach server or parse response. Please try again.');
+          'Unable to reach server or parse response. Please try again.',
+        );
       }
 
       setState(() {
@@ -689,8 +733,10 @@ class _LoginPageState extends State<LoginPage> {
 
       try {
         // Check SDP FIRST before checking facilitators
-        Map<String, dynamic>? sdpEntry =
-            await dbHelper.getSdp(username, password);
+        Map<String, dynamic>? sdpEntry = await dbHelper.getSdp(
+          username,
+          password,
+        );
 
         if (sdpEntry != null) {
           // ✅ SDP offline login successful - create offline session token
@@ -702,10 +748,12 @@ class _LoginPageState extends State<LoginPage> {
               await prefs.setString('offline_token', token);
               await prefs.setString('offline_user_email', username);
               debugPrint(
-                  '[OFFLINE_TOKEN] ✅ Offline token created and stored for $username');
+                '[OFFLINE_TOKEN] ✅ Offline token created and stored for $username',
+              );
             } else {
               debugPrint(
-                  '[OFFLINE_TOKEN] ⚠️ Failed to create offline token for $username');
+                '[OFFLINE_TOKEN] ⚠️ Failed to create offline token for $username',
+              );
             }
           } catch (e) {
             debugPrint('[OFFLINE_TOKEN] ❌ Error creating offline token: $e');
@@ -715,7 +763,8 @@ class _LoginPageState extends State<LoginPage> {
           String siteID = sdpEntry['siteID']?.toString() ?? '';
           String classID = sdpEntry['classID']?.toString() ?? '';
           // Try multiple fields for SDP identifier
-          String sdp = sdpEntry['sdp_id']?.toString() ??
+          String sdp =
+              sdpEntry['sdp_id']?.toString() ??
               sdpEntry['sdp_name']?.toString() ??
               sdpEntry['Reg_number']?.toString() ??
               '';
@@ -729,10 +778,12 @@ class _LoginPageState extends State<LoginPage> {
           if (classID.isNotEmpty) {
             try {
               // Ensure class data exists for offline functionality
-              await dbHelper.ensureClassDataExists(classID,
-                  className: null, // Will use default
-                  facilitatorEmail: username,
-                  facilitatorName: null);
+              await dbHelper.ensureClassDataExists(
+                classID,
+                className: null, // Will use default
+                facilitatorEmail: username,
+                facilitatorName: null,
+              );
 
               await dbHelper.syncLearnersFromServer(classID);
               print('Successfully synced learners for classID: $classID');
@@ -746,23 +797,35 @@ class _LoginPageState extends State<LoginPage> {
 
           // Create data map with sdp_name for offline login
           Map<String, dynamic> offlineData = {
-            'sdp_name': sdpEntry['sdp_name']?.toString() ??
+            'sdp_name':
+                sdpEntry['sdp_name']?.toString() ??
                 sdpEntry['client_name']?.toString() ??
                 '',
             'sdp_id': sdp,
           };
 
-          _navigateBasedOnRole(role, classID, sdp, classData, learners,
-              facilitatorId, classes, offlineData);
+          _navigateBasedOnRole(
+            role,
+            classID,
+            sdp,
+            classData,
+            learners,
+            facilitatorId,
+            classes,
+            offlineData,
+          );
         } else {
           // Check facilitator table only if not found in SDP
-          Map<String, dynamic>? facilitator =
-              await dbHelper.getFacilitator(username, password);
+          Map<String, dynamic>? facilitator = await dbHelper.getFacilitator(
+            username,
+            password,
+          );
 
           if (facilitator != null) {
             // ✅ Facilitator offline login successful - create offline session token
             debugPrint(
-                '[OFFLINE_TOKEN] Facilitator login successful for $username');
+              '[OFFLINE_TOKEN] Facilitator login successful for $username',
+            );
             try {
               final token = await dbHelper.createOfflineToken(username);
               if (token != null) {
@@ -770,10 +833,12 @@ class _LoginPageState extends State<LoginPage> {
                 await prefs.setString('offline_token', token);
                 await prefs.setString('offline_user_email', username);
                 debugPrint(
-                    '[OFFLINE_TOKEN] ✅ Offline token created and stored for $username');
+                  '[OFFLINE_TOKEN] ✅ Offline token created and stored for $username',
+                );
               } else {
                 debugPrint(
-                    '[OFFLINE_TOKEN] ⚠️ Failed to create offline token for $username');
+                  '[OFFLINE_TOKEN] ⚠️ Failed to create offline token for $username',
+                );
               }
             } catch (e) {
               debugPrint('[OFFLINE_TOKEN] ❌ Error creating offline token: $e');
@@ -797,8 +862,16 @@ class _LoginPageState extends State<LoginPage> {
                 facilitator['facilitator_id']?.toString() ?? '';
             List classes = facilitator['classes'] ?? [];
 
-            _navigateBasedOnRole(role, classID, sdp, classData, learners,
-                facilitatorId, classes, {});
+            _navigateBasedOnRole(
+              role,
+              classID,
+              sdp,
+              classData,
+              learners,
+              facilitatorId,
+              classes,
+              {},
+            );
           } else {
             _showError('Invalid email or password');
           }
@@ -822,7 +895,8 @@ class _LoginPageState extends State<LoginPage> {
         builder: (context) => AlertDialog(
           title: const Text('No Network Connection'),
           content: const Text(
-              'No internet connection detected. Would you like to proceed with offline login?'),
+            'No internet connection detected. Would you like to proceed with offline login?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -845,14 +919,15 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _navigateBasedOnRole(
-      String role,
-      String classID,
-      String sdp,
-      List classData,
-      List learners,
-      String facilitatorId,
-      List classes,
-      Map<String, dynamic> data) async {
+    String role,
+    String classID,
+    String sdp,
+    List classData,
+    List learners,
+    String facilitatorId,
+    List classes,
+    Map<String, dynamic> data,
+  ) async {
     // Normalize role to lowercase for consistent comparison
     final normalizedRole = role.toLowerCase().trim();
 
@@ -896,7 +971,8 @@ class _LoginPageState extends State<LoginPage> {
       debugPrint('[NAVIGATION] Navigating to Logistics Dashboard');
       // Use account_id for logistics users, fallback to facilitator_id if not available
       final logisticsId = data['account_id']?.toString() ?? facilitatorId;
-      final logisticsName = data['account_name']?.toString() ??
+      final logisticsName =
+          data['account_name']?.toString() ??
           _usernameController.text.split('@')[0];
 
       Navigator.push(
@@ -918,9 +994,7 @@ class _LoginPageState extends State<LoginPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AssessorPage(
-                facilitatorId: facilitatorId,
-              ),
+              builder: (context) => AssessorPage(facilitatorId: facilitatorId),
             ),
           );
         },
@@ -940,7 +1014,8 @@ class _LoginPageState extends State<LoginPage> {
         facilitatorName: 'ARPL Assessor',
         onSuccess: () async {
           debugPrint(
-              '[NAVIGATION] Successfully authenticated, checking fingerprint and clock-in status');
+            '[NAVIGATION] Successfully authenticated, checking fingerprint and clock-in status',
+          );
 
           // CRITICAL FIX: Use the EXACT SAME workflow as facilitators
           // Step 1: Check if assessor has fingerprints enrolled (one-time setup)
@@ -951,14 +1026,17 @@ class _LoginPageState extends State<LoginPage> {
             return;
           }
 
-          final hasFingerprints =
-              await dbHelper.facilitatorHasFingerprints(facilitatorIdInt);
+          final hasFingerprints = await dbHelper.facilitatorHasFingerprints(
+            facilitatorIdInt,
+          );
           debugPrint(
-              '[LOGIN] ARPL Assessor $facilitatorIdInt has fingerprints: $hasFingerprints');
+            '[LOGIN] ARPL Assessor $facilitatorIdInt has fingerprints: $hasFingerprints',
+          );
 
           if (!hasFingerprints) {
             debugPrint(
-                '[LOGIN] No fingerprints enrolled for assessor $facilitatorIdInt - requiring enrollment');
+              '[LOGIN] No fingerprints enrolled for assessor $facilitatorIdInt - requiring enrollment',
+            );
 
             if (!context.mounted) return;
 
@@ -992,16 +1070,19 @@ class _LoginPageState extends State<LoginPage> {
             }
 
             debugPrint(
-                '[LOGIN] ✅ Fingerprint enrollment completed for assessor $facilitatorIdInt');
+              '[LOGIN] ✅ Fingerprint enrollment completed for assessor $facilitatorIdInt',
+            );
           }
 
           // Step 2: Check if assessor has clocked in today (daily requirement)
-          final clockedInToday =
-              await dbHelper.facilitatorClockedInToday(facilitatorIdInt);
+          final clockedInToday = await dbHelper.facilitatorClockedInToday(
+            facilitatorIdInt,
+          );
 
           if (!clockedInToday) {
             debugPrint(
-                '[LOGIN] ARPL Assessor $facilitatorIdInt has NOT clocked in today - requiring clock-in');
+              '[LOGIN] ARPL Assessor $facilitatorIdInt has NOT clocked in today - requiring clock-in',
+            );
 
             if (!context.mounted) return;
 
@@ -1036,19 +1117,23 @@ class _LoginPageState extends State<LoginPage> {
             }
 
             debugPrint(
-                '[LOGIN] ✅ Clock-in completed for assessor $facilitatorIdInt');
+              '[LOGIN] ✅ Clock-in completed for assessor $facilitatorIdInt',
+            );
           } else {
             // Already clocked in today, show confirmation
-            final clockInTime =
-                await dbHelper.getFacilitatorTodayClockIn(facilitatorIdInt);
+            final clockInTime = await dbHelper.getFacilitatorTodayClockIn(
+              facilitatorIdInt,
+            );
             debugPrint(
-                '[LOGIN] ARPL Assessor $facilitatorIdInt already clocked in at $clockInTime');
+              '[LOGIN] ARPL Assessor $facilitatorIdInt already clocked in at $clockInTime',
+            );
 
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                      'Welcome back! Already clocked in at ${clockInTime ?? 'earlier'}'),
+                    'Welcome back! Already clocked in at ${clockInTime ?? 'earlier'}',
+                  ),
                   backgroundColor: Colors.green,
                   duration: const Duration(seconds: 2),
                 ),
@@ -1059,13 +1144,13 @@ class _LoginPageState extends State<LoginPage> {
           // Proceed to ARPL Assessor dashboard
           if (context.mounted) {
             debugPrint(
-                '[LOGIN] Proceeding to ARPL Assessor dashboard for $facilitatorIdInt');
+              '[LOGIN] Proceeding to ARPL Assessor dashboard for $facilitatorIdInt',
+            );
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ArplAssessorPage(
-                  facilitatorId: facilitatorId,
-                ),
+                builder: (context) =>
+                    ArplAssessorPage(facilitatorId: facilitatorId),
               ),
             );
           }
@@ -1081,9 +1166,7 @@ class _LoginPageState extends State<LoginPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ModeratorPage(
-                facilitatorId: facilitatorId,
-              ),
+              builder: (context) => ModeratorPage(facilitatorId: facilitatorId),
             ),
           );
         },
@@ -1099,10 +1182,8 @@ class _LoginPageState extends State<LoginPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => DashboardPage(
-                classID: classID,
-                learners: learners,
-              ),
+              builder: (context) =>
+                  DashboardPage(classID: classID, learners: learners),
             ),
           );
         },
@@ -1371,8 +1452,9 @@ class _LoginPageState extends State<LoginPage> {
                                   borderRadius: BorderRadius.circular(26),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF5BA4DE)
-                                          .withOpacity(0.25),
+                                      color: const Color(
+                                        0xFF5BA4DE,
+                                      ).withOpacity(0.25),
                                       blurRadius: 16,
                                       offset: const Offset(0, 8),
                                     ),
@@ -1401,10 +1483,7 @@ class _LoginPageState extends State<LoginPage> {
                                         ),
                                       ),
                                       SizedBox(width: 12),
-                                      Icon(
-                                        Icons.arrow_forward,
-                                        size: 24,
-                                      ),
+                                      Icon(Icons.arrow_forward, size: 24),
                                     ],
                                   ),
                                 ),
@@ -1510,10 +1589,7 @@ class _LoginPageState extends State<LoginPage> {
         obscureText: obscureText,
         validator:
             validator ?? (value) => value!.isEmpty ? 'Enter email' : null,
-        style: const TextStyle(
-          fontSize: 14,
-          color: Color(0xFF26364D),
-        ),
+        style: const TextStyle(fontSize: 14, color: Color(0xFF26364D)),
         decoration: InputDecoration(
           hintText: hintText,
           hintStyle: const TextStyle(
@@ -1538,11 +1614,7 @@ class _LoginPageState extends State<LoginPage> {
                 bottomRight: Radius.circular(18),
               ),
             ),
-            child: Icon(
-              prefixIcon,
-              color: Colors.white,
-              size: 22,
-            ),
+            child: Icon(prefixIcon, color: Colors.white, size: 22),
           ),
           prefixIconConstraints: const BoxConstraints(
             minWidth: 56,
@@ -1586,11 +1658,7 @@ class _LoginPageState extends State<LoginPage> {
               color: iconBackgroundColor,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: 14,
-            ),
+            child: Icon(icon, color: Colors.white, size: 14),
           ),
           const SizedBox(width: 10),
           Flexible(
@@ -1631,7 +1699,8 @@ class _LoginPageState extends State<LoginPage> {
       if (result.isEmpty) {
         debugPrint('[LOGIN] No facilitator found for classID: $classID');
         debugPrint(
-            '[LOGIN] Bypassing fingerprint features, proceeding to dashboard');
+          '[LOGIN] Bypassing fingerprint features, proceeding to dashboard',
+        );
         // No facilitator in database - bypass fingerprint features
         onSuccess();
         return;
@@ -1642,9 +1711,11 @@ class _LoginPageState extends State<LoginPage> {
 
       if (facilitatorIdInt == null) {
         debugPrint(
-            '[LOGIN] facilitator_id is null in database for classID: $classID');
+          '[LOGIN] facilitator_id is null in database for classID: $classID',
+        );
         debugPrint(
-            '[LOGIN] Bypassing fingerprint features, proceeding to dashboard');
+          '[LOGIN] Bypassing fingerprint features, proceeding to dashboard',
+        );
         // No valid ID - bypass fingerprint features
         onSuccess();
         return;
@@ -1655,7 +1726,8 @@ class _LoginPageState extends State<LoginPage> {
       final fullName = '$firstName $lastName'.trim();
 
       debugPrint(
-          '[LOGIN] Found facilitator: ID=$facilitatorIdInt, Name=$fullName');
+        '[LOGIN] Found facilitator: ID=$facilitatorIdInt, Name=$fullName',
+      );
 
       // Step 0: Sync facilitator data from server (including fingerprints) if online
       if (!_isOffline) {
@@ -1671,21 +1743,25 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       // Step 1: Check if facilitator has fingerprints OR face enrolled (one-time setup)
-      final hasFingerprints =
-          await dbHelper.facilitatorHasFingerprints(facilitatorIdInt);
+      final hasFingerprints = await dbHelper.facilitatorHasFingerprints(
+        facilitatorIdInt,
+      );
       debugPrint(
-          '[LOGIN] Facilitator $facilitatorIdInt has fingerprints: $hasFingerprints');
+        '[LOGIN] Facilitator $facilitatorIdInt has fingerprints: $hasFingerprints',
+      );
 
       // Check if facilitator has face enrolled (alternative to fingerprints)
       bool hasFaceEnrolled = false;
       if (!hasFingerprints) {
         try {
           final faceRepo = FacilitatorFaceRepository();
-          final checkResult =
-              await faceRepo.checkFaceEnrolled(facilitatorIdInt);
+          final checkResult = await faceRepo.checkFaceEnrolled(
+            facilitatorIdInt,
+          );
           hasFaceEnrolled = checkResult['enrolled'] == true;
           debugPrint(
-              '[LOGIN] Facilitator $facilitatorIdInt has face enrolled: $hasFaceEnrolled');
+            '[LOGIN] Facilitator $facilitatorIdInt has face enrolled: $hasFaceEnrolled',
+          );
         } catch (e) {
           debugPrint('[LOGIN] Error checking face enrollment: $e');
         }
@@ -1693,16 +1769,19 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!hasFingerprints && !hasFaceEnrolled) {
         debugPrint(
-            '[LOGIN] No fingerprints or face enrolled for facilitator $facilitatorIdInt');
+          '[LOGIN] No fingerprints or face enrolled for facilitator $facilitatorIdInt',
+        );
         // Navigate to fingerprint page which will handle scanner dialog
         // If no scanner, it will automatically use face enrollment flow
-        final enrolled = await Navigator.push(
+        final enrolled =
+            await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => FacilitatorFingerprintPage(
                   facilitatorId: facilitatorIdInt,
-                  facilitatorName:
-                      fullName.isNotEmpty ? fullName : facilitatorName,
+                  facilitatorName: fullName.isNotEmpty
+                      ? fullName
+                      : facilitatorName,
                   isFirstTimeSetup: true,
                 ),
               ),
@@ -1717,13 +1796,15 @@ class _LoginPageState extends State<LoginPage> {
         }
 
         // Re-check what was enrolled (in a local scope, don't reassign final variable)
-        final hasNewFingerprints =
-            await dbHelper.facilitatorHasFingerprints(facilitatorIdInt);
+        final hasNewFingerprints = await dbHelper.facilitatorHasFingerprints(
+          facilitatorIdInt,
+        );
         if (!hasNewFingerprints) {
           try {
             final faceRepo = FacilitatorFaceRepository();
-            final checkResult =
-                await faceRepo.checkFaceEnrolled(facilitatorIdInt);
+            final checkResult = await faceRepo.checkFaceEnrolled(
+              facilitatorIdInt,
+            );
             hasFaceEnrolled = checkResult['enrolled'] == true;
           } catch (e) {
             debugPrint('[LOGIN] Error re-checking face enrollment: $e');
@@ -1736,12 +1817,14 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       // Step 2: Check if facilitator has clocked in today (daily requirement)
-      final clockedInToday =
-          await dbHelper.facilitatorClockedInToday(facilitatorIdInt);
+      final clockedInToday = await dbHelper.facilitatorClockedInToday(
+        facilitatorIdInt,
+      );
 
       if (!clockedInToday) {
         debugPrint(
-            '[LOGIN] Facilitator $facilitatorIdInt has NOT clocked in today');
+          '[LOGIN] Facilitator $facilitatorIdInt has NOT clocked in today',
+        );
         // Show message that clock-in is required
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1765,13 +1848,15 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           debugPrint('[LOGIN] Using fingerprint for clock-in');
           // Navigate to fingerprint page for clock-in (required daily)
-          clockedIn = await Navigator.push(
+          clockedIn =
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => FacilitatorFingerprintPage(
                     facilitatorId: facilitatorIdInt,
-                    facilitatorName:
-                        fullName.isNotEmpty ? fullName : facilitatorName,
+                    facilitatorName: fullName.isNotEmpty
+                        ? fullName
+                        : facilitatorName,
                     isFirstTimeSetup: false,
                     requireClockIn: true, // Force clock-in mode
                   ),
@@ -1789,15 +1874,18 @@ class _LoginPageState extends State<LoginPage> {
         }
       } else {
         // Already clocked in today, show confirmation
-        final clockInTime =
-            await dbHelper.getFacilitatorTodayClockIn(facilitatorIdInt);
+        final clockInTime = await dbHelper.getFacilitatorTodayClockIn(
+          facilitatorIdInt,
+        );
         debugPrint(
-            '[LOGIN] Facilitator $facilitatorIdInt already clocked in at $clockInTime');
+          '[LOGIN] Facilitator $facilitatorIdInt already clocked in at $clockInTime',
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  'Welcome back! Already clocked in at ${clockInTime ?? 'earlier'}'),
+                'Welcome back! Already clocked in at ${clockInTime ?? 'earlier'}',
+              ),
               backgroundColor: Colors.green,
               duration: const Duration(seconds: 2),
             ),
@@ -1807,7 +1895,8 @@ class _LoginPageState extends State<LoginPage> {
 
       // Proceed to dashboard
       debugPrint(
-          '[LOGIN] Proceeding to dashboard for facilitator $facilitatorIdInt');
+        '[LOGIN] Proceeding to dashboard for facilitator $facilitatorIdInt',
+      );
       onSuccess();
     } catch (e) {
       debugPrint('[LOGIN] Error in facilitator login flow: $e');
@@ -1854,9 +1943,7 @@ class _LoginPageState extends State<LoginPage> {
                 Text('Verification Error'),
               ],
             ),
-            content: Text(
-              e.toString().replaceFirst('Exception: ', ''),
-            ),
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -1945,13 +2032,9 @@ class _LoginPageState extends State<LoginPage> {
               ),
               if (isClocking) ...[
                 const SizedBox(height: 16),
-                const Center(
-                  child: CircularProgressIndicator(),
-                ),
+                const Center(child: CircularProgressIndicator()),
                 const SizedBox(height: 8),
-                const Center(
-                  child: Text('Clocking in...'),
-                ),
+                const Center(child: Text('Clocking in...')),
               ],
             ],
           ),
@@ -1975,8 +2058,9 @@ class _LoginPageState extends State<LoginPage> {
                   try {
                     // Perform clock-in
                     final now = DateTime.now();
-                    final clockInTime =
-                        DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
+                    final clockInTime = DateFormat(
+                      'yyyy-MM-dd HH:mm:ss',
+                    ).format(now);
                     final clockDate = DateFormat('yyyy-MM-dd').format(now);
 
                     // Save to local database
@@ -2016,7 +2100,8 @@ class _LoginPageState extends State<LoginPage> {
                         }
                       } catch (e) {
                         debugPrint(
-                            '[CLOCK_IN] Server sync failed, saved offline: $e');
+                          '[CLOCK_IN] Server sync failed, saved offline: $e',
+                        );
                       }
                     }
 
@@ -2066,8 +2151,9 @@ class _LoginPageState extends State<LoginPage> {
 
   void _showError(String message) {
     if (mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -2081,7 +2167,8 @@ class _LoginPageState extends State<LoginPage> {
             children: facilitators.map((facilitator) {
               return ListTile(
                 title: Text(
-                    '${facilitator['firstName']} ${facilitator['lastName']}'),
+                  '${facilitator['firstName']} ${facilitator['lastName']}',
+                ),
                 subtitle: Text('Password: ${facilitator['password']}'),
               );
             }).toList(),
@@ -2105,10 +2192,7 @@ class _CurvedLinesPainter extends CustomPainter {
   final Color color;
   final bool reverse;
 
-  _CurvedLinesPainter({
-    required this.color,
-    this.reverse = false,
-  });
+  _CurvedLinesPainter({required this.color, this.reverse = false});
 
   @override
   void paint(Canvas canvas, Size size) {
