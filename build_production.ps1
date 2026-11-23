@@ -4,7 +4,7 @@
 Write-Host "Building Production APK" -ForegroundColor Cyan
 Write-Host "======================`n" -ForegroundColor Cyan
 
-# Set Java Home
+# Set Java Home for this session
 $env:JAVA_HOME = "C:\Program Files\Java\jdk-17.0.12"
 Write-Host "Java Home: $env:JAVA_HOME" -ForegroundColor Green
 
@@ -12,6 +12,9 @@ Write-Host "Java Home: $env:JAVA_HOME" -ForegroundColor Green
 Write-Host "Cleaning Gradle cache..." -ForegroundColor Yellow
 Remove-Item -Recurse -Force android\.gradle -ErrorAction SilentlyContinue
 Write-Host "Cache cleaned`n" -ForegroundColor Green
+
+# Note: org.gradle.java.home removed from gradle.properties for CI/CD compatibility
+# Local builds use JAVA_HOME environment variable set above
 
 # Build production APK
 Write-Host "Building production APK..." -ForegroundColor Yellow
