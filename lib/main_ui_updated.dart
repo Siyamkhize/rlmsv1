@@ -75,7 +75,9 @@ void callbackDispatcher() {
         final syncService = SyncService();
 
         final connectivityResult = await Connectivity().checkConnectivity();
-        final hasNetwork = connectivityResult.contains(ConnectivityResult.wifi) || connectivityResult.contains(ConnectivityResult.mobile);
+        final hasNetwork =
+            connectivityResult.contains(ConnectivityResult.wifi) ||
+                connectivityResult.contains(ConnectivityResult.mobile);
 
         if (hasNetwork) {
           debugPrint("Background sync: Network available, starting sync...");
@@ -95,7 +97,9 @@ void callbackDispatcher() {
         debugPrint("Connectivity check task started at ${DateTime.now()}");
         final connectivityResult = await Connectivity().checkConnectivity();
         debugPrint("Connectivity result: $connectivityResult");
-        final hasNetwork = connectivityResult.contains(ConnectivityResult.wifi) || connectivityResult.contains(ConnectivityResult.mobile);
+        final hasNetwork =
+            connectivityResult.contains(ConnectivityResult.wifi) ||
+                connectivityResult.contains(ConnectivityResult.mobile);
         debugPrint("Has network: $hasNetwork");
 
         if (!hasNetwork) {
@@ -325,12 +329,13 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _checkConnectivity() async {
     try {
-      final ConnectivityResult result =
+      final List<ConnectivityResult> result =
           await Connectivity().checkConnectivity();
       setState(() {
-        _isOffline = result != ConnectivityResult.wifi &&
-            result != ConnectivityResult.mobile;
-        _connectivityStatus = _getStatusMessage(result);
+        _isOffline = !result.contains(ConnectivityResult.wifi) &&
+            !result.contains(ConnectivityResult.mobile);
+        _connectivityStatus = _getStatusMessage(
+            result.isNotEmpty ? result.first : ConnectivityResult.none);
       });
     } catch (e) {
       setState(() {
