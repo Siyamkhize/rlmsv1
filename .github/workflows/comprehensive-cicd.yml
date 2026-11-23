@@ -211,10 +211,10 @@ jobs:
     timeout-minutes: 40
     strategy:
       matrix:
-        flavor: [debug, staging, production]
+        flavor: [local, staging, production]
         include:
-          - flavor: debug
-            build-args: '--debug'
+          - flavor: local
+            build-args: '--release --flavor local'
           - flavor: staging
             build-args: '--release --flavor staging'
           - flavor: production
@@ -371,7 +371,7 @@ jobs:
       - name: 📥 Download APK
         uses: actions/download-artifact@v4
         with:
-          name: android-apk-debug
+          name: android-apk-local
       
       - name: 🚀 Deploy to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
@@ -379,9 +379,9 @@ jobs:
           appId: ${{ secrets.FIREBASE_DEV_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIALS }}
           groups: developers
-          file: app-debug.apk
+          file: app-localRelease.apk
           releaseNotes: |
-            Development Build
+            Development Build (Local Flavor)
             Commit: ${{ github.sha }}
             Branch: ${{ github.ref_name }}
         continue-on-error: true
@@ -411,7 +411,7 @@ jobs:
           appId: ${{ secrets.FIREBASE_STAGING_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIALS }}
           groups: testers,qa
-          file: app-staging-release.apk
+          file: app-stagingRelease.apk
           releaseNotes: |
             Staging Build
             Commit: ${{ github.sha }}
@@ -451,8 +451,8 @@ jobs:
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_CREDENTIALS }}
-          packageName: com.rlms.app
-          releaseFiles: app-production-release.apk
+          packageName: com.example.rlmss
+          releaseFiles: app-productionRelease.apk
           track: internal
           status: completed
         continue-on-error: true
@@ -463,7 +463,7 @@ jobs:
           appId: ${{ secrets.FIREBASE_PRODUCTION_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIALS }}
           groups: production-testers
-          file: app-production-release.apk
+          file: app-productionRelease.apk
           releaseNotes: |
             Production Release
             Version: ${{ github.run_number }}
