@@ -89,6 +89,27 @@ android {
         vectorDrawables.useSupportLibrary = false
     }
 
+    flavorDimensions "environment"
+    
+    productFlavors {
+        local {
+            dimension "environment"
+            applicationIdSuffix ".local"
+            versionNameSuffix "-local"
+        }
+        
+        staging {
+            dimension "environment"
+            applicationIdSuffix ".staging"
+            versionNameSuffix "-staging"
+        }
+        
+        production {
+            dimension "environment"
+            // No suffix for production - uses base applicationId
+        }
+    }
+
     signingConfigs {
         release {
             if (keystorePropertiesFile.exists()) {
