@@ -1,15 +1,13 @@
 name: Advanced Security Scanning
 
-# Disabled due to GitHub Actions billing limits
-# Re-enable after updating billing at: https://github.com/settings/billing
 on:
-  workflow_dispatch:  # Manual trigger only
-  # schedule:
-  #   - cron: '0 2 * * *'
-  # push:
-  #   branches: [main, staging]
-  # pull_request:
-  #   branches: [main, staging]
+  workflow_dispatch:  # Manual trigger
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly on Monday at 2 AM UTC
+  push:
+    branches: [main]  # Only main to conserve minutes
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read

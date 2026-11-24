@@ -1,15 +1,13 @@
 name: "CodeQL Security Analysis"
 
-# Temporarily disabled due to GitHub Actions billing limits
-# Re-enable after fixing billing at: https://github.com/settings/billing
 on:
-  workflow_dispatch:  # Manual trigger only
-  # push:
-  #   branches: [ "main", "development" ]
-  # pull_request:
-  #   branches: [ "main", "development" ]
-  # schedule:
-  #   - cron: '30 2 * * 1'
+  workflow_dispatch:  # Manual trigger
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '30 2 * * 1'  # Weekly on Monday at 2:30 AM
 
 jobs:
   analyze:
