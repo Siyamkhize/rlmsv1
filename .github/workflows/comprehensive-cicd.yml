@@ -239,7 +239,12 @@ jobs:
           cache: true
       
       - name: 📦 Install dependencies
-        run: flutter pub get
+        run: |
+          flutter pub get
+          flutter pub cache repair
+      
+      - name: 🧹 Clean build
+        run: flutter clean
       
       - name: 🏗️ Build APK
         run: |
