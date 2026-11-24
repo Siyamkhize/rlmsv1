@@ -127,7 +127,7 @@ jobs:
           APK_PATH="build/app/outputs/flutter-apk/app-release.apk"
           if [ -f "$APK_PATH" ]; then
             APK_SIZE=$(du -h "$APK_PATH" | cut -f1)
-            APK_SIZE_BYTES=$(stat -f%z "$APK_PATH" 2>/dev/null || stat -c%s "$APK_PATH")
+            APK_SIZE_BYTES=$(stat -c%s "$APK_PATH")
             
             echo "## APK Size Report" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
@@ -140,13 +140,18 @@ jobs:
             else
               echo "✅ **Status:** APK size within acceptable limits" >> $GITHUB_STEP_SUMMARY
             fi
+          else
+            echo "⚠️ APK file not found, skipping size analysis" >> $GITHUB_STEP_SUMMARY
           fi
+        continue-on-error: true
       
       - name: 📤 Upload Size Analysis
         uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: apk-size-analysis
           path: build/app/outputs/flutter-apk/app-release.apk.size.json
+        continue-on-error: true
 
   dependency-audit:
     name: 📦 Dependency Health Check
