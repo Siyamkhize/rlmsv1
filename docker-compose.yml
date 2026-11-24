@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # Build all 3 flavors
+  build-local:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rlmss-build-local
+    environment:
+      - FLAVOR=local
+    volumes:
+      - ./build:/app/build
+      - flutter-pub-cache:/root/.pub-cache
+    command: flutter build apk --release --flavor local
+
+  build-staging:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rlmss-build-staging
+    environment:
+      - FLAVOR=staging
+    volumes:
+      - ./build:/app/build
+      - flutter-pub-cache:/root/.pub-cache
+    command: flutter build apk --release --flavor staging
+
+  build-production:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rlmss-build-production
+    environment:
+      - FLAVOR=production
+    volumes:
+      - ./build:/app/build
+      - flutter-pub-cache:/root/.pub-cache
+    command: flutter build apk --release --flavor production
+
+volumes:
+  flutter-pub-cache:
+    driver: local
