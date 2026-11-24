@@ -1,2 +1,0 @@
-C:/projects/rlmssv1/android/app/.cxx/RelWithDebInfo/71wm01h5/arm64-v8a/CMakeFiles/edit_cache.dir
-C:/projects/rlmssv1/android/app/.cxx/RelWithDebInfo/71wm01h5/arm64-v8a/CMakeFiles/rebuild_cache.dir

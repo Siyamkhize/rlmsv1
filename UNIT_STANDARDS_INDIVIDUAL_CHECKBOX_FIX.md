@@ -1,1 +1,0 @@
-# Unit Standards Individu
