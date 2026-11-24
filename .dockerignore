@@ -1,50 +1,26 @@
-# Build outputs
 build/
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
-
-# IDE
 .idea/
 .vscode/
 *.iml
-*.ipr
-*.iws
-
-# Git
 .git/
 .gitignore
-
-# Documentation
 *.md
 !README.md
-
-# Logs
 *.log
-
-# OS
 .DS_Store
 Thumbs.db
-
-# Android build artifacts
 android/.gradle/
 android/app/build/
 android/.cxx/
-android/local.properties
-
-# Sensitive files
 config/db.env
 *.env
 !*.env.example
-
-# Large directories
 .agents/
 venv/
 packages/
-
-# Temporary
 *.tmp
-*.temp
 temp/
-tmp/
