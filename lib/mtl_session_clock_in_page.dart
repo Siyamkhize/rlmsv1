@@ -6,20 +6,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:sqflite/sqflite.dart';
 
 import 'database_helper.dart';
 import 'config.dart';
 import 'mixins/learner_clockin_gates_mixin.dart';
 
 /// MTL Session-Based Clock-In Page
-/// 
+///
 /// Implements SessionVerificationContract.md:
 /// - User logs into MTL RLMS → receives sessionId
 /// - MTL RLMS sends sessionId to this Scanning app
 /// - This app uses auth_token (existing system) as the sessionId
 /// - Clock-in sends auth_token in Authorization: Bearer <token>
 /// - Server validates token before recording clock-in
-/// 
+///
 /// See: EXISTING_AUTH_SYSTEM.md for authentication details
 class MtlSessionClockInPage extends StatefulWidget {
   final String classID;
@@ -127,7 +128,8 @@ class _MtlSessionClockInPageState extends State<MtlSessionClockInPage>
           _isValidatingSession = false;
         });
 
-        debugPrint('[MTL_SESSION] ✅ Session loaded: User ${_sessionUser!['name']}');
+        debugPrint(
+            '[MTL_SESSION] ✅ Session loaded: User ${_sessionUser!['name']}');
       } else {
         setState(() {
           _sessionError = 'Session invalid. Please login again.';
@@ -152,7 +154,7 @@ class _MtlSessionClockInPageState extends State<MtlSessionClockInPage>
       // TODO: Implement when MTL team provides verify endpoint
       // For now, we rely on existing auth_token validation
       // which happens on every API call automatically
-      
+
       // Future implementation:
       // final response = await http.post(
       //   Uri.parse('${AppConfig.mtlApiBaseUrl}/api/sessions/verify'),
@@ -167,7 +169,7 @@ class _MtlSessionClockInPageState extends State<MtlSessionClockInPage>
       //   final data = jsonDecode(response.body);
       //   return data['isValid'] == true;
       // }
-      
+
       return true; // For now, trust the auth_token
     } catch (e) {
       debugPrint('[MTL_SESSION] Error verifying session: $e');
@@ -261,10 +263,12 @@ class _MtlSessionClockInPageState extends State<MtlSessionClockInPage>
       if (clocking.isNotEmpty && mounted) {
         setState(() {
           if (clocking.first['clock_in_time'] != null) {
-            clockInTimes[learnerId] = clocking.first['clock_in_time'].toString();
+            clockInTimes[learnerId] =
+                clocking.first['clock_in_time'].toString();
           }
           if (clocking.first['clock_out_time'] != null) {
-            clockOutTimes[learnerId] = clocking.first['clock_out_time'].toString();
+            clockOutTimes[learnerId] =
+                clocking.first['clock_out_time'].toString();
           }
           if (clocking.first['contact_time'] != null) {
             contactTimes[learnerId] = clocking.first['contact_time'].toString();
@@ -322,7 +326,8 @@ class _MtlSessionClockInPageState extends State<MtlSessionClockInPage>
           Uri.parse(AppConfig.clockinUrl),
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer $_sessionId', // ✅ SessionVerificationContract.md section 1
+            'Authorization':
+                'Bearer $_sessionId', // ✅ SessionVerificationContract.md section 1
           },
           body: jsonEncode(clockInData),
         );
@@ -333,7 +338,8 @@ class _MtlSessionClockInPageState extends State<MtlSessionClockInPage>
             setState(() {
               clockInTimes[learnerId] = clockInTime;
             });
-            _showSuccess('Clock-in successful for ${learner['Name']} ${learner['Surname']}');
+            _showSuccess(
+                'Clock-in successful for ${learner['Name']} ${learner['Surname']}');
           } else {
             _showError(responseData['message'] ?? 'Clock-in failed');
           }
@@ -367,7 +373,8 @@ class _MtlSessionClockInPageState extends State<MtlSessionClockInPage>
         setState(() {
           clockInTimes[learnerId] = clockInTime;
         });
-        _showSuccess('Clock-in saved offline for ${learner['Name']} ${learner['Surname']}');
+        _showSuccess(
+            'Clock-in saved offline for ${learner['Name']} ${learner['Surname']}');
       }
     } catch (e) {
       debugPrint('[MTL_SESSION] Clock-in error: $e');
@@ -505,7 +512,8 @@ class _MtlSessionClockInPageState extends State<MtlSessionClockInPage>
           // Geofence status
           Container(
             padding: const EdgeInsets.all(12),
-            color: _isWithinRange ? Colors.green.shade50 : Colors.orange.shade50,
+            color:
+                _isWithinRange ? Colors.green.shade50 : Colors.orange.shade50,
             child: Row(
               children: [
                 Icon(
@@ -516,7 +524,7 @@ class _MtlSessionClockInPageState extends State<MtlSessionClockInPage>
                 Expanded(
                   child: Text(
                     _isWithinRange
-                        ? 'Within site boundary (100m)'
+                        ? 'Within site boundary (50m)'
                         : 'Outside site boundary',
                     style: TextStyle(
                       color: _isWithinRange ? Colors.green : Colors.orange,
@@ -575,7 +583,8 @@ class _MtlSessionClockInPageState extends State<MtlSessionClockInPage>
             leading: CircleAvatar(
               backgroundColor: hasClockIn ? Colors.green : Colors.grey,
               child: Text(
-                learner['Name']?.toString().substring(0, 1).toUpperCase() ?? 'L',
+                learner['Name']?.toString().substring(0, 1).toUpperCase() ??
+                    'L',
                 style: const TextStyle(color: Colors.white),
               ),
             ),
