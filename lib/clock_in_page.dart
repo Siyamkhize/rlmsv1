@@ -21,6 +21,7 @@ import 'LearnerDetailsPage.dart';
 import 'sick_note_page.dart';
 // import 'backup_clock_in_page.dart'; // Temporarily commented - analyzer issue
 import 'signature_geofence_clock_in_page.dart'; // Added for signature+geofence clock-in
+import 'mtl_session_clock_in_page.dart'; // Added for MTL session-based clock-in
 import 'database_helper.dart';
 import 'sync_service.dart'
     show syncSingleClockIn, syncSingleClockOut, SyncService;
@@ -155,54 +156,51 @@ class _ClockInPageState extends State<ClockInPage>
   }
 
   void _startLiveGpsTracking() {
-    _liveGpsSub =
-        Geolocator.getPositionStream(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
-            distanceFilter: 5, // Update every 5 meters
-          ),
-        ).listen(
-          (pos) {
-            if (mounted) {
-              bool withinRange = false;
-              if (_siteLat != null && _siteLon != null) {
-                final distance = _calculateDistance(
-                  pos.latitude,
-                  pos.longitude,
-                  _siteLat!,
-                  _siteLon!,
-                );
-                // Use the same dynamic radius logic as the geofence check
-                final effectiveRadius = (50.0 + pos.accuracy).clamp(50.0, 60.0);
-                withinRange = distance <= effectiveRadius;
-              }
+    _liveGpsSub = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5, // Update every 5 meters
+      ),
+    ).listen(
+      (pos) {
+        if (mounted) {
+          bool withinRange = false;
+          if (_siteLat != null && _siteLon != null) {
+            final distance = _calculateDistance(
+              pos.latitude,
+              pos.longitude,
+              _siteLat!,
+              _siteLon!,
+            );
+            // Use the same dynamic radius logic as the geofence check
+            final effectiveRadius = (50.0 + pos.accuracy).clamp(50.0, 60.0);
+            withinRange = distance <= effectiveRadius;
+          }
 
-              setState(() {
-                _currentGpsAccuracy = pos.accuracy;
-                _isWithinRange = withinRange;
-              });
-            }
-          },
-          onError: (e) {
-            debugPrint('[GPS_LIVE] Tracking error: $e');
-          },
-        );
+          setState(() {
+            _currentGpsAccuracy = pos.accuracy;
+            _isWithinRange = withinRange;
+          });
+        }
+      },
+      onError: (e) {
+        debugPrint('[GPS_LIVE] Tracking error: $e');
+      },
+    );
   }
 
   void _warmUpGPS() {
     // Start getting position in background so it's ready when they click
     debugPrint('[GPS_WARMUP] Proactively warming up GPS for clock-in...');
-    SecureLocationService.getSecurePosition()
-        .then((result) {
-          debugPrint(
-            '[GPS_WARMUP] Warm-up complete: ${result.position.accuracy.toStringAsFixed(1)}m',
-          );
-        })
-        .catchError((e) {
-          debugPrint(
-            '[GPS_WARMUP] Warm-up failed (expected if permissions missing): $e',
-          );
-        });
+    SecureLocationService.getSecurePosition().then((result) {
+      debugPrint(
+        '[GPS_WARMUP] Warm-up complete: ${result.position.accuracy.toStringAsFixed(1)}m',
+      );
+    }).catchError((e) {
+      debugPrint(
+        '[GPS_WARMUP] Warm-up failed (expected if permissions missing): $e',
+      );
+    });
   }
 
   @override
@@ -367,8 +365,8 @@ class _ClockInPageState extends State<ClockInPage>
 
     _isProcessingQueue = true;
 
-    while (_requestQueue.isNotEmpty &&
-        _activeRequests < _maxConcurrentRequests) {
+    while (
+        _requestQueue.isNotEmpty && _activeRequests < _maxConcurrentRequests) {
       final request = _requestQueue.removeFirst();
 
       // Rate limiting: ensure minimum delay between requests
@@ -385,24 +383,22 @@ class _ClockInPageState extends State<ClockInPage>
       _lastRequestTime = DateTime.now();
 
       // Process the request
-      _processRequest(request)
-          .then((_) {
-            _activeRequests--;
-            // Continue processing queue
-            if (_requestQueue.isNotEmpty &&
-                _activeRequests < _maxConcurrentRequests) {
-              _processRequestQueue();
-            }
-          })
-          .catchError((error) {
-            _activeRequests--;
-            debugPrint('[QUEUE] Error processing request: $error');
-            // Continue processing queue even if one request fails
-            if (_requestQueue.isNotEmpty &&
-                _activeRequests < _maxConcurrentRequests) {
-              _processRequestQueue();
-            }
-          });
+      _processRequest(request).then((_) {
+        _activeRequests--;
+        // Continue processing queue
+        if (_requestQueue.isNotEmpty &&
+            _activeRequests < _maxConcurrentRequests) {
+          _processRequestQueue();
+        }
+      }).catchError((error) {
+        _activeRequests--;
+        debugPrint('[QUEUE] Error processing request: $error');
+        // Continue processing queue even if one request fails
+        if (_requestQueue.isNotEmpty &&
+            _activeRequests < _maxConcurrentRequests) {
+          _processRequestQueue();
+        }
+      });
     }
 
     _isProcessingQueue = false;
@@ -581,9 +577,8 @@ class _ClockInPageState extends State<ClockInPage>
 
       setState(() {
         _isSensorConnected = isConnected;
-        _statusMessage = isConnected
-            ? 'Sensor connected'
-            : 'Sensor not connected';
+        _statusMessage =
+            isConnected ? 'Sensor connected' : 'Sensor not connected';
         _isInitializing = false;
       });
 
@@ -640,7 +635,8 @@ class _ClockInPageState extends State<ClockInPage>
       }
     });
 
-    _enrollSuccessSubscription = _fingerprintService.enrollSuccessStream.listen((
+    _enrollSuccessSubscription =
+        _fingerprintService.enrollSuccessStream.listen((
       capturedData,
     ) async {
       debugPrint('[CLOCK_IN] enrollSuccessStream received: $capturedData');
@@ -803,8 +799,8 @@ class _ClockInPageState extends State<ClockInPage>
             final date = _getCurrentDateString();
 
             // FIRST: Check if learner already clocked in today
-            final existingAttendance = await DatabaseHelper()
-                .getAttendanceForDay(learnerId, date);
+            final existingAttendance =
+                await DatabaseHelper().getAttendanceForDay(learnerId, date);
             if (existingAttendance != null &&
                 existingAttendance['clock_in_time'] != null &&
                 existingAttendance['clock_in_time'].toString().isNotEmpty) {
@@ -926,9 +922,8 @@ class _ClockInPageState extends State<ClockInPage>
               'clock_out_time': '', // Empty for clock-in
               'contact_time': '', // Empty for clock-in
               'clock_date': date,
-              'synced': synced
-                  ? 1
-                  : 0, // Mark as synced if server sync succeeded
+              'synced':
+                  synced ? 1 : 0, // Mark as synced if server sync succeeded
             };
             await DatabaseHelper().insertClocking(dbData);
             debugPrint(
@@ -999,8 +994,8 @@ class _ClockInPageState extends State<ClockInPage>
               setState(() => _isClockingIn[learnerId] = false);
             } else {
               // MONITORING CHECK: Verify if learner missed all 3 random monitoring attempts
-              final missedMonitoring = await DatabaseHelper()
-                  .hasMissedAllMonitoring(learnerId);
+              final missedMonitoring =
+                  await DatabaseHelper().hasMissedAllMonitoring(learnerId);
 
               if (missedMonitoring) {
                 debugPrint(
@@ -1034,8 +1029,8 @@ class _ClockInPageState extends State<ClockInPage>
               );
 
               final now = _getCurrentTimeString();
-              final clockInTime = existingAttendance['clock_in_time']
-                  .toString();
+              final clockInTime =
+                  existingAttendance['clock_in_time'].toString();
               final contactTime = _calculateContactTime(clockInTime, now);
 
               // Get current position for storing with attendance (with fallback)
@@ -1447,12 +1442,11 @@ class _ClockInPageState extends State<ClockInPage>
   }) async {
     try {
       final now = DateTime.now().toUtc().add(
-        const Duration(hours: 2),
-      ); // South African time
+            const Duration(hours: 2),
+          ); // South African time
       final firstDayOfMonth = DateTime(now.year, now.month, 1);
-      final lastDayOfMonth = includeToday
-          ? now
-          : DateTime(now.year, now.month, now.day - 1);
+      final lastDayOfMonth =
+          includeToday ? now : DateTime(now.year, now.month, now.day - 1);
 
       final dbHelper = DatabaseHelper();
       final db = await dbHelper.database;
@@ -1474,9 +1468,8 @@ class _ClockInPageState extends State<ClockInPage>
         ],
       );
 
-      final localCount = result.isNotEmpty
-          ? (result.first['count'] as int? ?? 0)
-          : 0;
+      final localCount =
+          result.isNotEmpty ? (result.first['count'] as int? ?? 0) : 0;
       debugPrint('[LOCAL_COUNT] Local database returned: $localCount days');
       return localCount;
     } catch (e) {
@@ -1510,8 +1503,7 @@ class _ClockInPageState extends State<ClockInPage>
         learnerId,
         includeToday: includeToday,
       );
-      serverAvailable =
-          serverCount > 0 ||
+      serverAvailable = serverCount > 0 ||
           localCount ==
               0; // Consider server available if it returns data or if local is empty
     } else {
@@ -1519,9 +1511,8 @@ class _ClockInPageState extends State<ClockInPage>
     }
 
     // Use the higher count (server data is more comprehensive)
-    final finalCount = serverAvailable
-        ? math.max(localCount, serverCount)
-        : localCount;
+    final finalCount =
+        serverAvailable ? math.max(localCount, serverCount) : localCount;
 
     debugPrint(
       '[ENHANCED_COUNT] Final result - Local: $localCount, Server: $serverCount, Final: $finalCount',
@@ -1573,16 +1564,14 @@ class _ClockInPageState extends State<ClockInPage>
 
           debugPrint('[ATTENDANCE_BREAKDOWN] Fetching from API: $url');
 
-          final response = await http
-              .get(
-                url,
-                headers: {
-                  'Cache-Control': 'no-cache, no-store, must-revalidate',
-                  'Pragma': 'no-cache',
-                  'Expires': '0',
-                },
-              )
-              .timeout(const Duration(seconds: 10));
+          final response = await http.get(
+            url,
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0',
+            },
+          ).timeout(const Duration(seconds: 10));
 
           if (response.statusCode == 200) {
             final data = json.decode(response.body);
@@ -2706,8 +2695,8 @@ class _ClockInPageState extends State<ClockInPage>
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         debugPrint('[DETECT] Futronic attempt $attempt/$maxAttempts...');
-        final isFutronicConnected = await _futronicService
-            .isFutronicConnected();
+        final isFutronicConnected =
+            await _futronicService.isFutronicConnected();
 
         if (isFutronicConnected) {
           debugPrint('[DETECT] ✅ Futronic detected on attempt $attempt!');
@@ -2940,12 +2929,10 @@ class _ClockInPageState extends State<ClockInPage>
 
     String? template;
     if (scanner == 'zkteco') {
-      template =
-          templates['zkteco_left_template'] ??
+      template = templates['zkteco_left_template'] ??
           templates['zkteco_right_template'];
     } else if (scanner == 'futronic') {
-      template =
-          templates['futronic_left_template'] ??
+      template = templates['futronic_left_template'] ??
           templates['futronic_right_template'];
     }
     if (template == null || template.isEmpty) {
@@ -2982,9 +2969,9 @@ class _ClockInPageState extends State<ClockInPage>
         if (!mounted) return;
         final hasNew =
             (refreshed['zkteco_left_template']?.isNotEmpty ?? false) ||
-            (refreshed['zkteco_right_template']?.isNotEmpty ?? false) ||
-            (refreshed['futronic_left_template']?.isNotEmpty ?? false) ||
-            (refreshed['futronic_right_template']?.isNotEmpty ?? false);
+                (refreshed['zkteco_right_template']?.isNotEmpty ?? false) ||
+                (refreshed['futronic_left_template']?.isNotEmpty ?? false) ||
+                (refreshed['futronic_right_template']?.isNotEmpty ?? false);
         if (hasNew) {
           // Re-run verification flow
           await _verifyAndClockIn(learnerId);
@@ -3035,8 +3022,7 @@ class _ClockInPageState extends State<ClockInPage>
     try {
       bool match = false;
       if (scanner == 'zkteco') {
-        match =
-            await _fingerprintService.verify('left', template) ||
+        match = await _fingerprintService.verify('left', template) ||
             await _fingerprintService.verify('right', template);
       } else if (scanner == 'futronic') {
         try {
@@ -3855,9 +3841,8 @@ class _ClockInPageState extends State<ClockInPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       DropdownButtonFormField<String>(
-                        value: _banks.contains(selectedBank)
-                            ? selectedBank
-                            : null,
+                        value:
+                            _banks.contains(selectedBank) ? selectedBank : null,
                         decoration: const InputDecoration(
                           labelText: 'Bank Name',
                         ),
@@ -4449,12 +4434,10 @@ class _ClockInPageState extends State<ClockInPage>
         return {'allApproved': true, 'documents': []};
       }
 
-      final response = await http
-          .post(
-            Uri.parse(AppConfig.buildUrl('get_document_statuses.php')),
-            body: {'learner_id': learnerId},
-          )
-          .timeout(const Duration(seconds: 6));
+      final response = await http.post(
+        Uri.parse(AppConfig.buildUrl('get_document_statuses.php')),
+        body: {'learner_id': learnerId},
+      ).timeout(const Duration(seconds: 6));
 
       if (response.statusCode != 200) {
         return {'allApproved': false, 'documents': []};
@@ -4550,9 +4533,8 @@ class _ClockInPageState extends State<ClockInPage>
         );
         if (existsOnServer) {
           final dynamic docId = doc['document_id'];
-          final int? parsedDocId = docId is int
-              ? docId
-              : int.tryParse('$docId');
+          final int? parsedDocId =
+              docId is int ? docId : int.tryParse('$docId');
           if (parsedDocId != null) {
             await dbHelper.updateLearnerDocumentSynced(parsedDocId, 1);
           }
@@ -4588,9 +4570,8 @@ class _ClockInPageState extends State<ClockInPage>
           final decoded = jsonDecode(body);
           if (decoded is Map && decoded['success'] == true) {
             final dynamic docId = doc['document_id'];
-            final int? parsedDocId = docId is int
-                ? docId
-                : int.tryParse('$docId');
+            final int? parsedDocId =
+                docId is int ? docId : int.tryParse('$docId');
             if (parsedDocId != null) {
               await dbHelper.updateLearnerDocumentSynced(parsedDocId, 1);
             }
@@ -4675,9 +4656,8 @@ class _ClockInPageState extends State<ClockInPage>
         );
         if (existsOnServer) {
           final dynamic docId = doc['document_id'];
-          final int? parsedDocId = docId is int
-              ? docId
-              : int.tryParse('$docId');
+          final int? parsedDocId =
+              docId is int ? docId : int.tryParse('$docId');
           if (parsedDocId != null) {
             await dbHelper.updateLearnerDocumentSynced(parsedDocId, 1);
           }
@@ -4690,8 +4670,7 @@ class _ClockInPageState extends State<ClockInPage>
             ..fields['learner_id'] = learnerId
             ..fields['documentName'] = documentName
             ..fields['status'] = doc['status']?.toString() ?? 'Pending'
-            ..fields['upload_date'] =
-                doc['upload_date']?.toString() ??
+            ..fields['upload_date'] = doc['upload_date']?.toString() ??
                 DateTime.now().toIso8601String()
             ..fields['synced'] = '1'
             ..fields['rejection_reason'] =
@@ -4714,9 +4693,8 @@ class _ClockInPageState extends State<ClockInPage>
           final decoded = jsonDecode(body);
           if (decoded is Map && decoded['success'] == true) {
             final dynamic docId = doc['document_id'];
-            final int? parsedDocId = docId is int
-                ? docId
-                : int.tryParse('$docId');
+            final int? parsedDocId =
+                docId is int ? docId : int.tryParse('$docId');
             if (parsedDocId != null) {
               await dbHelper.updateLearnerDocumentSynced(parsedDocId, 1);
             }
@@ -4853,8 +4831,7 @@ class _ClockInPageState extends State<ClockInPage>
           status = item['status']?.toString() ?? 'Pending';
 
           // Handle learner_document table row shapes (real schema first).
-          value =
-              item['documentName']?.toString() ??
+          value = item['documentName']?.toString() ??
               item['DocumentName']?.toString() ??
               item['document_name']?.toString() ??
               item['document_type']?.toString() ??
@@ -5152,8 +5129,7 @@ class _ClockInPageState extends State<ClockInPage>
           content: Text(errorMessage),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 4),
-          action:
-              errorMessage.contains('plugin error') ||
+          action: errorMessage.contains('plugin error') ||
                   errorMessage.contains('Scanner session timed out') ||
                   errorMessage.contains('Scanner timeout')
               ? SnackBarAction(
@@ -5381,12 +5357,10 @@ class _ClockInPageState extends State<ClockInPage>
 
     String? template;
     if (scanner == 'zkteco') {
-      template =
-          templates['zkteco_left_template'] ??
+      template = templates['zkteco_left_template'] ??
           templates['zkteco_right_template'];
     } else if (scanner == 'futronic') {
-      template =
-          templates['futronic_left_template'] ??
+      template = templates['futronic_left_template'] ??
           templates['futronic_right_template'];
     }
     if (template == null || template.isEmpty) {
@@ -5418,9 +5392,9 @@ class _ClockInPageState extends State<ClockInPage>
         );
         final hasNew =
             (refreshed['zkteco_left_template']?.isNotEmpty ?? false) ||
-            (refreshed['zkteco_right_template']?.isNotEmpty ?? false) ||
-            (refreshed['futronic_left_template']?.isNotEmpty ?? false) ||
-            (refreshed['futronic_right_template']?.isNotEmpty ?? false);
+                (refreshed['zkteco_right_template']?.isNotEmpty ?? false) ||
+                (refreshed['futronic_left_template']?.isNotEmpty ?? false) ||
+                (refreshed['futronic_right_template']?.isNotEmpty ?? false);
         if (hasNew) {
           // Re-run clock-out attempt
           await _verifyAndClockOut(learnerId);
@@ -5470,8 +5444,7 @@ class _ClockInPageState extends State<ClockInPage>
     try {
       bool match = false;
       if (scanner == 'zkteco') {
-        match =
-            await _fingerprintService.verify('left', template) ||
+        match = await _fingerprintService.verify('left', template) ||
             await _fingerprintService.verify('right', template);
       } else if (scanner == 'futronic') {
         try {
@@ -6052,8 +6025,8 @@ class _ClockInPageState extends State<ClockInPage>
   Future<void> _refreshDataWithoutClearingState() async {
     try {
       final dbHelper = DatabaseHelper();
-      final learnersWithClockingData = await dbHelper
-          .getLearnersWithClockingData(widget.classID);
+      final learnersWithClockingData =
+          await dbHelper.getLearnersWithClockingData(widget.classID);
 
       setState(() {
         for (var learner in learnersWithClockingData) {
@@ -6178,8 +6151,8 @@ class _ClockInPageState extends State<ClockInPage>
         return;
       }
 
-      final learnersWithClockingData = await dbHelper
-          .getLearnersWithClockingData(widget.classID);
+      final learnersWithClockingData =
+          await dbHelper.getLearnersWithClockingData(widget.classID);
 
       debugPrint(
         '[LOAD] Found ${learnersWithClockingData.length} learners for classID: ${widget.classID}',
@@ -6313,15 +6286,12 @@ class _ClockInPageState extends State<ClockInPage>
             'Name': learner['Name']?.toString() ?? 'N/A',
             'Surname': learner['Surname']?.toString() ?? 'N/A',
             'IDNumber': learner['IDNumber']?.toString() ?? 'N/A',
-            'clock_in_time': hasClocking
-                ? clockInTime
-                : '', // Empty if no clocking
-            'clock_out_time': hasClocking
-                ? clockOutTime
-                : '', // Empty if no clocking
-            'contact_time': hasClocking
-                ? contactTime
-                : '', // Empty if no clocking
+            'clock_in_time':
+                hasClocking ? clockInTime : '', // Empty if no clocking
+            'clock_out_time':
+                hasClocking ? clockOutTime : '', // Empty if no clocking
+            'contact_time':
+                hasClocking ? contactTime : '', // Empty if no clocking
             'clock_date': hasClocking ? clockDate : '', // Empty if no clocking
             'has_clocking': hasClocking.toString(), // Convert boolean to string
             // Add signature page expected fields for compatibility
@@ -6354,8 +6324,7 @@ class _ClockInPageState extends State<ClockInPage>
     final double deltaPhi = (lat2 - lat1) * math.pi / 180;
     final double deltaLambda = (lon2 - lon1) * math.pi / 180;
 
-    final double a =
-        math.sin(deltaPhi / 2) * math.sin(deltaPhi / 2) +
+    final double a = math.sin(deltaPhi / 2) * math.sin(deltaPhi / 2) +
         math.cos(phi1) *
             math.cos(phi2) *
             math.sin(deltaLambda / 2) *
@@ -6743,6 +6712,21 @@ class _ClockInPageState extends State<ClockInPage>
             },
             tooltip: 'Signature + Geofence Clock-In',
           ),
+          IconButton(
+            icon: const Icon(Icons.verified_user, color: Colors.blue),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MtlSessionClockInPage(
+                    classID: widget.classID,
+                    learners: List.from(widget.learners),
+                  ),
+                ),
+              );
+            },
+            tooltip: 'MTL Session Clock-In',
+          ),
         ],
       ),
       body: Column(
@@ -6781,23 +6765,23 @@ class _ClockInPageState extends State<ClockInPage>
                         color: _currentGpsAccuracy == null
                             ? Colors.grey.withOpacity(0.1)
                             : (!_isWithinRange && _siteLat != null
-                                  ? Colors.red.withOpacity(0.1)
-                                  : (_currentGpsAccuracy! <= 25
-                                        ? Colors.green.withOpacity(0.1)
-                                        : (_currentGpsAccuracy! <= 60
-                                              ? Colors.orange.withOpacity(0.1)
-                                              : Colors.red.withOpacity(0.1)))),
+                                ? Colors.red.withOpacity(0.1)
+                                : (_currentGpsAccuracy! <= 25
+                                    ? Colors.green.withOpacity(0.1)
+                                    : (_currentGpsAccuracy! <= 60
+                                        ? Colors.orange.withOpacity(0.1)
+                                        : Colors.red.withOpacity(0.1)))),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: _currentGpsAccuracy == null
                               ? Colors.grey
                               : (!_isWithinRange && _siteLat != null
-                                    ? Colors.red
-                                    : (_currentGpsAccuracy! <= 25
-                                          ? Colors.green
-                                          : (_currentGpsAccuracy! <= 60
-                                                ? Colors.orange
-                                                : Colors.red))),
+                                  ? Colors.red
+                                  : (_currentGpsAccuracy! <= 25
+                                      ? Colors.green
+                                      : (_currentGpsAccuracy! <= 60
+                                          ? Colors.orange
+                                          : Colors.red))),
                           width: 1,
                         ),
                       ),
@@ -6812,31 +6796,31 @@ class _ClockInPageState extends State<ClockInPage>
                             color: _currentGpsAccuracy == null
                                 ? Colors.grey
                                 : (!_isWithinRange && _siteLat != null
-                                      ? Colors.red
-                                      : (_currentGpsAccuracy! <= 25
-                                            ? Colors.green
-                                            : (_currentGpsAccuracy! <= 60
-                                                  ? Colors.orange
-                                                  : Colors.red))),
+                                    ? Colors.red
+                                    : (_currentGpsAccuracy! <= 25
+                                        ? Colors.green
+                                        : (_currentGpsAccuracy! <= 60
+                                            ? Colors.orange
+                                            : Colors.red))),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             _currentGpsAccuracy == null
                                 ? 'GPS: --'
                                 : (!_isWithinRange && _siteLat != null
-                                      ? 'OUT OF RANGE'
-                                      : 'GPS Accuracy: ${_currentGpsAccuracy!.toStringAsFixed(0)}m'),
+                                    ? 'OUT OF RANGE'
+                                    : 'GPS Accuracy: ${_currentGpsAccuracy!.toStringAsFixed(0)}m'),
                             style: TextStyle(
                               fontSize: 14,
                               color: _currentGpsAccuracy == null
                                   ? Colors.grey
                                   : (!_isWithinRange && _siteLat != null
-                                        ? Colors.red
-                                        : (_currentGpsAccuracy! <= 25
-                                              ? Colors.green
-                                              : (_currentGpsAccuracy! <= 60
-                                                    ? Colors.orange
-                                                    : Colors.red))),
+                                      ? Colors.red
+                                      : (_currentGpsAccuracy! <= 25
+                                          ? Colors.green
+                                          : (_currentGpsAccuracy! <= 60
+                                              ? Colors.orange
+                                              : Colors.red))),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -6864,9 +6848,8 @@ class _ClockInPageState extends State<ClockInPage>
                               : Colors.red.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: _isSensorConnected
-                                ? Colors.green
-                                : Colors.red,
+                            color:
+                                _isSensorConnected ? Colors.green : Colors.red,
                             width: 1,
                           ),
                         ),
@@ -6908,8 +6891,7 @@ class _ClockInPageState extends State<ClockInPage>
                     _statusMessage,
                     style: TextStyle(
                       fontSize: 14,
-                      color:
-                          _statusMessage.toLowerCase().contains('error') ||
+                      color: _statusMessage.toLowerCase().contains('error') ||
                               _statusMessage.toLowerCase().contains('failed')
                           ? Colors.red
                           : Colors.black,
@@ -7079,11 +7061,12 @@ class _ClockInPageState extends State<ClockInPage>
                                             ? ElevatedButton(
                                                 onPressed:
                                                     _isClockingIn[learnerId] ==
-                                                        true
-                                                    ? null
-                                                    : () => _verifyAndClockIn(
-                                                        learnerId,
-                                                      ),
+                                                            true
+                                                        ? null
+                                                        : () =>
+                                                            _verifyAndClockIn(
+                                                              learnerId,
+                                                            ),
                                                 style: ElevatedButton.styleFrom(
                                                   backgroundColor: Colors.green,
                                                   foregroundColor: Colors.white,
@@ -7103,34 +7086,34 @@ class _ClockInPageState extends State<ClockInPage>
                                         clockInTime.isEmpty
                                             ? const Text('-')
                                             : (clockOutTime.isEmpty
-                                                  ? ElevatedButton(
-                                                      onPressed:
-                                                          _isClockingIn[learnerId] ==
-                                                              true
-                                                          ? null
-                                                          : () =>
-                                                                _verifyAndClockOut(
-                                                                  learnerId,
-                                                                ),
-                                                      style:
-                                                          ElevatedButton.styleFrom(
-                                                            backgroundColor:
-                                                                Colors.red,
-                                                            foregroundColor:
-                                                                Colors.white,
-                                                          ),
-                                                      child: const Text(
-                                                        'Clock Out',
-                                                      ),
-                                                    )
-                                                  : Text(
-                                                      clockOutTime,
-                                                      style: const TextStyle(
-                                                        color: Colors.red,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    )),
+                                                ? ElevatedButton(
+                                                    onPressed: _isClockingIn[
+                                                                learnerId] ==
+                                                            true
+                                                        ? null
+                                                        : () =>
+                                                            _verifyAndClockOut(
+                                                              learnerId,
+                                                            ),
+                                                    style: ElevatedButton
+                                                        .styleFrom(
+                                                      backgroundColor:
+                                                          Colors.red,
+                                                      foregroundColor:
+                                                          Colors.white,
+                                                    ),
+                                                    child: const Text(
+                                                      'Clock Out',
+                                                    ),
+                                                  )
+                                                : Text(
+                                                    clockOutTime,
+                                                    style: const TextStyle(
+                                                      color: Colors.red,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  )),
                                       ),
                                       // Contact Time column
                                       DataCell(
@@ -7149,12 +7132,11 @@ class _ClockInPageState extends State<ClockInPage>
                                               MaterialPageRoute(
                                                 builder: (context) =>
                                                     SickNotePage(
-                                                      learnerID: int.parse(
-                                                        learnerId,
-                                                      ),
-                                                      learnerName:
-                                                          '$name $surname',
-                                                    ),
+                                                  learnerID: int.parse(
+                                                    learnerId,
+                                                  ),
+                                                  learnerName: '$name $surname',
+                                                ),
                                               ),
                                             );
                                           },
