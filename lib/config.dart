@@ -48,6 +48,7 @@ class AppConfig {
   static String get syncLearnerDocumentsUrl =>
       '$baseUrl/sync_learner_documents.php';
   static String get syncBankLocalUrl => '$baseUrl/sync_bank_local.php';
+
   static String get syncFacilitatorUrl => '$baseUrl/sync_facilitator.php';
   static String get syncLearnerClockingUrl =>
       '$baseUrl/clocking/sync_learner_clocking.php';
